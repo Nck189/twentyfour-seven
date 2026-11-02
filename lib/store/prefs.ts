@@ -11,7 +11,12 @@ type PrefsState = {
   theme: ThemePref;
   soundOn: boolean;
   skipAnimations: boolean;
+  /** When the user last changed the language on this device (ms since epoch). */
+  localeChangedAt: number;
+  /** User action: changes the language and stamps the change time. */
   setLocale: (locale: Locale) => void;
+  /** Sync from the server profile: no timestamp bump. */
+  applyLocale: (locale: Locale) => void;
   setTheme: (theme: ThemePref) => void;
   setSoundOn: (on: boolean) => void;
   setSkipAnimations: (skip: boolean) => void;
@@ -25,7 +30,9 @@ export const usePrefs = create<PrefsState>()(
       theme: "system",
       soundOn: true,
       skipAnimations: false,
-      setLocale: (locale) => set({ locale }),
+      localeChangedAt: 0,
+      setLocale: (locale) => set({ locale, localeChangedAt: Date.now() }),
+      applyLocale: (locale) => set({ locale }),
       setTheme: (theme) => set({ theme }),
       setSoundOn: (soundOn) => set({ soundOn }),
       setSkipAnimations: (skipAnimations) => set({ skipAnimations }),

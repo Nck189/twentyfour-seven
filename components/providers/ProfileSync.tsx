@@ -20,7 +20,7 @@ export function ProfileSync() {
       if (!data.user || cancelled) return;
       const { data: profile } = await client
         .from("profiles")
-        .select("locale, sound_on, onboarding")
+        .select("locale, sound_on, onboarding, updated_at")
         .eq("user_id", data.user.id)
         .maybeSingle();
       if (cancelled || !profile) return;
@@ -35,8 +35,14 @@ export function ProfileSync() {
           .is("onboarding->locale_set", null);
         return;
       }
-      // Don't clobber a change the user made while we were loading.
-      if (prefs.locale === startLocale && isLocale(profile.locale)) prefs.setLocale(profile.locale);
+      // The newer choice wins: a change made on this device after the profile's last write
+      // (or while we were loading) is kept; otherwise the account's language is applied.
+      const profileTime = Date.parse(profile.updated_at as string) || 0;
+      const localIsNewer = prefs.localeChangedAt > profileTime || prefs.locale !== startLocale;
+      if (!localIsNewer && isLocale(profile.locale)) prefs.applyLocale(profile.locale);
+      if (localIsNewer && profile.locale !== prefs.locale) {
+        await client.from("profiles").update({ locale: prefs.locale }).eq("user_id", data.user.id);
+      }
       if (typeof profile.sound_on === "boolean") prefs.setSoundOn(profile.sound_on);
     })();
     return () => {

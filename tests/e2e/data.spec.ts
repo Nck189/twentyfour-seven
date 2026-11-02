@@ -61,3 +61,25 @@ test.describe("data", () => {
     await mac.close();
   });
 });
+
+test("regression: language change survives an immediate reload while the profile save is still in flight", async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName === "webkit", "WebKit can't intercept requests to the local API");
+  test.skip(IS_PROD_RUN, "uses request interception");
+  await setPrefs(page, { locale: "en", theme: "light" });
+  await signIn(page);
+  await page.waitForTimeout(800); // first-login sync done
+  await page.goto("/more");
+  // Hold every profile write for 3 s so the reload happens first.
+  await page.route("**/rest/v1/profiles**", async (route) => {
+    if (route.request().method() === "PATCH") await new Promise((r) => setTimeout(r, 3000));
+    await route.continue().catch(() => {});
+  });
+  await page.getByRole("radio", { name: "ไทย" }).click();
+  await page.goto("/today");
+  await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("วันนี้");
+  await page.waitForTimeout(1500);
+  await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("วันนี้");
+});
