@@ -12,6 +12,7 @@ async function nextWakeIn(u: { id: string }, ms: number) {
   const p = localParts(at, TZ);
   const hhmm = `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
   await admin().from("templates").update({ target_wake: hhmm, options: {} }).eq("user_id", u.id);
+  await admin().from("wake_snapshots").delete().eq("user_id", u.id); // as if set long ago
   return addDays(localDate(at, TZ), -1);
 }
 
