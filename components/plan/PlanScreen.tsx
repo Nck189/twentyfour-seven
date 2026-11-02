@@ -8,7 +8,10 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
+  pointerWithin,
+  rectIntersection,
   type Announcements,
+  type CollisionDetection,
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { useLocale, useTranslations } from "next-intl";
@@ -30,6 +33,15 @@ import { addDays } from "@/lib/time";
 import { planFor, templateFor } from "@/lib/today/day";
 import { DayEditor } from "./DayEditor";
 import { SaveStatus } from "./SaveStatus";
+
+/**
+ * Drop where the finger/pointer is (the dragged chip can be wide and overlap the big day card);
+ * keyboard drags have no pointer, so they fall back to rectangle overlap.
+ */
+const collision: CollisionDetection = (args) => {
+  const hits = pointerWithin(args);
+  return hits.length ? hits : rectIntersection(args);
+};
 
 /**
  * Week view (SPEC §4.1 / M4) + backlog week strip (SPEC §5 / M5): any future day can be planned
@@ -148,6 +160,7 @@ export function PlanScreen() {
     <DndContext
       id={dndId}
       sensors={sensors}
+      collisionDetection={collision}
       accessibility={{ announcements, screenReaderInstructions: { draggable: tb("a11y.instructions") } }}
       onDragStart={(e) => setDragging(String(e.active.id))}
       onDragCancel={() => setDragging(null)}

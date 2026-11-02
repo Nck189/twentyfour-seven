@@ -141,6 +141,7 @@ test("Plan week view: 7 days, Thu toggle, overrides don't touch templates; a11y 
   const id = await newUserOn(page);
   await page.goto("/plan");
   await expect(page.getByRole("list").first().getByRole("listitem")).toHaveCount(7);
+  await page.getByRole("button", { name: "Tomorrow", exact: true }).click();
   await page.getByRole("button", { name: "Plan Tomorrow" }).click();
   const sheet = page.getByRole("dialog");
   await sheet.getByRole("radio", { name: /Home weekend/ }).click();
