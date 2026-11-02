@@ -1,13 +1,14 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import { DayEditor } from "@/components/plan/DayEditor";
 import { SaveStatus } from "@/components/plan/SaveStatus";
 import { CheckRow } from "@/components/today/Checkbox";
 import { Sheet } from "@/components/today/BlockSheet";
 import { useBlockText } from "@/components/today/useBlockText";
 import { Button } from "@/components/ui/Button";
+import { BoltIcon, MoreDotsIcon, PeopleIcon, PhoneIcon, SickIcon, SleepyIcon } from "@/components/ui/Icons";
 import { sfx } from "@/lib/sound/sfx";
 import { useBacklog } from "@/lib/backlog/useBacklog";
 import { usePlan } from "@/lib/plan/usePlan";
@@ -16,6 +17,14 @@ import type { Timeline, TimelineBlock } from "@/lib/today/day";
 import type { BlockLog } from "@/lib/today/useToday";
 
 export const MISS_REASONS = ["sleepy", "phone", "interruption", "social", "sick", "other"] as const;
+const REASON_ICON: Record<(typeof MISS_REASONS)[number], (p: { className?: string }) => JSX.Element> = {
+  sleepy: SleepyIcon,
+  phone: PhoneIcon,
+  interruption: BoltIcon,
+  social: PeopleIcon,
+  sick: SickIcon,
+  other: MoreDotsIcon,
+};
 const PHONE_MIN = 10;
 
 type Props = {
@@ -94,32 +103,62 @@ export function NightRitual({ timeline, logFor, markMissed, complete, onClose }:
           {t("allClosed")}
         </p>
       ) : (
-        <ul className="flex flex-col gap-3">
-          {open.map((b) => (
-            <li key={b.key} className="rounded-xl bg-surface-2 p-3">
-              <p className="mb-2 font-bold">{text.name(b.key)}</p>
-              <div
-                role="group"
-                aria-label={t("reason", { block: text.name(b.key) })}
-                className="flex flex-wrap gap-2"
-              >
-                {MISS_REASONS.map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => {
-                      sfx.tick();
-                      void markMissed(b, r);
-                    }}
-                    className="tap min-h-11 rounded-full bg-surface px-3 text-sm font-bold"
-                  >
-                    {t(`reasons.${r}`)}
-                  </button>
-                ))}
+        <>
+          {open.length > 1 && (
+            <section aria-label={t("reasonAll")} className="flex flex-col gap-2">
+              <h4 className="text-sm font-bold text-muted">{t("reasonAll")}</h4>
+              <div className="grid grid-cols-3 gap-2">
+                {MISS_REASONS.map((r) => {
+                  const Icon = REASON_ICON[r];
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => {
+                        sfx.tick();
+                        for (const b of open) void markMissed(b, r);
+                      }}
+                      className="tap flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl bg-surface-2 text-xs font-bold text-muted"
+                    >
+                      <Icon className="h-6 w-6 text-primary" />
+                      {t(`reasons.${r}`)}
+                    </button>
+                  );
+                })}
               </div>
-            </li>
-          ))}
-        </ul>
+            </section>
+          )}
+          <ul className="flex flex-col gap-2">
+            {open.map((b) => (
+              <li key={b.key} className="flex flex-col gap-2 rounded-xl bg-surface-2 p-2 pl-3">
+                <p className="font-bold">{text.name(b.key)}</p>
+                <div
+                  role="group"
+                  aria-label={t("reason", { block: text.name(b.key) })}
+                  className="flex justify-between gap-1"
+                >
+                  {MISS_REASONS.map((r) => {
+                    const Icon = REASON_ICON[r];
+                    return (
+                      <button
+                        key={r}
+                        type="button"
+                        aria-label={t(`reasons.${r}`)}
+                        onClick={() => {
+                          sfx.tick();
+                          void markMissed(b, r);
+                        }}
+                        className="tap flex h-11 w-11 items-center justify-center rounded-full bg-surface text-muted"
+                      >
+                        <Icon className="h-5 w-5" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
       {unfinished.length > 0 && (
         <section aria-label={tb("carryTitle")} className="flex flex-col gap-2">
@@ -206,7 +245,16 @@ export function NightRitual({ timeline, logFor, markMissed, complete, onClose }:
 
   return (
     <Sheet title={t("title")} onClose={onClose}>
-      <p className="mb-3 text-sm text-muted">{t("step", { n: step + 1, total })}</p>
+      <div className="mb-3 flex items-center gap-1.5">
+        <span className="sr-only">{t("step", { n: step + 1, total })}</span>
+        {Array.from({ length: total }, (_, i) => (
+          <span
+            key={i}
+            aria-hidden="true"
+            className={`h-2 rounded-full ${i === step ? "w-6 bg-primary" : i < step ? "w-2 bg-primary" : "w-2 bg-surface-2"}`}
+          />
+        ))}
+      </div>
       {steps[step]}
       <div className="mt-4 flex justify-between gap-2">
         <Button variant="ghost" disabled={step === 0} onClick={() => setStep((s) => s - 1)}>

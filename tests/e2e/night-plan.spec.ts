@@ -160,3 +160,21 @@ test("Plan week view: 7 days, Thu toggle, overrides don't touch templates; a11y 
   }[];
   expect(tpls.find((t) => t.key === "class_wed")!.target_wake).toBe("07:30:00");
 });
+
+test("Night ritual: one tap tags every open block with the same reason", async ({ page }) => {
+  const id = await newUserOn(page);
+  await setWakeMinutesAgo(id, DOWN_TIME_MINUTES_AFTER_WAKE);
+  await page.goto("/today");
+  const sheet = page.getByRole("dialog", { name: "Night ritual" });
+  await expect(sheet).toBeVisible();
+  await sheet.getByRole("button", { name: "Next" }).click();
+  await sheet
+    .getByRole("region", { name: "Same reason for all" })
+    .getByRole("button", { name: "Sleepy" })
+    .click();
+  await expect(sheet.getByText("Every block is closed. Nice.")).toBeVisible();
+  await expect
+    .poll(async () => (await blockLogs(id)).filter((l) => l.miss_reason === "sleepy").length)
+    .toBe(5);
+  await expectTouchTargets(page);
+});

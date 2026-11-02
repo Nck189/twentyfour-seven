@@ -220,3 +220,63 @@ export function GripIcon(p: P) {
     </Svg>
   );
 }
+
+/* Miss reasons (Night ritual). */
+export function SleepyIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <path d="M13.5 5.5A7.5 7.5 0 1 0 20 15a6 6 0 0 1-6.5-9.5z" fill="currentColor" />
+      <rect x="15.5" y="3" width="5" height="1.8" rx="0.9" fill="currentColor" opacity="0.5" />
+      <rect x="17.5" y="7" width="3.5" height="1.6" rx="0.8" fill="currentColor" opacity="0.35" />
+    </Svg>
+  );
+}
+
+export function PhoneIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <rect x="6.5" y="2" width="11" height="20" rx="3" fill="currentColor" />
+      <rect x="8.3" y="4.5" width="7.4" height="13" rx="1.5" fill="currentColor" opacity="0.35" />
+      <circle cx="12" cy="19.6" r="1" fill="currentColor" opacity="0.35" />
+    </Svg>
+  );
+}
+
+export function BoltIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <path d="M13.5 2 5 13.2h5.6L9.5 22 19 10h-5.8z" fill="currentColor" />
+    </Svg>
+  );
+}
+
+export function PeopleIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <circle cx="16" cy="8" r="3.2" fill="currentColor" opacity="0.45" />
+      <path d="M10.5 20a5.5 5.5 0 0 1 11 0z" fill="currentColor" opacity="0.45" />
+      <circle cx="9" cy="8.5" r="3.6" fill="currentColor" />
+      <path d="M2.5 21a6.5 6.5 0 0 1 13 0z" fill="currentColor" />
+    </Svg>
+  );
+}
+
+export function SickIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <rect x="9.5" y="2.5" width="5" height="14" rx="2.5" fill="currentColor" opacity="0.35" />
+      <rect x="11" y="8" width="2" height="9" rx="1" fill="currentColor" />
+      <circle cx="12" cy="18" r="4" fill="currentColor" />
+    </Svg>
+  );
+}
+
+export function MoreDotsIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <circle cx="5" cy="12" r="2.4" fill="currentColor" />
+      <circle cx="12" cy="12" r="2.4" fill="currentColor" />
+      <circle cx="19" cy="12" r="2.4" fill="currentColor" />
+    </Svg>
+  );
+}

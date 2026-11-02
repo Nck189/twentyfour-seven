@@ -354,6 +354,7 @@
     "goodnight": "Goodnight",
     "ticket": "+1 Night ticket. Sleep well.",
     "already": "Already done tonight. Sleep well.",
-    "error": "Couldn't finish. Try again."
+    "error": "Couldn't finish. Try again.",
+    "reasonAll": "Same reason for all"
   }
 }
