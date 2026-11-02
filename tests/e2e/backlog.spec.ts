@@ -25,7 +25,8 @@ test.beforeEach(({ page }) => {
   page.on("console", (m) => m.type() === "error" && consoleErrors.push(`console ${m.text().slice(0, 300)}`));
   page.on("pageerror", (e) => consoleErrors.push(`pageerror ${e.message.slice(0, 300)}`));
 });
-test.afterEach((_, info) => {
+test.afterEach(({ page }, info) => {
+  void page; // Playwright wants the first argument destructured
   if (info.status === info.expectedStatus) return;
   console.log(`[diag] ${info.title}: unfinished requests:`, [...pending.entries()]);
   console.log(`[diag] errors:`, consoleErrors);
