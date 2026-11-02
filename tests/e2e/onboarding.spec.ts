@@ -37,8 +37,9 @@ test("lazy path: Student → Next → Use all suggestions → done (4 taps)", as
   await expectTouchTargets(page);
   await page.getByRole("button", { name: /Student/ }).click();
   const week = page.getByRole("region", { name: "Your week" });
-  await expect(week.getByRole("heading", { name: "School day" })).toBeVisible();
-  await expect(week.getByRole("button", { name: /Class 09:00–16:00/ })).toBeVisible();
+  // The week is a short summary: one line per kind of day.
+  await expect(week.getByRole("button", { name: /School day/ })).toContainText("09:00–16:00");
+  await expect(week.getByRole("button", { name: /Day off/ })).toBeVisible();
   await page.getByRole("button", { name: "Next" }).click();
   await page.getByRole("button", { name: "Use all suggestions" }).click();
   await expect(page.getByText("All set")).toBeVisible();
@@ -66,7 +67,9 @@ test("my own: sleep times + weekdays + a class slot, then first-10s one block at
   const week = page.getByRole("region", { name: "Your week" });
   // Same sleep every day in one tap, then fine-tune the first kind.
   await week.getByRole("group", { name: "Same sleep every day" }).getByRole("button").first().click();
-  const first = week.getByRole("listitem").first();
+  // Tap a kind of day → it opens on its own.
+  await week.getByRole("list", { name: "Kinds of day" }).getByRole("button").first().click();
+  const first = page.getByRole("region", { name: "Free weekday" });
   await first.getByLabel("Bed").fill("23:30");
   await first.getByLabel("Wake").fill("07:30");
   await expect(first.getByText("8h sleep")).toBeVisible();
@@ -78,6 +81,8 @@ test("my own: sleep times + weekdays + a class slot, then first-10s one block at
   await expectNoSeriousA11y(page);
   await expectTouchTargets(page);
   await expectNoHorizontalScroll(page);
+  await first.getByRole("button", { name: "Done" }).click();
+  await expect(week.getByRole("button", { name: /Free weekday/ })).toContainText("13:00–17:00");
   await page.getByRole("button", { name: "Next" }).click();
 
   // First-10: pick the 1st suggestion for Wake → Focus slides in by itself; add an own one.
@@ -120,7 +125,7 @@ test("import a timetable (.ics): weekly slots become kinds of day", async ({ pag
     .getByLabel("Import from a calendar file (.ics)")
     .setInputFiles({ name: "timetable.ics", mimeType: "text/calendar", buffer: Buffer.from(ics) });
   await expect(page.getByRole("status")).toContainText("Imported 2 kinds of day");
-  await expect(page.getByRole("heading", { name: "Operations Research" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Operations Research/ })).toContainText("09:00–12:00");
   const tpls = (await templates(id)).filter((t) => t.auto_apply);
   expect(tpls.find((t) => t.key === "sched_1")).toMatchObject({ weekdays: [1, 3], target_wake: "07:30:00" });
   expect(tpls.find((t) => t.key === "day_off")).toMatchObject({ weekdays: [2, 4, 5, 6, 7] });

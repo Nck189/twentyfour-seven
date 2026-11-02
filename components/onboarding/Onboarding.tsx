@@ -34,6 +34,7 @@ export function Onboarding() {
   const asked = (params.get("step") === "sleep" ? "week" : params.get("step")) as Step | null;
   const [step, setStep] = useState<Step>(asked && STEPS.includes(asked) ? asked : "starter");
   const setup = useSetup();
+  const [kindOpen, setKindOpen] = useState(false);
 
   const leave = () => router.push(fromMore ? "/more" : "/today");
   async function skip() {
@@ -130,10 +131,13 @@ export function Onboarding() {
                 )
               }
               onImportIcs={importIcs}
+              onEditingChange={setKindOpen}
             />
-            <Button onClick={() => (fromMore ? leave() : setStep("first10"))}>
-              {fromMore ? t("finish") : t("next")}
-            </Button>
+            {!kindOpen && (
+              <Button onClick={() => (fromMore ? leave() : setStep("first10"))}>
+                {fromMore ? t("finish") : t("next")}
+              </Button>
+            )}
           </>
         )}
         {setup.status === "ready" && step === "first10" && (

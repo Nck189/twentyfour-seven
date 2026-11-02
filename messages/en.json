@@ -458,6 +458,9 @@
     "importEmpty": "No weekly classes or work found in that file.",
     "useAll": "Use all suggestions",
     "slotStart": "{what} starts",
-    "slotEnd": "{what} ends"
+    "slotEnd": "{what} ends",
+    "backToWeek": "Back to the week",
+    "doneKind": "Done",
+    "kinds": "Kinds of day"
   }
 }

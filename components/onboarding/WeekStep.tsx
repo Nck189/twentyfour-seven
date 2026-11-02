@@ -5,6 +5,7 @@ import { useRef, useState, type ReactNode } from "react";
 import {
   BriefcaseIcon,
   CapIcon,
+  ChevronIcon,
   CloseIcon,
   MoonIcon,
   PlusIcon,
@@ -259,6 +260,80 @@ function DayKind({
   );
 }
 
+/** One line per kind of day: name, weekday dots, slots, bed → wake. Tap to edit it alone. */
+function KindSummary({
+  tpl,
+  name,
+  letters,
+  onOpen,
+}: {
+  tpl: TemplateRow;
+  name: string;
+  letters: string[];
+  onOpen: () => void;
+}) {
+  const t = useTranslations("onboarding");
+  const tf = useTranslations("fixedEvents");
+  const wake = tpl.target_wake.slice(0, 5);
+  const sleepMin = tpl.blocks?.sleep?.duration_min ?? BASE_SLEEP;
+  const days = WEEK.filter((d) => tpl.weekdays.includes(d));
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onOpen}
+        className="tap flex w-full items-center gap-2 rounded-[var(--radius-lg)] bg-surface p-3 text-left"
+      >
+        <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <span className="flex items-center justify-between gap-2">
+            <span className="font-extrabold">{name}</span>
+            <span className="sr-only">{days.map((d) => letters[d - 1]).join(" ")}</span>
+            <span aria-hidden="true" className="flex gap-1">
+              {WEEK.map((d) => (
+                <span
+                  key={d}
+                  className={`h-2 w-2 rounded-full ${tpl.weekdays.includes(d) ? "bg-primary" : "bg-surface-2"}`}
+                />
+              ))}
+            </span>
+          </span>
+          <span className="flex flex-wrap items-center gap-1.5 text-sm font-bold tabular-nums text-muted">
+            {tpl.fixed_events.map((e) => (
+              <span
+                key={e.id}
+                className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5"
+              >
+                {e.key === "work" ? (
+                  <BriefcaseIcon className="h-3.5 w-3.5" />
+                ) : (
+                  <CapIcon className="h-3.5 w-3.5" />
+                )}
+                <span className="sr-only">
+                  {e.title ??
+                    (tf.has(e.key as Parameters<typeof tf>[0])
+                      ? tf(e.key as Parameters<typeof tf>[0])
+                      : e.key)}{" "}
+                </span>
+                {`${e.start}–${e.end}`}
+              </span>
+            ))}
+            <span className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5">
+              <MoonIcon className="h-3.5 w-3.5 text-primary" />
+              <span className="sr-only">{t("bed")} </span>
+              {bedtimeFor(wake, sleepMin)}
+              <span aria-hidden="true">→</span>
+              <SunriseIcon className="h-3.5 w-3.5 text-warn" />
+              <span className="sr-only">{t("wake")} </span>
+              {wake}
+            </span>
+          </span>
+        </span>
+        <ChevronIcon className="h-4 w-4 shrink-0 -rotate-90 text-muted" />
+      </button>
+    </li>
+  );
+}
+
 /**
  * The week: each kind of day (weekdays, class/work slots, sleep). Shortcuts keep it quick:
  * one tap for the same sleep every day, add a kind of day, or import an .ics timetable.
@@ -273,6 +348,7 @@ export function WeekStep({
   onEvents,
   onAddKind,
   onImportIcs,
+  onEditingChange,
 }: {
   templates: TemplateRow[];
   version: number;
@@ -283,12 +359,55 @@ export function WeekStep({
   onEvents: (id: string, events: FixedEvent[]) => void;
   onAddKind: () => void;
   onImportIcs: (text: string) => Promise<string>;
+  /** Tells the parent when one kind is open on its own (it hides its Next button). */
+  onEditingChange?: (editing: boolean) => void;
 }) {
   const t = useTranslations("onboarding");
   const letters = useWeekLetters();
   const kinds = templates.filter((x) => x.auto_apply);
   const file = useRef<HTMLInputElement>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [editing, setEditingState] = useState<string | null>(null);
+  const setEditing = (id: string | null) => {
+    setEditingState(id);
+    onEditingChange?.(id !== null);
+  };
+  const open = kinds.find((k) => k.id === editing);
+
+  // One kind of day on its own: nothing else on screen.
+  if (open) {
+    return (
+      <section aria-label={nameOf(open)} className="flex flex-col gap-3">
+        <button
+          type="button"
+          onClick={() => setEditing(null)}
+          className="tap flex min-h-11 items-center gap-1 self-start rounded-xl pr-2 text-sm font-bold text-primary"
+        >
+          <ChevronIcon className="h-4 w-4 rotate-90" />
+          {t("backToWeek")}
+        </button>
+        <ul className="flex flex-col gap-3">
+          <DayKind
+            key={`${open.id}-${version}`}
+            tpl={open}
+            name={nameOf(open)}
+            letters={letters}
+            onSleep={(w, m) => onSleep(open.id, w, m)}
+            onMoveDay={(d) => onMoveDay(d, open.id)}
+            onEvents={(e) => onEvents(open.id, e)}
+          />
+        </ul>
+        <button
+          type="button"
+          onClick={() => setEditing(null)}
+          className="tap min-h-12 rounded-xl bg-primary px-4 font-bold text-on-primary"
+        >
+          {t("doneKind")}
+        </button>
+      </section>
+    );
+  }
+
   return (
     <section aria-labelledby="ob-sleep" className="flex flex-col gap-3">
       <div>
@@ -320,16 +439,14 @@ export function WeekStep({
         </div>
       </div>
 
-      <ul className="flex flex-col gap-3">
+      <ul aria-label={t("kinds")} className="flex flex-col gap-2">
         {kinds.map((k) => (
-          <DayKind
-            key={`${k.id}-${version}`}
+          <KindSummary
+            key={k.id}
             tpl={k}
             name={nameOf(k)}
             letters={letters}
-            onSleep={(w, m) => onSleep(k.id, w, m)}
-            onMoveDay={(d) => onMoveDay(d, k.id)}
-            onEvents={(e) => onEvents(k.id, e)}
+            onOpen={() => setEditing(k.id)}
           />
         ))}
       </ul>
