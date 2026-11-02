@@ -94,20 +94,19 @@ begin
        or exists (select 1 from public.wake_snapshots where user_id = uid and date = d) then
       continue;
     end if;
-    old := public._target_wake(uid, d);
+    -- In a statement that changes several rows, later rows' BEFORE triggers already see the
+    -- earlier rows changed: the target remembered at the first row is the real "old" one.
+    k := 'wake.old_' || to_char(d, 'YYYYMMDD');
+    old := coalesce(nullif(current_setting(k, true), '')::timestamptz, public._target_wake(uid, d));
     if old is null then
       continue;
     end if;
+    perform set_config(k, old::text, true);
     if now() >= old - interval '4 hours' then
       insert into public.wake_snapshots (user_id, date, target_wake, window_min)
       values (uid, d, old,
               coalesce((select wake_window_min from public.settings where user_id = uid), 15))
       on conflict do nothing;
-      continue;
-    end if;
-    k := 'wake.old_' || to_char(d, 'YYYYMMDD');
-    if nullif(current_setting(k, true), '') is null then
-      perform set_config(k, old::text, true);
     end if;
   end loop;
 end $$;
