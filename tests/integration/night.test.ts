@@ -1,22 +1,33 @@
 import { describe, expect, it } from "vitest";
-import { localDate } from "@/lib/time";
-import { addDays } from "@/lib/time";
-import { newUser } from "./helpers";
+import { addDays, localDate, localParts } from "@/lib/time";
+import { admin, newUser } from "./helpers";
 
-const today = () => localDate(new Date(), "Asia/Bangkok");
+const TZ = "Asia/Bangkok";
+const today = () => localDate(new Date(), TZ);
+const H = 3_600_000;
+
+/** Every kind of day wakes at the local time of (now + ms); returns the wake-day whose night that is. */
+async function nextWakeIn(u: { id: string }, ms: number) {
+  const at = new Date(Date.now() + ms);
+  const p = localParts(at, TZ);
+  const hhmm = `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
+  await admin().from("templates").update({ target_wake: hhmm, options: {} }).eq("user_id", u.id);
+  return addDays(localDate(at, TZ), -1);
+}
 
 describe("complete_night_ritual (CJ-07 ticket)", () => {
   it("grants exactly one Night ticket per day, even when called repeatedly or concurrently", async () => {
     const u = await newUser("night");
+    const day = await nextWakeIn(u, 8 * H); // before bed: tomorrow's wake is 8 h away
     const results = await Promise.all(
-      Array.from({ length: 4 }, () => u.client.rpc("complete_night_ritual", { p_date: today() })),
+      Array.from({ length: 4 }, () => u.client.rpc("complete_night_ritual", { p_date: day })),
     );
     expect(results.every((r) => r.error === null)).toBe(true);
     expect(results.filter((r) => r.data.ticket_granted)).toHaveLength(1);
     const { data: g } = await u.client.from("game_state").select("tickets").single();
     expect(g!.tickets).toBe(1);
     const { data: grants } = await u.client.from("ticket_grants").select("reason, ref_date, amount");
-    expect(grants).toEqual([{ reason: "night", ref_date: today(), amount: 1 }]);
+    expect(grants).toEqual([{ reason: "night", ref_date: day, amount: 1 }]);
   });
 
   it("yesterday is allowed (ritual after midnight); future and old dates are rejected", async () => {
@@ -32,6 +43,7 @@ describe("complete_night_ritual (CJ-07 ticket)", () => {
 
   it("the grant ledger is read-only for clients", async () => {
     const u = await newUser("night-ledger");
+    await nextWakeIn(u, 8 * H);
     const ins = await u.client
       .from("ticket_grants")
       .insert({ user_id: u.id, reason: "night", ref_date: "2026-01-01", amount: 99 });
@@ -42,5 +54,21 @@ describe("complete_night_ritual (CJ-07 ticket)", () => {
     // Re-calling after a (blocked) delete still doesn't grant twice.
     const again = await u.client.rpc("complete_night_ritual", { p_date: today() });
     expect(again.data.ticket_granted).toBe(false);
+  });
+
+  it("no ticket the next morning, or at noon for tonight (only before bed)", async () => {
+    const morning = await newUser("night-morning");
+    const lastNight = await nextWakeIn(morning, -2 * H); // woke 2 h ago
+    const r1 = await morning.client.rpc("complete_night_ritual", { p_date: lastNight });
+    expect(r1.data).toMatchObject({ ticket_granted: false, in_time: false });
+
+    const noon = await newUser("night-noon");
+    const tonight = await nextWakeIn(noon, 20 * H); // bed is still far away
+    if ([today(), addDays(today(), -1)].includes(tonight)) {
+      const r2 = await noon.client.rpc("complete_night_ritual", { p_date: tonight });
+      expect(r2.data).toMatchObject({ ticket_granted: false, in_time: false });
+    }
+    const { data: g } = await noon.client.from("game_state").select("tickets").single();
+    expect(g!.tickets).toBe(0);
   });
 });

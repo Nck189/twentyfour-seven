@@ -42,7 +42,7 @@ type Props = {
   markMissed: (b: TimelineBlock, reason: string) => Promise<void>;
   /** Closes a block that was started (it happened; no miss reason). */
   closeDone: (b: TimelineBlock) => Promise<void>;
-  complete: () => Promise<{ ticket_granted: boolean }>;
+  complete: () => Promise<{ ticket_granted: boolean; in_time?: boolean }>;
   onClose: () => void;
 };
 
@@ -62,7 +62,7 @@ export function NightRitual({ timeline, logFor, markMissed, closeDone, complete,
   const [phoneEnds, setPhoneEnds] = useState<number | null>(null);
   const [left, setLeft] = useState(PHONE_MIN * 60);
   const [alarmSet, setAlarmSet] = useState(false);
-  const [result, setResult] = useState<"ticket" | "already" | "error" | "unsaved" | null>(null);
+  const [result, setResult] = useState<"ticket" | "already" | "late" | "error" | "unsaved" | null>(null);
   const [busy, setBusy] = useState(false);
   const tomorrow = addDays(timeline.date, 1);
   const total = 4;
@@ -282,7 +282,7 @@ export function NightRitual({ timeline, logFor, markMissed, closeDone, complete,
                 return;
               }
               const r = await complete();
-              setResult(r.ticket_granted ? "ticket" : "already");
+              setResult(r.ticket_granted ? "ticket" : r.in_time === false ? "late" : "already");
               sfx.sunrise();
             } catch {
               setResult("error");

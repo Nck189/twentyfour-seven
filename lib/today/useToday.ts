@@ -457,7 +457,7 @@ export function useToday(now: Date) {
         const { data, error } = await client.rpc("complete_night_ritual", { p_date: dayDate });
         if (error) throw error;
         setNightDone((prev) => [...prev, dayDate]);
-        return data as { ticket_granted: boolean };
+        return data as { ticket_granted: boolean; in_time?: boolean };
       },
       setLocation: (b: TimelineBlock, location: "home" | "out", at: Date) =>
         upsertLog(b, { location }, "location_set", at),

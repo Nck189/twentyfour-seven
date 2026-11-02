@@ -410,7 +410,8 @@
     "error": "Couldn't finish. Try again.",
     "reasonAll": "Same reason for all",
     "tomorrowAppt": "Tomorrow: {list}",
-    "unsaved": "Tomorrow's plan isn't saved yet. Check your connection, then tap Goodnight again."
+    "unsaved": "Tomorrow's plan isn't saved yet. Check your connection, then tap Goodnight again.",
+    "late": "Done. The Night ticket only counts before bed."
   },
   "onboarding": {
     "cardTitle": "Make 24/7 yours in 2 minutes",
