@@ -12,6 +12,8 @@ import { usePrefs } from "@/lib/store/prefs";
 import { getSupabase } from "@/lib/supabase/client";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** Pasted emails often carry spaces, NBSP or zero-width characters that trim() misses. */
+const sanitizeEmail = (v: string) => v.replace(/[\s ​-‍⁠﻿]/g, "");
 const RESEND_COOLDOWN_S = 60;
 /** The paste step is saved so it survives iOS reloading the PWA while the user is in Mail. */
 const PENDING_KEY = "247-login-pending";
@@ -178,7 +180,7 @@ export function LoginForm() {
             autoComplete="email"
             placeholder={t("emailPlaceholder")}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => setEmail(sanitizeEmail(e.target.value))}
             className="min-h-12 rounded-xl border border-line bg-surface px-4 text-base"
           />
           <Button type="submit" disabled={busy}>

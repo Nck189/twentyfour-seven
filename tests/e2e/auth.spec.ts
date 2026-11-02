@@ -50,3 +50,13 @@ test.describe("auth", () => {
     await expect(page.getByRole("main").getByRole("alert")).toContainText("expired");
   });
 });
+
+test("pasted email with spaces / zero-width characters still sends the link", async ({ page }) => {
+  test.skip(IS_PROD_RUN, "needs local Mailpit");
+  await page.goto("/login");
+  const email = uniqueEmail("zw");
+  await page.getByLabel("Email").fill(`  ​${email}  `);
+  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+  await expect(page.getByLabel("Sign-in link")).toBeVisible();
+  await expect(page.getByText(email)).toBeVisible();
+});
