@@ -3,11 +3,13 @@
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { ExportCard } from "@/components/settings/ExportCard";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import type { Locale } from "@/lib/i18n/config";
 import { usePrefs, type ThemePref } from "@/lib/store/prefs";
 import { getSupabase } from "@/lib/supabase/client";
+import { logEvent } from "@/lib/db/events";
 
 function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -64,8 +66,15 @@ export function MoreScreen() {
     setLocale(next);
     const { data } = await getSupabase().auth.getUser();
     if (data.user) {
-      // Synced across devices (CJ-14). Ignored until the profiles table exists (M1).
-      await getSupabase().from("profiles").update({ locale: next }).eq("user_id", data.user.id);
+      // Synced across devices (CJ-14).
+      const { data: prof } = await getSupabase()
+        .from("profiles")
+        .select("onboarding")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+      const onboarding = { ...((prof?.onboarding ?? {}) as Record<string, unknown>), locale_set: true };
+      await getSupabase().from("profiles").update({ locale: next, onboarding }).eq("user_id", data.user.id);
+      await logEvent("locale_changed", { locale: next });
     }
   }
 
@@ -103,6 +112,7 @@ export function MoreScreen() {
       <Card title={t("install")}>
         <p className="text-muted">{t("installSteps")}</p>
       </Card>
+      <ExportCard />
       <Card title={t("account")}>
         {email && <p className="mb-3 text-muted">{t("signedInAs", { email })}</p>}
         <Button variant="secondary" onClick={signOut}>

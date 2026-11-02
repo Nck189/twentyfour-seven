@@ -24,6 +24,7 @@ for (const { locale, theme } of COMBOS) {
       await setPrefs(page, { locale, theme });
       await page.goto("/login");
       await page.evaluate(() => document.fonts.ready);
+      await page.waitForTimeout(400);
       await page.screenshot({
         path: `screenshots/${MILESTONE}-login-${info.project.name}-${locale}-${theme}.png`,
       });
@@ -37,6 +38,7 @@ for (const { locale, theme } of COMBOS) {
       for (const s of SCREENS) {
         await page.goto(`/${s}`);
         await page.evaluate(() => document.fonts.ready);
+        await page.waitForTimeout(400); // let hydration-driven transitions settle
         // Account email differs per run; hide it for stable baselines.
         const mask = s === "more" ? [page.getByText(/@test\.local/)] : [];
         await page.screenshot({

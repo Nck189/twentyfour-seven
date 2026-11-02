@@ -28,22 +28,20 @@ test.describe("app shell", () => {
   test("G4: a11y, touch targets, no horizontal scroll on every screen (EN + TH, light + dark)", async ({
     page,
   }) => {
+    const labels = { en: "English", th: "ไทย" } as const;
+    const themeLabels = {
+      en: { light: "Light", dark: "Dark" },
+      th: { light: "สว่าง", dark: "มืด" },
+    } as const;
     for (const locale of ["en", "th"] as const) {
       for (const theme of ["light", "dark"] as const) {
-        await page.evaluate(
-          ([l, th]) =>
-            localStorage.setItem(
-              "247-prefs",
-              JSON.stringify({
-                state: { locale: l, theme: th, soundOn: true, skipAnimations: true },
-                version: 0,
-              }),
-            ),
-          [locale, theme],
-        );
+        await page.goto("/more");
+        await page.getByRole("radio", { name: labels[locale] }).click();
+        await page.getByRole("radio", { name: themeLabels[locale][theme] }).click();
         for (const s of SCREENS) {
           await page.goto(`/${s}`);
           await expect(page.locator("html")).toHaveAttribute("lang", locale);
+          await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
           await expectNoSeriousA11y(page);
           await expectTouchTargets(page);
           await expectNoHorizontalScroll(page);

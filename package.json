@@ -21,7 +21,9 @@
     "qc:static": "npm run typecheck && npm run lint && npm run format:check && npm run i18n:check && npm run art:lint",
     "qc": "npm run qc:static && npm run test:cov && npm run secrets:check && npm run e2e",
     "qc:prod": "BASE_URL=${PROD_URL:-https://twentyfour-seven.vercel.app} playwright test tests/e2e --project=iphone --project=chrome-desktop --workers=1 && lhci autorun --collect.url=${PROD_URL:-https://twentyfour-seven.vercel.app}/login",
-    "icons": "tsx scripts/gen-icons.ts"
+    "icons": "tsx scripts/gen-icons.ts",
+    "db:types": "supabase gen types --db-url postgresql://postgres:postgres@127.0.0.1:54322/postgres --schema public > lib/db/database.types.ts && prettier --write lib/db/database.types.ts",
+    "db:seed-sql": "tsx scripts/gen-seed-sql.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -78,5 +78,54 @@
     "signOut": "Sign out",
     "install": "Install on iPhone",
     "installSteps": "In Safari, tap Share, then “Add to Home Screen”."
+  },
+  "blocks": {
+    "name": {
+      "down": "Down Time",
+      "sleep": "Sleep",
+      "wake": "Wake",
+      "focus": "Focus",
+      "work": "Work",
+      "gradation": "Gradation",
+      "free": "Free"
+    },
+    "first10": {
+      "down": "10 min free phone time → start Night ritual",
+      "sleep": "Alarm set + phone out of reach",
+      "wake": "Leave the bedroom + open curtains / get light",
+      "work": "Map the day: Must / Should / Just start",
+      "gradation": "One small task immediately on arriving home"
+    },
+    "first10Unset": "Set your first-10 action"
+  },
+  "templates": {
+    "free_weekday": "Free weekday",
+    "class_wed": "Class day",
+    "class_thu": "Class day (optional)",
+    "family_sat": "Family Saturday",
+    "family_sun": "Family Sunday",
+    "home_weekend": "Home weekend"
+  },
+  "fixedEvents": {
+    "class": "Class",
+    "family_out": "Out with family",
+    "relatives_dinner": "Dinner at relatives'"
+  },
+  "tags": {
+    "yop": "YOP",
+    "senior_project": "Senior project",
+    "class": "Class",
+    "personal": "Personal",
+    "family": "Family",
+    "health": "Health"
+  },
+  "export": {
+    "title": "Your data",
+    "description": "Download everything as JSON, plus one CSV per table. The free plan has no automatic backups, so export now and then.",
+    "json": "Export JSON",
+    "csv": "Export CSV (zip)",
+    "working": "Preparing…",
+    "done": "Downloaded.",
+    "error": "Export failed. Please try again."
   }
 }

@@ -78,5 +78,54 @@
     "signOut": "ออกจากระบบ",
     "install": "ติดตั้งบน iPhone",
     "installSteps": "ใน Safari กดปุ่มแชร์ แล้วเลือก “เพิ่มไปยังหน้าจอโฮม”"
+  },
+  "blocks": {
+    "name": {
+      "down": "Down Time",
+      "sleep": "นอน",
+      "wake": "ตื่น",
+      "focus": "โฟกัส",
+      "work": "งาน",
+      "gradation": "Gradation",
+      "free": "เวลาว่าง"
+    },
+    "first10": {
+      "down": "เล่นมือถือได้ 10 นาที → เริ่ม Night ritual",
+      "sleep": "ตั้งนาฬิกาปลุก + วางมือถือให้ไกลตัว",
+      "wake": "ออกจากห้องนอน + เปิดม่าน / รับแสง",
+      "work": "วางแผนวัน: Must / Should / Just start",
+      "gradation": "ทำงานเล็กๆ 1 อย่างทันทีที่ถึงบ้าน"
+    },
+    "first10Unset": "ตั้ง action 10 นาทีแรก"
+  },
+  "templates": {
+    "free_weekday": "วันธรรมดาที่ว่าง",
+    "class_wed": "วันมีเรียน",
+    "class_thu": "วันมีเรียน (ไม่บังคับ)",
+    "family_sat": "เสาร์กับครอบครัว",
+    "family_sun": "อาทิตย์กับครอบครัว",
+    "home_weekend": "เสาร์อาทิตย์อยู่บ้าน"
+  },
+  "fixedEvents": {
+    "class": "เรียน",
+    "family_out": "ออกไปข้างนอกกับครอบครัว",
+    "relatives_dinner": "กินข้าวบ้านญาติ"
+  },
+  "tags": {
+    "yop": "YOP",
+    "senior_project": "Senior project",
+    "class": "เรียน",
+    "personal": "ส่วนตัว",
+    "family": "ครอบครัว",
+    "health": "สุขภาพ"
+  },
+  "export": {
+    "title": "ข้อมูลของเรา",
+    "description": "ดาวน์โหลดข้อมูลทั้งหมดเป็น JSON และ CSV แยกตามตาราง แพ็กเกจฟรีไม่มี backup อัตโนมัติ เลยควร export ไว้บ้าง",
+    "json": "Export JSON",
+    "csv": "Export CSV (zip)",
+    "working": "กำลังเตรียม…",
+    "done": "ดาวน์โหลดแล้ว",
+    "error": "Export ไม่สำเร็จ ลองใหม่อีกครั้งนะ"
   }
 }
