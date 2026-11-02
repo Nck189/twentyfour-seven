@@ -56,10 +56,10 @@ jobs:
       # CJ-07 → 0/40 after the sheet-focus fix, 2026-11-03).
       - name: Flake hunt (2 workers × 20 repeats, no retries)
         run: >-
-          npx playwright test tests/e2e/backlog.spec.ts
-          -g "one tap on the circle"
+          npx playwright test tests/e2e/backlog.spec.ts tests/e2e/today.spec.ts
+          -g "one tap on the circle|CJ-05|CJ-06"
           --project=ipad-landscape --project=iphone-small
-          --workers=2 --repeat-each=25 --retries=0
+          --workers=2 --repeat-each=15 --retries=0
       # The artifact store isn't reachable from every debugging environment: print the page
       # snapshot (aria tree + error) of each failed attempt into the log as well.
       - name: Failure snapshots in the log

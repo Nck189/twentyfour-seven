@@ -25,19 +25,16 @@ self.addEventListener("fetch", (event) => {
 
   // Content-hashed build assets: cache-first.
   if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/")) {
-    event.respondWith(
-      caches.match(request).then(
-        (hit) =>
-          hit ||
-          fetch(request).then((res) => {
-            if (res.ok) {
-              const copy = res.clone();
-              caches.open(SHELL_CACHE).then((c) => c.put(request, copy));
-            }
-            return res;
-          }),
-      ),
-    );
+    // A failed fetch of a script chunk leaves the page unable to start: try the network twice.
+    const load = () =>
+      fetch(request).then((res) => {
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(SHELL_CACHE).then((c) => c.put(request, copy));
+        }
+        return res;
+      });
+    event.respondWith(caches.match(request).then((hit) => hit || load().catch(() => load())));
     return;
   }
 

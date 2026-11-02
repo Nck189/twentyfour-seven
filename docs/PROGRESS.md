@@ -5,15 +5,16 @@ Minnie is asleep (from 2026-11-03 ~02:00 Bangkok). The build moved between a clo
 
 **0. Only one session at a time.** `git fetch origin`, then look at the newest commit on `origin/claude/practical-cannon-a70ubq` and `origin/main`: if either was pushed less than 30 min ago by another session, it's probably still running. Don't push; re-check in 30 min. Otherwise you're the driver. Work on branch `claude/practical-cannon-a70ubq` (`git checkout claude/practical-cannon-a70ubq && git pull`).
 
-**1. Open PRs (check each with `gh pr list`):**
-- **PR #4 — onboarding (first-run setup) + unlocks spec.** Minnie approved: merge when QC is green (`gh pr ready 4 && gh pr merge 4 --merge`).
-- **Next PR — appointments any distance ahead + flake hunt + this handoff** (opened right after #4 merges). ⚠️ **Do NOT merge appointments until Minnie says so** (her rule). Fix CI if red.
-  - Its head commit has `[stress]` → the **Stress** workflow repeats CJ-07 (ipad-landscape) and "one tap on the circle" (iphone-small) 20× with no retries. A failure uploads `stress-report` (traces). Root-cause test-first; "flake" is not a cause.
+**1. State (2026-11-03 06:55 Bangkok):**
+- ✅ PR #3 (Plan redesign) and ✅ PR #4 (onboarding) are merged and live.
+- **PR #5 — appointments + 6-digit code login + every G7 S1/S2 fix + 5 new migrations.** Minnie approved merging ("merge นัดได้") — merge when QC is green AND the G7 re-review passes. Fix CI if red (always run `npx playwright test --list` before pushing E2E changes).
+  - Stress (head commit `[stress]`): CJ-07 is 0/40 since the sheet-focus fix. The one-tap finish was stuck on "Loading…" (a request that never answered) → every Supabase request now times out at 15 s and the first Plan/backlog load retries once; the stress run verifies it. Failure snapshots + `[diag]` lines are printed into the CI log (the artifact store isn't reachable from the cloud).
+  - G7: review 1 (`G7-M1-M3.md`, `G7-M4-M5.md`) → fixed → re-review 1 (`G7-rereview-2026-11-03.md`) FAIL → fixed → re-review 2 running (scratchpad `g7-rereview-2.md`; copy it into `docs/qa/` when done).
+- **After PR #5 merges, Minnie runs once on the Mac:** `git checkout main && git pull && npx supabase db push --remote` (5 migrations: wake freeze, coin rules, day-plan merge, night window, re-review fixes). The app works before and after; the fixes take effect after.
 
 **2. Then QC, in order (QA_QC.md gates G1–G7, reports in `docs/qa/`):**
-- G7 reviews ran in the cloud as **code-level** reviews (the cloud can't run Supabase); results are saved in `docs/qa/` (`G7-M1-M3.md`, `G7-M4-M5.md`) once done. Fix every S1/S2 test-first.
-- **On the Mac you can do what the cloud couldn't:** `supabase start` + `npm run e2e` locally, the live "try to break it" pass, re-record the visual baselines (`npm run e2e:update`, Today/Plan changed on purpose), and G6 on prod (`npm run qc:prod`).
-- Write `docs/qa/M1-report.md`, `M3-report.md`, `M4-report.md`, `M5-report.md` (template: `docs/qa/REPORT_TEMPLATE.md`, example: `M2-report.md`). Update BUILD_PLAN "Status".
+- Report drafts exist: `docs/qa/M1-report.md`, `M3-report.md`, `M4-report.md`, `M5-report.md` — fill in G7 (re-review 2) and the final CI numbers; update BUILD_PLAN "Status".
+- **On the Mac only:** `supabase start` + `npm run e2e` locally, the live "try to break it" pass, re-record the visual baselines (`npm run e2e:update`; Today/Plan changed on purpose) for G3 of M3–M5, and G6 on prod (`npm run qc:prod`) after the db push.
 - Then **M6 (art system + farm scene)**: strict art rules in CLAUDE.md, style = `design/reference-style-a.svg`, no emoji, no AI images.
 
 **3. Rules that still hold:** prod DB migrations only with `npx supabase db push --remote` (the Mac has the credentials; the cloud doesn't), and never merge code that needs a migration before the migration is applied. No destructive remote-DB ops, no force push, no paid upgrades, no secrets in git. Commit per logical step. Give Minnie a short casual-Thai update with **% progress** (formula below) when she's back.

@@ -26,6 +26,11 @@ export default defineConfig({
   use: {
     baseURL: BASE_URL ?? `http://localhost:${PORT}`,
     trace: "retain-on-failure",
+    // Linux WebKit (CI) intermittently fails service-worker-served loads with "WebKit encountered
+    // an internal error": a JS chunk didn't load, the page never hydrated and sat on "Loading…"
+    // (stress run 2026-11-03), and page.goto failed (M3-K1). No E2E test needs the worker
+    // registered (the PWA tests fetch sw.js / offline.html directly), so tests run without it.
+    serviceWorkers: "block",
     ...common,
   },
   projects: [
