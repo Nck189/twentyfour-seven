@@ -9,7 +9,15 @@ import { Sheet } from "@/components/today/BlockSheet";
 import { useBlockText } from "@/components/today/useBlockText";
 import { CalendarIcon } from "@/components/shell/TabIcons";
 import { Button } from "@/components/ui/Button";
-import { BoltIcon, MoreDotsIcon, PeopleIcon, PhoneIcon, SickIcon, SleepyIcon } from "@/components/ui/Icons";
+import {
+  BoltIcon,
+  CheckIcon,
+  MoreDotsIcon,
+  PeopleIcon,
+  PhoneIcon,
+  SickIcon,
+  SleepyIcon,
+} from "@/components/ui/Icons";
 import { sfx } from "@/lib/sound/sfx";
 import { useBacklog } from "@/lib/backlog/useBacklog";
 import { usePlan } from "@/lib/plan/usePlan";
@@ -32,6 +40,8 @@ type Props = {
   timeline: Timeline;
   logFor: (b: TimelineBlock) => BlockLog;
   markMissed: (b: TimelineBlock, reason: string) => Promise<void>;
+  /** Closes a block that was started (it happened; no miss reason). */
+  closeDone: (b: TimelineBlock) => Promise<void>;
   complete: () => Promise<{ ticket_granted: boolean }>;
   onClose: () => void;
 };
@@ -40,7 +50,7 @@ type Props = {
  * SPEC §4.1 Night ritual: 10-min free phone → close today (miss reasons) → plan tomorrow →
  * alarm + phone away → Goodnight (Night ticket, server-side).
  */
-export function NightRitual({ timeline, logFor, markMissed, complete, onClose }: Props) {
+export function NightRitual({ timeline, logFor, markMissed, closeDone, complete, onClose }: Props) {
   const t = useTranslations("night");
   const tc = useTranslations("common");
   const text = useBlockText();
@@ -72,6 +82,12 @@ export function NightRitual({ timeline, logFor, markMissed, complete, onClose }:
 
   // Blocks of today (Wake…Free) that never closed.
   const open = timeline.blocks.filter((b) => b.key !== "down" && b.key !== "sleep" && !logFor(b).closed_at);
+  // Started but never finished = it happened: one tap closes it as done (R-M4-3).
+  const started = (b: TimelineBlock) => {
+    const l = logFor(b);
+    return Boolean(l.started_at || l.first10_at || l.items_done.length);
+  };
+  const notStarted = open.filter((b) => !started(b));
   // Backlog items planned for today and not finished: carry them (SPEC §5, carry_count).
   const tomorrowAppts = (plan.ctx?.dayPlans[tomorrow]?.overrides.fixed_events ?? []).filter(
     (e) => e.key === "appointment",
@@ -109,7 +125,7 @@ export function NightRitual({ timeline, logFor, markMissed, complete, onClose }:
         </p>
       ) : (
         <>
-          {open.length > 1 && (
+          {notStarted.length > 1 && (
             <section aria-label={t("reasonAll")} className="flex flex-col gap-2">
               <h4 className="text-sm font-bold text-muted">{t("reasonAll")}</h4>
               <div className="grid grid-cols-3 gap-2">
@@ -121,7 +137,7 @@ export function NightRitual({ timeline, logFor, markMissed, complete, onClose }:
                       type="button"
                       onClick={() => {
                         sfx.tick();
-                        for (const b of open) void markMissed(b, r);
+                        for (const b of notStarted) void markMissed(b, r);
                       }}
                       className="tap flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl bg-surface-2 text-xs font-bold text-muted"
                     >
@@ -136,30 +152,50 @@ export function NightRitual({ timeline, logFor, markMissed, complete, onClose }:
           <ul className="flex flex-col gap-2">
             {open.map((b) => (
               <li key={b.key} className="flex flex-col gap-2 rounded-xl bg-surface-2 p-2 pl-3">
-                <p className="font-bold">{text.name(b.key)}</p>
-                <div
-                  role="group"
-                  aria-label={t("reason", { block: text.name(b.key) })}
-                  className="flex justify-between gap-1"
-                >
-                  {MISS_REASONS.map((r) => {
-                    const Icon = REASON_ICON[r];
-                    return (
-                      <button
-                        key={r}
-                        type="button"
-                        aria-label={t(`reasons.${r}`)}
-                        onClick={() => {
-                          sfx.tick();
-                          void markMissed(b, r);
-                        }}
-                        className="tap flex h-11 w-11 items-center justify-center rounded-full bg-surface text-muted"
-                      >
-                        <Icon className="h-5 w-5" />
-                      </button>
-                    );
-                  })}
-                </div>
+                {started(b) ? (
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-bold">{text.name(b.key)}</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sfx.tick();
+                        void closeDone(b);
+                      }}
+                      className="tap inline-flex min-h-11 items-center gap-1.5 rounded-full bg-primary-soft px-4 text-sm font-bold text-primary"
+                    >
+                      <CheckIcon className="h-4 w-4" />
+                      {t("closeBlock")}
+                      <span className="sr-only"> {text.name(b.key)}</span>
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <p className="font-bold">{text.name(b.key)}</p>
+                    <div
+                      role="group"
+                      aria-label={t("reason", { block: text.name(b.key) })}
+                      className="flex justify-between gap-1"
+                    >
+                      {MISS_REASONS.map((r) => {
+                        const Icon = REASON_ICON[r];
+                        return (
+                          <button
+                            key={r}
+                            type="button"
+                            aria-label={t(`reasons.${r}`)}
+                            onClick={() => {
+                              sfx.tick();
+                              void markMissed(b, r);
+                            }}
+                            className="tap flex h-11 w-11 items-center justify-center rounded-full bg-surface text-muted"
+                          >
+                            <Icon className="h-5 w-5" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
               </li>
             ))}
           </ul>

@@ -387,7 +387,7 @@
     "closeHint": "Which blocks didn't happen? Tag why — no judgement, it's data.",
     "allClosed": "Every block is closed. Nice.",
     "reason": "Reason for {block}",
-    "closeBlock": "Mark closed",
+    "closeBlock": "Mark done",
     "reasons": {
       "sleepy": "Sleepy",
       "phone": "Phone",

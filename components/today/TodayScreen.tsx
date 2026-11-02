@@ -280,6 +280,7 @@ export function TodayScreen() {
           timeline={tl}
           logFor={today.logFor}
           markMissed={today.actions.markMissed}
+          closeDone={(b) => today.actions.close(b, new Date())}
           complete={today.actions.completeNightRitual}
           onClose={() => {
             markOffered(tl.date);

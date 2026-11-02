@@ -1,7 +1,16 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
-import { blockLogs, dayPlans, gameState, setAllTemplates, setWakeMinutesAgo, userIdFor } from "../helpers/db";
+import {
+  blockLogs,
+  dayPlans,
+  gameState,
+  rest,
+  setAllTemplates,
+  setWakeMinutesAgo,
+  userIdFor,
+} from "../helpers/db";
+import { localDate } from "@/lib/time";
 import { IS_PROD_RUN } from "../helpers/env";
 
 test.skip(IS_PROD_RUN, "creates dedicated users");
@@ -178,4 +187,38 @@ test("Night ritual: one tap tags every open block with the same reason", async (
     .poll(async () => (await blockLogs(id)).filter((l) => l.miss_reason === "sleepy").length)
     .toBe(5);
   await expectTouchTargets(page);
+});
+
+test("R-M4-3: a block that was started closes as done (no miss reason); 'same for all' skips it", async ({
+  page,
+}) => {
+  const id = await newUserOn(page);
+  await setWakeMinutesAgo(id, DOWN_TIME_MINUTES_AFTER_WAKE);
+  // Focus was started this morning and never finished.
+  const day = localDate(new Date(Date.now() - DOWN_TIME_MINUTES_AFTER_WAKE * 60_000), "Asia/Bangkok");
+  await rest("block_logs", {
+    method: "POST",
+    body: JSON.stringify({
+      user_id: id,
+      date: day,
+      block: "focus",
+      started_at: new Date(Date.now() - (DOWN_TIME_MINUTES_AFTER_WAKE - 60) * 60_000).toISOString(),
+    }),
+  });
+  await page.goto("/today");
+  const sheet = page.getByRole("dialog", { name: "Night ritual" });
+  await expect(sheet).toBeVisible();
+  await sheet.getByRole("button", { name: "Next" }).click();
+  await sheet.getByRole("button", { name: "Mark done Focus" }).click();
+  await sheet
+    .getByRole("region", { name: "Same reason for all" })
+    .getByRole("button", { name: "Sleepy" })
+    .click();
+  await expect(sheet.getByText("Every block is closed. Nice.")).toBeVisible();
+  await expect
+    .poll(async () => (await blockLogs(id)).find((l) => l.block === "focus"))
+    .toMatchObject({ miss_reason: null });
+  const logs = await blockLogs(id);
+  expect(logs.find((l) => l.block === "focus")?.closed_at).toBeTruthy();
+  expect(logs.filter((l) => l.miss_reason === "sleepy")).toHaveLength(4);
 });

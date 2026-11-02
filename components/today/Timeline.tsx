@@ -9,6 +9,8 @@ import { useBlockText } from "./useBlockText";
 export type BlockStatus = "upcoming" | "notStarted" | "inProgress" | "done" | "missed";
 
 export function blockStatus(b: TimelineBlock, log: BlockLog, now: Date): BlockStatus {
+  // Closed with a miss reason (Night ritual) = didn't happen, even though it's closed.
+  if (log.miss_reason) return "missed";
   if (log.closed_at) return "done";
   if (log.started_at || log.first10_at || log.items_done.length) return "inProgress";
   if (now.getTime() >= b.end.getTime()) return "missed";
