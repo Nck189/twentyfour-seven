@@ -23,9 +23,10 @@ export function Sheet({
   }, [onClose]);
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center">
+      {/* Backdrop: tap to close; hidden from assistive tech (the visible Close button is the accessible one). */}
       <button
         type="button"
-        aria-label={tc("close")}
+        aria-hidden="true"
         tabIndex={-1}
         onClick={onClose}
         className="absolute inset-0 bg-ink/30"

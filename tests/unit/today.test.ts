@@ -8,6 +8,7 @@ import {
   inWakeWindow,
   isOnTime,
   isPastBlock,
+  pickWakeCard,
   planFor,
   templateFor,
   timelineFor,
@@ -170,5 +171,80 @@ describe("check-in rules", () => {
     expect(inWakeWindow(target, at("2026-11-02", "10:20"))).toBe(false);
     expect(inWakeWindow(target, at("2026-11-02", "08:00"))).toBe(true);
     expect(inWakeWindow(target, at("2026-11-02", "06:30"))).toBe(false);
+  });
+});
+
+describe("regression: tomorrow's bedtime override", () => {
+  const row = (date: string, over: Partial<import("@/lib/today/day").DayPlanRow>) => ({
+    date,
+    template_id: null,
+    attending: null,
+    bedtime_override: null,
+    late_night: null,
+    mode: "normal" as const,
+    overrides: {},
+    ...over,
+  });
+
+  it("today's Free ends exactly when tonight's (overridden) Down starts — no gap", () => {
+    const c = ctx({
+      dayPlans: {
+        "2026-11-03": row("2026-11-03", { bedtime_override: at("2026-11-03", "02:45").toISOString() }),
+      },
+    });
+    const t = timelineFor(c, "2026-11-02");
+    for (let i = 1; i < t.blocks.length; i++)
+      expect(t.blocks[i].start.getTime()).toBe(t.blocks[i - 1].end.getTime());
+    expect(hm(t.blocks.find((b) => b.key === "free")!.end)).toBe("01:15");
+    expect(hm(t.blocks.find((b) => b.key === "sleep")!.start)).toBe("02:45");
+  });
+
+  it("same with a late night planned for tonight", () => {
+    const c = ctx({
+      dayPlans: {
+        "2026-11-03": row("2026-11-03", {
+          late_night: { return_at: at("2026-11-03", "03:30").toISOString() },
+        }),
+      },
+    });
+    const t = timelineFor(c, "2026-11-02");
+    for (let i = 1; i < t.blocks.length; i++)
+      expect(t.blocks[i].start.getTime()).toBe(t.blocks[i - 1].end.getTime());
+    expect(hm(t.blocks.find((b) => b.key === "down")!.start)).toBe("03:30");
+  });
+});
+
+describe("wake card (review M3-F2a/b)", () => {
+  const w = (date: string) => ({ date, pressed_at: at(date, "10:05").toISOString(), in_window: true });
+  const wakes = { "2026-11-02": w("2026-11-02") };
+
+  it("late evening / after midnight: shows yesterday's result, no button", () => {
+    const now = at("2026-11-03", "01:00");
+    const card = pickWakeCard(ctx(), now, currentDayDate(ctx(), now), wakes)!;
+    expect(card).toMatchObject({ date: "2026-11-02", canPress: false });
+  });
+
+  it("early riser: 1 h before today's 10:00 target the button shows", () => {
+    const now = at("2026-11-03", "09:00");
+    const card = pickWakeCard(ctx(), now, currentDayDate(ctx(), now), wakes)!;
+    expect(card).toMatchObject({ date: "2026-11-03", event: null, canPress: true });
+    expect(hm(card.target)).toBe("10:00");
+  });
+
+  it("app left open overnight: the same inputs flip to the button as time passes", () => {
+    const early = at("2026-11-03", "06:59");
+    const later = at("2026-11-03", "07:00");
+    expect(pickWakeCard(ctx(), early, currentDayDate(ctx(), early), wakes)!.canPress).toBe(false);
+    expect(pickWakeCard(ctx(), later, currentDayDate(ctx(), later), wakes)!.canPress).toBe(true);
+  });
+
+  it("after pressing today: shows today's result; no card when there's nothing to show", () => {
+    const now = at("2026-11-03", "10:30");
+    const pressed = { ...wakes, "2026-11-03": w("2026-11-03") };
+    expect(pickWakeCard(ctx(), now, "2026-11-03", pressed)).toMatchObject({
+      date: "2026-11-03",
+      canPress: false,
+    });
+    expect(pickWakeCard(ctx(), at("2026-11-03", "01:00"), "2026-11-02", {})).toBeNull();
   });
 });

@@ -1,5 +1,5 @@
-import { Placeholder } from "@/components/ui/Placeholder";
+import { PlanScreen } from "@/components/plan/PlanScreen";
 
 export default function Page() {
-  return <Placeholder section="plan" />;
+  return <PlanScreen />;
 }

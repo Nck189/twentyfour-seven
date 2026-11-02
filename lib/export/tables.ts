@@ -16,6 +16,7 @@ export const EXPORT_TABLES = [
   "decor",
   "gacha_pulls",
   "events",
+  "ticket_grants",
 ] as const;
 export type ExportTable = (typeof EXPORT_TABLES)[number];
 
@@ -24,4 +25,25 @@ export type ExportBundle = {
   version: 1;
   exported_at: string;
   tables: Record<ExportTable, Record<string, unknown>[]>;
+};
+
+/** Unique ordering per table so paged export reads are stable. */
+export const EXPORT_ORDER: Record<ExportTable, string[]> = {
+  profiles: ["user_id"],
+  settings: ["user_id"],
+  templates: ["id"],
+  day_plans: ["id"],
+  block_logs: ["id"],
+  backlog_items: ["id"],
+  exercise_logs: ["id"],
+  wake_events: ["id"],
+  game_state: ["user_id"],
+  plots: ["id"],
+  inventory: ["item_id"],
+  seed_dex: ["crop_id"],
+  animals: ["id"],
+  decor: ["id"],
+  gacha_pulls: ["id"],
+  events: ["id"],
+  ticket_grants: ["reason", "ref_date"],
 };

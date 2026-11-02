@@ -6,7 +6,7 @@ import { fixClock } from "../helpers/clock";
  * G3 visual matrix: every screen × light/dark × EN/TH on every WebKit project.
  * Baselines live in tests/visual/__snapshots__; copies go to screenshots/ for the rubric review.
  */
-const MILESTONE = process.env.QC_MILESTONE ?? "M0";
+const MILESTONE = process.env.QC_MILESTONE ?? "M4";
 const SCREENS = ["today", "plan", "farm", "stats", "more"] as const;
 const COMBOS = [
   { locale: "en", theme: "light" },
@@ -62,6 +62,34 @@ for (const { locale, theme } of COMBOS) {
         path: `screenshots/${MILESTONE}-404-${info.project.name}-${locale}-${theme}.png`,
       });
       await expect(page).toHaveScreenshot(`404-${locale}-${theme}.png`);
+    });
+
+    test("plan editor and night ritual", async ({ page }, info) => {
+      await setPrefs(page, { locale, theme });
+      // 23:30 on a Wednesday = Down Time → the ritual opens by itself.
+      await fixClock(page, new Date("2026-10-28T23:30:00+07:00"));
+      await signIn(page);
+      const ritual = page.getByRole("dialog");
+      await expect(ritual).toBeVisible();
+      await page.getByRole("button", { name: locale === "th" ? "ถัดไป" : "Next" }).click();
+      await page.waitForTimeout(400);
+      await page.screenshot({
+        path: `screenshots/${MILESTONE}-night-close-${info.project.name}-${locale}-${theme}.png`,
+      });
+      await expect(page).toHaveScreenshot(`night-close-${locale}-${theme}.png`);
+      await page.getByRole("button", { name: locale === "th" ? "ถัดไป" : "Next" }).click();
+      await page.waitForTimeout(600);
+      await page.screenshot({
+        path: `screenshots/${MILESTONE}-night-plan-${info.project.name}-${locale}-${theme}.png`,
+      });
+      await expect(page).toHaveScreenshot(`night-plan-${locale}-${theme}.png`);
+      await page.getByRole("button", { name: locale === "th" ? "ปิด" : "Close", exact: true }).click();
+      await page.goto("/plan");
+      await page.waitForTimeout(400);
+      await page.screenshot({
+        path: `screenshots/${MILESTONE}-plan-week-${info.project.name}-${locale}-${theme}.png`,
+      });
+      await expect(page).toHaveScreenshot(`plan-week-${locale}-${theme}.png`);
     });
 
     test("app screens", async ({ page }, info) => {

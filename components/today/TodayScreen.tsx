@@ -8,6 +8,7 @@ import { formatDayLong } from "@/lib/format";
 import { useNow } from "@/lib/hooks/useNow";
 import { currentBlock, type TimelineBlock } from "@/lib/today/day";
 import { useToday } from "@/lib/today/useToday";
+import { NightRitual } from "@/components/night/NightRitual";
 import { BlockCheckin } from "./BlockCheckin";
 import { Sheet } from "./BlockSheet";
 import { ModeCard } from "./ModeCard";
@@ -15,6 +16,23 @@ import { NapCard } from "./NapCard";
 import { Timeline } from "./Timeline";
 import { useBlockText } from "./useBlockText";
 import { WakeCard } from "./WakeCard";
+
+/** The ritual sheet opens by itself once per night (at Down Time); afterwards only from the banner. */
+const offeredKey = (date: string) => `247-ritual-offered-${date}`;
+function wasOffered(date: string): boolean {
+  try {
+    return sessionStorage.getItem(offeredKey(date)) === "1";
+  } catch {
+    return false;
+  }
+}
+function markOffered(date: string) {
+  try {
+    sessionStorage.setItem(offeredKey(date), "1");
+  } catch {
+    // ignore
+  }
+}
 
 /** Placeholder before the client clock exists (never rendered: the loading state shows instead). */
 const EPOCH = new Date(0);
@@ -28,6 +46,9 @@ export function TodayScreen() {
   const now = clock ?? EPOCH;
   const today = useToday(now);
   const [openKey, setOpenKey] = useState<string | null>(null);
+  const [ritualOpen, setRitualOpen] = useState(false);
+  const [ritualDismissed, setRitualDismissed] = useState(false);
+  const tn = useTranslations("night");
 
   if (!clock || today.status === "loading") {
     return (
@@ -59,7 +80,8 @@ export function TodayScreen() {
   const tl = today.timeline;
   const cur = currentBlock(tl, now);
   const open: TimelineBlock | undefined = tl.blocks.find((b) => b.key === openKey);
-  const showWake = tl.blocks[0] && now.getTime() >= tl.wakeTarget.getTime() - 3 * 3600_000;
+  const isNight = cur?.key === "down" || cur?.key === "sleep";
+  const autoOffer = cur?.key === "down" && !today.nightDoneAtLoad && !ritualDismissed && !wasOffered(tl.date);
 
   return (
     <>
@@ -85,22 +107,36 @@ export function TodayScreen() {
         </ul>
       )}
 
-      {today.saveError && (
+      {today.saveError > 0 && (
         <div
           role="alert"
           className="mx-4 mb-3 flex items-center justify-between gap-2 rounded-xl bg-accent-soft p-3 text-accent lg:mx-6"
         >
           <span>{t("saveError")}</span>
-          <Button variant="secondary" onClick={() => void today.retrySave?.()}>
+          <Button variant="secondary" onClick={() => void today.retrySave()}>
             {tc("retry")}
           </Button>
         </div>
       )}
 
-      {showWake && (
+      {(isNight || today.nightDone) && (
+        <section className="mx-4 mb-3 flex flex-col gap-2 rounded-[var(--radius-lg)] bg-primary-soft p-4 lg:mx-6">
+          {today.nightDone ? (
+            <p className="font-bold text-primary">{tn("done")}</p>
+          ) : (
+            <>
+              <p className="font-bold text-primary">{tn("offer")}</p>
+              <Button onClick={() => setRitualOpen(true)}>{tn("start")}</Button>
+            </>
+          )}
+        </section>
+      )}
+
+      {today.wakeCard && (
         <WakeCard
-          target={tl.wakeTarget}
-          wake={today.wake}
+          key={today.wakeCard.date}
+          target={today.wakeCard.target}
+          wake={today.wakeCard.event}
           timezone={today.timezone}
           onPress={today.actions.pressWake}
         />
@@ -135,6 +171,20 @@ export function TodayScreen() {
 
       <NapCard timezone={today.timezone} />
       <ModeCard mode={tl.mode} onChange={today.actions.setMode} />
+
+      {(ritualOpen || autoOffer) && (
+        <NightRitual
+          timeline={tl}
+          logFor={today.logFor}
+          markMissed={today.actions.markMissed}
+          complete={today.actions.completeNightRitual}
+          onClose={() => {
+            markOffered(tl.date);
+            setRitualOpen(false);
+            setRitualDismissed(true);
+          }}
+        />
+      )}
 
       {open && (
         <Sheet title={text.name(open.key)} onClose={() => setOpenKey(null)}>

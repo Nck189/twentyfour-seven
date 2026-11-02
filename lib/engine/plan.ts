@@ -122,7 +122,9 @@ export function planDay(input: PlanInput): DayPlan {
     targetBedtime(nextDate, input.nextTargetWake, input.nextSleepMin ?? desired.sleep, tz);
 
   // --- Fit the chain into [bedtime, nextBedtime] -----------------------------------------
-  const d: Durations = { ...desired };
+  // The chain ends with the NEXT night's Down, which may be shorter (late night tomorrow).
+  const chainDesired: Durations = { ...desired, down: input.nextDownMin ?? desired.down };
+  const d: Durations = { ...chainDesired };
   const window = minutesBetween(bedtime, nextBedtime);
   const wanted = CHAIN_AFTER_BEDTIME.reduce((s, k) => s + d[k], 0);
   if (wanted > window) {
@@ -162,7 +164,7 @@ export function planDay(input: PlanInput): DayPlan {
       // Time freed before the host goes to the end of the day (Down, then Gradation, then Free).
       const freed = over - late;
       const restoreOrder = (["down", "gradation", "free"] as BlockKey[]).filter((k) => after.includes(k));
-      if (restoreOrder.length) restore(d, desired, restoreOrder, freed);
+      if (restoreOrder.length) restore(d, chainDesired, restoreOrder, freed);
     }
 
     // 2) The host block must last until the event ends.

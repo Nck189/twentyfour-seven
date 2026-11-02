@@ -68,7 +68,7 @@ test("CJ-05 check-in: first-10 → 3 items → close in ≤ 5 taps and ≤ 5 s",
   await tap("Inbox zero");
   await tap("YOP draft");
   await tap("Email advisor");
-  await card.getByRole("button", { name: "Close block" }).click();
+  await card.getByRole("button", { name: "Finish block" }).click();
   taps++;
   await expect(card.getByText(/Closed \d\d:\d\d/)).toBeVisible();
   const elapsed = Date.now() - t0;
@@ -97,7 +97,7 @@ test("CJ-06 backfilling a past block: counts, labeled backfilled", async ({ page
   const sheet = page.getByRole("dialog", { name: "Wake" });
   await expect(sheet.getByRole("note")).toContainText("backfilled");
   await sheet.getByRole("checkbox", { name: /Leave the bedroom/ }).click();
-  await sheet.getByRole("button", { name: "Close block" }).click();
+  await sheet.getByRole("button", { name: "Finish block" }).click();
   await expect(sheet.getByText(/Closed \d\d:\d\d/)).toBeVisible();
   await sheet.getByRole("button", { name: "Close", exact: true }).click();
   await expect(page.getByRole("button", { name: "Open Wake" })).toContainText("Backfilled");
@@ -137,6 +137,11 @@ test("CJ-15 two devices: a tick on one shows up on the other", async ({ browser 
   await b.goto("/today");
   await a.getByRole("region", { name: "Current block" }).getByRole("checkbox", { name: "One" }).click();
   await b.getByRole("region", { name: "Current block" }).getByRole("checkbox", { name: "Two" }).click();
+  // Diagnostics: the tap must stick on B with no save error.
+  await expect(
+    b.getByRole("region", { name: "Current block" }).getByRole("checkbox", { name: "Two" }),
+  ).toHaveAttribute("aria-checked", "true");
+  await expect(b.getByRole("main").getByRole("alert")).toHaveCount(0);
   // Both items survive (atomic toggles) and both devices converge.
   await expect
     .poll(async () => ((await blockLogs(id)).find((l) => l.block === "work")?.items_done as string[])?.sort())

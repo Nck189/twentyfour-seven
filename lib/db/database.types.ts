@@ -578,6 +578,31 @@ export type Database = {
         };
         Relationships: [];
       };
+      ticket_grants: {
+        Row: {
+          amount: number;
+          at: string;
+          reason: string;
+          ref_date: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          amount: number;
+          at?: string;
+          reason: string;
+          ref_date: string;
+          user_id: string;
+        };
+        Update: {
+          amount?: number;
+          at?: string;
+          reason?: string;
+          ref_date?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       wake_events: {
         Row: {
           backfilled: boolean;
@@ -617,6 +642,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      _grant_once: {
+        Args: { p_amount: number; p_date: string; p_reason: string; uid: string };
+        Returns: boolean;
+      };
       _grant_tickets: {
         Args: { amount: number; meta?: Json; reason: string; uid: string };
         Returns: undefined;
@@ -641,6 +670,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      complete_night_ritual: { Args: { p_date: string }; Returns: Json };
       keepalive: { Args: Record<PropertyKey, never>; Returns: string };
       press_wake: {
         Args: Record<PropertyKey, never>;

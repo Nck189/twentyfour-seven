@@ -90,9 +90,14 @@ export function BlockCheckin({
         {started ? (
           <span className="text-sm text-muted">
             {t("started", { time: formatTime(started, timezone) })} ·{" "}
-            <span className={isOnTime(block.start, started) ? "text-primary" : "text-warn"}>
-              {isOnTime(block.start, started) ? t("onTime") : t("late")}
-            </span>
+            {log.backfilled ? (
+              // A backfill never claims "on time" (no rewards, no inflated stats).
+              <span className="text-muted">{t("backfilledStart")}</span>
+            ) : (
+              <span className={isOnTime(block.start, started) ? "text-primary" : "text-warn"}>
+                {isOnTime(block.start, started) ? t("onTime") : t("late")}
+              </span>
+            )}
           </span>
         ) : (
           <Button

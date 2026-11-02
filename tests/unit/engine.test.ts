@@ -190,6 +190,12 @@ describe("SPEC §3 scenarios", () => {
     expect(block(p, "sleep").durationMin).toBe(0);
   });
 
+  it("a shorter next Down (late night tomorrow) gives the evening to Free", () => {
+    const p = planDay(input({ nextDownMin: 30 }));
+    expect(block(p, "free").durationMin).toBe(210);
+    expect(p.nextBedtime.getTime() - block(p, "free").end.getTime()).toBe(30 * 60_000);
+  });
+
   it("an earlier bedtime gives the extra time to Free", () => {
     const p = planDay(input({ bedtimeOverride: at("2026-11-02", "01:30") }));
     expect(hm(p.wake)).toBe("09:00");

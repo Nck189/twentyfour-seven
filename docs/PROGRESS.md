@@ -16,18 +16,28 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 - **When she's back**, she wants one short Thai summary of everything done + the questions list. Then delete this section and `MINNIE_IS_OUT.md`.
 
 ### Questions for Minnie (when back)
-- (none yet)
+- Should **Work** shrink when an evening event doesn't fit? Today the spec order cuts Sleep and moves wake earlier instead (review M2-F3).
+- Should pressing "I'm up" **early** (up to 3 h before target) earn the Sunrise ticket? Currently yes (review M3-F10).
+- Please test the offline page once on your real iPhone (Playwright can't automate WebKit offline on this Mac).
 
 ---
 
 ## Current milestone
-**M0** fixes pushed, G7 re-review running → then **M3** (M1/M2 built; their reports follow M0).
+**Paused (usage limit) mid M1–M3 review fixes + M4.** Work is committed LOCALLY only (not pushed: the deploy would need migration `20261102060000_review_m123_security.sql` applied to prod first).
 
-M3 plan (Today screen + check-ins):
-1. Pure `lib/today`: which wake-day "today" is (wake → next wake), timeline = Wake…Free of D + tonight's Down/Sleep (from D+1's plan), current block, on-time (±10 min), backfill detection.
-2. Server: `press_wake()` RPC (server clock, target from plan/template, 15-min window, Sunrise ticket +1 once/day, backfill = no ticket); trigger marks block_logs `backfilled` when a timestamp is >10 min from server time.
-3. UI: timeline with now line + current block, block sheet (first-10 auto-starts the block → 5 taps for CJ-05), checklist, close with mood/energy, location on Focus/Work, I'm up button, nap timer (20/25 min + alarm), vacation/sick toggle. Optimistic writes with rollback (CJ-16). Events for every action.
-4. Journeys: CJ-03, CJ-04, CJ-05, CJ-06, CJ-15, CJ-16. Invariants: day boundary wake→next wake, tz from profile.
+### Resume here
+1. **Open bug (S2, ~2% under load):** CJ-15: a tap on device B is sometimes ignored (no request sent) while the new foreground refetch (`visibilitychange` → `setReload` in `lib/today/useToday.ts`) re-renders. Debug log showed B's click → only GET refetches, no `set_block_item`. Fix idea: refetch only if the app was hidden > 60 s and the date changed, or do a background merge without replacing `loaded`/`actions`. Then stress: `npx playwright test tests/e2e/today.spec.ts -g CJ-15 --workers=8 --repeat-each=16`.
+2. `supabase db push` (prod) → push to GitHub → watch CI → `npm run qc:prod`.
+3. Write `docs/qa/M1-report.md`, `M2-report.md`, `M3-report.md` (review findings + fixes are listed below), re-review M1+M3 once (G7), then M4 QC (G1–G7) + report.
+4. Then M5 Backlog.
+
+### Review M1–M3 fixes done (tests in tests/integration/review-m123.test.ts, tests/e2e/regressions-m3.spec.ts, tests/unit/today.test.ts)
+- M3-F1 S1 `_target_wake` ignores client-written `planned` · M1-F1 plots read-only · M1-F3 server-only event types blocked · M3-F4 backfill only past 30 days · M3-F8 old-date logs always backfilled
+- M2-F1 timeline gap (tomorrow override / late night) · M3-F2a/b wake card by calendar date (`pickWakeCard`) + foreground refresh · M3-F3 retry queue replays all failed saves · M3-F5 nap survives reload · M3-F6 backfilled start label · M3-F7 long words wrap · M3-F9 field-level upserts · M3-F12 TH "จบบล็อกนี้", now-line · M1-F2 stable export order · M1-F4 CSV formula escape · stale realtime rows ignored · R8 Sunrise reward animation (`RewardBurst`, `TicketArt`)
+- Known/deferred: M2-F2 multiple fixed events in different blocks (S3), M2-F4/F5 (S4), M3-F11 offline Today read-only (S3 → M14), background nap alarm needs push (M11)
+
+### M4 built (not yet QC'd)
+Night ritual (`components/night/NightRitual.tsx`, auto-offered at Down), Plan week view + DayEditor, `complete_night_ritual` RPC + `ticket_grants` ledger. CJ-07..10 E2E pass. Seed planting deferred to M6.
 
 ## Done
 - **Phase 0** ✅ tools + logins (gh, Supabase, Vercel), GitHub repo, Supabase prod project, Vercel auto-deploy from `main`.
