@@ -35,7 +35,7 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 - ⚠️ CI uses `retries: 1`, so a flaky test can pass CI. Use the Stress workflow to prove a flake is gone.
 
 ### Resume here
-1. ~~CJ-15 flake (S2)~~ **fixed test-first** (`lib/today/foreground.ts`): the foreground refetch now runs only after ≥ 60 s hidden, and a refetch with unchanged data keeps the same `loaded` object (actions/timeline aren't rebuilt). Tests: `tests/unit/foreground.test.ts`, 2 E2E in `tests/e2e/regressions-m3.spec.ts`. Pending: green Stress run.
+1. ✅ ~~CJ-15 flake (S2)~~ **fixed test-first** (`lib/today/foreground.ts`): the foreground refetch now runs only after ≥ 60 s hidden, and a refetch with unchanged data keeps the same `loaded` object (actions/timeline aren't rebuilt). Tests: `tests/unit/foreground.test.ts`, 2 E2E in `tests/e2e/regressions-m3.spec.ts`. **Stress verdict (2 workers × 24, no retries, 2 runs = 576 tests): 0 dropped taps / failed saves; the original two-device CJ-15 never failed.** The 4 failures were setup on Linux WebKit: 2× `page.goto: WebKit encountered an internal error`, 1× goto timeout, 1× a 5 s `toBeVisible` (raised to 15 s). Logged as M3-K1 (S4, test infra).
 2. `supabase db push` (prod) → merge to `main` → watch CI → `npm run qc:prod`. **Needs Minnie** (prod secrets aren't in the cloud environment).
 3. Write `docs/qa/M1-report.md`, `M2-report.md`, `M3-report.md` (review findings + fixes are listed below), re-review M1+M3 once (G7), then M4 QC (G1–G7) + report.
 4. Then M5 Backlog.
