@@ -133,7 +133,8 @@ test("CJ-15 flake: a quick app switch doesn't refetch, and a tap right after it 
   const item = page
     .getByRole("region", { name: "Current block" })
     .getByRole("checkbox", { name: "A", exact: true });
-  await expect(item).toBeVisible();
+  // Same patience as a plain click (slow CI runners): the default 5 s isn't enough to load Today.
+  await expect(item).toBeVisible({ timeout: 15_000 });
   let refetches = 0;
   page.on("request", (r) => {
     if (isLogsRefetch(r.url(), r.method())) refetches++;
