@@ -37,5 +37,5 @@ export function useOnboardingState() {
     void logEvent("onboarding_skipped", { from: "today" });
   }, [client, state, userId]);
 
-  return { show: state !== null && needsOnboarding(state), later };
+  return { ready: state !== null, show: state !== null && needsOnboarding(state), later };
 }

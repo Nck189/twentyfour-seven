@@ -10,7 +10,7 @@ test.skip(IS_PROD_RUN, "creates dedicated users");
 async function newUser(page: Page) {
   const email = uniqueEmail("ob");
   await setPrefs(page, { locale: "en", theme: "light" });
-  await signIn(page, email);
+  await signIn(page, email, { onboarded: false });
   return userIdFor(email);
 }
 
@@ -73,7 +73,7 @@ test("my own: sleep times + weekdays + a class slot, then first-10s one block at
   await first.getByLabel("Bed").fill("23:30");
   await first.getByLabel("Wake").fill("07:30");
   await expect(first.getByText("8h sleep")).toBeVisible();
-  await first.getByRole("button", { name: "W" }).first().click();
+  await first.getByRole("button", { name: "W", exact: true }).first().click();
   await first.getByRole("button", { name: "Add class or work time" }).click();
   await first.getByRole("radio", { name: "Work" }).click();
   await first.getByLabel("Work starts").fill("13:00");

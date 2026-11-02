@@ -105,7 +105,14 @@ export function TodayScreen() {
   const cur = currentBlock(tl, now);
   const open: TimelineBlock | undefined = tl.blocks.find((b) => b.key === openKey);
   const isNight = cur?.key === "down" || cur?.key === "sleep";
-  const autoOffer = cur?.key === "down" && !today.nightDoneAtLoad && !ritualDismissed && !wasOffered(tl.date);
+  // Not while the first-run card is up (or still loading): a new user sets up their day first.
+  const autoOffer =
+    cur?.key === "down" &&
+    onboarding.ready &&
+    !onboarding.show &&
+    !today.nightDoneAtLoad &&
+    !ritualDismissed &&
+    !wasOffered(tl.date);
   // One thing at a time: what's on screen depends on the part of the day.
   const next = cur ? tl.blocks[tl.blocks.indexOf(cur) + 1] : undefined;
   const wake = today.wakeCard;
