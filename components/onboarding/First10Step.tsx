@@ -112,7 +112,7 @@ export function First10Step({
                 aria-label={text.name(k)}
                 aria-current={n === i ? "step" : undefined}
                 onClick={() => setI(n)}
-                className="tap flex h-11 w-8 items-center justify-center"
+                className="tap flex h-11 w-11 items-center justify-center"
               >
                 <span
                   className={`h-2 rounded-full ${n === i ? "w-6 bg-primary" : n < i ? "w-2 bg-primary" : "w-2 bg-surface-2"}`}

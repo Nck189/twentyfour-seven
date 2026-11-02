@@ -199,7 +199,7 @@ function DayKind({
                 aria-pressed={on}
                 aria-label={letters[i]}
                 onClick={() => !on && onMoveDay(d)}
-                className="tap flex h-11 w-8 items-center justify-center"
+                className="tap flex h-11 w-11 items-center justify-center"
               >
                 <span
                   className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${

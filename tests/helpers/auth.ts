@@ -27,15 +27,24 @@ export async function signIn(
   if (!res.ok) throw new Error(`generate_link failed: ${res.status} ${await res.text()}`);
   const body = (await res.json()) as { id: string; hashed_token: string; verification_type: string };
   if (onboarded && body.id) {
-    await fetch(`${SB_URL}/rest/v1/profiles?user_id=eq.${body.id}`, {
-      method: "PATCH",
-      headers: {
-        apikey: SB_SERVICE_KEY,
-        Authorization: `Bearer ${SB_SERVICE_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ onboarding: { done: true } }),
-    });
+    // Merge: the same jsonb remembers other first-run facts (locale_set: a 2nd device must not
+    // push its own language over the account's, CJ-14).
+    const headers = {
+      apikey: SB_SERVICE_KEY,
+      Authorization: `Bearer ${SB_SERVICE_KEY}`,
+      "Content-Type": "application/json",
+    };
+    const url = `${SB_URL}/rest/v1/profiles?user_id=eq.${body.id}`;
+    const [prof] = (await (await fetch(`${url}&select=onboarding`, { headers })).json()) as {
+      onboarding: Record<string, unknown> | null;
+    }[];
+    if (!prof?.onboarding?.done) {
+      await fetch(url, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ onboarding: { ...prof?.onboarding, done: true } }),
+      });
+    }
   }
   if (IS_PROD_RUN) {
     // The shared smoke account must start each test in English (the app applies the account's language).
