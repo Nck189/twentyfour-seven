@@ -19,14 +19,21 @@ async function setup(page: Page, wakeMinutesAgo: number, checklist?: { block: st
   await setWakeMinutesAgo(id, wakeMinutesAgo);
   if (checklist) await setChecklist(id, checklist.block, checklist.items);
   await page.goto("/today");
-  await expect(page.getByRole("list", { name: "Today" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "See the whole day" })).toBeVisible();
   return id;
+}
+
+/** The full-day timeline is folded away by default (one thing at a time). */
+async function showDay(page: Page) {
+  await page.getByRole("button", { name: "See the whole day" }).click();
+  await expect(page.getByRole("list", { name: "Today" })).toBeVisible();
 }
 
 test("timeline shows the 7 blocks from wake to next wake, with the current block highlighted", async ({
   page,
 }) => {
   await setup(page, 150); // wake 1h + focus 1.5h → 2.5h after wake is Work
+  await showDay(page);
   const rows = page.getByRole("list", { name: "Today" }).getByRole("listitem");
   await expect(rows).toHaveCount(7);
   await expect(rows.nth(0)).toContainText("Wake");
@@ -82,6 +89,7 @@ test("CJ-05 check-in: first-10 → 3 items → close in ≤ 5 taps and ≤ 5 s",
   expect(log.first10_at).toBeTruthy();
   expect(log.started_at).toBeTruthy();
   expect(log.closed_at).toBeTruthy();
+  await showDay(page);
   await expect(page.locator('[aria-current="step"]')).toContainText("Done");
   // Optional mood/energy after closing (not part of the 5-tap budget).
   await card.getByRole("radio", { name: "Mood 4" }).click();
@@ -93,6 +101,7 @@ test("CJ-05 check-in: first-10 → 3 items → close in ≤ 5 taps and ≤ 5 s",
 
 test("CJ-06 backfilling a past block: counts, labeled backfilled", async ({ page }) => {
   const id = await setup(page, 150);
+  await showDay(page);
   await page.getByRole("button", { name: "Open Wake" }).click();
   const sheet = page.getByRole("dialog", { name: "Wake" });
   await expect(sheet.getByRole("note")).toContainText("backfilled");
@@ -105,17 +114,44 @@ test("CJ-06 backfilling a past block: counts, labeled backfilled", async ({ page
   expect((await gameState(id)).tickets).toBe(0);
 });
 
-test("location tag on Work and vacation mode", async ({ page }) => {
+test("location is asked when Work is finished; vacation mode lives in the menu", async ({ page }) => {
   const id = await setup(page, 150);
   const card = page.getByRole("region", { name: "Current block" });
+  await expect(card.getByRole("radiogroup", { name: "Where were you?" })).toHaveCount(0);
+  await card.getByRole("button", { name: "Start", exact: true }).click();
+  await card.getByRole("button", { name: "Finish block" }).click();
   await card.getByRole("radio", { name: "Out" }).click();
   await expect.poll(async () => (await blockLogs(id)).find((l) => l.block === "work")?.location).toBe("out");
-  await page.getByRole("radiogroup", { name: "Day mode" }).getByRole("radio", { name: "Vacation" }).click();
+  await page.getByRole("button", { name: "More for today" }).click();
+  const menu = page.getByRole("dialog", { name: "More for today" });
+  await menu.getByRole("radiogroup", { name: "Day mode" }).getByRole("radio", { name: "Vacation" }).click();
+  await menu.getByRole("button", { name: "Close", exact: true }).click();
   await expect(page.getByText("Vacation mode")).toBeVisible();
+});
+
+test("one thing at a time: the current block, a Next line; the rest is folded away", async ({ page }) => {
+  await setup(page, 150, { block: "work", items: ["Alpha"] });
+  const card = page.getByRole("region", { name: "Current block" });
+  await expect(card).toContainText("Work");
+  // Nothing to finish before the block has started.
+  await expect(card.getByRole("button", { name: "Finish block" })).toHaveCount(0);
+  await expect(page.getByText(/^Next: Gradation · \d\d:\d\d$/)).toBeVisible();
+  await expect(page.getByRole("list", { name: "Today" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "20 min" })).toHaveCount(0);
+  await expect(page.getByRole("radiogroup", { name: "Day mode" })).toHaveCount(0);
+  await card.getByRole("checkbox", { name: "Alpha", exact: true }).click();
+  await expect(card.getByRole("button", { name: "Finish block" })).toBeVisible();
+  await page.getByRole("button", { name: "More for today" }).click();
+  await expect(
+    page.getByRole("dialog", { name: "More for today" }).getByRole("button", { name: "20 min" }),
+  ).toBeVisible();
+  await expectNoSeriousA11y(page);
+  await expectTouchTargets(page);
 });
 
 test("power nap timer starts and can be stopped", async ({ page }) => {
   await setup(page, 150);
+  await page.getByRole("button", { name: "More for today" }).click();
   await page.getByRole("button", { name: "20 min" }).click();
   await expect(page.getByText(/Nap ends at \d\d:\d\d/)).toBeVisible();
   await page.getByRole("button", { name: "Stop" }).click();

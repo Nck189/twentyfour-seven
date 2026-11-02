@@ -79,6 +79,7 @@ test("M3-F5 nap timer survives a reload", async ({ page }) => {
   const id = await user(page);
   await setWakeMinutesAgo(id, 150);
   await page.goto("/today");
+  await page.getByRole("button", { name: "More for today" }).click();
   await page.getByRole("button", { name: "20 min" }).click();
   await expect(page.getByText(/Nap ends at \d\d:\d\d/)).toBeVisible();
   await page.reload();
@@ -90,6 +91,7 @@ test("M3-F6 a backfilled start never says 'On time'", async ({ page }) => {
   const id = await user(page);
   await setWakeMinutesAgo(id, 150);
   await page.goto("/today");
+  await page.getByRole("button", { name: "See the whole day" }).click();
   await page.getByRole("button", { name: "Open Wake" }).click();
   const sheet = page.getByRole("dialog", { name: "Wake" });
   await sheet.getByRole("button", { name: "Start", exact: true }).click();

@@ -85,7 +85,7 @@
       "mood": "Mood",
       "energy": "Energy",
       "optional": "optional",
-      "location": "Where are you?",
+      "location": "Where were you?",
       "home": "Home",
       "out": "Out",
       "backfillNote": "This block is over. Logging it now counts toward your %, labeled backfilled, with no tickets or mutations.",
@@ -119,7 +119,16 @@
     },
     "loadError": "Couldn't load today. Check your connection.",
     "saveError": "Couldn't save that. Nothing was lost — try again.",
-    "empty": "No plan for today yet."
+    "empty": "No plan for today yet.",
+    "nextAt": "Next: {block} · {time}",
+    "showDay": "See the whole day",
+    "hideDay": "Hide the whole day",
+    "warningsMore": "+{count} more",
+    "warningsLess": "Show less",
+    "menu": {
+      "open": "More for today",
+      "title": "More for today"
+    }
   },
   "plan": {
     "title": "Plan",

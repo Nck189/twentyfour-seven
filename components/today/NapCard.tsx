@@ -32,7 +32,12 @@ function writeNap(endsAt: number | null) {
  * evicted home-screen app still rings (in the foreground) when you come back. A background
  * alarm on a locked iPhone needs Web Push (M11).
  */
-export function NapCard({ timezone }: { timezone: string }) {
+/** True while a nap timer is set (Today then shows the nap card instead of hiding it in the menu). */
+export function isNapRunning(): boolean {
+  return readNap() !== null;
+}
+
+export function NapCard({ timezone, bare = false }: { timezone: string; bare?: boolean }) {
   const t = useTranslations("today.nap");
   // Rendered only on the client (Today waits for the clock), so reading storage here is safe.
   const [endsAt, setEndsAt] = useState<number | null>(() => readNap());
@@ -70,7 +75,7 @@ export function NapCard({ timezone }: { timezone: string }) {
   }
 
   return (
-    <section className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
+    <section className={bare ? "" : "mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6"}>
       <h2 className="mb-2 text-lg font-bold">{t("title")}</h2>
       {endsAt === null ? (
         <div className="flex gap-2">

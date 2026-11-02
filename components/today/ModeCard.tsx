@@ -7,12 +7,20 @@ import { Segmented } from "@/components/ui/Segmented";
 type Mode = "normal" | "vacation" | "sick";
 
 /** SPEC §4.4: Vacation / Sick pause the streak and freeze farm penalties. */
-export function ModeCard({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => Promise<void> }) {
+export function ModeCard({
+  mode,
+  onChange,
+  bare = false,
+}: {
+  mode: Mode;
+  onChange: (m: Mode) => Promise<void>;
+  bare?: boolean;
+}) {
   const t = useTranslations("today.mode");
   const tc = useTranslations("today");
   const [error, setError] = useState(false);
   return (
-    <section className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
+    <section className={bare ? "" : "mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6"}>
       <h2 className="mb-2 text-lg font-bold">{t("title")}</h2>
       <Segmented<Mode>
         label={t("title")}

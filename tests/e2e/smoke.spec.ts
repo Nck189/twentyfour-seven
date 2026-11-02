@@ -5,6 +5,7 @@ import { setPrefs, signIn } from "../helpers/auth";
 test("smoke: login → today → check-in → farm", async ({ page }) => {
   await setPrefs(page, { locale: "en", theme: "light" });
   await signIn(page);
+  await page.getByRole("button", { name: "See the whole day" }).click();
   await expect(page.getByRole("list", { name: "Today" })).toBeVisible();
   await expect(page.getByRole("list", { name: "Today" }).getByRole("listitem")).toHaveCount(7);
   const card = page.getByRole("region", { name: "Current block" });

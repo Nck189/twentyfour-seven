@@ -125,7 +125,8 @@ Owner/first user: Minnie (Bangkok, Asia/Bangkok). Personal use first, designed s
 4. **Close:** optional mood/energy 1–5.
 
 Extras:
-- **Location tag** (home / out) on Focus and Work.
+- **Location tag** (home / out) on Focus and Work — asked when the block is finished.
+- **One thing at a time (Minnie, 2026-11-02):** Today shows only what the moment needs — the "I'm up" card in the morning, the current block (Finish appears once it has started), a one-line "Next: …", and the Night ritual at Down. The full-day timeline is folded behind "See the whole day"; the nap timer and Vacation/Sick mode live in the ⋯ menu (a running nap shows on Today).
 - **Backfill** is allowed: it counts toward %, is labeled `backfilled`, and earns no tickets or mutations.
 
 ### 4.4 Other
