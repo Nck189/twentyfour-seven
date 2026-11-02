@@ -164,3 +164,29 @@ test("foreground after a long hide (≥ 60 s) refreshes Today", async ({ page })
   await refetch;
   await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
 });
+
+test("offline: a failed save is retried by itself when the connection comes back", async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName === "webkit", "WebKit can't intercept requests to the local API");
+  const id = await user(page);
+  await setWakeMinutesAgo(id, 150);
+  await setChecklist(id, "work", ["Alpha"]);
+  await page.goto("/today");
+  const item = page
+    .getByRole("region", { name: "Current block" })
+    .getByRole("checkbox", { name: "Alpha", exact: true });
+  await expect(item).toBeVisible({ timeout: 15_000 });
+  await page.route("**/rest/v1/rpc/set_block_item**", (r) => r.abort("internetdisconnected"));
+  await item.click();
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("Nothing was lost");
+  await page.unroute("**/rest/v1/rpc/set_block_item**");
+  // Back online: no "Try again" tap needed.
+  await page.evaluate(() => window.dispatchEvent(new Event("online")));
+  await expect(item).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
+  await expect
+    .poll(async () => (await blockLogs(id)).find((l) => l.block === "work")?.items_done)
+    .toEqual(["work-0"]);
+});
