@@ -1,5 +1,5 @@
 import type { BlockKey, BlockSetting, ChecklistItem } from "@/content/blocks";
-import type { FixedEvent, TemplateDefault } from "@/content/defaults";
+import { DEFAULT_TEMPLATES, type FixedEvent, type TemplateDefault } from "@/content/defaults";
 import {
   parseHHMM,
   planDay,
@@ -42,13 +42,33 @@ export type DayContext = {
   gymClose?: string;
 };
 
-export function templateFor(ctx: DayContext, date: string): TemplateRow | undefined {
+/** Used when no kind of day exists at all (never seeded / all removed): the built-in free day. */
+const BUILT_IN: TemplateRow = { ...DEFAULT_TEMPLATES[0], id: "built-in", name: null };
+
+/** Whether D has a kind of day of its own (its weekday is claimed, or the day picked one). */
+export function hasKindOfDay(ctx: DayContext, date: string): boolean {
+  const id = ctx.dayPlans[date]?.template_id;
+  return Boolean(
+    (id && ctx.templates.some((x) => x.id === id)) || templateForWeekday(ctx.templates, isoWeekday(date)),
+  );
+}
+
+/**
+ * The kind of day for D. A weekday nobody claims (e.g. a half-saved setup) falls back to the
+ * first kind, then the built-in free day, so Plan/Today never crash (R-M4-11); Plan says so.
+ */
+export function templateFor(ctx: DayContext, date: string): TemplateRow {
   const row = ctx.dayPlans[date];
   if (row?.template_id) {
     const t = ctx.templates.find((x) => x.id === row.template_id);
     if (t) return t;
   }
-  return templateForWeekday(ctx.templates, isoWeekday(date));
+  return (
+    templateForWeekday(ctx.templates, isoWeekday(date)) ??
+    ctx.templates.find((x) => x.auto_apply) ??
+    ctx.templates[0] ??
+    BUILT_IN
+  );
 }
 
 /** Tomorrow's real bedtime and Down length when it was overridden (bedtime push / late night). */
@@ -69,7 +89,6 @@ export function planFor(ctx: DayContext, date: string, depth = 0): DayPlan {
   const row = ctx.dayPlans[date];
   const tpl = templateFor(ctx, date);
   const nextTpl = templateFor(ctx, next);
-  if (!tpl || !nextTpl) throw new Error(`no template for ${date}`);
   const blockSettings = ctx.blocks.map((b) => ({
     key: b.key,
     duration_min: row?.overrides.blocks?.[b.key]?.duration_min ?? b.duration_min,
@@ -106,7 +125,6 @@ export function planFor(ctx: DayContext, date: string, depth = 0): DayPlan {
  */
 export function plannedWake(ctx: DayContext, date: string): { wake: string; base: string } {
   const tpl = templateFor(ctx, date);
-  if (!tpl) throw new Error(`no template for ${date}`);
   const base = resolveDay(tpl, ctx.blocks, { attending: ctx.dayPlans[date]?.attending }).targetWake;
   return {
     wake: planFor(ctx, date).wake.toISOString(),

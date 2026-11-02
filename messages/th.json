@@ -177,7 +177,8 @@
     "nextMonth": "เดือนถัดไป",
     "nextAppointment": "นัดถัดไป:",
     "appointments": "นัดหมาย",
-    "removeAppointment": "ลบนัด {title}"
+    "removeAppointment": "ลบนัด {title}",
+    "noKind": "ยังไม่ได้ตั้ง{day}ว่าเป็นวันแบบไหน แตะเพื่อตั้ง"
   },
   "farm": {
     "title": "ฟาร์ม",

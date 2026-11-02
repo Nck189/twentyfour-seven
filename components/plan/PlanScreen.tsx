@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   DndContext,
   DragOverlay,
@@ -22,17 +23,18 @@ import { ItemSheet } from "@/components/backlog/ItemSheet";
 import { MonthCalendar, shiftMonth, type DayMarks } from "@/components/backlog/MonthCalendar";
 import { WeekStrip } from "@/components/backlog/WeekStrip";
 import { CalendarIcon } from "@/components/shell/TabIcons";
+import { WarnIcon } from "@/components/ui/Icons";
 import { Sheet } from "@/components/today/BlockSheet";
 import { useBlockText } from "@/components/today/useBlockText";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
-import { formatDayLong, formatDayShort, formatWeekdayShort } from "@/lib/format";
+import { formatDayLong, formatDayShort, formatWeekdayLong, formatWeekdayShort } from "@/lib/format";
 import type { BlockKey } from "@/content/blocks";
 import { dayCapacity } from "@/lib/backlog";
 import { useBacklog } from "@/lib/backlog/useBacklog";
 import { usePlan } from "@/lib/plan/usePlan";
 import { addDays } from "@/lib/time";
-import { planFor, templateFor } from "@/lib/today/day";
+import { hasKindOfDay, planFor, templateFor } from "@/lib/today/day";
 import { DayEditor } from "./DayEditor";
 import { SaveStatus } from "./SaveStatus";
 
@@ -210,6 +212,15 @@ export function PlanScreen() {
             {formatDayShort(nextAppt.date, locale, ctx.timezone)} · {nextAppt.start}
           </span>
         </button>
+      )}
+      {!hasKindOfDay(ctx, day) && (
+        <Link
+          href="/welcome?step=week&from=more"
+          className="tap mx-4 mb-3 flex min-h-11 items-center gap-2 rounded-xl bg-warn-soft px-3 text-sm font-bold text-warn lg:mx-6"
+        >
+          <WarnIcon className="h-4 w-4 shrink-0" />
+          {t("noKind", { day: formatWeekdayLong(day, locale, ctx.timezone) })}
+        </Link>
       )}
       <DayCard
         date={day}

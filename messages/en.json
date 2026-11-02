@@ -177,7 +177,8 @@
     "nextMonth": "Next month",
     "nextAppointment": "Next appointment:",
     "appointments": "Appointments",
-    "removeAppointment": "Remove {title}"
+    "removeAppointment": "Remove {title}",
+    "noKind": "{day} has no kind of day yet. Set it up"
   },
   "farm": {
     "title": "Farm",

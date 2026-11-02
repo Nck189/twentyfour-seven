@@ -9,6 +9,7 @@ import {
   isOnTime,
   isPastBlock,
   pickWakeCard,
+  hasKindOfDay,
   planFor,
   plannedWake,
   templateFor,
@@ -137,10 +138,6 @@ describe("timeline", () => {
     expect(t.planned).toBe(true);
     expect(hm(t.blocks.find((b) => b.key === "sleep")!.start)).toBe("04:00");
     expect(timelineFor(c, "2026-11-03").mode).toBe("vacation");
-  });
-
-  it("throws clearly when no template covers a day", () => {
-    expect(() => planFor(ctx({ templates: [] }), "2026-11-02")).toThrow(/no template/);
   });
 
   it("finds the current block", () => {
@@ -287,5 +284,21 @@ describe("plannedWake (what the server needs to honor a planned push)", () => {
     const p = plannedWake(c, "2026-11-05");
     expect(hm(new Date(p.base))).toBe("10:00");
     expect(p.wake).toBe(p.base);
+  });
+});
+
+describe("a weekday without a kind of day (R-M4-11)", () => {
+  it("falls back instead of crashing Plan/Today/the ritual, and says so", () => {
+    // Wednesday (3) belongs to no auto-applied kind, e.g. after a half-saved setup.
+    const c = ctx({
+      templates: templates.map((t) => ({ ...t, weekdays: t.weekdays.filter((d) => d !== 3) })),
+    });
+    expect(() => planFor(c, "2026-11-04")).not.toThrow();
+    expect(templateFor(c, "2026-11-04")).toBeDefined();
+    expect(hasKindOfDay(c, "2026-11-04")).toBe(false);
+    expect(hasKindOfDay(c, "2026-11-03")).toBe(true);
+  });
+  it("even with no kinds at all, the built-in default keeps the app usable", () => {
+    expect(() => planFor(ctx({ templates: [] }), "2026-11-04")).not.toThrow();
   });
 });

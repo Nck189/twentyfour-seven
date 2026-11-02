@@ -25,6 +25,13 @@ const noonOf = (date: string) => {
   return new Date(Date.UTC(y, m - 1, d, 5));
 };
 
+/** Full weekday like "Wednesday" / "วันพุธ". */
+export function formatWeekdayLong(date: string, locale: string, timeZone: string): string {
+  return new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-GB", { timeZone, weekday: "long" }).format(
+    noonOf(date),
+  );
+}
+
 /** Short weekday like "Tue" / "อ." for the week strip. */
 export function formatWeekdayShort(date: string, locale: string, timeZone: string): string {
   return new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-GB", { timeZone, weekday: "short" }).format(
