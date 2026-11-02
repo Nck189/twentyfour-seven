@@ -26,7 +26,18 @@ jobs:
           version: latest
       - run: npm ci
       - name: Start Supabase (local)
-        run: supabase start -x studio,imgproxy,vector,logflare,edge-runtime
+        # Hosted runners sometimes report a Supabase port as already in use on the first try.
+        # Log who holds the ports, clean up, and retry once.
+        run: |
+          EXCLUDE=studio,imgproxy,vector,logflare,edge-runtime
+          if ! supabase start -x "$EXCLUDE"; then
+            echo "::warning::supabase start failed; ports in use:"
+            sudo ss -ltnp | grep -E ':5432[0-9]' || true
+            docker ps -a
+            supabase stop --no-backup || true
+            sleep 5
+            supabase start -x "$EXCLUDE"
+          fi
       - name: Export local Supabase env
         run: |
           supabase status -o env \
