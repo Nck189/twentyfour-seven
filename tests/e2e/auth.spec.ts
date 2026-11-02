@@ -30,7 +30,7 @@ test.describe("auth", () => {
     expect(text).not.toMatch(/https?:\/\//);
     const code = await latestSignInCode(email);
     expect(code).toMatch(/^\d{6}$/);
-    const field = page.getByLabel("Sign-in code");
+    const field = page.getByLabel("Code or link");
     await expect(field).toHaveAttribute("autocomplete", "one-time-code");
     await expect(field).toHaveAttribute("inputmode", "numeric");
     await field.fill(code);
@@ -46,7 +46,7 @@ test.describe("auth", () => {
     await page.goto("/login");
     await page.getByLabel("Email").fill(uniqueEmail("junk"));
     await page.getByRole("button", { name: "Email me a sign-in code" }).click();
-    await page.getByLabel("Sign-in code").fill("https://example.com/nothing-here");
+    await page.getByLabel("Code or link").fill("https://example.com/nothing-here");
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page.getByRole("main").getByRole("alert")).toContainText("didn't work");
   });
@@ -64,6 +64,6 @@ test("pasted email with spaces / zero-width characters still sends the code", as
   const email = uniqueEmail("zw");
   await page.getByLabel("Email").fill(`  ​${email}  `);
   await page.getByRole("button", { name: "Email me a sign-in code" }).click();
-  await expect(page.getByLabel("Sign-in code")).toBeVisible();
+  await expect(page.getByLabel("Code or link")).toBeVisible();
   await expect(page.getByText(email)).toBeVisible();
 });
