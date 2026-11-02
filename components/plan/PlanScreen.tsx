@@ -19,12 +19,14 @@ import { useId, useState } from "react";
 import { BacklogList } from "@/components/backlog/BacklogList";
 import { DayCard } from "@/components/backlog/DayCard";
 import { ItemSheet } from "@/components/backlog/ItemSheet";
+import { MonthCalendar, shiftMonth, type DayMarks } from "@/components/backlog/MonthCalendar";
 import { WeekStrip } from "@/components/backlog/WeekStrip";
+import { CalendarIcon } from "@/components/shell/TabIcons";
 import { Sheet } from "@/components/today/BlockSheet";
 import { useBlockText } from "@/components/today/useBlockText";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
-import { formatDayLong, formatWeekdayShort } from "@/lib/format";
+import { formatDayLong, formatDayShort, formatWeekdayShort } from "@/lib/format";
 import type { BlockKey } from "@/content/blocks";
 import { dayCapacity } from "@/lib/backlog";
 import { useBacklog } from "@/lib/backlog/useBacklog";
@@ -61,6 +63,8 @@ export function PlanScreen() {
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  const [monthOpen, setMonthOpen] = useState(false);
+  const [month, setMonth] = useState<string | null>(null);
   // Stable ids for dnd-kit's screen-reader hints (no server/client mismatch).
   const dndId = useId();
   const sensors = useSensors(
@@ -126,7 +130,16 @@ export function PlanScreen() {
     void backlog.schedule(String(e.active.id), date, block as BlockKey | undefined);
   }
   const item = backlog.items.find((i) => i.id === editingItem);
-  const day = selected && days.includes(selected) ? selected : days[0];
+  // Any date can be selected (the month view reaches months ahead); default today.
+  const day = selected ?? days[0];
+  const nextAppt = plan.appointments[0];
+  const marks: Record<string, DayMarks> = {};
+  for (const a of plan.appointments)
+    marks[a.date] = { appointment: true, tasks: marks[a.date]?.tasks ?? false };
+  for (const i of backlog.items)
+    if (i.scheduled_date && i.status === "scheduled")
+      marks[i.scheduled_date] = { appointment: marks[i.scheduled_date]?.appointment ?? false, tasks: true };
+  const shownMonth = month ?? day.slice(0, 7);
   const dayIndex = days.indexOf(day);
   const tplOf = (d: string) => {
     const tpl = templateFor(ctx, d);
@@ -166,9 +179,38 @@ export function PlanScreen() {
       onDragCancel={() => setDragging(null)}
       onDragEnd={onDragEnd}
     >
-      <ScreenHeader title={t("title")} />
+      <ScreenHeader
+        title={t("title")}
+        action={
+          <button
+            type="button"
+            aria-label={t("month")}
+            onClick={() => {
+              setMonth(null);
+              setMonthOpen(true);
+            }}
+            className="tap flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-2 text-primary"
+          >
+            <CalendarIcon className="h-5 w-5" />
+          </button>
+        }
+      />
       <SaveStatus state={plan.saving} />
       <WeekStrip days={stripDays} selected={day} onSelect={setSelected} label={t("week")} />
+      {nextAppt && (
+        <button
+          type="button"
+          onClick={() => setSelected(nextAppt.date)}
+          className="tap mx-4 mb-3 flex min-h-11 items-center gap-2 rounded-xl bg-warn-soft px-3 text-left text-sm font-bold text-warn lg:mx-6"
+        >
+          <CalendarIcon className="h-4 w-4 shrink-0" />
+          <span className="sr-only">{t("nextAppointment")} </span>
+          <span className="min-w-0 flex-1 truncate">{nextAppt.title}</span>
+          <span className="shrink-0 tabular-nums">
+            {formatDayShort(nextAppt.date, locale, ctx.timezone)} · {nextAppt.start}
+          </span>
+        </button>
+      )}
       <DayCard
         date={day}
         label={dayLabel(day, dayIndex)}
@@ -179,6 +221,10 @@ export function PlanScreen() {
         today={plan.today}
         timezone={ctx.timezone}
         dragging={dragging !== null}
+        appointments={(ctx.dayPlans[day]?.overrides.fixed_events ?? []).filter(
+          (e) => e.key === "appointment",
+        )}
+        onRemoveAppointment={(id) => void plan.removeAppointment(day, id)}
         onEdit={() => setEditing(day)}
         onOpen={setEditingItem}
         onComplete={backlog.complete}
@@ -189,7 +235,12 @@ export function PlanScreen() {
         today={plan.today}
         timezone={ctx.timezone}
         error={backlog.error}
-        onAdd={backlog.add}
+        onAdd={async (c) => {
+          if (c.appointment) {
+            await plan.addAppointment(c.appointment.date, c.title, c.appointment.start, c.appointment.end);
+            setSelected(c.appointment.date);
+          } else await backlog.add(c);
+        }}
         onOpen={setEditingItem}
         onComplete={backlog.complete}
       />
@@ -199,6 +250,22 @@ export function PlanScreen() {
           <div className="rounded-xl bg-surface p-3 font-bold ring-2 ring-primary">{titleOf(dragging)}</div>
         ) : null}
       </DragOverlay>
+
+      {monthOpen && (
+        <Sheet title={t("month")} onClose={() => setMonthOpen(false)}>
+          <MonthCalendar
+            month={shownMonth}
+            today={plan.today}
+            selected={day}
+            marks={marks}
+            onMonth={(d) => setMonth(shiftMonth(shownMonth, d))}
+            onPick={(d) => {
+              setSelected(d);
+              setMonthOpen(false);
+            }}
+          />
+        </Sheet>
+      )}
 
       {editing && (
         <Sheet

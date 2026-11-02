@@ -172,7 +172,13 @@
     "bedLabel": "นอน",
     "wakeLabel": "ตื่น",
     "warnings": "คำเตือน {count} ข้อ",
-    "dayTasks": "งานของ{day}"
+    "dayTasks": "งานของ{day}",
+    "month": "เดือน",
+    "prevMonth": "เดือนก่อน",
+    "nextMonth": "เดือนถัดไป",
+    "nextAppointment": "นัดถัดไป:",
+    "appointments": "นัดหมาย",
+    "removeAppointment": "ลบนัด {title}"
   },
   "farm": {
     "title": "ฟาร์ม",
@@ -398,7 +404,8 @@
     "ticket": "+1 ตั๋ว Night นอนหลับฝันดี",
     "already": "คืนนี้ทำไปแล้ว นอนหลับฝันดี",
     "error": "ยังไม่สำเร็จ ลองอีกครั้งนะ",
-    "reasonAll": "เหตุผลเดียวกันทุกบล็อก"
+    "reasonAll": "เหตุผลเดียวกันทุกบล็อก",
+    "tomorrowAppt": "พรุ่งนี้มีนัด: {list}"
   },
   "onboarding": {
     "cardTitle": "ตั้งค่า 2 นาทีให้ 24/7 เป็นของคุณ",

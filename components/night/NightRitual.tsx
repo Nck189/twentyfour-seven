@@ -7,6 +7,7 @@ import { SaveStatus } from "@/components/plan/SaveStatus";
 import { CheckRow } from "@/components/today/Checkbox";
 import { Sheet } from "@/components/today/BlockSheet";
 import { useBlockText } from "@/components/today/useBlockText";
+import { CalendarIcon } from "@/components/shell/TabIcons";
 import { Button } from "@/components/ui/Button";
 import { BoltIcon, MoreDotsIcon, PeopleIcon, PhoneIcon, SickIcon, SleepyIcon } from "@/components/ui/Icons";
 import { sfx } from "@/lib/sound/sfx";
@@ -71,6 +72,9 @@ export function NightRitual({ timeline, logFor, markMissed, complete, onClose }:
   // Blocks of today (Wake…Free) that never closed.
   const open = timeline.blocks.filter((b) => b.key !== "down" && b.key !== "sleep" && !logFor(b).closed_at);
   // Backlog items planned for today and not finished: carry them (SPEC §5, carry_count).
+  const tomorrowAppts = (plan.ctx?.dayPlans[tomorrow]?.overrides.fixed_events ?? []).filter(
+    (e) => e.key === "appointment",
+  );
   const unfinished = backlog.items.filter(
     (i) => i.status === "scheduled" && i.scheduled_date === timeline.date,
   );
@@ -193,6 +197,12 @@ export function NightRitual({ timeline, logFor, markMissed, complete, onClose }:
     // 3. Plan tomorrow
     <div key="plan" className="flex flex-col gap-3">
       <h3 className="text-lg font-bold">{t("planTitle")}</h3>
+      {tomorrowAppts.length > 0 && (
+        <p className="flex items-center gap-2 rounded-xl bg-warn-soft p-3 text-sm font-bold text-warn">
+          <CalendarIcon className="h-4 w-4 shrink-0" />
+          {t("tomorrowAppt", { list: tomorrowAppts.map((a) => `${a.title ?? ""} ${a.start}`).join(", ") })}
+        </p>
+      )}
       <SaveStatus state={plan.saving} />
       {plan.ctx ? (
         <DayEditor

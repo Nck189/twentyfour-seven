@@ -11,3 +11,4 @@ export {
 export { bedtimeDrift, sleepRegularity, nightMinutes, dayMinutes, mean, sd } from "./guardrails";
 export { nextKaizenTarget, type KaizenSettings } from "./kaizen";
 export { resolveDay, templateForWeekday, type ResolvedDay, type TemplateLike } from "./template";
+export { hostFor } from "./host";

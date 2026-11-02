@@ -1,23 +1,29 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BlockKey, BlockSetting, ChecklistItem } from "@/content/blocks";
+import type { FixedEvent } from "@/content/defaults";
+import { hostFor, parseHHMM } from "@/lib/engine";
+import { addDays, zonedInstant } from "@/lib/time";
 import { logEvent } from "@/lib/db/events";
 import { getSupabase } from "@/lib/supabase/client";
-import type { DayContext, DayPlanRow } from "@/lib/today/day";
-import { emptyDayPlan, loadDayContext } from "@/lib/today/loadContext";
+import { planFor, type DayContext, type DayPlanRow } from "@/lib/today/day";
+import { DAY_PLAN_COLUMNS, emptyDayPlan, loadDayContext } from "@/lib/today/loadContext";
 
 export type DayPatch = Partial<Omit<DayPlanRow, "date" | "overrides">> & {
   /** Merged into overrides.blocks[key]. */
   block?: { key: BlockKey; first10?: string | null; checklist?: ChecklistItem[]; duration_min?: number };
+  /** One-off fixed events for this day (appointments). */
+  fixed_events?: FixedEvent[];
 };
 
 const SAVE_DELAY_MS = 400;
 
 /** Pure: applies a patch to a day plan row (templates are never touched). */
 export function applyDayPatch(row: DayPlanRow, patch: DayPatch): DayPlanRow {
-  const { block, ...fields } = patch;
+  const { block, fixed_events, ...fields } = patch;
   const next: DayPlanRow = { ...row, ...fields, overrides: { ...row.overrides } };
+  if (fixed_events) next.overrides.fixed_events = fixed_events;
   if (block) {
     const { key, ...rest } = block;
     next.overrides.blocks = { ...next.overrides.blocks, [key]: { ...next.overrides.blocks?.[key], ...rest } };
@@ -43,7 +49,14 @@ export function usePlan() {
   useEffect(() => {
     let cancelled = false;
     loadDayContext(client, -2, 14)
-      .then((r) => {
+      .then(async (r) => {
+        // Appointments can be months ahead: load every later day that has one.
+        const later = await client
+          .from("day_plans")
+          .select(DAY_PLAN_COLUMNS)
+          .gt("date", addDays(r.today, 14))
+          .not("overrides->fixed_events", "is", null);
+        for (const row of (later.data ?? []) as DayPlanRow[]) r.ctx.dayPlans[row.date] = row;
         if (cancelled) return;
         ctxRef.current = r.ctx;
         setCtx(r.ctx);
@@ -127,10 +140,60 @@ export function usePlan() {
   }, [flush]);
   useEffect(() => () => void flushRef.current(), []);
 
+  /** Upcoming appointments (any distance ahead), soonest first. */
+  const appointments = useMemo(
+    () =>
+      ctx && today
+        ? Object.values(ctx.dayPlans)
+            .filter((r) => r && r.date >= today)
+            .flatMap((r) =>
+              (r!.overrides.fixed_events ?? [])
+                .filter((e) => e.key === "appointment")
+                .map((e) => ({ ...e, date: r!.date })),
+            )
+            .sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start))
+        : [],
+    [ctx, today],
+  );
+
+  /** Adds a one-off appointment; it lives in the block its start time falls in (else Work). */
+  const addAppointment = useCallback(
+    async (date: string, title: string, start: string, end: string) => {
+      const current = ctxRef.current;
+      if (!current) return;
+      let host: BlockKey = "work";
+      try {
+        host = hostFor(planFor(current, date), zonedInstant(date, parseHHMM(start), current.timezone));
+      } catch {
+        // No template for that day: keep Work.
+      }
+      const existing = current.dayPlans[date]?.overrides.fixed_events ?? [];
+      updateDay(date, {
+        fixed_events: [...existing, { id: crypto.randomUUID(), key: "appointment", title, start, end, host }],
+      });
+      await flush();
+      void logEvent("appointment_added", { date, host });
+    },
+    [flush, updateDay],
+  );
+
+  const removeAppointment = useCallback(
+    async (date: string, id: string) => {
+      const existing = ctxRef.current?.dayPlans[date]?.overrides.fixed_events ?? [];
+      updateDay(date, { fixed_events: existing.filter((e) => e.id !== id) });
+      await flush();
+      void logEvent("appointment_removed", { date });
+    },
+    [flush, updateDay],
+  );
+
   return {
     ctx,
     today,
     userId,
+    appointments,
+    addAppointment,
+    removeAppointment,
     status,
     saving,
     updateDay,

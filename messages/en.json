@@ -172,7 +172,13 @@
     "bedLabel": "Bed",
     "wakeLabel": "Wake",
     "warnings": "{count, plural, one {# warning} other {# warnings}}",
-    "dayTasks": "Tasks for {day}"
+    "dayTasks": "Tasks for {day}",
+    "month": "Month",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "nextAppointment": "Next appointment:",
+    "appointments": "Appointments",
+    "removeAppointment": "Remove {title}"
   },
   "farm": {
     "title": "Farm",
@@ -398,7 +404,8 @@
     "ticket": "+1 Night ticket. Sleep well.",
     "already": "Already done tonight. Sleep well.",
     "error": "Couldn't finish. Try again.",
-    "reasonAll": "Same reason for all"
+    "reasonAll": "Same reason for all",
+    "tomorrowAppt": "Tomorrow: {list}"
   },
   "onboarding": {
     "cardTitle": "Make 24/7 yours in 2 minutes",

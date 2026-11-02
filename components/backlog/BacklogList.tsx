@@ -234,6 +234,13 @@ function CapturePreview({ capture, timezone }: { capture: Capture; timezone: str
         {formatDayShort(capture.scheduled_date, locale, timezone)}
       </Pill>,
     );
+  if (capture.appointment)
+    bits.push(
+      <Pill key="a" icon={<CalendarIcon className="h-3.5 w-3.5" />} tone="warn">
+        {formatDayShort(capture.appointment.date, locale, timezone)} · {capture.appointment.start}–
+        {capture.appointment.end}
+      </Pill>,
+    );
   if (capture.deadline)
     bits.push(
       <Pill key="d" icon={<FlagIcon className="h-3.5 w-3.5" />} tone="warn">

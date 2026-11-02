@@ -1,7 +1,15 @@
 import { DEFAULT_BLOCKS, type BlockKey, type BlockSetting } from "./blocks";
 
 /** Fixed event in a template. `key` = i18n label (`fixedEvents.<key>`); `title` overrides it. */
-export type FixedEvent = { id: string; key: string; title: string | null; start: string; end: string };
+export type FixedEvent = {
+  id: string;
+  key: string;
+  title: string | null;
+  start: string;
+  end: string;
+  /** Block that holds it (default Work); set for one-off appointments by their time. */
+  host?: BlockKey;
+};
 
 export type TemplateDefault = {
   key: string;
