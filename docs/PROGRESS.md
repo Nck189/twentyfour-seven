@@ -49,6 +49,9 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 - M2-F1 timeline gap (tomorrow override / late night) · M3-F2a/b wake card by calendar date (`pickWakeCard`) + foreground refresh · M3-F3 retry queue replays all failed saves · M3-F5 nap survives reload · M3-F6 backfilled start label · M3-F7 long words wrap · M3-F9 field-level upserts · M3-F12 TH "จบบล็อกนี้", now-line · M1-F2 stable export order · M1-F4 CSV formula escape · stale realtime rows ignored · R8 Sunrise reward animation (`RewardBurst`, `TicketArt`)
 - Known/deferred: M2-F2 multiple fixed events in different blocks (S3), M2-F4/F5 (S4), M3-F11 offline Today read-only (S3 → M14), background nap alarm needs push (M11)
 
+### Flakes to root-cause (QC runs, passed on retry)
+- CJ-14 language toggle (iphone, QC run on 521177e): heading still "More" right after switching to TH.
+
 ### M4 built (not yet QC'd)
 - Flake to root-cause in M4 QC: CJ-07 (ipad-portrait, QC run #40) — after "Add item" in the ritual's Plan step, "YOP chapter 2" wasn't visible within 5 s; passed on retry.
 Night ritual (`components/night/NightRitual.tsx`, auto-offered at Down), Plan week view + DayEditor, `complete_night_ritual` RPC + `ticket_grants` ledger. CJ-07..10 E2E pass. Seed planting deferred to M6.

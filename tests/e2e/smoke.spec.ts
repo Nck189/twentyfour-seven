@@ -5,7 +5,12 @@ import { setPrefs, signIn } from "../helpers/auth";
 test("smoke: login → today → check-in → farm", async ({ page }) => {
   await setPrefs(page, { locale: "en", theme: "light" });
   await signIn(page);
-  await page.getByRole("button", { name: "See the whole day" }).click();
+  // At Down Time the Night ritual opens by itself and covers Today: close it first.
+  const showDay = page.getByRole("button", { name: "See the whole day" });
+  const ritual = page.getByRole("dialog", { name: "Night ritual" });
+  await expect(showDay.or(ritual)).toBeVisible();
+  if (await ritual.isVisible()) await ritual.getByRole("button", { name: "Close", exact: true }).click();
+  await showDay.click();
   await expect(page.getByRole("list", { name: "Today" })).toBeVisible();
   await expect(page.getByRole("list", { name: "Today" }).getByRole("listitem")).toHaveCount(7);
   const card = page.getByRole("region", { name: "Current block" });
