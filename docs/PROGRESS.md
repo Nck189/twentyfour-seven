@@ -37,9 +37,10 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 ### Resume here
 1. ✅ ~~CJ-15 flake (S2)~~ **fixed test-first** (`lib/today/foreground.ts`): the foreground refetch now runs only after ≥ 60 s hidden, and a refetch with unchanged data keeps the same `loaded` object (actions/timeline aren't rebuilt). Tests: `tests/unit/foreground.test.ts`, 2 E2E in `tests/e2e/regressions-m3.spec.ts`. **Stress verdict (2 workers × 24, no retries, 2 runs = 576 tests): 0 dropped taps / failed saves; the original two-device CJ-15 never failed.** The 4 failures were setup on Linux WebKit: 2× `page.goto: WebKit encountered an internal error`, 1× goto timeout, 1× a 5 s `toBeVisible` (raised to 15 s). Logged as M3-K1 (S4, test infra).
 1b. ✅ Today redesign "one thing at a time" (Minnie's feedback) + auto-retry of failed saves when back online. ⚠️ Visual baselines for Today in `tests/visual` (recorded on the Mac; CI doesn't run them) need re-recording → part of M3's G3.
-1c. ✅ PR #1 merged to `main` 2026-11-03 00:25 Bangkok (Minnie ran `supabase db push` for the M1–M3 security migration first) → Vercel deploy.
-1d. **M5 Backlog built** (PR #2): `lib/backlog` (sort, RCCP capacity, carry-over), `complete_backlog_item` RPC + `coin_grants` ledger, Plan screen backlog + dnd-kit drop targets + capacity bars + item sheet with Move to…, Night-ritual carry-over. ⚠️ **Before merging PR #2: Minnie runs `npx supabase db push` (migration `20261103000000_m5_backlog.sql`).** Then M5 QC (G1–G7) + report; touch drag on a real iPhone.
-2. `supabase db push` (prod) → merge to `main` → watch CI → `npm run qc:prod`. **Needs Minnie** (prod secrets aren't in the cloud environment).
+1c. ✅ PR #1 merged to `main` 2026-11-03 00:25 Bangkok → Vercel deploy.
+1d. ✅ **M5 Backlog** built and merged (PR #2, 2026-11-03 00:50): `lib/backlog` (sort, RCCP capacity, carry-over), `complete_backlog_item` RPC + `coin_grants` ledger, Plan screen backlog + dnd-kit drop targets + capacity bars + item sheet with Move to…, Night-ritual carry-over. CI green (incl. 5 new E2E). Pending: M5 QC report (G3 visual, G7) + touch drag on a real iPhone.
+2. ✅ **Prod DB caught up 2026-11-03 ~00:45:** ⚠️ the Supabase CLI now targets the LOCAL stack by default — `npx supabase db push` alone does NOT touch prod. **Always use `npx supabase db push --remote`.** (The first two pushes went to Minnie's local stack; prod was missing M4 + the M1–M3 security migration until the `--remote` push, which also applied M5.)
+   ✅ **G6 on prod (M1/M3/M4 code):** `npm run qc:prod` 22/22 passed (iphone + chrome-desktop; dedicated-user tests skip on prod by design), incl. CJ-17 export, smoke, PWA manifest/SW; Lighthouse assertions passed.
 3. Write `docs/qa/M1-report.md`, `M2-report.md`, `M3-report.md` (review findings + fixes are listed below), re-review M1+M3 once (G7), then M4 QC (G1–G7) + report.
 4. Then M5 Backlog.
 
@@ -47,6 +48,9 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 - M3-F1 S1 `_target_wake` ignores client-written `planned` · M1-F1 plots read-only · M1-F3 server-only event types blocked · M3-F4 backfill only past 30 days · M3-F8 old-date logs always backfilled
 - M2-F1 timeline gap (tomorrow override / late night) · M3-F2a/b wake card by calendar date (`pickWakeCard`) + foreground refresh · M3-F3 retry queue replays all failed saves · M3-F5 nap survives reload · M3-F6 backfilled start label · M3-F7 long words wrap · M3-F9 field-level upserts · M3-F12 TH "จบบล็อกนี้", now-line · M1-F2 stable export order · M1-F4 CSV formula escape · stale realtime rows ignored · R8 Sunrise reward animation (`RewardBurst`, `TicketArt`)
 - Known/deferred: M2-F2 multiple fixed events in different blocks (S3), M2-F4/F5 (S4), M3-F11 offline Today read-only (S3 → M14), background nap alarm needs push (M11)
+
+### Flakes to root-cause (QC runs, passed on retry)
+- CJ-14 language toggle (iphone, QC run on 521177e): heading still "More" right after switching to TH.
 
 ### M4 built (not yet QC'd)
 - Flake to root-cause in M4 QC: CJ-07 (ipad-portrait, QC run #40) — after "Add item" in the ritual's Plan step, "YOP chapter 2" wasn't visible within 5 s; passed on retry.

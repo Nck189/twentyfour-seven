@@ -33,6 +33,40 @@ test("quick capture: type + Enter lands in the Inbox", async ({ page }) => {
   await expectNoHorizontalScroll(page);
 });
 
+test("type once: estimate, priority, day and project are read from one line", async ({ page }) => {
+  const id = await setup(page);
+  await page.goto("/plan");
+  const box = page.getByRole("textbox", { name: "Add to backlog" });
+  await box.fill("Report 30m !must tomorrow #yop");
+  await expect(page.getByText("Will be saved with:")).toBeAttached();
+  await box.press("Enter");
+  await expect
+    .poll(async () => (await backlogItems(id))[0])
+    .toMatchObject({
+      title: "Report",
+      estimate_min: 30,
+      priority: "must",
+      scheduled_date: tomorrow(),
+      block: "work",
+      status: "scheduled",
+      tag: "yop",
+    });
+  // This week's tasks live on the strip + day card (not in a second list).
+  await page.getByRole("button", { name: "Tomorrow", exact: true }).click();
+  await expect(page.getByRole("list", { name: "Tasks for Tomorrow" })).toContainText("Report");
+});
+
+test("one tap on the circle finishes a task and shows the coins", async ({ page }) => {
+  const id = await setup(page);
+  await addBacklogItem(id, { title: "Wash dishes", priority: "just_start" });
+  await page.goto("/plan");
+  await page.getByRole("button", { name: "Finish Wash dishes" }).click();
+  await expect(page.getByRole("status", { name: "+10 coins" })).toBeAttached();
+  await expect.poll(async () => (await gameState(id)).coins).toBe(10);
+  await expect.poll(async () => (await backlogItems(id))[0].status).toBe("done");
+  await expect(page.getByRole("list", { name: "Inbox" })).toHaveCount(0);
+});
+
 test("CJ-11 Move to… lands in that day's Work block; the capacity bar turns red when over", async ({
   page,
 }) => {
@@ -46,9 +80,11 @@ test("CJ-11 Move to… lands in that day's Work block; the capacity bar turns re
     .poll(async () => (await backlogItems(id))[0])
     .toMatchObject({ scheduled_date: tomorrow(), block: "work", status: "scheduled" });
   await sheet.getByRole("button", { name: "Close", exact: true }).click();
+  await page.getByRole("button", { name: "Tomorrow", exact: true }).click();
+  const card = page.getByRole("region", { name: "Tomorrow" });
   // 600 min planned vs 540 free in Work (hand calculation) → over by 1 h.
-  await expect(page.getByText("Over by 1h")).toBeVisible();
-  await expect(page.getByText("1 task")).toBeVisible();
+  await expect(card.getByText("Over by 1h")).toBeVisible();
+  await expect(card.getByRole("list", { name: "Tasks for Tomorrow" })).toContainText("Thesis draft");
 });
 
 test("CJ-11 drag a task onto a day (mouse)", async ({ page, isMobile }) => {
@@ -57,7 +93,7 @@ test("CJ-11 drag a task onto a day (mouse)", async ({ page, isMobile }) => {
   await addBacklogItem(id, { title: "Read paper", estimate_min: 60 });
   await page.goto("/plan");
   const handle = page.getByRole("button", { name: "Drag Read paper" });
-  const target = page.getByRole("button", { name: "Plan Tomorrow" });
+  const target = page.getByRole("button", { name: "Tomorrow", exact: true });
   await handle.scrollIntoViewIfNeeded();
   const from = (await handle.boundingBox())!;
   await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
@@ -69,7 +105,8 @@ test("CJ-11 drag a task onto a day (mouse)", async ({ page, isMobile }) => {
   await expect
     .poll(async () => (await backlogItems(id))[0])
     .toMatchObject({ scheduled_date: tomorrow(), block: "work", status: "scheduled" });
-  await expect(page.getByText("1h of 9h free")).toBeVisible();
+  await target.click();
+  await expect(page.getByRole("region", { name: "Tomorrow" }).getByText("1h of 9h free")).toBeVisible();
 });
 
 test("finishing a task grants coins once (server-side)", async ({ page }) => {

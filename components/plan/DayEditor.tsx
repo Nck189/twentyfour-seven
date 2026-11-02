@@ -5,6 +5,7 @@ import { useId, useState } from "react";
 import { BLOCK_KEYS, type BlockKey, type ChecklistItem } from "@/content/blocks";
 import { useBlockText } from "@/components/today/useBlockText";
 import { Button } from "@/components/ui/Button";
+import { CloseIcon, StepsIcon } from "@/components/ui/Icons";
 import { Segmented } from "@/components/ui/Segmented";
 import { parseHHMM, targetBedtime } from "@/lib/engine";
 import { formatTime } from "@/lib/format";
@@ -227,9 +228,12 @@ export function DayEditor({
                   className="tap flex min-h-12 w-full items-center justify-between px-3 text-left font-bold"
                 >
                   <span>{text.name(key)}</span>
-                  <span className="text-xs font-normal text-muted">
-                    {meta.checklist.length > 0 ? `${meta.checklist.length} ✓` : ""}
-                  </span>
+                  {meta.checklist.length > 0 && (
+                    <span className="inline-flex items-center gap-1 text-xs font-bold text-muted">
+                      <StepsIcon className="h-3.5 w-3.5" />
+                      {meta.checklist.length}
+                    </span>
+                  )}
                 </button>
                 {isOpen && (
                   <div className="flex flex-col gap-2 px-3 pb-3">
@@ -257,7 +261,7 @@ export function DayEditor({
                               })
                             }
                           >
-                            ✕
+                            <CloseIcon className="h-4 w-4" />
                           </Button>
                         </li>
                       ))}

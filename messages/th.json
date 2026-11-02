@@ -166,7 +166,11 @@
     "saving": "กำลังบันทึก…",
     "saved": "บันทึกแล้ว",
     "saveError": "บันทึกไม่สำเร็จ การแก้ไขยังอยู่ตรงนี้ เช็กอินเทอร์เน็ตอีกที",
-    "loadError": "โหลดแผนไม่ได้"
+    "loadError": "โหลดแผนไม่ได้",
+    "bedLabel": "นอน",
+    "wakeLabel": "ตื่น",
+    "warnings": "คำเตือน {count} ข้อ",
+    "dayTasks": "งานของ{day}"
   },
   "farm": {
     "title": "ฟาร์ม",
@@ -248,7 +252,7 @@
     "placeholder": "งานทั้งหมดที่ต้องเคลียร์จะอยู่ตรงนี้",
     "comingSoon": "Backlog กำลังจะมาเร็วๆ นี้",
     "captureLabel": "เพิ่มงานใน backlog",
-    "capturePlaceholder": "พิมพ์แล้วกด Enter",
+    "capturePlaceholder": "เช่น รายงาน 30m !must พรุ่งนี้ #yop",
     "add": "เพิ่ม",
     "inbox": "Inbox",
     "planned": "ลงวันแล้ว",
@@ -302,7 +306,12 @@
     "carryHint": "จะย้ายไปไหนดี?",
     "carryTomorrow": "พรุ่งนี้",
     "carryInbox": "กลับ Inbox",
-    "carryDone": "จัดการครบแล้ว"
+    "carryDone": "จัดการครบแล้ว",
+    "complete": "ทำ {title} เสร็จแล้ว",
+    "willSave": "จะบันทึกเป็น:",
+    "more": "เพิ่มเติม: โปรเจกต์ เดดไลน์ ขั้นตอน",
+    "titleLabel": "งาน",
+    "earlier": "ค้างจากวันก่อน"
   },
   "errors": {
     "notFoundTitle": "ไม่พบหน้านี้",
@@ -345,6 +354,7 @@
     "goodnight": "ราตรีสวัสดิ์",
     "ticket": "+1 ตั๋ว Night นอนหลับฝันดี",
     "already": "คืนนี้ทำไปแล้ว นอนหลับฝันดี",
-    "error": "ยังไม่สำเร็จ ลองอีกครั้งนะ"
+    "error": "ยังไม่สำเร็จ ลองอีกครั้งนะ",
+    "reasonAll": "เหตุผลเดียวกันทุกบล็อก"
   }
 }

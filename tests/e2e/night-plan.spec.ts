@@ -81,6 +81,7 @@ test("CJ-08 bedtime +90 on a free day: tomorrow re-flows +90, Free shrinks, the 
   const id = await newUserOn(page);
   await setAllTemplates(id, "10:00");
   await page.goto("/plan");
+  await page.getByRole("button", { name: "Tomorrow", exact: true }).click();
   await page.getByRole("button", { name: "Plan Tomorrow" }).click();
   const sheet = page.getByRole("dialog");
   const preview = sheet.getByRole("list", { name: "Preview" });
@@ -92,12 +93,14 @@ test("CJ-08 bedtime +90 on a free day: tomorrow re-flows +90, Free shrinks, the 
   await expect(preview.getByRole("listitem").nth(2)).toContainText("11:30");
   await expect(preview.getByRole("listitem").nth(6)).toContainText("1h");
   await sheet.getByRole("button", { name: "Close", exact: true }).click();
+  const tomorrowCard = page.getByRole("region", { name: "Tomorrow" });
+  await expect(tomorrowCard).toContainText("Bed 04:00");
+  await expect(tomorrowCard).toContainText("Wake 11:30");
   // The day after tomorrow is untouched (snap-back).
-  const rows = page.getByRole("list").first().getByRole("listitem");
-  await expect(rows.nth(1)).toContainText("Bed 04:00");
-  await expect(rows.nth(1)).toContainText("Wake 11:30");
-  await expect(rows.nth(2)).toContainText("Bed 02:30");
-  await expect(rows.nth(2)).toContainText("Wake 10:00");
+  await page.getByRole("list", { name: "Next 7 days" }).getByRole("button").nth(2).click();
+  const dayAfter = page.getByRole("region").filter({ hasText: /Bed \d\d:\d\d/ });
+  await expect(dayAfter).toContainText("Bed 02:30");
+  await expect(dayAfter).toContainText("Wake 10:00");
   await expect.poll(async () => (await dayPlans(id)).filter((p) => p.bedtime_override).length).toBe(1);
 });
 
@@ -107,6 +110,7 @@ test("CJ-09 bedtime +2h before a class day: class unmoved, 'only Xh sleep' warni
     { id: "class", key: "class", title: null, start: "09:00", end: "16:00" },
   ]);
   await page.goto("/plan");
+  await page.getByRole("button", { name: "Tomorrow", exact: true }).click();
   await page.getByRole("button", { name: "Plan Tomorrow" }).click();
   const sheet = page.getByRole("dialog");
   for (let i = 0; i < 8; i++) await sheet.getByRole("button", { name: "15 min later" }).click();
@@ -120,6 +124,7 @@ test("CJ-10 out late tonight: planned, Down starts at return, no short-sleep war
   const id = await newUserOn(page);
   await setAllTemplates(id, "10:00");
   await page.goto("/plan");
+  await page.getByRole("button", { name: "Tomorrow", exact: true }).click();
   await page.getByRole("button", { name: "Plan Tomorrow" }).click();
   const sheet = page.getByRole("dialog");
   await sheet.getByLabel("Home at").fill("03:30");
@@ -136,6 +141,7 @@ test("Plan week view: 7 days, Thu toggle, overrides don't touch templates; a11y 
   const id = await newUserOn(page);
   await page.goto("/plan");
   await expect(page.getByRole("list").first().getByRole("listitem")).toHaveCount(7);
+  await page.getByRole("button", { name: "Tomorrow", exact: true }).click();
   await page.getByRole("button", { name: "Plan Tomorrow" }).click();
   const sheet = page.getByRole("dialog");
   await sheet.getByRole("radio", { name: /Home weekend/ }).click();
@@ -144,8 +150,8 @@ test("Plan week view: 7 days, Thu toggle, overrides don't touch templates; a11y 
   await expectTouchTargets(page);
   await expectNoHorizontalScroll(page);
   await sheet.getByRole("button", { name: "Close", exact: true }).click();
-  await expect(page.getByRole("list").first().getByRole("listitem").nth(1)).toContainText("Home weekend");
-  await expect(page.getByRole("list").first().getByRole("listitem").nth(1)).toContainText("Edited");
+  await expect(page.getByRole("region", { name: "Tomorrow" })).toContainText("Home weekend");
+  await expect(page.getByRole("region", { name: "Tomorrow" })).toContainText("Edited");
   // Templates themselves are unchanged.
   const tpls = (await (
     await import("../helpers/db")
@@ -154,4 +160,22 @@ test("Plan week view: 7 days, Thu toggle, overrides don't touch templates; a11y 
     target_wake: string;
   }[];
   expect(tpls.find((t) => t.key === "class_wed")!.target_wake).toBe("07:30:00");
+});
+
+test("Night ritual: one tap tags every open block with the same reason", async ({ page }) => {
+  const id = await newUserOn(page);
+  await setWakeMinutesAgo(id, DOWN_TIME_MINUTES_AFTER_WAKE);
+  await page.goto("/today");
+  const sheet = page.getByRole("dialog", { name: "Night ritual" });
+  await expect(sheet).toBeVisible();
+  await sheet.getByRole("button", { name: "Next" }).click();
+  await sheet
+    .getByRole("region", { name: "Same reason for all" })
+    .getByRole("button", { name: "Sleepy" })
+    .click();
+  await expect(sheet.getByText("Every block is closed. Nice.")).toBeVisible();
+  await expect
+    .poll(async () => (await blockLogs(id)).filter((l) => l.miss_reason === "sleepy").length)
+    .toBe(5);
+  await expectTouchTargets(page);
 });

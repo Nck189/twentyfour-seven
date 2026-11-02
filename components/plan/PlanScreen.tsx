@@ -6,22 +6,25 @@ import {
   KeyboardSensor,
   MouseSensor,
   TouchSensor,
-  useDroppable,
   useSensor,
   useSensors,
+  pointerWithin,
+  rectIntersection,
   type Announcements,
+  type CollisionDetection,
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { useLocale, useTranslations } from "next-intl";
-import { useState, type ReactNode } from "react";
+import { useId, useState } from "react";
 import { BacklogList } from "@/components/backlog/BacklogList";
-import { CapacityBar } from "@/components/backlog/CapacityBar";
+import { DayCard } from "@/components/backlog/DayCard";
 import { ItemSheet } from "@/components/backlog/ItemSheet";
+import { WeekStrip } from "@/components/backlog/WeekStrip";
 import { Sheet } from "@/components/today/BlockSheet";
 import { useBlockText } from "@/components/today/useBlockText";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
-import { formatDayLong, formatTime } from "@/lib/format";
+import { formatDayLong, formatWeekdayShort } from "@/lib/format";
 import type { BlockKey } from "@/content/blocks";
 import { dayCapacity } from "@/lib/backlog";
 import { useBacklog } from "@/lib/backlog/useBacklog";
@@ -31,18 +34,14 @@ import { planFor, templateFor } from "@/lib/today/day";
 import { DayEditor } from "./DayEditor";
 import { SaveStatus } from "./SaveStatus";
 
-/** Blocks a task can be dropped onto directly on iPad/Mac. */
-const DROP_BLOCKS: BlockKey[] = ["focus", "work", "gradation", "free"];
-
-/** A drop target: a whole day (→ its Work block) or, on wide screens, one block of a day. */
-function Drop({ id, children, className }: { id: string; children: ReactNode; className: string }) {
-  const { setNodeRef, isOver } = useDroppable({ id });
-  return (
-    <div ref={setNodeRef} className={`${className} ${isOver ? "ring-2 ring-primary" : ""}`}>
-      {children}
-    </div>
-  );
-}
+/**
+ * Drop where the finger/pointer is (the dragged chip can be wide and overlap the big day card);
+ * keyboard drags have no pointer, so they fall back to rectangle overlap.
+ */
+const collision: CollisionDetection = (args) => {
+  const hits = pointerWithin(args);
+  return hits.length ? hits : rectIntersection(args);
+};
 
 /**
  * Week view (SPEC §4.1 / M4) + backlog week strip (SPEC §5 / M5): any future day can be planned
@@ -61,6 +60,9 @@ export function PlanScreen() {
   const [editing, setEditing] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  // Stable ids for dnd-kit's screen-reader hints (no server/client mismatch).
+  const dndId = useId();
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 6 } }),
@@ -119,90 +121,68 @@ export function PlanScreen() {
   function onDragEnd(e: DragEndEvent) {
     setDragging(null);
     if (!e.over) return;
+    // Drop ids: "day:<date>" (strip), "card:<date>" (day card), "card:<date>:<block>" (wide screens).
     const [, date, block] = String(e.over.id).split(":");
     void backlog.schedule(String(e.active.id), date, block as BlockKey | undefined);
   }
   const item = backlog.items.find((i) => i.id === editingItem);
+  const day = selected && days.includes(selected) ? selected : days[0];
+  const dayIndex = days.indexOf(day);
+  const tplOf = (d: string) => {
+    const tpl = templateFor(ctx, d);
+    return tpl ? (tpl.name ?? tt(tpl.key as Parameters<typeof tt>[0])) : "";
+  };
+  const editedOn = (d: string) => {
+    const row = ctx.dayPlans[d];
+    return Boolean(
+      row &&
+      (row.template_id ||
+        row.bedtime_override ||
+        row.late_night ||
+        row.attending === false ||
+        Object.keys(row.overrides ?? {}).length),
+    );
+  };
+  const stripDays = days.map((d, i) => {
+    const p = planFor(ctx, d);
+    const dayItems = backlog.items.filter((x) => x.scheduled_date === d && x.status !== "dropped");
+    return {
+      date: d,
+      label: dayLabel(d, i),
+      weekday: formatWeekdayShort(d, locale, ctx.timezone),
+      num: Number(d.slice(8)),
+      cap: dayItems.length ? dayCapacity(p, dayItems) : null,
+      warn: p.warnings.length > 0,
+    };
+  });
 
   return (
     <DndContext
+      id={dndId}
       sensors={sensors}
+      collisionDetection={collision}
       accessibility={{ announcements, screenReaderInstructions: { draggable: tb("a11y.instructions") } }}
       onDragStart={(e) => setDragging(String(e.active.id))}
       onDragCancel={() => setDragging(null)}
       onDragEnd={onDragEnd}
     >
-      <ScreenHeader title={t("title")} subtitle={t("week")} />
+      <ScreenHeader title={t("title")} />
       <SaveStatus state={plan.saving} />
-      <ol className="mx-4 mb-4 flex flex-col gap-2 lg:mx-6">
-        {days.map((d, i) => {
-          const p = planFor(ctx, d);
-          const tpl = templateFor(ctx, d);
-          const row = ctx.dayPlans[d];
-          const edited = Boolean(
-            row &&
-            (row.template_id ||
-              row.bedtime_override ||
-              row.late_night ||
-              row.attending === false ||
-              Object.keys(row.overrides ?? {}).length),
-          );
-          const dayItems = backlog.items.filter((x) => x.scheduled_date === d && x.status !== "dropped");
-          return (
-            <li key={d}>
-              <Drop id={`day:${d}`} className="flex flex-col gap-2 rounded-xl bg-surface">
-                <button
-                  type="button"
-                  onClick={() => setEditing(d)}
-                  aria-label={t("edit", { day: dayLabel(d, i) })}
-                  className="tap flex min-h-16 w-full items-center gap-3 rounded-xl px-3 py-2 text-left"
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-bold">{dayLabel(d, i)}</span>
-                    <span className="block text-sm text-muted">
-                      {tpl ? (tpl.name ?? tt(tpl.key as Parameters<typeof tt>[0])) : ""}
-                      {edited && (
-                        <span className="ml-2 rounded-full bg-primary-soft px-2 text-xs font-bold text-primary">
-                          {t("overridden")}
-                        </span>
-                      )}
-                      {dayItems.length > 0 && (
-                        <span className="ml-2">{tb("dayItems", { count: dayItems.length })}</span>
-                      )}
-                    </span>
-                  </span>
-                  <span className="text-right text-sm tabular-nums text-muted">
-                    {t("bed", { time: formatTime(p.bedtime, ctx.timezone) })}
-                    <br />
-                    {t("wake", { time: formatTime(p.wake, ctx.timezone) })}
-                  </span>
-                  {p.warnings.length > 0 && (
-                    <span aria-hidden="true" className="h-3 w-3 shrink-0 rounded-full bg-warn" />
-                  )}
-                </button>
-                {dayItems.length > 0 && (
-                  <div className="px-3 pb-2">
-                    <CapacityBar cap={dayCapacity(p, dayItems)} />
-                  </div>
-                )}
-                {dragging && (
-                  <div className="hidden gap-2 px-3 pb-2 lg:flex">
-                    {DROP_BLOCKS.map((b) => (
-                      <Drop
-                        key={b}
-                        id={`day:${d}:${b}`}
-                        className="flex min-h-11 flex-1 items-center justify-center rounded-lg bg-surface-2 text-sm font-bold text-muted"
-                      >
-                        {text.name(b)}
-                      </Drop>
-                    ))}
-                  </div>
-                )}
-              </Drop>
-            </li>
-          );
-        })}
-      </ol>
+      <WeekStrip days={stripDays} selected={day} onSelect={setSelected} label={t("week")} />
+      <DayCard
+        date={day}
+        label={dayLabel(day, dayIndex)}
+        templateName={tplOf(day)}
+        edited={editedOn(day)}
+        plan={planFor(ctx, day)}
+        items={backlog.items}
+        today={plan.today}
+        timezone={ctx.timezone}
+        dragging={dragging !== null}
+        onEdit={() => setEditing(day)}
+        onOpen={setEditingItem}
+        onComplete={backlog.complete}
+      />
 
       <BacklogList
         items={backlog.items}
@@ -211,13 +191,12 @@ export function PlanScreen() {
         error={backlog.error}
         onAdd={backlog.add}
         onOpen={setEditingItem}
+        onComplete={backlog.complete}
       />
 
       <DragOverlay>
         {dragging ? (
-          <div className="rounded-xl bg-surface p-3 font-bold shadow-none ring-2 ring-primary">
-            {titleOf(dragging)}
-          </div>
+          <div className="rounded-xl bg-surface p-3 font-bold ring-2 ring-primary">{titleOf(dragging)}</div>
         ) : null}
       </DragOverlay>
 
@@ -243,7 +222,7 @@ export function PlanScreen() {
           <ItemSheet
             key={item.id}
             item={item}
-            days={days.map((d, i) => ({ date: d, label: dayLabel(d, i) }))}
+            days={stripDays.map((d) => ({ date: d.date, label: d.label, weekday: d.weekday, num: d.num }))}
             onUpdate={(patch) => void backlog.update(item.id, patch)}
             onSchedule={(date, block) => void backlog.schedule(item.id, date, block)}
             onComplete={() => backlog.complete(item.id)}

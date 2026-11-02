@@ -5,6 +5,7 @@ import type { BlockKey } from "@/content/blocks";
 import { logEvent } from "@/lib/db/events";
 import { getSupabase } from "@/lib/supabase/client";
 import { DEFAULT_BLOCK, carryOver, type BacklogItem } from "./index";
+import type { Capture } from "./parse";
 
 const COLUMNS =
   "id, title, tag, estimate_min, priority, deadline, scheduled_date, block, status, carry_count, checklist, done_at, created_at";
@@ -71,22 +72,32 @@ export function useBacklog(userId: string | null) {
     [show],
   );
 
+  /** Quick capture: a parsed line (see `parseCapture`) becomes an item; a day word schedules it. */
   const add = useCallback(
-    async (title: string) => {
-      const clean = title.trim();
+    async (capture: Capture) => {
+      const clean = capture.title.trim();
       if (!clean || !userId) return;
-      const { data, error: err } = await client
-        .from("backlog_items")
-        .insert({ user_id: userId, title: clean.slice(0, 500) })
-        .select(COLUMNS)
-        .single();
+      const row: Record<string, unknown> = { user_id: userId, title: clean.slice(0, 500) };
+      if (capture.estimate_min) row.estimate_min = capture.estimate_min;
+      if (capture.priority) row.priority = capture.priority;
+      if (capture.deadline) row.deadline = capture.deadline;
+      if (capture.tag) row.tag = capture.tag;
+      if (capture.scheduled_date) {
+        row.scheduled_date = capture.scheduled_date;
+        row.block = DEFAULT_BLOCK;
+        row.status = "scheduled";
+      }
+      const { data, error: err } = await client.from("backlog_items").insert(row).select(COLUMNS).single();
       if (err || !data) {
         setError(true);
         return;
       }
       setError(false);
       show([...itemsRef.current, data as BacklogItem]);
-      void logEvent("backlog_item_added", { id: (data as BacklogItem).id });
+      void logEvent("backlog_item_added", {
+        id: (data as BacklogItem).id,
+        parsed: Object.keys(row).filter((k) => k !== "user_id" && k !== "title"),
+      });
     },
     [client, userId, show],
   );
