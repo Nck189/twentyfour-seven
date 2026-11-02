@@ -60,3 +60,34 @@ export async function gameState(userId: string) {
   const [g] = (await rest(`game_state?user_id=eq.${userId}&select=*`)) as Record<string, number>[];
   return g;
 }
+
+/** Same target wake (and optional fixed events) for every template, so any real date behaves the same. */
+export async function setAllTemplates(
+  userId: string,
+  target: string,
+  fixedEvents: { id: string; key: string; title: string | null; start: string; end: string }[] = [],
+) {
+  await rest(`templates?user_id=eq.${userId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ target_wake: target, fixed_events: fixedEvents, options: {} }),
+  });
+}
+
+export async function dayPlans(userId: string) {
+  return (await rest(`day_plans?user_id=eq.${userId}&select=*`)) as Record<string, unknown>[];
+}
+
+/** Inserts a wake event for a past date via the user's backfill RPC equivalent (admin). */
+export async function addWakeEvent(userId: string, date: string, inWindow: boolean) {
+  await rest("wake_events", {
+    method: "POST",
+    body: JSON.stringify({
+      user_id: userId,
+      date,
+      target_wake: new Date(Date.now() - 86400_000).toISOString(),
+      pressed_at: new Date(Date.now() - 86400_000).toISOString(),
+      in_window: inWindow,
+      backfilled: false,
+    }),
+  });
+}

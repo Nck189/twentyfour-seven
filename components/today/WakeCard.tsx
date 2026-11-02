@@ -5,6 +5,7 @@ import { useState } from "react";
 import { SunIcon } from "@/components/shell/TabIcons";
 import { formatTime } from "@/lib/format";
 import { sfx } from "@/lib/sound/sfx";
+import { RewardBurst } from "./RewardBurst";
 import type { WakeEvent } from "@/lib/today/useToday";
 
 /** SPEC §4.2: one big button, 1 tap from launch. The server decides the window and the ticket. */
@@ -23,19 +24,27 @@ export function WakeCard({
   const tc = useTranslations("today");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
+  const [celebrate, setCelebrate] = useState(false);
 
   if (wake) {
     const time = formatTime(new Date(wake.pressed_at), timezone);
     return (
-      <section
-        aria-live="polite"
-        className={`mx-4 mb-3 flex items-center gap-3 rounded-[var(--radius-lg)] p-4 lg:mx-6 ${
-          wake.in_window ? "bg-warn-soft" : "bg-surface"
-        }`}
-      >
-        <SunIcon className={`h-8 w-8 shrink-0 ${wake.in_window ? "text-warn" : "text-muted"}`} />
-        <p className="font-bold">{wake.in_window ? t("doneInWindow", { time }) : t("doneLate", { time })}</p>
-      </section>
+      <>
+        {celebrate && (
+          <RewardBurst kind="sunrise" label={t("ticketBurst")} onDone={() => setCelebrate(false)} />
+        )}
+        <section
+          aria-live="polite"
+          className={`mx-4 mb-3 flex items-center gap-3 rounded-[var(--radius-lg)] p-4 lg:mx-6 ${
+            wake.in_window ? "bg-warn-soft" : "bg-surface"
+          }`}
+        >
+          <SunIcon className={`h-8 w-8 shrink-0 ${wake.in_window ? "text-warn" : "text-muted"}`} />
+          <p className="font-bold">
+            {wake.in_window ? t("doneInWindow", { time }) : t("doneLate", { time })}
+          </p>
+        </section>
+      </>
     );
   }
 
@@ -49,8 +58,10 @@ export function WakeCard({
           setError(false);
           try {
             const res = await onPress();
-            if (res.in_window) sfx.sunrise();
-            else sfx.tick();
+            if (res.in_window) {
+              sfx.sunrise();
+              setCelebrate(true);
+            } else sfx.tick();
           } catch {
             setError(true);
           } finally {

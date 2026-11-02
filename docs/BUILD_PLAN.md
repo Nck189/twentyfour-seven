@@ -218,11 +218,15 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 > - performance pass (Lighthouse PWA ≥ 90)
 > - accessibility pass
 > - empty states
-> - error and offline states
+> - error and offline states — incl. a persistent offline queue for check-ins that survives closing the app (Minnie 2026-11-02; step 1, auto-retry on reconnect, shipped in M3)
 > - estimate-vs-actual analytics
 > - final export/import
 
 ---
 
 ## Status
-- [ ] M0 … update this list as milestones finish (deferred items go here)
+- [ ] M0 — G1–G6 ✅, G7 re-review done; report `docs/qa/M0-report.md` (final ✅ after prod deploy of the M1–M4 branch)
+- [ ] M1 — built; G6 on prod + G7 re-review pending
+- [x] M2 — ✅ 2026-11-02 · `docs/qa/M2-report.md` · deferred: M2-F2 (S3), M2-F4/F5 (S4); open spec question M2-F3
+- [ ] M3 — built + review fixes; G6 on prod + G7 re-review pending
+- [ ] M4 — built; QC not started (seed planting deferred to M6)

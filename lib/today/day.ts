@@ -50,8 +50,20 @@ export function templateFor(ctx: DayContext, date: string): TemplateRow | undefi
   return templateForWeekday(ctx.templates, isoWeekday(date));
 }
 
+/** Tomorrow's real bedtime and Down length when it was overridden (bedtime push / late night). */
+function nextNight(
+  ctx: DayContext,
+  next: string,
+  depth: number,
+): { nextBedtimeOverride?: Date; nextDownMin?: number } {
+  const row = ctx.dayPlans[next];
+  if (depth > 0 || !(row?.bedtime_override || row?.late_night)) return {};
+  const p = planFor(ctx, next, 1);
+  return { nextBedtimeOverride: p.bedtime, nextDownMin: p.blocks[0].durationMin };
+}
+
 /** Engine plan for date D from templates + per-day overrides. Templates stay untouched. */
-export function planFor(ctx: DayContext, date: string): DayPlan {
+export function planFor(ctx: DayContext, date: string, depth = 0): DayPlan {
   const next = addDays(date, 1);
   const row = ctx.dayPlans[date];
   const tpl = templateFor(ctx, date);
@@ -79,6 +91,8 @@ export function planFor(ctx: DayContext, date: string): DayPlan {
     fixedEvents: day.fixedEvents,
     subSlots,
     bedtimeOverride: row?.bedtime_override ? new Date(row.bedtime_override) : undefined,
+    // The day ends at tomorrow's real bedtime (override / late night), not just the template target.
+    ...nextNight(ctx, next, depth),
     lateNightReturn: row?.late_night?.return_at ? new Date(row.late_night.return_at) : undefined,
     gymClose: ctx.gymClose,
   });
@@ -168,4 +182,29 @@ export function isPastBlock(block: Pick<TimelineBlock, "end">, now: Date): boole
 export function inWakeWindow(target: Date, pressed: Date, windowMin = 15): boolean {
   const diff = pressed.getTime() - target.getTime();
   return diff <= windowMin * 60_000 && diff >= -180 * 60_000;
+}
+
+/** The server accepts "I'm up" from 3 h before the target (see press_wake). */
+export const WAKE_EARLY_MS = 3 * 3600_000;
+
+export type WakeLike = { date: string; pressed_at: string; in_window: boolean };
+
+/**
+ * Which "I'm up" card to show. Same rule as the server: a press belongs to the calendar date.
+ * From 3 h before today's target the card is today's (button or result); before that it shows
+ * the last result (e.g. yesterday's) and no button.
+ */
+export function pickWakeCard<W extends WakeLike>(
+  ctx: DayContext,
+  now: Date,
+  dayDate: string,
+  wakes: Record<string, W>,
+): { date: string; target: Date; event: W | null; canPress: boolean } | null {
+  const calDate = localDate(now, ctx.timezone);
+  const target = planFor(ctx, calDate).wake;
+  if (now.getTime() >= target.getTime() - WAKE_EARLY_MS) {
+    return { date: calDate, target, event: wakes[calDate] ?? null, canPress: !wakes[calDate] };
+  }
+  const prev = wakes[dayDate];
+  return prev ? { date: dayDate, target: planFor(ctx, dayDate).wake, event: prev, canPress: false } : null;
 }

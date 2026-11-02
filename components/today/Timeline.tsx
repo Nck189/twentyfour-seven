@@ -89,7 +89,7 @@ export function Timeline({
               <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-bold ${STATUS_STYLE[status]}`}>
                 {log.backfilled && status === "done" ? t("status.backfilled") : t(`status.${status}`)}
               </span>
-              {isCurrent && (
+              {isCurrent && progress > 0.03 && (
                 <span
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-x-0 h-0.5 bg-accent"

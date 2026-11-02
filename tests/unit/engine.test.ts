@@ -5,6 +5,7 @@ import { DEFAULT_TEMPLATES } from "@/content/defaults";
 import {
   CHAIN_AFTER_BEDTIME,
   MIN_DURATION,
+  WORK_MIN_SHARE,
   bedtimeDrift,
   dayMinutes,
   nextKaizenTarget,
@@ -170,24 +171,30 @@ describe("SPEC §3 scenarios", () => {
     expect(block(gone, "free").subSlots[0].clipped).toBe(true);
   });
 
-  it("compression hits the minimums: Down/Wake stop at 30 min, Sleep goes last with a warning", () => {
-    // +10h on a free day: window is 14h for 24h of blocks.
+  it("compression order: Free, Gradation, Focus, then Work (to half), then Down — sleep kept", () => {
+    // +10h on a free day: window is 14h for 24h of blocks, 600 min must give.
     const p = planDay(input({ bedtimeOverride: at("2026-11-02", "12:30") }));
     expect(block(p, "free").durationMin).toBe(0);
     expect(block(p, "gradation").durationMin).toBe(0);
     expect(block(p, "focus").durationMin).toBe(0);
-    expect(block(p, "wake").durationMin).toBe(30);
-    expect(block(p, "work").durationMin).toBe(540);
-    // next Down (D+1) shrank to its 30-min minimum: free ends 30 min before next bedtime
-    expect(p.nextBedtime.getTime() - block(p, "free").end.getTime()).toBe(30 * 60_000);
-    expect(block(p, "sleep").durationMin).toBe(840 - 30 - 30 - 540);
-    expect(p.warnings.some((w) => w.type === "short_sleep")).toBe(true);
+    expect(block(p, "work").durationMin).toBe(270);
+    // next Down (D+1) gave the last 30 min: free ends 60 min before next bedtime
+    expect(p.nextBedtime.getTime() - block(p, "free").end.getTime()).toBe(60 * 60_000);
+    expect(block(p, "wake").durationMin).toBe(60);
+    expect(block(p, "sleep").durationMin).toBe(450);
+    expect(p.warnings.some((w) => w.type === "short_sleep")).toBe(false);
   });
 
   it("reports day_overfull when even the minimums don't fit", () => {
     const p = planDay(input({ bedtimeOverride: at("2026-11-02", "22:00") }));
     expect(p.warnings.some((w) => w.type === "day_overfull")).toBe(true);
     expect(block(p, "sleep").durationMin).toBe(0);
+  });
+
+  it("a shorter next Down (late night tomorrow) gives the evening to Free", () => {
+    const p = planDay(input({ nextDownMin: 30 }));
+    expect(block(p, "free").durationMin).toBe(210);
+    expect(p.nextBedtime.getTime() - block(p, "free").end.getTime()).toBe(30 * 60_000);
   });
 
   it("an earlier bedtime gives the extra time to Free", () => {
@@ -236,6 +243,42 @@ describe("fixed events", () => {
     const p = planDay(input({ date: "2026-11-07", ...sat, nextTargetWake: "10:00" }));
     expect(block(p, "work").start.getTime()).toBeLessThanOrEqual(at("2026-11-07", "12:00").getTime());
     expect(p.warnings).toEqual([]);
+  });
+});
+
+describe("Work gives way before sleep (Minnie, review M2-F3)", () => {
+  it("free day: an evening event shrinks Work, not Sleep — wake stays put, no sleep warning", () => {
+    // Free must start by 17:00 (normally 22:30): 330 min must give.
+    const p = planDay(input({ fixedEvents: [{ id: "dinner", start: "17:00", end: "19:00", host: "free" }] }));
+    expect(block(p, "gradation").durationMin).toBe(0);
+    expect(block(p, "focus").durationMin).toBe(0);
+    expect(block(p, "work").durationMin).toBe(540 - 180);
+    expect(block(p, "sleep").durationMin).toBe(450);
+    expect(hm(p.wake)).toBe("10:00");
+    expect(p.warnings.filter((w) => w.type === "short_sleep")).toEqual([]);
+  });
+
+  it("Work shrinks to half at most; then Down/Wake/Sleep give as before", () => {
+    // +14h on a free day: window 10h for 24h of blocks.
+    const p = planDay(input({ bedtimeOverride: at("2026-11-02", "16:30") }));
+    expect(block(p, "work").durationMin).toBe(WORK_MIN_SHARE * 540);
+    expect(block(p, "wake").durationMin).toBe(30);
+    expect(block(p, "sleep").durationMin).toBe(600 - 270 - 30 - 30);
+    expect(p.warnings.some((w) => w.type === "short_sleep")).toBe(true);
+  });
+
+  it("a day with a class or appointment in Work keeps Work whole (spec order)", () => {
+    const wed = resolveDay(tpl("class_wed"), DEFAULT_BLOCKS);
+    const p = planDay(
+      input({
+        date: "2026-11-04",
+        ...wed,
+        nextTargetWake: "07:30",
+        bedtimeOverride: at("2026-11-04", "02:00"),
+      }),
+    );
+    expect(block(p, "work").durationMin).toBe(540);
+    expect(block(p, "sleep").durationMin).toBe(390);
   });
 });
 

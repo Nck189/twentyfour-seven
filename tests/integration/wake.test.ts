@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { localParts } from "@/lib/time";
+import { addDays, localDate, localParts } from "@/lib/time";
 import { newUser } from "./helpers";
 
 const TZ = "Asia/Bangkok";
@@ -54,9 +54,10 @@ describe("press_wake (CJ-03 / CJ-04)", () => {
 
   it("CJ-06 backfill: counts, labeled backfilled, never a ticket; no future backfill", async () => {
     const u = await newUser("wake-back");
+    const past = addDays(localDate(new Date(), TZ), -3);
     const { data, error } = await u.client.rpc("backfill_wake", {
-      p_date: "2026-10-01",
-      p_pressed_at: "2026-10-01T03:00:00Z",
+      p_date: past,
+      p_pressed_at: new Date(Date.now() - 3 * 86400_000).toISOString(),
     });
     expect(error).toBeNull();
     expect(data).toMatchObject({ backfilled: true });

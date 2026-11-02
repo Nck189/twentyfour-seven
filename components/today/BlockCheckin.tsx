@@ -53,8 +53,9 @@ function Scale({
 }
 
 /**
- * One block's check-in (SPEC §4.3): first-10 (auto-starts the block), checklist, location,
- * close (1 tap), then an optional mood/energy rating. Budget: first-10 + 3 items + close = 5 taps.
+ * One block's check-in (SPEC §4.3), one step at a time: first-10 (auto-starts the block) and
+ * the checklist; "Finish" appears once the block has started; after closing, optional location
+ * (Focus/Work), mood and energy. Budget: first-10 + 3 items + close = 5 taps.
  */
 export function BlockCheckin({
   block,
@@ -90,9 +91,14 @@ export function BlockCheckin({
         {started ? (
           <span className="text-sm text-muted">
             {t("started", { time: formatTime(started, timezone) })} ·{" "}
-            <span className={isOnTime(block.start, started) ? "text-primary" : "text-warn"}>
-              {isOnTime(block.start, started) ? t("onTime") : t("late")}
-            </span>
+            {log.backfilled ? (
+              // A backfill never claims "on time" (no rewards, no inflated stats).
+              <span className="text-muted">{t("backfilledStart")}</span>
+            ) : (
+              <span className={isOnTime(block.start, started) ? "text-primary" : "text-warn"}>
+                {isOnTime(block.start, started) ? t("onTime") : t("late")}
+              </span>
+            )}
           </span>
         ) : (
           <Button
@@ -157,21 +163,6 @@ export function BlockCheckin({
         )}
       </section>
 
-      {(block.key === "focus" || block.key === "work") && (
-        <section aria-label={t("location")}>
-          <h3 className="mb-1 text-sm font-bold text-muted">{t("location")}</h3>
-          <Segmented<"home" | "out">
-            label={t("location")}
-            value={(log.location ?? "") as "home" | "out"}
-            onChange={(v) => void actions.setLocation(block, v, new Date())}
-            options={[
-              { value: "home", label: t("home") },
-              { value: "out", label: t("out") },
-            ]}
-          />
-        </section>
-      )}
-
       {closed ? (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">
@@ -182,6 +173,20 @@ export function BlockCheckin({
               {t("reopen")}
             </Button>
           </div>
+          {(block.key === "focus" || block.key === "work") && (
+            <section aria-label={t("location")}>
+              <h3 className="mb-1 text-sm font-bold text-muted">{t("location")}</h3>
+              <Segmented<"home" | "out">
+                label={t("location")}
+                value={(log.location ?? "") as "home" | "out"}
+                onChange={(v) => void actions.setLocation(block, v, new Date())}
+                options={[
+                  { value: "home", label: t("home") },
+                  { value: "out", label: t("out") },
+                ]}
+              />
+            </section>
+          )}
           <p className="text-xs text-muted">
             {t("mood")} / {t("energy")} · {t("optional")}
           </p>
@@ -202,7 +207,7 @@ export function BlockCheckin({
             }}
           />
         </div>
-      ) : (
+      ) : started || past ? (
         <Button
           onClick={() => {
             sfx.pop();
@@ -211,7 +216,7 @@ export function BlockCheckin({
         >
           {t("close")}
         </Button>
-      )}
+      ) : null}
     </div>
   );
 }

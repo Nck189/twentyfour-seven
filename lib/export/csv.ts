@@ -4,7 +4,9 @@ export function toCsv(rows: Record<string, unknown>[]): string {
   const columns = [...new Set(rows.flatMap((r) => Object.keys(r)))];
   const cell = (v: unknown): string => {
     if (v === null || v === undefined) return "";
-    const s = typeof v === "object" ? JSON.stringify(v) : String(v);
+    let s = typeof v === "object" ? JSON.stringify(v) : String(v);
+    // Spreadsheet formula injection: text starting with = + - @ (or tab/CR) gets a leading apostrophe.
+    if (typeof v === "string" && /^[=+\-@\t\r]/.test(s)) s = `'${s}`;
     return /[",\r\n]/.test(s) || /^\s|\s$/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const lines = [columns.map(cell).join(","), ...rows.map((r) => columns.map((c) => cell(r[c])).join(","))];

@@ -3,6 +3,7 @@ import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } fro
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import { blockLogs, gameState, setChecklist, setWakeMinutesAgo, userIdFor } from "../helpers/db";
 import { IS_PROD_RUN } from "../helpers/env";
+import { localDate } from "@/lib/time";
 
 /**
  * M3 Today journeys. Real clock on purpose: the server marks any check-in timestamp >10 min
@@ -19,14 +20,21 @@ async function setup(page: Page, wakeMinutesAgo: number, checklist?: { block: st
   await setWakeMinutesAgo(id, wakeMinutesAgo);
   if (checklist) await setChecklist(id, checklist.block, checklist.items);
   await page.goto("/today");
-  await expect(page.getByRole("list", { name: "Today" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "See the whole day" })).toBeVisible();
   return id;
+}
+
+/** The full-day timeline is folded away by default (one thing at a time). */
+async function showDay(page: Page) {
+  await page.getByRole("button", { name: "See the whole day" }).click();
+  await expect(page.getByRole("list", { name: "Today" })).toBeVisible();
 }
 
 test("timeline shows the 7 blocks from wake to next wake, with the current block highlighted", async ({
   page,
 }) => {
   await setup(page, 150); // wake 1h + focus 1.5h → 2.5h after wake is Work
+  await showDay(page);
   const rows = page.getByRole("list", { name: "Today" }).getByRole("listitem");
   await expect(rows).toHaveCount(7);
   await expect(rows.nth(0)).toContainText("Wake");
@@ -38,7 +46,13 @@ test("timeline shows the 7 blocks from wake to next wake, with the current block
   await expectNoHorizontalScroll(page);
 });
 
+/** "Woke N min ago" must stay on today's calendar date: the I'm up card belongs to the date. */
+const wokeYesterday = (minutesAgo: number) =>
+  localDate(new Date(Date.now() - minutesAgo * 60_000), "Asia/Bangkok") !==
+  localDate(new Date(), "Asia/Bangkok");
+
 test("CJ-03 I'm up within the window → +1 Sunrise ticket", async ({ page }) => {
+  test.skip(wokeYesterday(15), "a wake 10 min ago would land on yesterday's date");
   const id = await setup(page, 10);
   await page.getByRole("button", { name: /I'm up — out of bed/ }).click();
   await expect(page.getByText(/on time! \+1 Sunrise ticket/)).toBeVisible();
@@ -49,6 +63,7 @@ test("CJ-03 I'm up within the window → +1 Sunrise ticket", async ({ page }) =>
 });
 
 test("CJ-04 I'm up 20 min late → logged, no ticket", async ({ page }) => {
+  test.skip(wokeYesterday(25), "a wake 20 min ago would land on yesterday's date");
   const id = await setup(page, 20);
   await page.getByRole("button", { name: /I'm up — out of bed/ }).click();
   await expect(page.getByText(/Logged — no ticket this time/)).toBeVisible();
@@ -68,7 +83,7 @@ test("CJ-05 check-in: first-10 → 3 items → close in ≤ 5 taps and ≤ 5 s",
   await tap("Inbox zero");
   await tap("YOP draft");
   await tap("Email advisor");
-  await card.getByRole("button", { name: "Close block" }).click();
+  await card.getByRole("button", { name: "Finish block" }).click();
   taps++;
   await expect(card.getByText(/Closed \d\d:\d\d/)).toBeVisible();
   const elapsed = Date.now() - t0;
@@ -82,6 +97,7 @@ test("CJ-05 check-in: first-10 → 3 items → close in ≤ 5 taps and ≤ 5 s",
   expect(log.first10_at).toBeTruthy();
   expect(log.started_at).toBeTruthy();
   expect(log.closed_at).toBeTruthy();
+  await showDay(page);
   await expect(page.locator('[aria-current="step"]')).toContainText("Done");
   // Optional mood/energy after closing (not part of the 5-tap budget).
   await card.getByRole("radio", { name: "Mood 4" }).click();
@@ -93,11 +109,12 @@ test("CJ-05 check-in: first-10 → 3 items → close in ≤ 5 taps and ≤ 5 s",
 
 test("CJ-06 backfilling a past block: counts, labeled backfilled", async ({ page }) => {
   const id = await setup(page, 150);
+  await showDay(page);
   await page.getByRole("button", { name: "Open Wake" }).click();
   const sheet = page.getByRole("dialog", { name: "Wake" });
   await expect(sheet.getByRole("note")).toContainText("backfilled");
   await sheet.getByRole("checkbox", { name: /Leave the bedroom/ }).click();
-  await sheet.getByRole("button", { name: "Close block" }).click();
+  await sheet.getByRole("button", { name: "Finish block" }).click();
   await expect(sheet.getByText(/Closed \d\d:\d\d/)).toBeVisible();
   await sheet.getByRole("button", { name: "Close", exact: true }).click();
   await expect(page.getByRole("button", { name: "Open Wake" })).toContainText("Backfilled");
@@ -105,17 +122,44 @@ test("CJ-06 backfilling a past block: counts, labeled backfilled", async ({ page
   expect((await gameState(id)).tickets).toBe(0);
 });
 
-test("location tag on Work and vacation mode", async ({ page }) => {
+test("location is asked when Work is finished; vacation mode lives in the menu", async ({ page }) => {
   const id = await setup(page, 150);
   const card = page.getByRole("region", { name: "Current block" });
+  await expect(card.getByRole("radiogroup", { name: "Where were you?" })).toHaveCount(0);
+  await card.getByRole("button", { name: "Start", exact: true }).click();
+  await card.getByRole("button", { name: "Finish block" }).click();
   await card.getByRole("radio", { name: "Out" }).click();
   await expect.poll(async () => (await blockLogs(id)).find((l) => l.block === "work")?.location).toBe("out");
-  await page.getByRole("radiogroup", { name: "Day mode" }).getByRole("radio", { name: "Vacation" }).click();
+  await page.getByRole("button", { name: "More for today" }).click();
+  const menu = page.getByRole("dialog", { name: "More for today" });
+  await menu.getByRole("radiogroup", { name: "Day mode" }).getByRole("radio", { name: "Vacation" }).click();
+  await menu.getByRole("button", { name: "Close", exact: true }).click();
   await expect(page.getByText("Vacation mode")).toBeVisible();
+});
+
+test("one thing at a time: the current block, a Next line; the rest is folded away", async ({ page }) => {
+  await setup(page, 150, { block: "work", items: ["Alpha"] });
+  const card = page.getByRole("region", { name: "Current block" });
+  await expect(card).toContainText("Work");
+  // Nothing to finish before the block has started.
+  await expect(card.getByRole("button", { name: "Finish block" })).toHaveCount(0);
+  await expect(page.getByText(/^Next: Gradation · \d\d:\d\d$/)).toBeVisible();
+  await expect(page.getByRole("list", { name: "Today" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "20 min" })).toHaveCount(0);
+  await expect(page.getByRole("radiogroup", { name: "Day mode" })).toHaveCount(0);
+  await card.getByRole("checkbox", { name: "Alpha", exact: true }).click();
+  await expect(card.getByRole("button", { name: "Finish block" })).toBeVisible();
+  await page.getByRole("button", { name: "More for today" }).click();
+  await expect(
+    page.getByRole("dialog", { name: "More for today" }).getByRole("button", { name: "20 min" }),
+  ).toBeVisible();
+  await expectNoSeriousA11y(page);
+  await expectTouchTargets(page);
 });
 
 test("power nap timer starts and can be stopped", async ({ page }) => {
   await setup(page, 150);
+  await page.getByRole("button", { name: "More for today" }).click();
   await page.getByRole("button", { name: "20 min" }).click();
   await expect(page.getByText(/Nap ends at \d\d:\d\d/)).toBeVisible();
   await page.getByRole("button", { name: "Stop" }).click();
@@ -137,6 +181,11 @@ test("CJ-15 two devices: a tick on one shows up on the other", async ({ browser 
   await b.goto("/today");
   await a.getByRole("region", { name: "Current block" }).getByRole("checkbox", { name: "One" }).click();
   await b.getByRole("region", { name: "Current block" }).getByRole("checkbox", { name: "Two" }).click();
+  // Diagnostics: the tap must stick on B with no save error.
+  await expect(
+    b.getByRole("region", { name: "Current block" }).getByRole("checkbox", { name: "Two" }),
+  ).toHaveAttribute("aria-checked", "true");
+  await expect(b.getByRole("main").getByRole("alert")).toHaveCount(0);
   // Both items survive (atomic toggles) and both devices converge.
   await expect
     .poll(async () => ((await blockLogs(id)).find((l) => l.block === "work")?.items_done as string[])?.sort())

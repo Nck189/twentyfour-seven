@@ -78,9 +78,10 @@ Owner/first user: Minnie (Bangkok, Asia/Bangkok). Personal use first, designed s
   1. Free
   2. Gradation
   3. Focus
-  4. Down (min 30m)
-  5. Wake (min 30m)
-  6. Sleep, last — with a warning "only Xh sleep"
+  4. Work (min 50% of its length) — skipped on a day with a fixed event in Work (class or appointment): she has to show up for those anyway *(Minnie, 2026-11-02: protect sleep before Work, but keep balance)*
+  5. Down (min 30m)
+  6. Wake (min 30m)
+  7. Sleep, last — with a warning "only Xh sleep"
 - **Guardrails:**
   - Warn when planned bedtime deviates more than 60 min from the 7-day mean.
   - Show a sleep regularity score.
@@ -124,7 +125,8 @@ Owner/first user: Minnie (Bangkok, Asia/Bangkok). Personal use first, designed s
 4. **Close:** optional mood/energy 1–5.
 
 Extras:
-- **Location tag** (home / out) on Focus and Work.
+- **Location tag** (home / out) on Focus and Work — asked when the block is finished.
+- **One thing at a time (Minnie, 2026-11-02):** Today shows only what the moment needs — the "I'm up" card in the morning, the current block (Finish appears once it has started), a one-line "Next: …", and the Night ritual at Down. The full-day timeline is folded behind "See the whole day"; the nap timer and Vacation/Sick mode live in the ⋯ menu (a running nap shows on Today).
 - **Backfill** is allowed: it counts toward %, is labeled `backfilled`, and earns no tickets or mutations.
 
 ### 4.4 Other

@@ -32,6 +32,8 @@ export type PlanInput = {
   durations: Record<BlockKey, number>;
   /** Sleep duration used to derive D+1's target bedtime (defaults to durations.sleep). */
   nextSleepMin?: number;
+  /** Length of the next night's Down (shorter after a late night). Defaults to durations.down. */
+  nextDownMin?: number;
   fixedEvents?: FixedEventInput[];
   subSlots?: Partial<Record<BlockKey, SubSlot[]>>;
   /** Bedtime the night before D (instant). Omit = template target. */

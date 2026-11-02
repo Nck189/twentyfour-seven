@@ -22,6 +22,13 @@ describe("toCsv", () => {
   it("keeps Thai text intact", () => {
     expect(toCsv([{ title: "อ่านหนังสือ" }])).toContain("อ่านหนังสือ");
   });
+  it("neutralises spreadsheet formulas in text cells (M1-F4)", () => {
+    expect(toCsv([{ t: "=HYPERLINK(1)" }, { t: "+1" }, { t: "-2" }, { t: "@x" }, { t: "ok" }])).toBe(
+      "\uFEFFt\r\n'=HYPERLINK(1)\r\n'+1\r\n'-2\r\n'@x\r\nok\r\n",
+    );
+    expect(toCsv([{ n: -5 }])).toBe("\uFEFFn\r\n-5\r\n");
+  });
+
   it("handles an empty table", () => {
     expect(toCsv([])).toBe("﻿");
   });

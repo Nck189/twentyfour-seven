@@ -16,7 +16,7 @@ test.describe("data", () => {
     expect(json.suggestedFilename()).toMatch(/^24-7-export-\d{4}-\d{2}-\d{2}\.json$/);
     const bundle = JSON.parse(readFileSync((await json.path())!, "utf8"));
     expect(bundle.app).toBe("24/7");
-    expect(Object.keys(bundle.tables)).toHaveLength(16);
+    expect(Object.keys(bundle.tables)).toHaveLength(17);
     expect(bundle.tables.templates).toHaveLength(6);
     expect(bundle.tables.settings[0].weekly_exercise_goal).toBe(3);
 
