@@ -29,3 +29,5 @@ screenshots/
 *.tsbuildinfo
 next-env.d.ts
 .lighthouseci/
+.vercel
+.env*

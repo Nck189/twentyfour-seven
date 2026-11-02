@@ -1,12 +1,12 @@
 import type { Page } from "@playwright/test";
-import { SB_SERVICE_KEY, SB_URL } from "./env";
+import { IS_PROD_RUN, PROD_SMOKE_EMAIL, SB_SERVICE_KEY, SB_URL } from "./env";
 
 export function uniqueEmail(tag = "e2e") {
   return `${tag}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@test.local`;
 }
 
 /** Signs a (new) user in through the real /auth/callback route using an admin-generated link. */
-export async function signIn(page: Page, email = uniqueEmail()) {
+export async function signIn(page: Page, email = IS_PROD_RUN ? PROD_SMOKE_EMAIL : uniqueEmail()) {
   const res = await fetch(`${SB_URL}/auth/v1/admin/generate_link`, {
     method: "POST",
     headers: {

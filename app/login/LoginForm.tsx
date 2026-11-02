@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { AppMark } from "@/components/art/AppMark";
 import { Button } from "@/components/ui/Button";
+import { parseSignInInput } from "@/lib/auth/parseSignInInput";
 import { getSupabase } from "@/lib/supabase/client";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -44,13 +45,18 @@ export function LoginForm() {
 
   async function verify(e: FormEvent) {
     e.preventDefault();
+    const parsed = parseSignInInput(code);
+    if (parsed.kind === "invalid") {
+      setError(t("invalidCode"));
+      return;
+    }
     setBusy(true);
     setError(null);
-    const { error: err } = await getSupabase().auth.verifyOtp({
-      email,
-      token: code.trim(),
-      type: "email",
-    });
+    const auth = getSupabase().auth;
+    const { error: err } =
+      parsed.kind === "code"
+        ? await auth.verifyOtp({ email, token: parsed.code, type: "email" })
+        : await auth.verifyOtp({ token_hash: parsed.tokenHash, type: parsed.type });
     setBusy(false);
     if (err) setError(t("invalidCode"));
     else router.replace("/today");
@@ -85,21 +91,24 @@ export function LoginForm() {
         </form>
       ) : (
         <form onSubmit={verify} className="flex flex-col gap-3">
-          <p className="text-muted">{t("codeHint", { email })}</p>
+          <p className="font-bold">{t("codeHint", { email })}</p>
+          <p className="text-muted">{t("pasteHint")}</p>
           <label htmlFor="code" className="font-bold">
             {t("codeLabel")}
           </label>
-          <input
+          <textarea
             id="code"
-            inputMode="numeric"
+            rows={3}
             autoComplete="one-time-code"
-            pattern="[0-9]*"
-            maxLength={10}
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder={t("pastePlaceholder")}
             value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-            className="min-h-12 rounded-xl border border-line bg-surface px-4 text-center text-2xl tracking-[0.4em]"
+            onChange={(e) => setCode(e.target.value)}
+            className="min-h-12 rounded-xl border border-line bg-surface px-4 py-3 text-base break-all"
           />
-          <Button type="submit" disabled={busy || code.length < 6}>
+          <Button type="submit" disabled={busy || code.trim().length < 6}>
             {busy ? t("verifying") : t("verify")}
           </Button>
           <div className="flex justify-between">
