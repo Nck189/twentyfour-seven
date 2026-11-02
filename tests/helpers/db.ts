@@ -91,3 +91,19 @@ export async function addWakeEvent(userId: string, date: string, inWindow: boole
     }),
   });
 }
+
+/** Adds a backlog item directly (setup for M5 journeys). */
+export async function addBacklogItem(userId: string, item: Record<string, unknown>) {
+  const [row] = (await rest("backlog_items", {
+    method: "POST",
+    body: JSON.stringify({ user_id: userId, ...item }),
+  })) as Record<string, unknown>[];
+  return row;
+}
+
+export async function backlogItems(userId: string) {
+  return (await rest(`backlog_items?user_id=eq.${userId}&select=*&order=created_at`)) as Record<
+    string,
+    unknown
+  >[];
+}

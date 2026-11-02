@@ -130,6 +130,7 @@ export function usePlan() {
   return {
     ctx,
     today,
+    userId,
     status,
     saving,
     updateDay,
