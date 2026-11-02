@@ -1,5 +1,5 @@
 /* G5: no secrets tracked in git, and .env files are not tracked. */
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 
 const problems: string[] = [];
 let tracked: string[] = [];
@@ -22,10 +22,16 @@ const patterns = [
 ];
 for (const p of patterns) {
   try {
-    const out = execSync(`git grep -nIE '${p}' -- . ':!package-lock.json'`, { encoding: "utf8" });
+    // -e so patterns starting with "-" aren't parsed as options.
+    const out = execFileSync("git", ["grep", "-nIE", "-e", p, "--", ".", ":!package-lock.json"], {
+      encoding: "utf8",
+    });
     if (out.trim()) problems.push(`possible secret (${p}):\n${out}`);
-  } catch {
-    // git grep exits 1 when nothing matches
+  } catch (e) {
+    // git grep exits 1 when nothing matches; anything else is a broken check.
+    if ((e as { status?: number }).status !== 1) {
+      problems.push(`secrets check failed to run for pattern ${p}: ${(e as Error).message}`);
+    }
   }
 }
 if (problems.length) {
