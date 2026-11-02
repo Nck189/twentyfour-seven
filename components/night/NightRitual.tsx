@@ -9,6 +9,7 @@ import { Sheet } from "@/components/today/BlockSheet";
 import { useBlockText } from "@/components/today/useBlockText";
 import { Button } from "@/components/ui/Button";
 import { sfx } from "@/lib/sound/sfx";
+import { useBacklog } from "@/lib/backlog/useBacklog";
 import { usePlan } from "@/lib/plan/usePlan";
 import { addDays } from "@/lib/time";
 import type { Timeline, TimelineBlock } from "@/lib/today/day";
@@ -33,7 +34,9 @@ export function NightRitual({ timeline, logFor, markMissed, complete, onClose }:
   const t = useTranslations("night");
   const tc = useTranslations("common");
   const text = useBlockText();
+  const tb = useTranslations("backlog");
   const plan = usePlan();
+  const backlog = useBacklog(plan.userId);
   const [step, setStep] = useState(0);
   const [phoneEnds, setPhoneEnds] = useState<number | null>(null);
   const [left, setLeft] = useState(PHONE_MIN * 60);
@@ -58,6 +61,10 @@ export function NightRitual({ timeline, logFor, markMissed, complete, onClose }:
 
   // Blocks of today (Wake…Free) that never closed.
   const open = timeline.blocks.filter((b) => b.key !== "down" && b.key !== "sleep" && !logFor(b).closed_at);
+  // Backlog items planned for today and not finished: carry them (SPEC §5, carry_count).
+  const unfinished = backlog.items.filter(
+    (i) => i.status === "scheduled" && i.scheduled_date === timeline.date,
+  );
 
   const steps = [
     // 1. Free phone time
@@ -113,6 +120,35 @@ export function NightRitual({ timeline, logFor, markMissed, complete, onClose }:
             </li>
           ))}
         </ul>
+      )}
+      {unfinished.length > 0 && (
+        <section aria-label={tb("carryTitle")} className="flex flex-col gap-2">
+          <h4 className="font-bold">{tb("carryTitle")}</h4>
+          <p className="text-sm text-muted">{tb("carryHint")}</p>
+          <ul className="flex flex-col gap-3">
+            {unfinished.map((i) => (
+              <li key={i.id} className="rounded-xl bg-surface-2 p-3">
+                <p className="mb-2 font-bold [overflow-wrap:anywhere]">{i.title}</p>
+                <div role="group" aria-label={i.title} className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void backlog.carry(i.id, tomorrow)}
+                    className="tap min-h-11 rounded-full bg-surface px-3 text-sm font-bold"
+                  >
+                    {tb("carryTomorrow")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void backlog.carry(i.id, null)}
+                    className="tap min-h-11 rounded-full bg-surface px-3 text-sm font-bold"
+                  >
+                    {tb("carryInbox")}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </div>,
     // 3. Plan tomorrow
