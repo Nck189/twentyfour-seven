@@ -13,14 +13,20 @@ test("smoke: login → today → check-in → farm", async ({ page }) => {
   await showDay.click();
   await expect(page.getByRole("list", { name: "Today" })).toBeVisible();
   await expect(page.getByRole("list", { name: "Today" }).getByRole("listitem")).toHaveCount(7);
+  // Day: check in on the current block. Night (Down/Sleep): Today shows the Night ritual instead.
   const card = page.getByRole("region", { name: "Current block" });
-  await expect(card).toBeVisible();
-  const start = card.getByRole("button", { name: "Start", exact: true });
-  if (await start.isVisible()) {
-    await start.click();
-    await expect(card.getByText(/Started \d\d:\d\d/)).toBeVisible();
-  } else {
-    await expect(card.getByText(/Started \d\d:\d\d|Closed \d\d:\d\d/).first()).toBeVisible();
+  const night = page
+    .getByRole("button", { name: "Start night ritual" })
+    .or(page.getByText("Night ritual done"));
+  await expect(card.or(night).first()).toBeVisible();
+  if (await card.isVisible()) {
+    const start = card.getByRole("button", { name: "Start", exact: true });
+    if (await start.isVisible()) {
+      await start.click();
+      await expect(card.getByText(/Started \d\d:\d\d/)).toBeVisible();
+    } else {
+      await expect(card.getByText(/Started \d\d:\d\d|Closed \d\d:\d\d/).first()).toBeVisible();
+    }
   }
   await page
     .getByRole("navigation", { name: "Main navigation" })
