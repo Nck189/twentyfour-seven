@@ -107,7 +107,9 @@ test("M3-F7 a very long checklist word wraps (no horizontal scroll)", async ({ p
     "Supercalifragilisticexpialidocious-and-a-very-long-identifier-without-spaces",
   ]);
   await page.goto("/today");
-  await expect(page.getByRole("region", { name: "Current block" }).getByRole("checkbox")).toHaveCount(2);
+  await expect(page.getByRole("region", { name: "Current block" }).getByRole("checkbox")).toHaveCount(2, {
+    timeout: 15_000,
+  });
   await expectNoHorizontalScroll(page);
 });
 

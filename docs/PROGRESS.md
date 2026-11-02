@@ -47,6 +47,7 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 - Known/deferred: M2-F2 multiple fixed events in different blocks (S3), M2-F4/F5 (S4), M3-F11 offline Today read-only (S3 → M14), background nap alarm needs push (M11)
 
 ### M4 built (not yet QC'd)
+- Flake to root-cause in M4 QC: CJ-07 (ipad-portrait, QC run #40) — after "Add item" in the ritual's Plan step, "YOP chapter 2" wasn't visible within 5 s; passed on retry.
 Night ritual (`components/night/NightRitual.tsx`, auto-offered at Down), Plan week view + DayEditor, `complete_night_ritual` RPC + `ticket_grants` ledger. CJ-07..10 E2E pass. Seed planting deferred to M6.
 
 ## Done

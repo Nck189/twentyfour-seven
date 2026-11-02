@@ -3,6 +3,7 @@ import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } fro
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import { blockLogs, gameState, setChecklist, setWakeMinutesAgo, userIdFor } from "../helpers/db";
 import { IS_PROD_RUN } from "../helpers/env";
+import { localDate } from "@/lib/time";
 
 /**
  * M3 Today journeys. Real clock on purpose: the server marks any check-in timestamp >10 min
@@ -45,7 +46,13 @@ test("timeline shows the 7 blocks from wake to next wake, with the current block
   await expectNoHorizontalScroll(page);
 });
 
+/** "Woke N min ago" must stay on today's calendar date: the I'm up card belongs to the date. */
+const wokeYesterday = (minutesAgo: number) =>
+  localDate(new Date(Date.now() - minutesAgo * 60_000), "Asia/Bangkok") !==
+  localDate(new Date(), "Asia/Bangkok");
+
 test("CJ-03 I'm up within the window → +1 Sunrise ticket", async ({ page }) => {
+  test.skip(wokeYesterday(15), "a wake 10 min ago would land on yesterday's date");
   const id = await setup(page, 10);
   await page.getByRole("button", { name: /I'm up — out of bed/ }).click();
   await expect(page.getByText(/on time! \+1 Sunrise ticket/)).toBeVisible();
@@ -56,6 +63,7 @@ test("CJ-03 I'm up within the window → +1 Sunrise ticket", async ({ page }) =>
 });
 
 test("CJ-04 I'm up 20 min late → logged, no ticket", async ({ page }) => {
+  test.skip(wokeYesterday(25), "a wake 20 min ago would land on yesterday's date");
   const id = await setup(page, 20);
   await page.getByRole("button", { name: /I'm up — out of bed/ }).click();
   await expect(page.getByText(/Logged — no ticket this time/)).toBeVisible();
