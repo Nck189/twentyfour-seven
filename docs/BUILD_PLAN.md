@@ -225,4 +225,8 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 ---
 
 ## Status
-- [ ] M0 … update this list as milestones finish (deferred items go here)
+- [ ] M0 — G1–G6 ✅, G7 re-review done; report `docs/qa/M0-report.md` (final ✅ after prod deploy of the M1–M4 branch)
+- [ ] M1 — built; G6 on prod + G7 re-review pending
+- [x] M2 — ✅ 2026-11-02 · `docs/qa/M2-report.md` · deferred: M2-F2 (S3), M2-F4/F5 (S4); open spec question M2-F3
+- [ ] M3 — built + review fixes; G6 on prod + G7 re-review pending
+- [ ] M4 — built; QC not started (seed planting deferred to M6)
