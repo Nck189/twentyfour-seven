@@ -292,3 +292,66 @@ export function SwapIcon(p: P) {
     </Svg>
   );
 }
+
+/* Starters (first-run setup). */
+export function CapIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <path d="M12 3.5 1.8 8.6 12 13.7l10.2-5.1z" fill="currentColor" />
+      <path d="M6 11.2v4.3c0 1.7 2.7 3.2 6 3.2s6-1.5 6-3.2v-4.3L12 14.2z" fill="currentColor" opacity="0.5" />
+      <rect x="19.3" y="9" width="1.8" height="7" rx="0.9" fill="currentColor" />
+    </Svg>
+  );
+}
+
+export function BriefcaseIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <rect x="8" y="3.5" width="8" height="4.5" rx="1.8" fill="currentColor" opacity="0.5" />
+      <rect x="2.5" y="7" width="19" height="13.5" rx="3" fill="currentColor" />
+      <rect x="2.5" y="12" width="19" height="2" fill="currentColor" opacity="0.35" />
+    </Svg>
+  );
+}
+
+export function LaptopIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <rect x="4" y="4" width="16" height="11.5" rx="2.2" fill="currentColor" />
+      <rect x="6" y="6" width="12" height="7.5" rx="1" fill="currentColor" opacity="0.35" />
+      <path d="M1.5 17.5h21l-1.2 2a2 2 0 0 1-1.7 1H4.4a2 2 0 0 1-1.7-1z" fill="currentColor" opacity="0.6" />
+    </Svg>
+  );
+}
+
+export function SlidersIcon(p: P) {
+  return (
+    <Svg {...p}>
+      {[6, 12, 18].map((y, i) => (
+        <g key={y}>
+          <rect x="3" y={y - 1.1} width="18" height="2.2" rx="1.1" fill="currentColor" opacity="0.4" />
+          <circle cx={[8, 15, 10][i]} cy={y} r="2.6" fill="currentColor" />
+        </g>
+      ))}
+    </Svg>
+  );
+}
+
+export function PlusIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <rect x="10.7" y="4" width="2.6" height="16" rx="1.3" fill="currentColor" />
+      <rect x="4" y="10.7" width="16" height="2.6" rx="1.3" fill="currentColor" />
+    </Svg>
+  );
+}
+
+export function UploadIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="15" width="18" height="6" rx="2.5" fill="currentColor" opacity="0.4" />
+      <rect x="10.8" y="5" width="2.4" height="11" rx="1.2" fill="currentColor" />
+      <path d="M12 2.5 17 8h-10z" fill="currentColor" />
+    </Svg>
+  );
+}

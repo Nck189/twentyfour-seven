@@ -21,12 +21,15 @@ export function First10Step({
   onAddOwn,
   onUseFirst10,
   onDone,
+  onUseAll,
 }: {
   blocks: BlockSetting[];
   onPick: (key: BlockKey, value: string | null) => void;
   onAddOwn: (key: BlockKey, text: string) => Promise<void>;
   onUseFirst10: (on: boolean) => void;
   onDone: () => void;
+  /** One tap: keep every default, pick suggestion 1 where a block has none, and finish. */
+  onUseAll: () => void;
 }) {
   const t = useTranslations("onboarding");
   const text = useBlockText();
@@ -82,6 +85,17 @@ export function First10Step({
           />
         </span>
       </button>
+
+      {using && (
+        <button
+          type="button"
+          onClick={onUseAll}
+          className="tap flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 font-bold text-on-primary"
+        >
+          <CheckIcon className="h-4 w-4" />
+          {t("useAll")}
+        </button>
+      )}
 
       {!using ? (
         <p role="note" className="rounded-xl bg-warn-soft p-3 text-sm text-warn">

@@ -28,25 +28,59 @@ test("first open offers setup on Today; Later hides it for good", async ({ page 
   await expect(card).toHaveCount(0);
 });
 
-test("setup: sleep times + weekdays, then a first-10 per block in a few taps", async ({ page }) => {
+test("lazy path: Student → Next → Use all suggestions → done (4 taps)", async ({ page }) => {
   const id = await newUser(page);
   await page.goto("/today");
   await page.getByRole("link", { name: "Set up now" }).click();
   await expect(page).toHaveURL(/\/welcome$/);
+  await expectNoSeriousA11y(page);
+  await expectTouchTargets(page);
+  await page.getByRole("button", { name: /Student/ }).click();
+  const week = page.getByRole("region", { name: "Your week" });
+  await expect(week.getByRole("heading", { name: "School day" })).toBeVisible();
+  await expect(week.getByRole("button", { name: /Class 09:00–16:00/ })).toBeVisible();
+  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Use all suggestions" }).click();
+  await expect(page.getByText("All set")).toBeVisible();
 
-  // Sleep: the first kind of day (free weekdays) → bed 23:30, wake 07:30 (8 h).
-  const first = page.getByRole("region", { name: "Sleep times" }).getByRole("listitem").first();
+  await expect.poll(async () => (await profile(id)).onboarding).toMatchObject({ done: true });
+  const tpls = await templates(id);
+  const school = tpls.find((t) => t.key === "school_day")!;
+  expect(school).toMatchObject({ auto_apply: true, weekdays: [1, 2, 3, 4, 5], target_wake: "07:30:00" });
+  expect(school.fixed_events).toEqual([
+    { id: "class", key: "class", title: null, start: "09:00", end: "16:00" },
+  ]);
+  // Old kinds stop claiming weekdays.
+  expect(tpls.filter((t) => t.auto_apply && (t.weekdays as number[]).includes(3))).toHaveLength(1);
+  const blocks = await settingsBlocks(id);
+  expect(blocks.find((b) => b.key === "focus")).toMatchObject({ first10: "@s:focus:1" });
+  expect(blocks.find((b) => b.key === "work")).toMatchObject({ first10: null }); // built-in default kept
+});
+
+test("my own: sleep times + weekdays + a class slot, then first-10s one block at a time", async ({
+  page,
+}) => {
+  const id = await newUser(page);
+  await page.goto("/welcome");
+  await page.getByRole("button", { name: /My own/ }).click();
+  const week = page.getByRole("region", { name: "Your week" });
+  // Same sleep every day in one tap, then fine-tune the first kind.
+  await week.getByRole("group", { name: "Same sleep every day" }).getByRole("button").first().click();
+  const first = week.getByRole("listitem").first();
   await first.getByLabel("Bed").fill("23:30");
   await first.getByLabel("Wake").fill("07:30");
   await expect(first.getByText("8h sleep")).toBeVisible();
-  // Move Wednesday into this kind of day.
   await first.getByRole("button", { name: "W" }).first().click();
+  await first.getByRole("button", { name: "Add class or work time" }).click();
+  await first.getByRole("radio", { name: "Work" }).click();
+  await first.getByLabel("Work starts").fill("13:00");
+  await first.getByLabel("Work ends").fill("17:00");
   await expectNoSeriousA11y(page);
   await expectTouchTargets(page);
   await expectNoHorizontalScroll(page);
   await page.getByRole("button", { name: "Next" }).click();
 
-  // First-10: pick the 1st suggestion for Wake → Focus slides in by itself.
+  // First-10: pick the 1st suggestion for Wake → Focus slides in by itself; add an own one.
   await page.getByRole("radiogroup", { name: "Wake" }).getByRole("radio").nth(1).click();
   await expect(page.getByRole("radiogroup", { name: "Focus" })).toBeVisible();
   await page.getByRole("textbox", { name: "Add your own" }).fill("Open Figma");
@@ -55,7 +89,6 @@ test("setup: sleep times + weekdays, then a first-10 per block in a few taps", a
   await page.getByRole("button", { name: "Done" }).click();
   await expect(page.getByText("All set")).toBeVisible();
 
-  await expect.poll(async () => (await profile(id)).onboarding).toMatchObject({ done: true });
   const blocks = await settingsBlocks(id);
   expect(blocks.find((b) => b.key === "wake")).toMatchObject({ first10: "@s:wake:1" });
   expect(blocks.find((b) => b.key === "focus")).toMatchObject({
@@ -67,7 +100,30 @@ test("setup: sleep times + weekdays, then a first-10 per block in a few taps", a
   expect(free.target_wake).toBe("07:30:00");
   expect((free.blocks as { sleep?: { duration_min: number } }).sleep?.duration_min).toBe(480);
   expect(free.weekdays).toContain(3);
-  expect(tpls.filter((t) => (t.weekdays as number[]).includes(3)).length).toBe(1);
+  expect(free.fixed_events).toEqual([expect.objectContaining({ key: "work", start: "13:00", end: "17:00" })]);
+});
+
+test("import a timetable (.ics): weekly slots become kinds of day", async ({ page }) => {
+  const id = await newUser(page);
+  await page.goto("/welcome?step=week&from=more");
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "BEGIN:VEVENT",
+    "SUMMARY:Operations Research",
+    "DTSTART;TZID=Asia/Bangkok:20261102T090000",
+    "DTEND;TZID=Asia/Bangkok:20261102T120000",
+    "RRULE:FREQ=WEEKLY;BYDAY=MO,WE",
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+  await page
+    .getByLabel("Import from a calendar file (.ics)")
+    .setInputFiles({ name: "timetable.ics", mimeType: "text/calendar", buffer: Buffer.from(ics) });
+  await expect(page.getByRole("status")).toContainText("Imported 2 kinds of day");
+  await expect(page.getByRole("heading", { name: "Operations Research" })).toBeVisible();
+  const tpls = (await templates(id)).filter((t) => t.auto_apply);
+  expect(tpls.find((t) => t.key === "sched_1")).toMatchObject({ weekdays: [1, 3], target_wake: "07:30:00" });
+  expect(tpls.find((t) => t.key === "day_off")).toMatchObject({ weekdays: [2, 4, 5, 6, 7] });
 });
 
 test("no first-10s at all is allowed (with a gentle note)", async ({ page }) => {

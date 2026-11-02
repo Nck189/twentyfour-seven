@@ -200,7 +200,7 @@
     "install": "Install on iPhone",
     "installSteps": "In Safari, tap Share, then “Add to Home Screen”.",
     "setupTitle": "Setup",
-    "setupSleep": "Sleep times",
+    "setupSleep": "Your week",
     "setupFirst10": "First 10 minutes"
   },
   "blocks": {
@@ -260,12 +260,18 @@
     "class_thu": "Class day (optional)",
     "family_sat": "Family Saturday",
     "family_sun": "Family Sunday",
-    "home_weekend": "Home weekend"
+    "home_weekend": "Home weekend",
+    "school_day": "School day",
+    "work_day": "Work day",
+    "flex_day": "Weekday",
+    "day_off": "Day off"
   },
   "fixedEvents": {
     "class": "Class",
     "family_out": "Out with family",
-    "relatives_dinner": "Dinner at relatives'"
+    "relatives_dinner": "Dinner at relatives'",
+    "work": "Work",
+    "appointment": "Appointment"
   },
   "tags": {
     "yop": "YOP",
@@ -404,8 +410,8 @@
     "next": "Next",
     "back": "Back",
     "finish": "Done",
-    "sleepTitle": "Sleep times",
-    "sleepHint": "When do you go to bed and get up on each kind of day?",
+    "sleepTitle": "Your week",
+    "sleepHint": "Which days are which, when you're busy, and when you sleep.",
     "bed": "Bed",
     "wake": "Wake",
     "hours": "{hours}h sleep",
@@ -420,6 +426,38 @@
     "addButton": "Add",
     "doneTitle": "All set",
     "doneHint": "Change any of this later in More → Setup.",
-    "weekdays": "Days"
+    "weekdays": "Days",
+    "starterTitle": "What's your week like?",
+    "starter": {
+      "student": {
+        "title": "Student",
+        "hint": "Class Mon–Fri 9–16"
+      },
+      "office": {
+        "title": "Office job",
+        "hint": "Work Mon–Fri 9–18"
+      },
+      "flex": {
+        "title": "Flexible",
+        "hint": "Freelance / work from home"
+      },
+      "custom": {
+        "title": "My own",
+        "hint": "Set things yourself"
+      }
+    },
+    "sameSleep": "Same sleep every day",
+    "schedule": "Class / work",
+    "addSlot": "Add class or work time",
+    "removeSlot": "Remove",
+    "slotLabel": "What",
+    "addKind": "Add a kind of day",
+    "newKind": "Day type {n}",
+    "importIcs": "Import from a calendar file (.ics)",
+    "imported": "Imported {count, plural, one {# kind of day} other {# kinds of day}} from your calendar.",
+    "importEmpty": "No weekly classes or work found in that file.",
+    "useAll": "Use all suggestions",
+    "slotStart": "{what} starts",
+    "slotEnd": "{what} ends"
   }
 }

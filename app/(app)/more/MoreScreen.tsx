@@ -67,7 +67,7 @@ export function MoreScreen() {
           {(
             [
               {
-                href: "/welcome?step=sleep&from=more",
+                href: "/welcome?step=week&from=more",
                 label: t("setupSleep"),
                 icon: <MoonIcon className="h-5 w-5" />,
               },
