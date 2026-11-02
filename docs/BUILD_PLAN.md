@@ -218,7 +218,7 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 > - performance pass (Lighthouse PWA ≥ 90)
 > - accessibility pass
 > - empty states
-> - error and offline states
+> - error and offline states — incl. a persistent offline queue for check-ins that survives closing the app (Minnie 2026-11-02; step 1, auto-retry on reconnect, shipped in M3)
 > - estimate-vs-actual analytics
 > - final export/import
 

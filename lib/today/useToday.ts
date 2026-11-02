@@ -292,6 +292,15 @@ export function useToday(now: Date) {
     }
   }, [failQueue, runOp, show]);
 
+  // Back online: replay failed saves by itself (the "Try again" button stays as a fallback).
+  useEffect(() => {
+    const onOnline = () => {
+      if (queueRef.current.length) void retrySave();
+    };
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, [retrySave]);
+
   const upsertLog = useCallback(
     (b: TimelineBlock, patch: Partial<BlockLog>, event: string, nowAt: Date) => {
       if (!loaded) return Promise.resolve();
