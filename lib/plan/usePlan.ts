@@ -7,7 +7,7 @@ import { hostFor, parseHHMM } from "@/lib/engine";
 import { addDays, zonedInstant } from "@/lib/time";
 import { logEvent } from "@/lib/db/events";
 import { getSupabase } from "@/lib/supabase/client";
-import { planFor, plannedWake, type DayContext, type DayPlanRow } from "@/lib/today/day";
+import { currentDayDate, planFor, plannedWake, type DayContext, type DayPlanRow } from "@/lib/today/day";
 import { DAY_PLAN_COLUMNS, emptyDayPlan, loadDayContext } from "@/lib/today/loadContext";
 
 export type DayPatch = Partial<Omit<DayPlanRow, "date" | "overrides">> & {
@@ -63,7 +63,9 @@ export function usePlan() {
         ctxRef.current = r.ctx;
         setCtx(r.ctx);
         setUserId(r.userId);
-        setToday(r.today);
+        // "Today" is the wake-day (a day runs wake → next wake): after midnight, before bed, Plan
+        // and the Night ritual agree on what "tomorrow" is (R-M4-6).
+        setToday(currentDayDate(r.ctx, new Date()));
         setStatus("ready");
       })
       .catch(() => !cancelled && setStatus("error"));

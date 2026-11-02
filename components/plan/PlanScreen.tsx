@@ -291,6 +291,7 @@ export function PlanScreen() {
           }}
         >
           <DayEditor
+            today={plan.today}
             ctx={ctx}
             date={editing}
             onChange={plan.updateDay}

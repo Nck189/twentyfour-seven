@@ -2,13 +2,12 @@ import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import { backlogItems, dayPlans, setAllTemplates, userIdFor } from "../helpers/db";
+import { wakeDay } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
-import { addDays, localDate } from "@/lib/time";
+import { addDays } from "@/lib/time";
 
 /** Appointments any distance ahead (Minnie: "the dentist or a friend can book me months ahead"). */
 test.skip(IS_PROD_RUN, "creates dedicated users");
-
-const TZ = "Asia/Bangkok";
 
 async function setup(page: Page) {
   const email = uniqueEmail("appt");
@@ -39,7 +38,7 @@ test("a dentist 40 days ahead: one line → that day's plan, the next-appointmen
   page,
 }) => {
   const id = await setup(page);
-  const today = localDate(new Date(), TZ);
+  const today = wakeDay(); // Plan's "Today" (the month view opens on it)
   const date = addDays(today, 40);
   const [, m, d] = date.split("-").map(Number);
 
@@ -92,8 +91,7 @@ test("a date without a time plans a task that day; next year's date when this ye
   page,
 }) => {
   const id = await setup(page);
-  const today = localDate(new Date(), TZ);
-  const yesterday = addDays(today, -1);
+  const yesterday = addDays(wakeDay(), -1); // the day before Plan's "Today"
   const [y, m, d] = yesterday.split("-").map(Number);
   test.skip(m === 2 && d === 29, "29/2 waits for the next leap year (unit-tested)");
 

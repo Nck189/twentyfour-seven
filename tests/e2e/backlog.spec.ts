@@ -4,11 +4,13 @@ import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import { addBacklogItem, backlogItems, gameState, setAllTemplates, userIdFor } from "../helpers/db";
 import { IS_PROD_RUN } from "../helpers/env";
 import { addDays, localDate } from "@/lib/time";
+import { wakeDay } from "../helpers/day";
 
 /** M5 Backlog journeys (CJ-11). Every day is a free day (Work 9 h, no fixed events). */
 test.skip(IS_PROD_RUN, "creates dedicated users");
 
-const tomorrow = () => addDays(localDate(new Date(), "Asia/Bangkok"), 1);
+/** Plan's "Tomorrow": the wake-day + 1 (every day wakes at 10:00 here). */
+const tomorrow = () => addDays(wakeDay(), 1);
 
 async function setup(page: Page) {
   const email = uniqueEmail("m5");
@@ -227,4 +229,15 @@ test("R-M5-2: finishing a task on the day card keeps its row (coins pop, nothing
   await expect
     .poll(async () => (await backlogItems(id)).find((i) => i.title === "Slides")?.status)
     .toBe("scheduled");
+});
+
+test("R-M4-6: 'tomorrow' in Plan is the Night ritual's tomorrow (a day runs wake → next wake)", async ({
+  page,
+}) => {
+  const id = await setup(page); // every day wakes at 10:00
+  await page.goto("/plan");
+  const box = page.getByRole("textbox", { name: "Add to backlog" });
+  await box.fill("Call prof tomorrow");
+  await box.press("Enter");
+  await expect.poll(async () => (await backlogItems(id))[0]?.scheduled_date).toBe(addDays(wakeDay(), 1));
 });

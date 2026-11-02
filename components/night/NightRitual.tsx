@@ -243,6 +243,7 @@ export function NightRitual({ timeline, logFor, markMissed, closeDone, complete,
       <SaveStatus state={plan.saving} />
       {plan.ctx ? (
         <DayEditor
+          today={timeline.date}
           ctx={plan.ctx}
           date={tomorrow}
           onChange={plan.updateDay}

@@ -302,3 +302,29 @@ describe("a weekday without a kind of day (R-M4-11)", () => {
     expect(() => planFor(ctx({ templates: [] }), "2026-11-04")).not.toThrow();
   });
 });
+
+describe("bedtime drift guardrail (SPEC §3, R-M4-8)", () => {
+  const pushed = (minutes: number) =>
+    ctx({
+      dayPlans: {
+        "2026-11-02": {
+          date: "2026-11-02",
+          template_id: null,
+          attending: null,
+          bedtime_override: new Date(at("2026-11-02", "02:30").getTime() + minutes * 60_000).toISOString(),
+          late_night: null,
+          mode: "normal",
+          overrides: {},
+        },
+      },
+    });
+  const drift = (c: DayContext) => planFor(c, "2026-11-02").warnings.find((w) => w.type === "bedtime_drift");
+  it("warns when tonight is pushed more than 60 min past this kind of day's recent bedtimes", () => {
+    expect(drift(pushed(90))).toMatchObject({ deltaMin: 90 });
+  });
+  it("stays quiet for a small push, an unpushed night, or a different kind of day", () => {
+    expect(drift(pushed(30))).toBeUndefined();
+    expect(drift(ctx())).toBeUndefined();
+    expect(planFor(ctx(), "2026-11-04").warnings.find((w) => w.type === "bedtime_drift")).toBeUndefined();
+  });
+});

@@ -178,7 +178,10 @@
     "nextAppointment": "Next appointment:",
     "appointments": "Appointments",
     "removeAppointment": "Remove {title}",
-    "noKind": "{day} has no kind of day yet. Set it up"
+    "noKind": "{day} has no kind of day yet. Set it up",
+    "bedtimeBefore": "Bedtime the night before {day}",
+    "lateNightBefore": "Out late the night before {day}",
+    "attendingOn": "Class on {day}?"
   },
   "farm": {
     "title": "Farm",

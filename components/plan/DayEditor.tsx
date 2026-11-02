@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import { BLOCK_KEYS, type BlockKey, type ChecklistItem } from "@/content/blocks";
 import { useBlockText } from "@/components/today/useBlockText";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { CloseIcon, StepsIcon } from "@/components/ui/Icons";
 import { Segmented } from "@/components/ui/Segmented";
 import { parseHHMM, targetBedtime } from "@/lib/engine";
-import { formatTime } from "@/lib/format";
+import { formatDayLong, formatTime } from "@/lib/format";
 import type { DayPatch } from "@/lib/plan/usePlan";
 import { addDays, zonedInstant } from "@/lib/time";
 import { planFor, templateFor, type DayContext } from "@/lib/today/day";
@@ -23,11 +23,14 @@ function newId() {
 export function DayEditor({
   ctx,
   date,
+  today,
   onChange,
   onSaveDefault,
 }: {
   ctx: DayContext;
   date: string;
+  /** The current wake-day: decides "tonight" vs "the night before {day}", and past nights. */
+  today: string;
   onChange: (date: string, patch: DayPatch) => void;
   onSaveDefault: (
     key: BlockKey,
@@ -44,6 +47,10 @@ export function DayEditor({
   const tpl = templateFor(ctx, date);
   const plan = planFor(ctx, date);
   const sleepMin = ctx.blocks.find((b) => b.key === "sleep")!.duration_min;
+  const locale = useLocale();
+  const tonight = date === addDays(today, 1);
+  const nightPassed = date <= today;
+  const dayName = formatDayLong(date, locale, ctx.timezone);
   const [openBlock, setOpenBlock] = useState<BlockKey | null>(null);
   const [draft, setDraft] = useState("");
   const [savedDefault, setSavedDefault] = useState<BlockKey | null>(null);
@@ -108,9 +115,11 @@ export function DayEditor({
         </div>
         {tpl?.options.attend_toggle && (
           <div className="mt-3">
-            <p className="mb-1 text-sm font-bold">{t("attending")}</p>
+            <p className="mb-1 text-sm font-bold">
+              {tonight ? t("attending") : t("attendingOn", { day: dayName })}
+            </p>
             <Segmented<"going" | "skipping">
-              label={t("attending")}
+              label={tonight ? t("attending") : t("attendingOn", { day: dayName })}
               value={row?.attending === false ? "skipping" : "going"}
               onChange={(v) => onChange(date, { attending: v === "going" })}
               options={[
@@ -122,57 +131,61 @@ export function DayEditor({
         )}
       </section>
 
-      {/* Bedtime */}
-      <section aria-labelledby={`${ids}-bed`}>
-        <h3 id={`${ids}-bed`} className="mb-1 font-bold">
-          {t("bedtime")}
-        </h3>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" aria-label={t("earlier")} onClick={() => shiftBedtime(-STEP_MIN)}>
-            −15
-          </Button>
-          <output aria-live="polite" className="min-w-20 text-center text-2xl font-extrabold tabular-nums">
-            {formatTime(plan.bedtime, tz)}
-          </output>
-          <Button variant="secondary" aria-label={t("later")} onClick={() => shiftBedtime(STEP_MIN)}>
-            +15
-          </Button>
-          {row?.bedtime_override && (
-            <Button variant="ghost" onClick={() => onChange(date, { bedtime_override: null })}>
-              {t("reset")}
+      {/* Bedtime: the night before `date`. For today it's over: not editable (R-M4-7). */}
+      {!nightPassed && (
+        <section aria-labelledby={`${ids}-bed`}>
+          <h3 id={`${ids}-bed`} className="mb-1 font-bold">
+            {tonight ? t("bedtime") : t("bedtimeBefore", { day: dayName })}
+          </h3>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" aria-label={t("earlier")} onClick={() => shiftBedtime(-STEP_MIN)}>
+              −15
             </Button>
-          )}
-        </div>
-        <p className="mt-1 text-sm text-muted">
-          {t("bedtimeTarget", { time: formatTime(target, tz) })}
-          {plan.pushMin > 0 && ` · ${t("pushNote", { minutes: plan.pushMin })}`}
-        </p>
-      </section>
+            <output aria-live="polite" className="min-w-20 text-center text-2xl font-extrabold tabular-nums">
+              {formatTime(plan.bedtime, tz)}
+            </output>
+            <Button variant="secondary" aria-label={t("later")} onClick={() => shiftBedtime(STEP_MIN)}>
+              +15
+            </Button>
+            {row?.bedtime_override && (
+              <Button variant="ghost" onClick={() => onChange(date, { bedtime_override: null })}>
+                {t("reset")}
+              </Button>
+            )}
+          </div>
+          <p className="mt-1 text-sm text-muted">
+            {t("bedtimeTarget", { time: formatTime(target, tz) })}
+            {plan.pushMin > 0 && ` · ${t("pushNote", { minutes: plan.pushMin })}`}
+          </p>
+        </section>
+      )}
 
       {/* Late night */}
-      <section aria-labelledby={`${ids}-late`}>
-        <h3 id={`${ids}-late`} className="mb-1 font-bold">
-          {t("lateNight")}
-        </h3>
-        <p className="mb-2 text-sm text-muted">{t("lateNightHint")}</p>
-        <div className="flex flex-wrap items-center gap-2">
-          <label htmlFor={`${ids}-ret`} className="text-sm font-bold">
-            {t("returnAt")}
-          </label>
-          <input
-            id={`${ids}-ret`}
-            type="time"
-            value={lateReturn ? formatTime(lateReturn, tz) : ""}
-            onChange={(e) => setLateReturn(e.target.value)}
-            className="min-h-11 rounded-xl border border-line bg-surface px-3"
-          />
-          {lateReturn && (
-            <Button variant="ghost" onClick={() => setLateReturn("")}>
-              {t("lateNightOff")}
-            </Button>
-          )}
-        </div>
-      </section>
+      {!nightPassed && (
+        <section aria-labelledby={`${ids}-late`}>
+          <h3 id={`${ids}-late`} className="mb-1 font-bold">
+            {tonight ? t("lateNight") : t("lateNightBefore", { day: dayName })}
+          </h3>
+          <p className="mb-2 text-sm text-muted">{t("lateNightHint")}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <label htmlFor={`${ids}-ret`} className="text-sm font-bold">
+              {t("returnAt")}
+            </label>
+            <input
+              id={`${ids}-ret`}
+              type="time"
+              value={lateReturn ? formatTime(lateReturn, tz) : ""}
+              onChange={(e) => setLateReturn(e.target.value)}
+              className="min-h-11 rounded-xl border border-line bg-surface px-3"
+            />
+            {lateReturn && (
+              <Button variant="ghost" onClick={() => setLateReturn("")}>
+                {t("lateNightOff")}
+              </Button>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Live preview + warnings */}
       <section aria-labelledby={`${ids}-prev`}>

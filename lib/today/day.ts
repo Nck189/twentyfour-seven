@@ -115,7 +115,22 @@ export function planFor(ctx: DayContext, date: string, depth = 0): DayPlan {
     ...nextNight(ctx, next, depth),
     lateNightReturn: row?.late_night?.return_at ? new Date(row.late_night.return_at) : undefined,
     gymClose: ctx.gymClose,
+    // Drift guardrail: only for a pushed night, against this kind of day's recent bedtimes.
+    recentBedtimes:
+      depth === 0 && (row?.bedtime_override || row?.late_night)
+        ? recentBedtimes(ctx, date, tpl.id)
+        : undefined,
   });
+}
+
+/** Planned bedtimes of the last 7 days that used the same kind of day (SPEC §3 guardrail). */
+function recentBedtimes(ctx: DayContext, date: string, templateId: string): Date[] {
+  const out: Date[] = [];
+  for (let i = 1; i <= 7; i++) {
+    const d = addDays(date, -i);
+    if (templateFor(ctx, d).id === templateId) out.push(planFor(ctx, d, 1).bedtime);
+  }
+  return out;
 }
 
 /**

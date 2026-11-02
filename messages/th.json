@@ -178,7 +178,10 @@
     "nextAppointment": "นัดถัดไป:",
     "appointments": "นัดหมาย",
     "removeAppointment": "ลบนัด {title}",
-    "noKind": "ยังไม่ได้ตั้ง{day}ว่าเป็นวันแบบไหน แตะเพื่อตั้ง"
+    "noKind": "ยังไม่ได้ตั้ง{day}ว่าเป็นวันแบบไหน แตะเพื่อตั้ง",
+    "bedtimeBefore": "เวลานอนคืนก่อน{day}",
+    "lateNightBefore": "กลับดึกคืนก่อน{day}",
+    "attendingOn": "{day} ไปเรียนไหม?"
   },
   "farm": {
     "title": "ฟาร์ม",
