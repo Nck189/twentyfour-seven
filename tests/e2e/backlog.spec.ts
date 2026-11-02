@@ -153,3 +153,50 @@ test("Night ritual: an unfinished task planned for today is carried to tomorrow"
     .poll(async () => (await backlogItems(id))[0])
     .toMatchObject({ scheduled_date: addDays(wakeDate, 1), status: "scheduled", carry_count: 1 });
 });
+
+test("R-M5-3: a capture that fails to save keeps the typed text; it saves on the next Enter", async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName === "webkit", "WebKit can't intercept requests to the local API");
+  const id = await setup(page);
+  await page.goto("/plan");
+  const box = page.getByRole("textbox", { name: "Add to backlog" });
+  await page.route("**/rest/v1/backlog_items**", (r) =>
+    r.request().method() === "POST" ? r.abort("internetdisconnected") : r.continue(),
+  );
+  await box.fill("Email advisor about chapter 3");
+  await box.press("Enter");
+  await expect(page.getByRole("main").getByRole("alert")).toBeVisible();
+  await expect(box).toHaveValue("Email advisor about chapter 3");
+  await page.unroute("**/rest/v1/backlog_items**");
+  await box.press("Enter");
+  await expect(box).toHaveValue("");
+  await expect
+    .poll(async () => (await backlogItems(id)).map((i) => i.title))
+    .toEqual(["Email advisor about chapter 3"]);
+});
+
+test("R-M5-4 / R-M4-10: a failed load says so with Retry (never 'Nothing here' or 'Loading…' forever)", async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName === "webkit", "WebKit can't intercept requests to the local API");
+  await setup(page);
+  await page.route("**/rest/v1/backlog_items**", (r) => r.abort("internetdisconnected"));
+  await page.goto("/plan");
+  const alert = page.getByRole("alert").filter({ hasText: "Couldn't load your tasks." });
+  await expect(alert).toBeVisible();
+  await expect(page.getByText("Nothing here yet", { exact: false })).toHaveCount(0);
+  await page.unroute("**/rest/v1/backlog_items**");
+  await alert.getByRole("button", { name: "Try again" }).click();
+  await expect(alert).toHaveCount(0);
+
+  await page.route("**/rest/v1/templates**", (r) => r.abort("internetdisconnected"));
+  await page.reload();
+  const planAlert = page.getByRole("alert").filter({ hasText: "Couldn't load your plan." });
+  await expect(planAlert).toBeVisible();
+  await page.unroute("**/rest/v1/templates**");
+  await planAlert.getByRole("button", { name: "Try again" }).click();
+  await expect(page.getByRole("textbox", { name: "Add to backlog" })).toBeVisible();
+});

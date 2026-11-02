@@ -37,7 +37,8 @@ describe("parseCapture: type once, the app fills the fields", () => {
     expect(p("ยิม พรุ่งนี้").scheduled_date).toBe("2026-11-04");
     expect(p("ยิม วันนี้").scheduled_date).toBe("2026-11-03");
     expect(p("Gym fri").scheduled_date).toBe("2026-11-06");
-    expect(p("Gym tue").scheduled_date).toBe("2026-11-10"); // today is Tue → next week
+    // Today is Tue: "tue" means today (R-M5-5: next week's Tue fell outside the week strip).
+    expect(p("Gym tue").scheduled_date).toBe("2026-11-03");
     expect(p("ยิม ศุกร์").scheduled_date).toBe("2026-11-06");
     expect(p("Gym fri").title).toBe("Gym");
   });

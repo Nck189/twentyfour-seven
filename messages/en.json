@@ -359,7 +359,8 @@
     "willSave": "Will be saved with:",
     "more": "More: project, deadline, steps",
     "titleLabel": "Task",
-    "earlier": "From earlier days"
+    "earlier": "From earlier days",
+    "loadError": "Couldn't load your tasks."
   },
   "errors": {
     "notFoundTitle": "Page not found",

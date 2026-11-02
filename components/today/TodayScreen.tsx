@@ -113,6 +113,8 @@ export function TodayScreen() {
     !today.nightDoneAtLoad &&
     !ritualDismissed &&
     !wasOffered(tl.date);
+  // Once offered it stays until Done/Close, even when Down ends mid-flow (R-M4-4).
+  if (autoOffer && !ritualOpen) setRitualOpen(true);
   // One thing at a time: what's on screen depends on the part of the day.
   const next = cur ? tl.blocks[tl.blocks.indexOf(cur) + 1] : undefined;
   const wake = today.wakeCard;

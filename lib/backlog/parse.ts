@@ -6,7 +6,7 @@ import type { Priority } from "./index";
  * read, so ordinary sentences stay as typed:
  *   30m · 1h · 1.5h · 1h30 · 20น · 2ชม     → estimate
  *   !must !m !1 !ด่วน · !should !s !2 · !just !j !3 → priority
- *   today วันนี้ · tomorrow tmr พรุ่งนี้ · mon…sun · จันทร์…อาทิตย์ (next one) → planned day
+ *   today วันนี้ · tomorrow tmr พรุ่งนี้ · mon…sun · จันทร์…อาทิตย์ (the next one; the same weekday = today) → planned day
  *   due <day> · ส่ง<day> / ส่ง <day>   → deadline
  *   #yop #senior #class #เรียน …        → project tag
  *   30/11 · 15/3/2027 · 15 มี.ค. · mar 15 (+ a time 14:00 · 2pm · 13:00-16:00) → appointment;
@@ -71,7 +71,7 @@ function dayOf(word: string, today: string): string | null {
   if (w === "tomorrow" || w === "tmr" || word === "พรุ่งนี้") return addDays(today, 1);
   const wd = WEEKDAYS[w];
   if (!wd) return null;
-  const diff = (wd - isoWeekday(today) + 7) % 7 || 7;
+  const diff = (wd - isoWeekday(today) + 7) % 7; // the same weekday = today
   return addDays(today, diff);
 }
 

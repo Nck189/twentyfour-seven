@@ -45,6 +45,7 @@ export function NightRitual({ timeline, logFor, markMissed, complete, onClose }:
   const tc = useTranslations("common");
   const text = useBlockText();
   const tb = useTranslations("backlog");
+  const tp = useTranslations("plan");
   const plan = usePlan();
   const backlog = useBacklog(plan.userId);
   const [step, setStep] = useState(0);
@@ -211,6 +212,16 @@ export function NightRitual({ timeline, logFor, markMissed, complete, onClose }:
           onChange={plan.updateDay}
           onSaveDefault={plan.saveBlockDefault}
         />
+      ) : plan.status === "error" ? (
+        <div
+          role="alert"
+          className="flex flex-col items-start gap-2 rounded-xl bg-accent-soft p-3 text-accent"
+        >
+          <p>{tp("loadError")}</p>
+          <Button variant="secondary" onClick={plan.reload}>
+            {tc("retry")}
+          </Button>
+        </div>
       ) : (
         <p role="status" className="text-muted">
           {tc("loading")}

@@ -74,9 +74,9 @@ export function useBacklog(userId: string | null) {
 
   /** Quick capture: a parsed line (see `parseCapture`) becomes an item; a day word schedules it. */
   const add = useCallback(
-    async (capture: Capture) => {
+    async (capture: Capture): Promise<boolean> => {
       const clean = capture.title.trim();
-      if (!clean || !userId) return;
+      if (!clean || !userId) return false;
       const row: Record<string, unknown> = { user_id: userId, title: clean.slice(0, 500) };
       if (capture.estimate_min) row.estimate_min = capture.estimate_min;
       if (capture.priority) row.priority = capture.priority;
@@ -90,7 +90,7 @@ export function useBacklog(userId: string | null) {
       const { data, error: err } = await client.from("backlog_items").insert(row).select(COLUMNS).single();
       if (err || !data) {
         setError(true);
-        return;
+        return false;
       }
       setError(false);
       show([...itemsRef.current, data as BacklogItem]);
@@ -98,6 +98,7 @@ export function useBacklog(userId: string | null) {
         id: (data as BacklogItem).id,
         parsed: Object.keys(row).filter((k) => k !== "user_id" && k !== "title"),
       });
+      return true;
     },
     [client, userId, show],
   );
@@ -194,6 +195,9 @@ export function useBacklog(userId: string | null) {
     complete,
     reopen,
     drop,
-    reload: () => setReload((r) => r + 1),
+    reload: () => {
+      setStatus("loading");
+      setReload((r) => r + 1);
+    },
   };
 }

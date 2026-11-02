@@ -206,6 +206,9 @@ export function usePlan() {
     updateDay,
     flush,
     saveBlockDefault,
-    reload: () => setReload((r) => r + 1),
+    reload: () => {
+      setStatus("loading");
+      setReload((r) => r + 1);
+    },
   };
 }

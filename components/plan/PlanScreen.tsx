@@ -73,16 +73,6 @@ export function PlanScreen() {
     useSensor(KeyboardSensor),
   );
 
-  if (plan.status === "loading" || !plan.ctx || !plan.today) {
-    return (
-      <>
-        <ScreenHeader title={t("title")} />
-        <p role="status" className="px-4 text-muted lg:px-6">
-          {tc("loading")}
-        </p>
-      </>
-    );
-  }
   if (plan.status === "error") {
     return (
       <>
@@ -96,6 +86,16 @@ export function PlanScreen() {
             {tc("retry")}
           </Button>
         </div>
+      </>
+    );
+  }
+  if (plan.status === "loading" || !plan.ctx || !plan.today) {
+    return (
+      <>
+        <ScreenHeader title={t("title")} />
+        <p role="status" className="px-4 text-muted lg:px-6">
+          {tc("loading")}
+        </p>
       </>
     );
   }
@@ -235,11 +235,15 @@ export function PlanScreen() {
         today={plan.today}
         timezone={ctx.timezone}
         error={backlog.error}
+        loadState={backlog.status}
+        onRetry={backlog.reload}
         onAdd={async (c) => {
           if (c.appointment) {
             await plan.addAppointment(c.appointment.date, c.title, c.appointment.start, c.appointment.end);
             setSelected(c.appointment.date);
-          } else await backlog.add(c);
+            return true;
+          }
+          return backlog.add(c);
         }}
         onOpen={setEditingItem}
         onComplete={backlog.complete}
