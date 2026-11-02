@@ -14,6 +14,7 @@ const common = { timezoneId: "Asia/Bangkok", locale: "en-US" } as const;
 
 export default defineConfig({
   testDir: "tests",
+  globalSetup: "./tests/global-setup.ts",
   testMatch: ["e2e/**/*.spec.ts", "visual/**/*.spec.ts"],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,

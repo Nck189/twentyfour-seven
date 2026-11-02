@@ -20,7 +20,7 @@
     "secrets:check": "tsx scripts/secrets-check.ts",
     "qc:static": "npm run typecheck && npm run lint && npm run format:check && npm run i18n:check && npm run art:lint",
     "qc": "npm run qc:static && npm run test:cov && npm run secrets:check && npm run e2e",
-    "qc:prod": "BASE_URL=${PROD_URL:-https://twentyfour-seven.vercel.app} playwright test tests/e2e --project=iphone --project=chrome-desktop && lhci autorun --collect.url=${PROD_URL:-https://twentyfour-seven.vercel.app}/login",
+    "qc:prod": "BASE_URL=${PROD_URL:-https://twentyfour-seven.vercel.app} playwright test tests/e2e --project=iphone --project=chrome-desktop --workers=1 && lhci autorun --collect.url=${PROD_URL:-https://twentyfour-seven.vercel.app}/login",
     "icons": "tsx scripts/gen-icons.ts"
   },
   "dependencies": {
