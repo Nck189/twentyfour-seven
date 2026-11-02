@@ -280,3 +280,15 @@ export function MoreDotsIcon(p: P) {
     </Svg>
   );
 }
+
+/** Swap / change (two opposite arrows). */
+export function SwapIcon(p: P) {
+  return (
+    <Svg {...p}>
+      <rect x="4" y="6" width="13" height="2.6" rx="1.3" fill="currentColor" />
+      <path d="M16 3.2 21 7.3 16 11.4z" fill="currentColor" />
+      <rect x="7" y="15.4" width="13" height="2.6" rx="1.3" fill="currentColor" opacity="0.55" />
+      <path d="M8 12.6 3 16.7 8 20.8z" fill="currentColor" opacity="0.55" />
+    </Svg>
+  );
+}

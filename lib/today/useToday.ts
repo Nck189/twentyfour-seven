@@ -460,6 +460,22 @@ export function useToday(now: Date) {
         setWakes((prev) => ({ ...prev, [w.date]: w }));
         return data as WakeEvent;
       },
+      /** Picks today's first-10 for a block (a per-day override; the default stays as set). */
+      setFirst10: async (b: TimelineBlock, value: string | null) => {
+        if (!loaded) return;
+        const row = loaded.ctx.dayPlans[b.logDate];
+        const blocks = row?.overrides.blocks ?? {};
+        const overrides = {
+          ...row?.overrides,
+          blocks: { ...blocks, [b.key]: { ...blocks[b.key], first10: value } },
+        };
+        const { error } = await client
+          .from("day_plans")
+          .upsert({ user_id: loaded.userId, date: b.logDate, overrides }, { onConflict: "user_id,date" });
+        if (error) throw error;
+        void logEvent("first10_changed", { date: b.logDate, block: b.key });
+        setReload((r) => r + 1);
+      },
       setMode: async (mode: DayPlanRow["mode"]) => {
         if (!loaded || !dayDate) return;
         const { error } = await client
@@ -475,6 +491,8 @@ export function useToday(now: Date) {
 
   return {
     status,
+    /** The user's block settings (own first-10 choices live here). */
+    blockSettings: loaded?.ctx.blocks ?? [],
     timeline,
     dayDate,
     timezone: loaded?.ctx.timezone ?? DEFAULT_TZ,

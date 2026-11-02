@@ -9,6 +9,8 @@ import { sfx } from "@/lib/sound/sfx";
 import { isOnTime, isPastBlock, type TimelineBlock } from "@/lib/today/day";
 import type { BlockLog } from "@/lib/today/useToday";
 import { CheckRow } from "./Checkbox";
+import { SwapIcon } from "@/components/ui/Icons";
+import { NONE, first10Options } from "@/lib/onboarding";
 import { useBlockText } from "./useBlockText";
 
 export type CheckinActions = {
@@ -19,6 +21,7 @@ export type CheckinActions = {
   rate: (b: TimelineBlock, at: Date, mood: number | null, energy: number | null) => Promise<void>;
   reopen: (b: TimelineBlock, at: Date) => Promise<void>;
   setLocation: (b: TimelineBlock, loc: "home" | "out", at: Date) => Promise<void>;
+  setFirst10?: (b: TimelineBlock, value: string | null) => Promise<void>;
 };
 
 function Scale({
@@ -63,17 +66,21 @@ export function BlockCheckin({
   now,
   timezone,
   actions,
+  ownFirst10 = [],
 }: {
   block: TimelineBlock;
   log: BlockLog;
   now: Date;
   timezone: string;
   actions: CheckinActions;
+  /** The user's own first-10 texts for this block (to pick today's). */
+  ownFirst10?: string[];
 }) {
   const t = useTranslations("today.block");
   const text = useBlockText();
   const [mood, setMood] = useState<number | null>(log.mood);
   const [energy, setEnergy] = useState<number | null>(log.energy);
+  const [choosing, setChoosing] = useState(false);
   const past = isPastBlock(block, now);
   const first10Text = text.first10(block.key, block.first10);
   const started = log.started_at ? new Date(log.started_at) : null;
@@ -114,7 +121,44 @@ export function BlockCheckin({
       </div>
 
       <section aria-label={t("first10")}>
-        <h3 className="mb-1 text-sm font-bold text-muted">{t("first10")}</h3>
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <h3 className="text-sm font-bold text-muted">{t("first10")}</h3>
+          {actions.setFirst10 && !closed && !log.first10_at && (
+            <button
+              type="button"
+              aria-expanded={choosing}
+              aria-label={t("changeFirst10")}
+              onClick={() => setChoosing((v) => !v)}
+              className="tap -my-2 flex h-11 w-11 items-center justify-center rounded-full text-muted"
+            >
+              <SwapIcon className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+        {choosing && actions.setFirst10 && (
+          <div role="radiogroup" aria-label={t("changeFirst10")} className="mb-2 flex flex-col gap-1.5">
+            {[...first10Options(block.key, ownFirst10), NONE].map((o) => {
+              const on = (block.first10 ?? null) === o;
+              return (
+                <button
+                  key={o ?? "default"}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => {
+                    setChoosing(false);
+                    void actions.setFirst10!(block, o);
+                  }}
+                  className={`tap min-h-11 rounded-xl px-3 py-2 text-left text-sm font-bold ${
+                    on ? "bg-primary-soft text-primary ring-2 ring-primary ring-inset" : "bg-surface-2"
+                  }`}
+                >
+                  {o === NONE ? t("none") : text.first10(block.key, o)}
+                </button>
+              );
+            })}
+          </div>
+        )}
         {first10Text ? (
           <CheckRow
             emphasis

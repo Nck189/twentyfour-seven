@@ -92,7 +92,9 @@
       "current": "Current block",
       "open": "Open {block}",
       "fixedEvent": "Fixed",
-      "backfilledStart": "Backfilled"
+      "backfilledStart": "Backfilled",
+      "changeFirst10": "Change today's first 10 minutes",
+      "none": "No first-10"
     },
     "nap": {
       "title": "Power nap",
@@ -196,7 +198,10 @@
     "signedInAs": "Signed in as {email}",
     "signOut": "Sign out",
     "install": "Install on iPhone",
-    "installSteps": "In Safari, tap Share, then “Add to Home Screen”."
+    "installSteps": "In Safari, tap Share, then “Add to Home Screen”.",
+    "setupTitle": "Setup",
+    "setupSleep": "Sleep times",
+    "setupFirst10": "First 10 minutes"
   },
   "blocks": {
     "name": {
@@ -215,7 +220,39 @@
       "work": "Map the day: Must / Should / Just start",
       "gradation": "One small task immediately on arriving home"
     },
-    "first10Unset": "Set your first-10 action"
+    "first10Unset": "Set your first-10 action",
+    "suggest": {
+      "down": {
+        "1": "Dim the lights + write tomorrow's top 3",
+        "2": "Shower + skincare, no screens"
+      },
+      "sleep": {
+        "1": "Read 5 pages of a paper book",
+        "2": "3 slow breaths, lights off"
+      },
+      "wake": {
+        "1": "Drink a big glass of water",
+        "2": "Make the bed"
+      },
+      "focus": {
+        "1": "Open the one file you'll work on",
+        "2": "Write the first sentence",
+        "3": "Clear the desk, phone in another room"
+      },
+      "work": {
+        "1": "Do the smallest Must for 10 min",
+        "2": "Reply to 3 messages, then close the inbox"
+      },
+      "gradation": {
+        "1": "Change clothes + put the bag away",
+        "2": "Tidy one surface"
+      },
+      "free": {
+        "1": "Pick one thing just for fun",
+        "2": "Message someone you like",
+        "3": "Walk outside for 10 min"
+      }
+    }
   },
   "templates": {
     "free_weekday": "Free weekday",
@@ -356,5 +393,33 @@
     "already": "Already done tonight. Sleep well.",
     "error": "Couldn't finish. Try again.",
     "reasonAll": "Same reason for all"
+  },
+  "onboarding": {
+    "cardTitle": "Make 24/7 yours in 2 minutes",
+    "cardHint": "Set your sleep times and your first 10 minutes. You can skip and do it later in More.",
+    "start": "Set up now",
+    "later": "Later",
+    "title": "Set up",
+    "skip": "Skip for now",
+    "next": "Next",
+    "back": "Back",
+    "finish": "Done",
+    "sleepTitle": "Sleep times",
+    "sleepHint": "When do you go to bed and get up on each kind of day?",
+    "bed": "Bed",
+    "wake": "Wake",
+    "hours": "{hours}h sleep",
+    "shortSleep": "Under 7 h",
+    "invalidSleep": "Between 3 and 12 hours, please",
+    "first10Title": "Your first 10 minutes",
+    "first10Hint": "Starting is the hardest part. Pick what you'll do in the first 10 minutes of each block; you can switch any day.",
+    "useFirst10": "Use first-10 actions (recommended)",
+    "noFirst10Note": "Without a first-10, blocks are harder to start, and the farm grows slower. You can turn this back on in More.",
+    "addOwn": "Add your own",
+    "ownPlaceholder": "Your first-10 for {block}",
+    "addButton": "Add",
+    "doneTitle": "All set",
+    "doneHint": "Change any of this later in More → Setup.",
+    "weekdays": "Days"
   }
 }

@@ -9,6 +9,8 @@ import { useNow } from "@/lib/hooks/useNow";
 import { currentBlock, type TimelineBlock } from "@/lib/today/day";
 import { useToday } from "@/lib/today/useToday";
 import { NightRitual } from "@/components/night/NightRitual";
+import { WelcomeCard } from "@/components/onboarding/WelcomeCard";
+import { useOnboardingState } from "@/lib/onboarding/useOnboardingState";
 import { BlockCheckin } from "./BlockCheckin";
 import { Sheet } from "./BlockSheet";
 import { ModeCard } from "./ModeCard";
@@ -62,6 +64,7 @@ export function TodayScreen() {
   const clock = useNow(30_000);
   const now = clock ?? EPOCH;
   const today = useToday(now);
+  const onboarding = useOnboardingState();
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [ritualOpen, setRitualOpen] = useState(false);
   const [ritualDismissed, setRitualDismissed] = useState(false);
@@ -137,6 +140,8 @@ export function TodayScreen() {
           </button>
         }
       />
+
+      {onboarding.show && <WelcomeCard onLater={() => void onboarding.later()} />}
 
       {tl.mode !== "normal" && (
         <p className="mx-4 mb-3 inline-block rounded-full bg-primary-soft px-3 py-1 text-sm font-bold text-primary lg:mx-6">
@@ -215,6 +220,7 @@ export function TodayScreen() {
             now={now}
             timezone={today.timezone}
             actions={today.actions}
+            ownFirst10={today.blockSettings.find((b) => b.key === cur.key)?.first10_options}
           />
         </section>
       )}
@@ -283,6 +289,7 @@ export function TodayScreen() {
             now={now}
             timezone={today.timezone}
             actions={today.actions}
+            ownFirst10={today.blockSettings.find((b) => b.key === open.key)?.first10_options}
           />
         </Sheet>
       )}

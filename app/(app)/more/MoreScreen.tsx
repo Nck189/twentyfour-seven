@@ -2,7 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import { useEffect, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { ExportCard } from "@/components/settings/ExportCard";
+import { ChevronIcon, MoonIcon, SunriseIcon } from "@/components/ui/Icons";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { Segmented } from "@/components/ui/Segmented";
@@ -60,6 +62,35 @@ export function MoreScreen() {
   return (
     <>
       <ScreenHeader title={t("title")} />
+      <Card title={t("setupTitle")}>
+        <ul className="flex flex-col gap-2">
+          {(
+            [
+              {
+                href: "/welcome?step=sleep&from=more",
+                label: t("setupSleep"),
+                icon: <MoonIcon className="h-5 w-5" />,
+              },
+              {
+                href: "/welcome?step=first10&from=more",
+                label: t("setupFirst10"),
+                icon: <SunriseIcon className="h-5 w-5" />,
+              },
+            ] as const
+          ).map((row) => (
+            <li key={row.href}>
+              <Link
+                href={row.href}
+                className="tap flex min-h-12 items-center gap-3 rounded-xl bg-surface-2 px-3 font-bold"
+              >
+                <span className="text-primary">{row.icon}</span>
+                <span className="flex-1">{row.label}</span>
+                <ChevronIcon className="h-4 w-4 -rotate-90 text-muted" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </Card>
       <Card title={t("language")}>
         <Segmented<Locale>
           label={t("language")}
