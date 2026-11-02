@@ -21,8 +21,13 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 ---
 
 ## Current milestone
-**M0** waiting on G7 review → then M1 QC (G3–G7) → M2 QC → M3 Today screen.
-(M1 schema and M2 engine were built while the M0 reviewer ran.)
+**M0** fixes pushed, G7 re-review running → then **M3** (M1/M2 built; their reports follow M0).
+
+M3 plan (Today screen + check-ins):
+1. Pure `lib/today`: which wake-day "today" is (wake → next wake), timeline = Wake…Free of D + tonight's Down/Sleep (from D+1's plan), current block, on-time (±10 min), backfill detection.
+2. Server: `press_wake()` RPC (server clock, target from plan/template, 15-min window, Sunrise ticket +1 once/day, backfill = no ticket); trigger marks block_logs `backfilled` when a timestamp is >10 min from server time.
+3. UI: timeline with now line + current block, block sheet (first-10 auto-starts the block → 5 taps for CJ-05), checklist, close with mood/energy, location on Focus/Work, I'm up button, nap timer (20/25 min + alarm), vacation/sick toggle. Optimistic writes with rollback (CJ-16). Events for every action.
+4. Journeys: CJ-03, CJ-04, CJ-05, CJ-06, CJ-15, CJ-16. Invariants: day boundary wake→next wake, tz from profile.
 
 ## Done
 - **Phase 0** ✅ tools + logins (gh, Supabase, Vercel), GitHub repo, Supabase prod project, Vercel auto-deploy from `main`.

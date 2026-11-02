@@ -18,6 +18,26 @@ export async function signIn(page: Page, email = IS_PROD_RUN ? PROD_SMOKE_EMAIL 
   });
   if (!res.ok) throw new Error(`generate_link failed: ${res.status} ${await res.text()}`);
   const body = (await res.json()) as { hashed_token: string; verification_type: string };
+  if (IS_PROD_RUN) {
+    // The shared smoke account must start each test in English (the app applies the account's language).
+    const user = (await (
+      await fetch(`${SB_URL}/auth/v1/admin/users?email=${encodeURIComponent(email)}`, {
+        headers: { apikey: SB_SERVICE_KEY, Authorization: `Bearer ${SB_SERVICE_KEY}` },
+      })
+    ).json()) as { users?: { id: string; email: string }[] };
+    const id = user.users?.find((u) => u.email === email)?.id;
+    if (id) {
+      await fetch(`${SB_URL}/rest/v1/profiles?user_id=eq.${id}`, {
+        method: "PATCH",
+        headers: {
+          apikey: SB_SERVICE_KEY,
+          Authorization: `Bearer ${SB_SERVICE_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ locale: "en" }),
+      });
+    }
+  }
   await page.goto(`/auth/callback?token_hash=${body.hashed_token}&type=${body.verification_type}`);
   await page.waitForURL("**/today");
   return email;

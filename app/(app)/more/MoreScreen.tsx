@@ -42,7 +42,11 @@ export function MoreScreen() {
         .eq("user_id", data.user.id)
         .maybeSingle();
       const onboarding = { ...((prof?.onboarding ?? {}) as Record<string, unknown>), locale_set: true };
-      await getSupabase().from("profiles").update({ locale: next, onboarding }).eq("user_id", data.user.id);
+      const { error } = await getSupabase()
+        .from("profiles")
+        .update({ locale: next, onboarding })
+        .eq("user_id", data.user.id);
+      if (!error && usePrefs.getState().locale === next) usePrefs.getState().markLocaleSynced();
       await logEvent("locale_changed", { locale: next });
     }
   }

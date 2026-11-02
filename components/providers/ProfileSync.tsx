@@ -7,20 +7,19 @@ import { getSupabase } from "@/lib/supabase/client";
 
 /**
  * Language follows the account across devices (CJ-14). On the very first sign-in the device's
- * choice is saved to the profile; afterwards the profile wins — unless the user changes the
- * language on this screen before the profile has loaded.
+ * choice is saved to the profile; afterwards the profile wins, except for a change on this
+ * device that hasn't been saved yet (e.g. the app reloaded mid-save).
  */
 export function ProfileSync() {
   useEffect(() => {
     const client = getSupabase();
-    const startLocale = usePrefs.getState().locale;
     let cancelled = false;
     (async () => {
       const { data } = await client.auth.getUser();
       if (!data.user || cancelled) return;
       const { data: profile } = await client
         .from("profiles")
-        .select("locale, sound_on, onboarding, updated_at")
+        .select("locale, sound_on, onboarding")
         .eq("user_id", data.user.id)
         .maybeSingle();
       if (cancelled || !profile) return;
@@ -33,15 +32,18 @@ export function ProfileSync() {
           .eq("user_id", data.user.id)
           // Atomic: a late write must never overwrite a language the user already picked.
           .is("onboarding->locale_set", null);
+        prefs.markLocaleSynced();
         return;
       }
-      // The newer choice wins: a change made on this device after the profile's last write
-      // (or while we were loading) is kept; otherwise the account's language is applied.
-      const profileTime = Date.parse(profile.updated_at as string) || 0;
-      const localIsNewer = prefs.localeChangedAt > profileTime || prefs.locale !== startLocale;
-      if (!localIsNewer && isLocale(profile.locale)) prefs.applyLocale(profile.locale);
-      if (localIsNewer && profile.locale !== prefs.locale) {
-        await client.from("profiles").update({ locale: prefs.locale }).eq("user_id", data.user.id);
+      // An unsaved change made on this device wins (clock-free); otherwise the account's language applies.
+      if (prefs.localeDirty) {
+        const { error } = await client
+          .from("profiles")
+          .update({ locale: prefs.locale })
+          .eq("user_id", data.user.id);
+        if (!error) prefs.markLocaleSynced();
+      } else if (isLocale(profile.locale)) {
+        prefs.applyLocale(profile.locale);
       }
       if (typeof profile.sound_on === "boolean") prefs.setSoundOn(profile.sound_on);
     })();
