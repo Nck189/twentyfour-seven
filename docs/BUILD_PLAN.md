@@ -164,6 +164,8 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 
 **Done when:** the streak behaves correctly across a simulated month with misses, freezes and vacation.
 
+**Added 2026-11-03 (Minnie): unlocks & milestones (SPEC §8.8b).** Rules in `content/unlocks.ts`, progress as pure functions in `lib/game/unlocks.ts` (unit-tested), grants through a server RPC + read-only `unlock_grants` ledger (counters/ledger can start in M7 with the economy). Collection book on the Farm tab, one "next unlock" line on Today, feature reveals (Stats after 3 days, gacha with the first ticket). **Done when:** each tier unlocks exactly once from real data, and a new user sees fewer tabs/cards until they're earned.
+
 ## M10 — Stats + weekly review
 **Prompt:**
 > Start M10. Build Stats per SPEC §7:

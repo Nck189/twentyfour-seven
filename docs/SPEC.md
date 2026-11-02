@@ -278,6 +278,14 @@ Each mutation has its own visual tint / particles.
 - Each real calendar month is a season, with a limited banner and festival decorations (Loy Krathong, Christmas, New Year, Chinese New Year, Songkran, …).
 - **Harvest festival** at month end = monthly review.
 
+### 8.8b Unlocks & milestones (Minnie, 2026-11-03 — proposal, rewards land with M6–M9 art)
+Something is always "almost unlocked", so there's a reason to come back. Small and frequent early, bigger later. Every unlock is granted **server-side** once (read-only ledger, like ticket grants); rules are static content (`content/unlocks.ts`); progress is computed from data, never UI state.
+- **Small (first days):** firsts. First Night ritual → lantern decor; first backlog item done → mailbox; all first-10s in one day → sunflower seed.
+- **Medium (weekly):** counts. 20 first-10s → better watering can; 10 Must items done → harvest cart; 7-day streak → an animal egg (plus the existing scarecrow).
+- **Big (monthly):** farm-changing. 30-day streak → pond / new farm area; 100 blocks closed → house upgrade; 4 weekly reviews → a festival theme.
+- **Feature reveals (progressive disclosure, also keeps a new user's screens calm):** Stats after 3 days of data; the gacha machine with the first ticket; farm expansion after the first harvest.
+- **UI:** a collection book on the Farm tab (locked = soft silhouette + a progress ring "2 more"); Today shows at most one quiet line with the next near unlock (picture + "1 more night"); unlocking uses the reward animation (skippable, reduced-motion aware). No emoji — hand-built art only.
+
 ### 8.9 Decor & sky
 - **Coins buy:** fences, paths, flowers, house, pond, plot expansions.
 - **Sky follows the current block:** Down = dusk, Sleep = stars, Wake = sunrise, daytime blocks = day.
