@@ -30,7 +30,9 @@ export function ProfileSync() {
         await client
           .from("profiles")
           .update({ locale: prefs.locale, onboarding: { ...onboarding, locale_set: true } })
-          .eq("user_id", data.user.id);
+          .eq("user_id", data.user.id)
+          // Atomic: a late write must never overwrite a language the user already picked.
+          .is("onboarding->locale_set", null);
         return;
       }
       // Don't clobber a change the user made while we were loading.

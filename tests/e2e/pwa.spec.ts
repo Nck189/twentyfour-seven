@@ -1,3 +1,4 @@
+import { IS_PROD_RUN } from "../helpers/env";
 import { expect, test } from "@playwright/test";
 
 test("manifest is valid for an installable PWA", async ({ request }) => {
@@ -18,7 +19,14 @@ test("service worker and apple touch icon are served", async ({ request }) => {
   expect((await request.get("/apple-icon.png")).ok()).toBe(true);
 });
 
-test("keep-alive endpoint rejects calls without the cron secret when one is set", async ({ request }) => {
-  const res = await request.get("/api/keepalive", { headers: { authorization: "Bearer wrong" } });
-  expect([200, 401, 502]).toContain(res.status());
+test("keep-alive endpoint: 401 without the cron secret, 200 + DB round-trip with it", async ({ request }) => {
+  expect((await request.get("/api/keepalive")).status()).toBe(401);
+  expect((await request.get("/api/keepalive", { headers: { authorization: "Bearer wrong" } })).status()).toBe(
+    401,
+  );
+  const secret = process.env.CRON_SECRET;
+  test.skip(!secret || IS_PROD_RUN, "secret only available locally");
+  const ok = await request.get("/api/keepalive", { headers: { authorization: `Bearer ${secret}` } });
+  expect(ok.status()).toBe(200);
+  expect(await ok.json()).toMatchObject({ ok: true, status: 200 });
 });

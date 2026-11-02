@@ -28,40 +28,44 @@
     "emailPlaceholder": "you@example.com",
     "send": "Email me a sign-in link",
     "sending": "Sending…",
-    "sent": "Link sent. Check your email.",
     "invalidEmail": "Please enter a valid email address.",
     "google": "Continue with Google",
     "error": "Couldn't send the link. Please try again.",
     "callbackError": "That sign-in link has expired or was already used. Request a new one.",
-    "codeLabel": "Sign-in link or code",
+    "codeLabel": "Sign-in link",
     "codeHint": "We emailed a sign-in link to {email}.",
     "verify": "Sign in",
     "verifying": "Signing in…",
-    "invalidCode": "That link or code didn't work. It may have expired — send a new one.",
+    "invalidCode": "That link didn't work. It may have expired — send a new one.",
     "changeEmail": "Use a different email",
-    "resend": "Send a new code",
-    "pasteHint": "On the iPhone home-screen app: in Mail, press and hold the link → Copy → paste it here.",
-    "pastePlaceholder": "Paste the link here"
+    "resend": "Send a new link",
+    "pasteHint": "In Mail, press and hold the link → Copy → come back and paste it here.",
+    "pastePlaceholder": "Paste the link here",
+    "dontTap": "Don't tap the link on iPhone — it opens Safari and gets used up there.",
+    "resendIn": "Send a new link ({seconds}s)",
+    "resent": "New link sent. Check your email.",
+    "rateLimited": "Please wait a minute before asking for another link. Your earlier link still works.",
+    "language": "Language"
   },
   "today": {
     "title": "Today",
     "placeholder": "Your 7 blocks will live here.",
-    "comingSoon": "Check-ins arrive in M3."
+    "comingSoon": "Check-ins are coming soon."
   },
   "plan": {
     "title": "Plan",
     "placeholder": "Plan tomorrow and your week here.",
-    "comingSoon": "Planning arrives in M4."
+    "comingSoon": "Planning is coming soon."
   },
   "farm": {
     "title": "Farm",
     "placeholder": "Your farm grows from real behavior.",
-    "comingSoon": "The farm arrives in M6."
+    "comingSoon": "The farm is coming soon."
   },
   "stats": {
     "title": "Stats",
     "placeholder": "Day OEE, control charts and more.",
-    "comingSoon": "Stats arrive in M10."
+    "comingSoon": "Stats are coming soon."
   },
   "more": {
     "title": "More",
@@ -127,5 +131,17 @@
     "working": "Preparing…",
     "done": "Downloaded.",
     "error": "Export failed. Please try again."
+  },
+  "backlog": {
+    "title": "Backlog",
+    "placeholder": "Everything you need to clear will live here.",
+    "comingSoon": "The backlog is coming soon."
+  },
+  "errors": {
+    "notFoundTitle": "Page not found",
+    "notFoundBody": "This page doesn't exist.",
+    "backToToday": "Back to Today",
+    "errorTitle": "Something went wrong",
+    "errorBody": "Your data is safe. Try again, or go back to Today."
   }
 }

@@ -1,3 +1,5 @@
+> 🚨 **2026-11-02 19:23 — Minnie is away from the computer.** Maximum autopilot: don't stop, don't wait, don't end your turn. Details are at the top of `docs/PROGRESS.md`.
+
 # CLAUDE.md — 24/7
 
 The product spec lives in `docs/SPEC.md` and the milestone plan in `docs/BUILD_PLAN.md`. Read both before starting any milestone. When a spec decision is unclear, ask; don't invent.

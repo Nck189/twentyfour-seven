@@ -26,7 +26,7 @@ test.describe("auth", () => {
     await page.getByLabel("Email").fill(email);
     await page.getByRole("button", { name: "Email me a sign-in link" }).click();
     const link = await latestSignInLink(email);
-    await page.getByLabel("Sign-in link or code").fill(link);
+    await page.getByLabel("Sign-in link").fill(link);
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(/\/today$/);
     await page.reload();
@@ -39,7 +39,7 @@ test.describe("auth", () => {
     await page.goto("/login");
     await page.getByLabel("Email").fill(uniqueEmail("junk"));
     await page.getByRole("button", { name: "Email me a sign-in link" }).click();
-    await page.getByLabel("Sign-in link or code").fill("https://example.com/nothing-here");
+    await page.getByLabel("Sign-in link").fill("https://example.com/nothing-here");
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page.getByRole("main").getByRole("alert")).toContainText("didn't work");
   });

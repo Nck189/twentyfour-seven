@@ -31,6 +31,39 @@ for (const { locale, theme } of COMBOS) {
       await expect(page).toHaveScreenshot(`login-${locale}-${theme}.png`);
     });
 
+    test("login paste step, offline, 404", async ({ page }, info) => {
+      await fixClock(page);
+      await setPrefs(page, { locale, theme });
+      await page.addInitScript(() =>
+        localStorage.setItem(
+          "247-login-pending",
+          JSON.stringify({ email: "minnie@example.com", sentAt: Date.now() }),
+        ),
+      );
+      const shots: [string, string][] = [
+        ["login-paste", "/login"],
+        ["offline", "/offline.html"],
+      ];
+      for (const [name, url] of shots) {
+        await page.goto(url);
+        await page.evaluate(() => document.fonts.ready);
+        await page.waitForTimeout(400);
+        await page.screenshot({
+          path: `screenshots/${MILESTONE}-${name}-${info.project.name}-${locale}-${theme}.png`,
+        });
+        await expect(page).toHaveScreenshot(`${name}-${locale}-${theme}.png`, {
+          mask: [page.getByRole("button", { name: /\(\d+/ })],
+        });
+      }
+      await signIn(page);
+      await page.goto("/nonexistent-page");
+      await page.waitForTimeout(400);
+      await page.screenshot({
+        path: `screenshots/${MILESTONE}-404-${info.project.name}-${locale}-${theme}.png`,
+      });
+      await expect(page).toHaveScreenshot(`404-${locale}-${theme}.png`);
+    });
+
     test("app screens", async ({ page }, info) => {
       await fixClock(page);
       await setPrefs(page, { locale, theme });

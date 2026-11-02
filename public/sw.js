@@ -1,7 +1,7 @@
-/* 24/7 service worker — app-shell caching + offline fallback. Push handlers are added in M11. */
-const VERSION = "v1";
+/* 24/7 service worker — versioned per build via ?v=<build id>; push handlers arrive in M11. */
+const VERSION = new URL(self.location).searchParams.get("v") || "dev";
 const SHELL_CACHE = `shell-${VERSION}`;
-const OFFLINE_URL = "/offline";
+const OFFLINE_URL = "/offline.html"; // self-contained: no JS/CSS chunks needed
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(SHELL_CACHE).then((c) => c.addAll([OFFLINE_URL, "/icons/icon-192.png"])));
@@ -23,15 +23,17 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Static build assets: cache-first (they are content-hashed).
+  // Content-hashed build assets: cache-first.
   if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/")) {
     event.respondWith(
       caches.match(request).then(
         (hit) =>
           hit ||
           fetch(request).then((res) => {
-            const copy = res.clone();
-            caches.open(SHELL_CACHE).then((c) => c.put(request, copy));
+            if (res.ok) {
+              const copy = res.clone();
+              caches.open(SHELL_CACHE).then((c) => c.put(request, copy));
+            }
             return res;
           }),
       ),
@@ -39,7 +41,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Navigations: network-first, offline page as fallback.
+  // Navigations: network first, self-contained offline page as fallback.
   if (request.mode === "navigate") {
     event.respondWith(fetch(request).catch(() => caches.match(OFFLINE_URL)));
   }

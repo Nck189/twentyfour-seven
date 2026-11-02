@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>24/7</title>
+<style>
+  :root { --bg:#f7f4ec; --text:#3f3a33; --muted:#6e665a; --primary:#3f7236; --on:#ffffff; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#22201c; --text:#f1ece2; --muted:#c2b9a9; --primary:#9bcb85; --on:#1e2a1a; } }
+  html[data-theme="light"] { --bg:#f7f4ec; --text:#3f3a33; --muted:#6e665a; --primary:#3f7236; --on:#ffffff; }
+  html[data-theme="dark"] { --bg:#22201c; --text:#f1ece2; --muted:#c2b9a9; --primary:#9bcb85; --on:#1e2a1a; }
+  body { margin:0; min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         gap:12px; padding:24px; box-sizing:border-box; text-align:center; background:var(--bg); color:var(--text);
+         font-family: ui-rounded, -apple-system, "Thonburi", system-ui, sans-serif; line-height:1.6; }
+  h1 { font-size:24px; margin:8px 0 0; }
+  p { color:var(--muted); margin:0; max-width:320px; }
+  button { min-height:44px; min-width:44px; padding:0 20px; border:0; border-radius:12px; background:var(--primary);
+           color:var(--on); font:inherit; font-weight:700; font-size:16px; margin-top:8px; }
+</style>
+</head>
+<body>
+  <svg viewBox="0 0 64 64" width="80" height="80" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#F3EFE4"/><circle cx="49" cy="15" r="7" fill="#FFDB8E"/><rect x="8" y="42" width="48" height="14" rx="5" fill="#CDA582"/><rect x="8" y="42" width="48" height="4" rx="2" fill="#DDBB98"/><ellipse cx="32" cy="45" rx="9" ry="2" fill="#B88E6B"/><rect x="30.5" y="26" width="3" height="19" rx="1.5" fill="#6FA860"/><ellipse cx="24" cy="29" rx="8" ry="4.5" fill="#A6D08F" transform="rotate(-25 24 29)"/><ellipse cx="40" cy="26" rx="8" ry="4.5" fill="#8CC27A" transform="rotate(25 40 26)"/><circle cx="32" cy="24" r="3" fill="#B9DDA3"/></svg>
+  <h1 id="t">You're offline</h1>
+  <p id="b">24/7 needs a connection right now. Your data is safe.</p>
+  <button id="r" type="button" onclick="location.reload()">Try again</button>
+  <script>
+    try {
+      var p = (JSON.parse(localStorage.getItem("247-prefs") || "{}").state) || {};
+      if (p.theme && p.theme !== "system") document.documentElement.setAttribute("data-theme", p.theme);
+      if (p.locale === "th") {
+        document.documentElement.lang = "th";
+        document.getElementById("t").textContent = "ตอนนี้ออฟไลน์อยู่";
+        document.getElementById("b").textContent = "ตอนนี้ 24/7 ต้องต่อเน็ตก่อน ข้อมูลยังอยู่ครบ";
+        document.getElementById("r").textContent = "ลองอีกครั้ง";
+      }
+    } catch (e) {}
+    window.addEventListener("online", function () { location.reload(); });
+  </script>
+</body>
+</html>

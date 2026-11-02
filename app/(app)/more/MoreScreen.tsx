@@ -1,11 +1,11 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { ExportCard } from "@/components/settings/ExportCard";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
+import { Segmented } from "@/components/ui/Segmented";
 import type { Locale } from "@/lib/i18n/config";
 import { usePrefs, type ThemePref } from "@/lib/store/prefs";
 import { getSupabase } from "@/lib/supabase/client";
@@ -20,39 +20,8 @@ function Card({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function Segmented<T extends string>({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: T;
-  options: { value: T; label: string }[];
-  onChange: (v: T) => void;
-}) {
-  return (
-    <div role="radiogroup" aria-label={label} className="flex gap-1 rounded-xl bg-surface-2 p-1">
-      {options.map((o) => (
-        <button
-          key={o.value}
-          role="radio"
-          aria-checked={value === o.value}
-          onClick={() => onChange(o.value)}
-          className={`tap min-h-11 flex-1 rounded-lg px-3 font-bold ${
-            value === o.value ? "bg-surface text-primary" : "text-muted"
-          }`}
-        >
-          {o.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 export function MoreScreen() {
   const t = useTranslations("more");
-  const router = useRouter();
   const { locale, setLocale, theme, setTheme } = usePrefs();
   const [email, setEmail] = useState<string | null>(null);
 
@@ -79,8 +48,9 @@ export function MoreScreen() {
   }
 
   async function signOut() {
-    await getSupabase().auth.signOut();
-    router.replace("/login");
+    await getSupabase().auth.signOut({ scope: "local" });
+    // Hard navigation so the proxy sees the cleared cookies (no stale client router cache).
+    window.location.replace(new URL("/login", window.location.origin).href);
   }
 
   return (
