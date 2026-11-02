@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, localDate } from "@/lib/time";
+import { addDays, localDate, localParts } from "@/lib/time";
 import { newUser } from "./helpers";
 
 const today = () => localDate(new Date(), "Asia/Bangkok");
@@ -8,10 +8,11 @@ const today = () => localDate(new Date(), "Asia/Bangkok");
 describe("review M1–M3 security regressions", () => {
   it("M3-F1: a client-written planned.wake can't open the Sunrise window", async () => {
     const u = await newUser("f1");
-    // Template target far from now, so only the fake snapshot could make this "on time".
-    await u.client.from("templates").update({ target_wake: "03:00", options: {} }).neq("key", "");
-    const hour = new Date().getUTCHours(); // skip if Bangkok time is near 03:00
-    if (hour >= 19 && hour <= 21) return;
+    // Template target 12 h from now (outside the 3 h early window and the late window at any time
+    // of day), so only the fake snapshot could make this "on time".
+    const far = localParts(new Date(Date.now() + 12 * 3_600_000), "Asia/Bangkok");
+    const target = `${String(far.hour).padStart(2, "0")}:${String(far.minute).padStart(2, "0")}`;
+    await u.client.from("templates").update({ target_wake: target, options: {} }).neq("key", "");
     await u.client
       .from("day_plans")
       .upsert(
