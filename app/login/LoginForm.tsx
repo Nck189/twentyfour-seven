@@ -128,7 +128,8 @@ export function LoginForm() {
     const auth = getSupabase().auth;
     const { error: err } =
       parsed.kind === "code"
-        ? await auth.verifyOtp({ email, token: parsed.code, type: "email" })
+        ? // The saved step's email: after iOS reloads the app (while in Mail) the field is empty.
+          await auth.verifyOtp({ email: pending?.email ?? email, token: parsed.code, type: "email" })
         : await auth.verifyOtp({ token_hash: parsed.tokenHash, type: parsed.type });
     setBusy(false);
     if (err) {
@@ -190,24 +191,24 @@ export function LoginForm() {
       ) : (
         <form onSubmit={verify} className="flex flex-col gap-3">
           <p className="font-bold">{t("codeHint", { email: pending.email })}</p>
-          <p role="note" className="rounded-xl bg-warn-soft p-3 font-bold text-warn">
-            {t("dontTap")}
-          </p>
-          <p className="text-muted">{t("pasteHint")}</p>
-          <label htmlFor="link" className="font-bold">
+          <label htmlFor="code" className="font-bold">
             {t("codeLabel")}
           </label>
-          <textarea
-            id="link"
-            rows={3}
+          {/* One field: the code (iPhone offers it above the keyboard), or a pasted link from an older email. */}
+          <input
+            id="code"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
             autoCapitalize="off"
             autoCorrect="off"
             spellCheck={false}
-            placeholder={t("pastePlaceholder")}
+            placeholder={t("codePlaceholder")}
             value={link}
             onChange={(e) => setLink(e.target.value)}
-            className="min-h-12 rounded-xl border border-line bg-surface px-4 py-3 text-base break-all"
+            className="min-h-14 rounded-xl border border-line bg-surface px-4 text-center text-2xl font-extrabold tracking-[0.3em] tabular-nums"
           />
+          <p className="text-sm text-muted">{t("codeTip")}</p>
           <Button type="submit" disabled={busy || link.trim().length < 6}>
             {busy ? t("verifying") : t("verify")}
           </Button>
