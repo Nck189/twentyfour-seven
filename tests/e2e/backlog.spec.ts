@@ -9,6 +9,28 @@ import { wakeDay } from "../helpers/day";
 /** M5 Backlog journeys (CJ-11). Every day is a free day (Work 9 h, no fixed events). */
 test.skip(IS_PROD_RUN, "creates dedicated users");
 
+// Flake hunt (one-tap finish stuck on "Loading…" on Linux WebKit): on failure, print the
+// requests that never finished and the console errors, since traces can't be downloaded here.
+const pending = new Map<string, string>();
+const consoleErrors: string[] = [];
+test.beforeEach(({ page }) => {
+  pending.clear();
+  consoleErrors.length = 0;
+  page.on("request", (r) => pending.set(`${r.method()} ${r.url()}`, new Date().toISOString()));
+  page.on("requestfinished", (r) => pending.delete(`${r.method()} ${r.url()}`));
+  page.on("requestfailed", (r) => {
+    pending.delete(`${r.method()} ${r.url()}`);
+    consoleErrors.push(`requestfailed ${r.url()} ${r.failure()?.errorText ?? ""}`);
+  });
+  page.on("console", (m) => m.type() === "error" && consoleErrors.push(`console ${m.text().slice(0, 300)}`));
+  page.on("pageerror", (e) => consoleErrors.push(`pageerror ${e.message.slice(0, 300)}`));
+});
+test.afterEach((_, info) => {
+  if (info.status === info.expectedStatus) return;
+  console.log(`[diag] ${info.title}: unfinished requests:`, [...pending.entries()]);
+  console.log(`[diag] errors:`, consoleErrors);
+});
+
 /** Plan's "Tomorrow": the wake-day + 1 (every day wakes at 10:00 here). */
 const tomorrow = () => addDays(wakeDay(), 1);
 

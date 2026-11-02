@@ -26,6 +26,7 @@ export function useBacklog(userId: string | null) {
   const [reload, setReload] = useState(0);
   const itemsRef = useRef<BacklogItem[]>([]);
 
+  const autoRetried = useRef(false);
   const show = useCallback((next: BacklogItem[]) => {
     itemsRef.current = next;
     setItems(next);
@@ -44,7 +45,11 @@ export function useBacklog(userId: string | null) {
       .then(({ data, error: err }) => {
         if (cancelled) return;
         if (err) {
-          setStatus("error");
+          // One quiet retry (a hung or dropped request), then the error with Try again.
+          if (!autoRetried.current) {
+            autoRetried.current = true;
+            setReload((r) => r + 1);
+          } else setStatus("error");
           return;
         }
         show((data ?? []) as BacklogItem[]);

@@ -58,6 +58,7 @@ export function usePlan() {
   /** Days with a save in flight (a realtime echo mustn't overwrite the newer local copy). */
   const inflight = useRef<Set<string>>(new Set());
   const ctxRef = useRef<DayContext | null>(null);
+  const autoRetried = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,7 +81,14 @@ export function usePlan() {
         setToday(currentDayDate(r.ctx, new Date()));
         setStatus("ready");
       })
-      .catch(() => !cancelled && setStatus("error"));
+      .catch(() => {
+        if (cancelled) return;
+        // One quiet retry (a hung or dropped request), then the error with Try again.
+        if (!autoRetried.current) {
+          autoRetried.current = true;
+          setReload((r) => r + 1);
+        } else setStatus("error");
+      });
     return () => {
       cancelled = true;
     };
