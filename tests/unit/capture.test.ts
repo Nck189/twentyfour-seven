@@ -110,6 +110,9 @@ describe("parseCapture: appointments far ahead (date + time)", () => {
     expect(p("Checkup 1/2 09:00").appointment?.date).toBe("2027-02-01");
     expect(p("Checkup 1/2/2028 09:00").appointment?.date).toBe("2028-02-01");
     expect(p("ตรวจสุขภาพ 1/2/2571 09:00").appointment?.date).toBe("2028-02-01");
+    // Two-digit years: "70" written in Thai style is พ.ศ. 2570 (= 2027), "27" is 2027.
+    expect(p("ตรวจสุขภาพ 1/2/70 09:00").appointment?.date).toBe("2027-02-01");
+    expect(p("Checkup 1/2/27 09:00").appointment?.date).toBe("2027-02-01");
   });
   it("a time range sets the end", () => {
     expect(p("Exam 12/12 13:00-16:00").appointment).toEqual({

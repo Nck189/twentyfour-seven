@@ -14,30 +14,46 @@ type Fields = Partial<
 export type DirtyDay = {
   set: Fields & { planned?: unknown };
   blocks?: Record<string, unknown>;
-  fixedEvents?: FixedEvent[];
+  /** Appointments added / removed one by one (R2-5: never the whole list). */
+  addEvents?: FixedEvent[];
+  removeEventIds?: string[];
 };
 
-type Patch = Fields & { block?: { key: string }; fixed_events?: FixedEvent[] };
+type Patch = Fields & { block?: { key: string }; add_event?: FixedEvent; remove_event?: string };
 
 /** Adds an edit (already applied to `row`) to what's pending for that day. */
 export function markDirty(prev: DirtyDay | undefined, patch: Patch, row: DayPlanRow): DirtyDay {
-  const { block, fixed_events, ...fields } = patch;
+  const { block, add_event, remove_event, ...fields } = patch;
   const next: DirtyDay = {
     set: { ...prev?.set, ...fields },
     blocks: prev?.blocks,
-    fixedEvents: prev?.fixedEvents,
+    addEvents: prev?.addEvents,
+    removeEventIds: prev?.removeEventIds,
   };
   if (block) next.blocks = { ...next.blocks, [block.key]: row.overrides.blocks?.[block.key as never] ?? {} };
-  if (fixed_events) next.fixedEvents = row.overrides.fixed_events ?? [];
+  if (add_event) next.addEvents = [...(next.addEvents ?? []), add_event];
+  if (remove_event) {
+    // Removing one that was only added here (not saved yet) just cancels the add.
+    const local = next.addEvents?.some((e) => e.id === remove_event);
+    next.addEvents = next.addEvents?.filter((e) => e.id !== remove_event);
+    if (!local) next.removeEventIds = [...(next.removeEventIds ?? []), remove_event];
+  }
   return next;
 }
 
 /** A failed save goes back under anything edited since (newer wins). */
 export function requeue(failed: DirtyDay, newer: DirtyDay | undefined): DirtyDay {
+  const removedLater = new Set(newer?.removeEventIds ?? []);
+  const adds = [
+    ...(failed.addEvents ?? []).filter((e) => !removedLater.has(e.id)),
+    ...(newer?.addEvents ?? []),
+  ];
+  const removes = [...(failed.removeEventIds ?? []), ...(newer?.removeEventIds ?? [])];
   return {
     set: { ...failed.set, ...newer?.set },
     blocks: failed.blocks || newer?.blocks ? { ...failed.blocks, ...newer?.blocks } : undefined,
-    fixedEvents: newer?.fixedEvents ?? failed.fixedEvents,
+    addEvents: adds.length ? adds : undefined,
+    removeEventIds: removes.length ? removes : undefined,
   };
 }
 
@@ -56,12 +72,13 @@ export async function saveDirty(
     p_date: date,
     p_set: dirty.set,
     p_blocks: dirty.blocks ?? null,
-    p_fixed_events: dirty.fixedEvents ?? null,
+    p_add_events: dirty.addEvents?.length ? dirty.addEvents : null,
+    p_remove_event_ids: dirty.removeEventIds?.length ? dirty.removeEventIds : null,
   });
   if (!error) return true;
   if (error.code !== "PGRST202" && !/patch_day_plan/.test(error.message ?? "")) return false;
   const fallback: Record<string, unknown> = { user_id: userId, date, ...dirty.set };
-  if ((dirty.blocks || dirty.fixedEvents) && row) fallback.overrides = row.overrides;
+  if ((dirty.blocks || dirty.addEvents || dirty.removeEventIds) && row) fallback.overrides = row.overrides;
   const res = await client.from("day_plans").upsert(fallback, { onConflict: "user_id,date" });
   return !res.error;
 }

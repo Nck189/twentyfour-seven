@@ -169,7 +169,9 @@ const daysIn = (year: number, m: number) => new Date(Date.UTC(year, m, 0)).getUT
 function resolveDate(d: number, m: number, y: number | null, today: string): string | null {
   if (m < 1 || m > 12 || d < 1 || d > 31) return null;
   if (y !== null) {
-    const year = y > 2400 ? y - 543 /* Buddhist era */ : y < 100 ? 2000 + y : y;
+    // Buddhist era (2569 → 2026); two digits: 27 → 2027, but 70 → พ.ศ. 2570 = 2027 (Thai style).
+    const thisYear = Number(today.slice(0, 4));
+    const year = y > 2400 ? y - 543 : y < 100 ? (2000 + y > thisYear + 10 ? 2500 + y - 543 : 2000 + y) : y;
     return d > daysIn(year, m) ? null : `${year}-${pad2(m)}-${pad2(d)}`;
   }
   const start = Number(today.slice(0, 4));

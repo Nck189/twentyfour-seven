@@ -14,17 +14,23 @@ import { DAY_PLAN_COLUMNS, emptyDayPlan, loadDayContext } from "@/lib/today/load
 export type DayPatch = Partial<Omit<DayPlanRow, "date" | "overrides">> & {
   /** Merged into overrides.blocks[key]. */
   block?: { key: BlockKey; first10?: string | null; checklist?: ChecklistItem[]; duration_min?: number };
-  /** One-off fixed events for this day (appointments). */
-  fixed_events?: FixedEvent[];
+  /** Adds one one-off fixed event (an appointment) to this day. */
+  add_event?: FixedEvent;
+  /** Removes one fixed event by id. */
+  remove_event?: string;
 };
 
 const SAVE_DELAY_MS = 400;
 
 /** Pure: applies a patch to a day plan row (templates are never touched). */
 export function applyDayPatch(row: DayPlanRow, patch: DayPatch): DayPlanRow {
-  const { block, fixed_events, ...fields } = patch;
+  const { block, add_event, remove_event, ...fields } = patch;
   const next: DayPlanRow = { ...row, ...fields, overrides: { ...row.overrides } };
-  if (fixed_events) next.overrides.fixed_events = fixed_events;
+  if (add_event || remove_event) {
+    const events = (row.overrides.fixed_events ?? []).filter((e) => e.id !== remove_event);
+    next.overrides.fixed_events =
+      add_event && !events.some((e) => e.id === add_event.id) ? [...events, add_event] : events;
+  }
   if (block) {
     const { key, ...rest } = block;
     next.overrides.blocks = { ...next.overrides.blocks, [key]: { ...next.overrides.blocks?.[key], ...rest } };
@@ -49,18 +55,21 @@ export function usePlan() {
   const failed = useRef<Set<string>>(new Set());
   /** Per day, only the fields changed since the last successful save (R-M3-4). */
   const dirty = useRef<Record<string, DirtyDay>>({});
+  /** Days with a save in flight (a realtime echo mustn't overwrite the newer local copy). */
+  const inflight = useRef<Set<string>>(new Set());
   const ctxRef = useRef<DayContext | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     loadDayContext(client, -2, 14)
       .then(async (r) => {
-        // Appointments can be months ahead: load every later day that has one.
+        // Any day can be planned (month view): load every saved day beyond the window too, so a
+        // far day never shows defaults and an edit there never drops what was saved (R2-6).
         const later = await client
           .from("day_plans")
           .select(DAY_PLAN_COLUMNS)
-          .gt("date", addDays(r.today, 14))
-          .not("overrides->fixed_events", "is", null);
+          .gt("date", addDays(r.today, 14));
+        if (later.error) throw later.error;
         for (const row of (later.data ?? []) as DayPlanRow[]) r.ctx.dayPlans[row.date] = row;
         if (cancelled) return;
         ctxRef.current = r.ctx;
@@ -77,6 +86,40 @@ export function usePlan() {
     };
   }, [client, reload]);
 
+  // Another device or screen changed a day: take its row unless this screen has unsaved edits
+  // for that day (those are merged on the server when they save) (R2-5).
+  useEffect(() => {
+    if (!userId) return;
+    const channel = client
+      .channel(`plan-${userId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "day_plans", filter: `user_id=eq.${userId}` },
+        (p) => {
+          const row = p.new as DayPlanRow | undefined;
+          const current = ctxRef.current;
+          if (!row?.date || !current) return;
+          if (dirty.current[row.date] || timers.current[row.date] || inflight.current.has(row.date)) return;
+          const fresh: DayPlanRow = {
+            date: row.date,
+            template_id: row.template_id,
+            attending: row.attending,
+            bedtime_override: row.bedtime_override,
+            late_night: row.late_night,
+            mode: row.mode,
+            overrides: row.overrides ?? {},
+          };
+          const next = { ...current, dayPlans: { ...current.dayPlans, [row.date]: fresh } };
+          ctxRef.current = next;
+          setCtx(next);
+        },
+      )
+      .subscribe();
+    return () => {
+      void client.removeChannel(channel);
+    };
+  }, [client, userId]);
+
   const persist = useCallback(
     async (date: string) => {
       const row = ctxRef.current?.dayPlans[date];
@@ -85,14 +128,23 @@ export function usePlan() {
       if (!pending) return true;
       // Take what's pending; edits made while this save is in flight queue up separately.
       delete dirty.current[date];
+      inflight.current.add(date);
       setSaving("saving");
       const change = { ...pending, set: { ...pending.set } };
-      try {
-        change.set.planned = plannedWake(ctxRef.current!, date); // so the server honors a planned push
-      } catch {
-        // No template for that day: the server falls back to its own target.
+      // The planned wake goes along only when this edit can move it, so a stale screen elsewhere
+      // can't reset a push made on another device (R2-5).
+      const movesWake =
+        ["bedtime_override", "late_night", "template_id", "attending"].some((k) => k in pending.set) ||
+        Boolean(pending.addEvents?.length || pending.removeEventIds?.length);
+      if (movesWake) {
+        try {
+          change.set.planned = plannedWake(ctxRef.current!, date); // so the server honors a planned push
+        } catch {
+          // No kind of day: the server falls back to its own target.
+        }
       }
       const ok = await saveDirty(client, userId, date, change, row);
+      inflight.current.delete(date);
       if (ok) failed.current.delete(date);
       else {
         failed.current.add(date);
@@ -190,9 +242,8 @@ export function usePlan() {
       } catch {
         // No template for that day: keep Work.
       }
-      const existing = current.dayPlans[date]?.overrides.fixed_events ?? [];
       updateDay(date, {
-        fixed_events: [...existing, { id: crypto.randomUUID(), key: "appointment", title, start, end, host }],
+        add_event: { id: crypto.randomUUID(), key: "appointment", title, start, end, host },
       });
       await flush();
       void logEvent("appointment_added", { date, host });
@@ -202,8 +253,7 @@ export function usePlan() {
 
   const removeAppointment = useCallback(
     async (date: string, id: string) => {
-      const existing = ctxRef.current?.dayPlans[date]?.overrides.fixed_events ?? [];
-      updateDay(date, { fixed_events: existing.filter((e) => e.id !== id) });
+      updateDay(date, { remove_event: id });
       await flush();
       void logEvent("appointment_removed", { date });
     },

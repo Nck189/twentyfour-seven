@@ -72,6 +72,7 @@ export function useToday(now: Date) {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [logs, setLogs] = useState<Record<string, BlockLog>>({});
   const [wakes, setWakes] = useState<Record<string, WakeEvent>>({});
+  const [frozen, setFrozen] = useState<Record<string, string>>({});
   const [nightDone, setNightDone] = useState<string[]>([]);
   const [nightDoneAtLoad, setNightDoneAtLoad] = useState<string[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -97,7 +98,7 @@ export function useToday(now: Date) {
     (async () => {
       try {
         const { ctx, userId, today } = await loadDayContext(client);
-        const [blockLogs, wakeRows, nightRows] = await Promise.all([
+        const [blockLogs, wakeRows, nightRows, snapRows] = await Promise.all([
           client.from("block_logs").select("*").gte("date", addDays(today, -1)).lte("date", today),
           client
             .from("wake_events")
@@ -108,6 +109,8 @@ export function useToday(now: Date) {
             .select("ref_date")
             .eq("reason", "night")
             .gte("ref_date", addDays(today, -1)),
+          // A target the server froze after a late edit is the one "I'm up" is judged by (R2-4).
+          client.from("wake_snapshots").select("date, target_wake").gte("date", addDays(today, -1)),
         ]);
         if (cancelled) return;
         // Keep the same object when nothing changed, so actions and the timeline aren't rebuilt.
@@ -126,12 +129,22 @@ export function useToday(now: Date) {
         logsRef.current = merged;
         setLogs(merged);
         setWakes(Object.fromEntries(((wakeRows.data ?? []) as WakeEvent[]).map((w) => [w.date, w])));
+        setFrozen(
+          Object.fromEntries(
+            ((snapRows.data ?? []) as { date: string; target_wake: string }[]).map((r) => [
+              r.date,
+              r.target_wake,
+            ]),
+          ),
+        );
         const doneDates = ((nightRows.data ?? []) as { ref_date: string }[]).map((r) => r.ref_date);
         setNightDone(doneDates);
         setNightDoneAtLoad(doneDates);
         setStatus("ready");
       } catch {
-        if (!cancelled) setStatus("error");
+        // A failed refetch (e.g. after a day-plan change elsewhere) keeps what's on screen; only a
+        // failed first load shows the error card (an open Night ritual stays open).
+        if (!cancelled) setStatus((st) => (st === "ready" ? st : "error"));
       }
     })();
     return () => {
@@ -212,8 +225,8 @@ export function useToday(now: Date) {
    * shows the last result (e.g. yesterday's) and no button.
    */
   const wakeCard = useMemo(
-    () => (loaded && dayDate ? pickWakeCard(loaded.ctx, now, dayDate, wakes) : null),
-    [loaded, dayDate, now, wakes],
+    () => (loaded && dayDate ? pickWakeCard(loaded.ctx, now, dayDate, wakes, frozen) : null),
+    [loaded, dayDate, now, wakes, frozen],
   );
 
   const logFor = useCallback(

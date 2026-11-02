@@ -167,7 +167,8 @@ export type Timeline = {
   date: string;
   wakeTarget: Date;
   blocks: TimelineBlock[];
-  fixedEvents: DayPlan["fixedEvents"];
+  /** Fixed events with their label source (`title`, else i18n `fixedEvents.<key>`). */
+  fixedEvents: (DayPlan["fixedEvents"][number] & { key: string; title: string | null })[];
   warnings: Warning[];
   mode: DayPlanRow["mode"];
   planned: boolean;
@@ -201,7 +202,13 @@ export function timelineFor(ctx: DayContext, date: string): Timeline {
     date,
     wakeTarget: today.wake,
     blocks: [...day, ...night],
-    fixedEvents: today.fixedEvents,
+    fixedEvents: today.fixedEvents.map((e) => {
+      const src = [
+        ...templateFor(ctx, date).fixed_events,
+        ...(ctx.dayPlans[date]?.overrides.fixed_events ?? []),
+      ].find((x) => x.id === e.id);
+      return { ...e, key: src?.key ?? "class", title: src?.title ?? null };
+    }),
     warnings: [
       ...today.warnings,
       ...tonight.warnings.filter((w) => w.type === "short_sleep" || w.type === "bedtime_drift"),
@@ -248,12 +255,15 @@ export function pickWakeCard<W extends WakeLike>(
   now: Date,
   dayDate: string,
   wakes: Record<string, W>,
+  /** Targets the server froze after a late edit (wake_snapshots): what "I'm up" is judged by. */
+  frozen: Record<string, string> = {},
 ): { date: string; target: Date; event: W | null; canPress: boolean } | null {
   const calDate = localDate(now, ctx.timezone);
-  const target = planFor(ctx, calDate).wake;
+  const target = frozen[calDate] ? new Date(frozen[calDate]) : planFor(ctx, calDate).wake;
   if (now.getTime() >= target.getTime() - WAKE_EARLY_MS) {
     return { date: calDate, target, event: wakes[calDate] ?? null, canPress: !wakes[calDate] };
   }
   const prev = wakes[dayDate];
-  return prev ? { date: dayDate, target: planFor(ctx, dayDate).wake, event: prev, canPress: false } : null;
+  const prevTarget = frozen[dayDate] ? new Date(frozen[dayDate]) : planFor(ctx, dayDate).wake;
+  return prev ? { date: dayDate, target: prevTarget, event: prev, canPress: false } : null;
 }

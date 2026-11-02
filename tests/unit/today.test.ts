@@ -328,3 +328,19 @@ describe("bedtime drift guardrail (SPEC §3, R-M4-8)", () => {
     expect(planFor(ctx(), "2026-11-04").warnings.find((w) => w.type === "bedtime_drift")).toBeUndefined();
   });
 });
+
+describe("a target the server froze is the one Today shows (R2-4)", () => {
+  it("after a late edit, the wake card uses the frozen target", () => {
+    const now = at("2026-11-02", "09:50");
+    const plain = pickWakeCard(ctx(), now, "2026-11-02", {});
+    expect(hm(plain!.target)).toBe("10:00");
+    const frozen = pickWakeCard(
+      ctx(),
+      now,
+      "2026-11-02",
+      {},
+      { "2026-11-02": at("2026-11-02", "08:00").toISOString() },
+    );
+    expect(hm(frozen!.target)).toBe("08:00");
+  });
+});

@@ -43,6 +43,7 @@ export function Timeline({
   onOpen: (b: TimelineBlock) => void;
 }) {
   const t = useTranslations("today");
+  const tf = useTranslations("fixedEvents");
   const text = useBlockText();
   return (
     <ol className="mx-4 mb-3 flex flex-col gap-2 lg:mx-6" aria-label={t("title")}>
@@ -79,7 +80,11 @@ export function Timeline({
                 )}
                 {events.map((e) => (
                   <span key={e.id} className="mt-0.5 block text-xs text-muted">
-                    {t("block.fixedEvent")} {formatTime(e.start, timezone)}–{formatTime(e.end, timezone)}
+                    {e.title ??
+                      (tf.has(e.key as Parameters<typeof tf>[0])
+                        ? tf(e.key as Parameters<typeof tf>[0])
+                        : t("block.fixedEvent"))}{" "}
+                    {formatTime(e.start, timezone)}–{formatTime(e.end, timezone)}
                   </span>
                 ))}
                 {b.subSlots.map((s) => (

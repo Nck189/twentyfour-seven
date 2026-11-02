@@ -40,4 +40,22 @@ describe("day-plan saves carry only what changed (R-M3-4)", () => {
     expect(requeue(a, b).set).toEqual({ bedtime_override: "B", mode: "normal" });
     expect(requeue(a, undefined)).toEqual(a);
   });
+
+  it("appointments go one by one; removing an unsaved one just cancels it (R2-5)", () => {
+    const a = { id: "a", key: "appointment", title: "Dentist", start: "14:00", end: "15:00" };
+    const b = { id: "b", key: "appointment", title: "Dinner", start: "19:00", end: "20:00" };
+    let d = markDirty(undefined, { add_event: a }, row());
+    d = markDirty(d, { add_event: b }, row());
+    d = markDirty(d, { remove_event: "a" }, row());
+    d = markDirty(d, { remove_event: "old" }, row());
+    expect(d.addEvents).toEqual([b]);
+    expect(d.removeEventIds).toEqual(["old"]);
+  });
+
+  it("a failed add stays queued unless removed meanwhile", () => {
+    const a = { id: "a", key: "appointment", title: "Dentist", start: "14:00", end: "15:00" };
+    const failed = markDirty(undefined, { add_event: a }, row());
+    expect(requeue(failed, undefined).addEvents).toEqual([a]);
+    expect(requeue(failed, markDirty(undefined, { remove_event: "a" }, row())).addEvents).toBeUndefined();
+  });
 });

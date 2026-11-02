@@ -239,9 +239,11 @@ test("R-M4-5: Goodnight waits until tomorrow's plan is saved (offline edit isn't
     .getByRole("button", { name: "Sleepy" })
     .click();
   await sheet.getByRole("button", { name: "Next" }).click();
-  await page.route("**/rest/v1/day_plans**", (r) =>
-    r.request().method() === "POST" ? r.abort("internetdisconnected") : r.continue(),
-  );
+  // Day-plan saves go through the merge RPC (or the plain upsert before that migration).
+  const offline = (r: import("@playwright/test").Route) =>
+    r.request().method() === "POST" ? r.abort("internetdisconnected") : r.continue();
+  await page.route("**/rest/v1/rpc/patch_day_plan**", offline);
+  await page.route("**/rest/v1/day_plans**", offline);
   await sheet.getByRole("button", { name: "15 min later" }).click();
   await sheet.getByRole("button", { name: "Next" }).click();
   await sheet.getByRole("checkbox", { name: "Alarm set + phone away" }).click();
@@ -249,6 +251,7 @@ test("R-M4-5: Goodnight waits until tomorrow's plan is saved (offline edit isn't
   await expect(sheet.getByRole("alert")).toContainText("Tomorrow's plan isn't saved yet");
   expect((await gameState(id)).tickets).toBe(0);
 
+  await page.unroute("**/rest/v1/rpc/patch_day_plan**");
   await page.unroute("**/rest/v1/day_plans**");
   await sheet.getByRole("button", { name: "Goodnight" }).click();
   await expect(sheet.getByText("+1 Night ticket. Sleep well.")).toBeVisible();
