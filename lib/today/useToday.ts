@@ -15,6 +15,7 @@ import {
   type DayPlanRow,
   type TimelineBlock,
 } from "./day";
+import { sameDayContext, shouldRefreshOnForeground } from "./foreground";
 import { loadDayContext } from "./loadContext";
 
 export type BlockLog = {
@@ -108,7 +109,10 @@ export function useToday(now: Date) {
             .gte("ref_date", addDays(today, -1)),
         ]);
         if (cancelled) return;
-        setLoaded({ ctx, userId });
+        // Keep the same object when nothing changed, so actions and the timeline aren't rebuilt.
+        setLoaded((prev) =>
+          prev && prev.userId === userId && sameDayContext(prev.ctx, ctx) ? prev : { ctx, userId },
+        );
         const loadedLogs = Object.fromEntries(
           ((blockLogs.data ?? []) as BlockLog[]).map((l) => [`${l.date}:${l.block}`, l]),
         );
@@ -134,10 +138,17 @@ export function useToday(now: Date) {
     };
   }, [client, reload]);
 
-  // Coming back to the app (iOS home-screen apps stay open for days): refresh silently.
+  // Coming back to the app (iOS home-screen apps stay open for days): refresh silently,
+  // but only after a real absence; a quick app switch must not re-render mid-tap (CJ-15).
   useEffect(() => {
+    let hiddenAt: number | null = null;
     const onVisible = () => {
-      if (document.visibilityState === "visible") setReload((r) => r + 1);
+      if (document.visibilityState === "hidden") {
+        hiddenAt = Date.now();
+        return;
+      }
+      if (shouldRefreshOnForeground(hiddenAt, Date.now())) setReload((r) => r + 1);
+      hiddenAt = null;
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);

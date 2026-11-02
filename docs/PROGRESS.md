@@ -23,11 +23,13 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 ---
 
 ## Current milestone
-**Paused (usage limit) mid M1–M3 review fixes + M4.** Work is committed LOCALLY only (not pushed: the deploy would need migration `20261102060000_review_m123_security.sql` applied to prod first).
+**Moved to a cloud session (2026-11-02 ~22:30 Bangkok)** — the local machine hit its usage limit. Work continues on branch `claude/practical-cannon-a70ubq` → draft PR https://github.com/Nck189/twentyfour-seven/pull/1 (not `main`: the prod migration must go first).
+- The cloud container has no prod secrets and can't run Supabase locally (image downloads blocked), so **GitHub Actions is the test runner**: `QC` runs on every push; `Stress` runs when the commit message contains `[stress]` (no retries).
+- ⚠️ CI uses `retries: 1`, so a flaky test can pass CI. Use the Stress workflow to prove a flake is gone.
 
 ### Resume here
-1. **Open bug (S2, ~2% under load):** CJ-15: a tap on device B is sometimes ignored (no request sent) while the new foreground refetch (`visibilitychange` → `setReload` in `lib/today/useToday.ts`) re-renders. Debug log showed B's click → only GET refetches, no `set_block_item`. Fix idea: refetch only if the app was hidden > 60 s and the date changed, or do a background merge without replacing `loaded`/`actions`. Then stress: `npx playwright test tests/e2e/today.spec.ts -g CJ-15 --workers=8 --repeat-each=16`.
-2. `supabase db push` (prod) → push to GitHub → watch CI → `npm run qc:prod`.
+1. ~~CJ-15 flake (S2)~~ **fixed test-first** (`lib/today/foreground.ts`): the foreground refetch now runs only after ≥ 60 s hidden, and a refetch with unchanged data keeps the same `loaded` object (actions/timeline aren't rebuilt). Tests: `tests/unit/foreground.test.ts`, 2 E2E in `tests/e2e/regressions-m3.spec.ts`. Pending: green Stress run.
+2. `supabase db push` (prod) → merge to `main` → watch CI → `npm run qc:prod`. **Needs Minnie** (prod secrets aren't in the cloud environment).
 3. Write `docs/qa/M1-report.md`, `M2-report.md`, `M3-report.md` (review findings + fixes are listed below), re-review M1+M3 once (G7), then M4 QC (G1–G7) + report.
 4. Then M5 Backlog.
 
