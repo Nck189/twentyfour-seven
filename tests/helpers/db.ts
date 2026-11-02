@@ -104,10 +104,12 @@ export async function addWakeEvent(userId: string, date: string, inWindow: boole
 }
 
 /** Adds a backlog item directly (setup for M5 journeys). */
+/** Adds a task as if added yesterday (so it pays its full priority amount, not the quick-finish one). */
 export async function addBacklogItem(userId: string, item: Record<string, unknown>) {
+  const yesterday = new Date(Date.now() - 86_400_000).toISOString();
   const [row] = (await rest("backlog_items", {
     method: "POST",
-    body: JSON.stringify({ user_id: userId, ...item }),
+    body: JSON.stringify({ user_id: userId, created_at: yesterday, priority_set_at: yesterday, ...item }),
   })) as Record<string, unknown>[];
   return row;
 }

@@ -1,11 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { COINS_BY_PRIORITY } from "@/content/economy";
-import { newUser } from "./helpers";
+import { BACKLOG_DAILY_COIN_CAP, COINS_BY_PRIORITY, QUICK_FINISH_COINS } from "@/content/economy";
+import { admin, newUser } from "./helpers";
 
-async function addItem(u: Awaited<ReturnType<typeof newUser>>, priority: "must" | "should" | "just_start") {
-  const { data, error } = await u.client
+type Priority = "must" | "should" | "just_start";
+const yesterday = () => new Date(Date.now() - 86_400_000).toISOString();
+
+/** A task added (and prioritized) yesterday: pays its full priority amount. */
+async function addItem(u: Awaited<ReturnType<typeof newUser>>, priority: Priority) {
+  const { data, error } = await admin()
     .from("backlog_items")
-    .insert({ user_id: u.id, title: `t-${priority}`, priority })
+    .insert({
+      user_id: u.id,
+      title: `t-${priority}`,
+      priority,
+      created_at: yesterday(),
+      priority_set_at: yesterday(),
+    })
     .select("id")
     .single();
   if (error) throw error;
@@ -59,5 +69,47 @@ describe("complete_backlog_item (M5 coins, server-side)", () => {
     expect(await coins(a)).toBe(0);
     const ev = await a.client.from("events").insert({ user_id: a.id, type: "coins_granted", payload: {} });
     expect(ev.error).not.toBeNull();
+  });
+});
+
+describe("coins come from real work, not farming (R-M5-1)", () => {
+  it("type a Must and finish it at once: only the smallest amount", async () => {
+    const u = await newUser("farm-quick");
+    const { data } = await u.client
+      .from("backlog_items")
+      .insert({ user_id: u.id, title: "x", priority: "must", created_at: yesterday() }) // backdate ignored
+      .select("id, created_at")
+      .single();
+    expect(new Date(data!.created_at).getTime()).toBeGreaterThan(Date.now() - 60_000);
+    const r = await u.client.rpc("complete_backlog_item", { p_id: data!.id });
+    expect(r.data.coins_granted).toBe(QUICK_FINISH_COINS);
+  });
+
+  it("raise the priority right before finishing: only the smallest amount", async () => {
+    const u = await newUser("farm-raise");
+    const id = await addItem(u, "just_start");
+    await u.client.from("backlog_items").update({ priority: "must" }).eq("id", id);
+    const r = await u.client.rpc("complete_backlog_item", { p_id: id });
+    expect(r.data.coins_granted).toBe(QUICK_FINISH_COINS);
+  });
+
+  it("at most the daily cap", async () => {
+    const u = await newUser("farm-cap");
+    let total = 0;
+    for (let i = 0; i < 7; i++) {
+      const id = await addItem(u, "must");
+      total += (await u.client.rpc("complete_backlog_item", { p_id: id })).data.coins_granted;
+    }
+    expect(total).toBe(BACKLOG_DAILY_COIN_CAP);
+    expect(await coins(u)).toBe(BACKLOG_DAILY_COIN_CAP);
+  });
+
+  it("a removed task pays nothing", async () => {
+    const u = await newUser("farm-drop");
+    const id = await addItem(u, "must");
+    await u.client.from("backlog_items").update({ status: "dropped" }).eq("id", id);
+    const r = await u.client.rpc("complete_backlog_item", { p_id: id });
+    expect(r.data.coins_granted).toBe(0);
+    expect(await coins(u)).toBe(0);
   });
 });
