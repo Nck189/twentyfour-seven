@@ -6,7 +6,8 @@ on:
   push:
 
 concurrency:
-  group: stress-${{ github.ref }}
+  # Only a newer [stress] push cancels a running stress run; other pushes get their own group.
+  group: stress-${{ github.ref }}-${{ contains(github.event.head_commit.message, '[stress]') && 'stress' || github.sha }}
   cancel-in-progress: true
 
 jobs:
