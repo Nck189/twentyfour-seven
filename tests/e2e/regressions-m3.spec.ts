@@ -108,3 +108,56 @@ test("M3-F7 a very long checklist word wraps (no horizontal scroll)", async ({ p
   await expect(page.getByRole("region", { name: "Current block" }).getByRole("checkbox")).toHaveCount(2);
   await expectNoHorizontalScroll(page);
 });
+
+/** Simulate the app going to the background / coming back (iOS app switcher). */
+async function setHidden(page: Page, hidden: boolean) {
+  await page.evaluate((h) => {
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => (h ? "hidden" : "visible"),
+    });
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => h });
+    document.dispatchEvent(new Event("visibilitychange"));
+  }, hidden);
+}
+const isLogsRefetch = (url: string, method: string) =>
+  method === "GET" && url.includes("/rest/v1/block_logs");
+
+test("CJ-15 flake: a quick app switch doesn't refetch, and a tap right after it is saved", async ({
+  page,
+}) => {
+  const id = await user(page);
+  await setWakeMinutesAgo(id, 150);
+  await setChecklist(id, "work", ["A"]);
+  await page.goto("/today");
+  const item = page.getByRole("region", { name: "Current block" }).getByRole("checkbox", { name: "A" });
+  await expect(item).toBeVisible();
+  let refetches = 0;
+  page.on("request", (r) => {
+    if (isLogsRefetch(r.url(), r.method())) refetches++;
+  });
+  await setHidden(page, true);
+  await setHidden(page, false);
+  const saved = page.waitForRequest((r) => r.url().includes("/rest/v1/rpc/set_block_item"));
+  await item.click();
+  await saved;
+  await expect(item).toHaveAttribute("aria-checked", "true");
+  await expect
+    .poll(async () => (await blockLogs(id)).find((l) => l.block === "work")?.items_done)
+    .toEqual(["work-0"]);
+  expect(refetches).toBe(0);
+});
+
+test("foreground after a long hide (≥ 60 s) refreshes Today", async ({ page }) => {
+  const id = await user(page);
+  await setWakeMinutesAgo(id, 150);
+  await page.clock.install();
+  await page.goto("/today");
+  await expect(page.getByRole("region", { name: "Current block" })).toBeVisible();
+  await setHidden(page, true);
+  await page.clock.fastForward(61_000);
+  const refetch = page.waitForRequest((r) => isLogsRefetch(r.url(), r.method()));
+  await setHidden(page, false);
+  await refetch;
+  await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
+});
