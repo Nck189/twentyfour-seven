@@ -1,0 +1,113 @@
+/*
+ * 24/7 design tokens — palette derived from design/reference-style-a.svg.
+ * Art components may only use colors defined here (enforced by scripts/qc-art-lint.ts).
+ * Art tokens are prefixed --art-*; UI chrome tokens are prefixed --ui-*.
+ */
+:root {
+  /* ---------- Art: soil ---------- */
+  --art-soil: #cda582;
+  --art-soil-light: #ddbb98;
+  --art-soil-dark: #b88e6b;
+  --art-soil-deep: #a07a59;
+
+  /* ---------- Art: leaf (3 tones + stems) ---------- */
+  --art-leaf-light: #b9dda3;
+  --art-leaf-1: #a6d08f;
+  --art-leaf-2: #9bcb85;
+  --art-leaf-3: #8cc27a;
+  --art-leaf-4: #7db46c;
+  --art-stem: #6fa860;
+
+  /* ---------- Art: fruit ---------- */
+  --art-red: #f2877a;
+  --art-red-light: #f8b5ab;
+  --art-red-dark: #d9695c;
+  --art-orange: #f5a86b;
+  --art-orange-light: #f9c89e;
+  --art-orange-dark: #dd8c4f;
+  --art-yellow: #ffdb8e;
+  --art-yellow-light: #ffeab8;
+  --art-yellow-dark: #e9bf68;
+  --art-purple: #b9a3dd;
+  --art-purple-light: #d5c8ee;
+  --art-purple-dark: #9a84c2;
+  --art-blue: #9cc8e8;
+  --art-blue-light: #c6e0f3;
+  --art-blue-dark: #7aaed6;
+  --art-pink: #f4a8c4;
+  --art-pink-light: #f9cfde;
+  --art-pink-dark: #db86a6;
+  --art-cream: #f3efe4;
+  --art-white: #ffffff;
+  --art-sun: #ffdb8e;
+  --art-cloud: #ffffff;
+  --art-shadow: #cdbfa6; /* soft flat ellipse under objects */
+
+  /* ---------- Art: sky by time of day (gradients allowed only here) ---------- */
+  --sky-day-top: #bfe3f2;
+  --sky-day-bottom: #eef7f1;
+  --sky-sunrise-top: #f9cfc0;
+  --sky-sunrise-bottom: #ffeab8;
+  --sky-dusk-top: #b7a6d6;
+  --sky-dusk-bottom: #f6b9a8;
+  --sky-night-top: #3b4a72;
+  --sky-night-bottom: #5d6a93;
+  --sky-star: #fff4d1;
+  --sky-moon: #fff1c7;
+
+  /* ---------- UI chrome (light) ---------- */
+  --ui-bg: #f7f4ec;
+  --ui-surface: #ffffff;
+  --ui-surface-2: #efeadd;
+  --ui-border: #e4ddcc;
+  --ui-text: #3f3a33;
+  --ui-text-muted: #6e665a;
+  --ui-primary: #3f7236; /* leaf, darkened for AA contrast (≥4.5:1 on every light surface) */
+  --ui-primary-soft: #dcefd2;
+  --ui-on-primary: #ffffff;
+  --ui-accent: #a8443a; /* fruit red, darkened for AA */
+  --ui-accent-soft: #fbe0dc;
+  --ui-warn: #7d5508;
+  --ui-warn-soft: #fff1cf;
+  --ui-focus: #3f7236;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+}
+
+/* Dark mode for the UI chrome only (the farm scene has its own night palette). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ui-bg: #22201c;
+    --ui-surface: #2d2a25;
+    --ui-surface-2: #38342e;
+    --ui-border: #48433b;
+    --ui-text: #f1ece2;
+    --ui-text-muted: #c2b9a9;
+    --ui-primary: #9bcb85;
+    --ui-primary-soft: #33442d;
+    --ui-on-primary: #1e2a1a;
+    --ui-accent: #f2877a;
+    --ui-accent-soft: #4a2e2a;
+    --ui-warn: #ffdb8e;
+    --ui-warn-soft: #463a22;
+    --ui-focus: #b9dda3;
+  }
+}
+:root[data-theme="dark"] {
+  --ui-bg: #22201c;
+  --ui-surface: #2d2a25;
+  --ui-surface-2: #38342e;
+  --ui-border: #48433b;
+  --ui-text: #f1ece2;
+  --ui-text-muted: #c2b9a9;
+  --ui-primary: #9bcb85;
+  --ui-primary-soft: #33442d;
+  --ui-on-primary: #1e2a1a;
+  --ui-accent: #f2877a;
+  --ui-accent-soft: #4a2e2a;
+  --ui-warn: #ffdb8e;
+  --ui-warn-soft: #463a22;
+  --ui-focus: #b9dda3;
+}

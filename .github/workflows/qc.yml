@@ -1,0 +1,51 @@
+name: QC
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: qc-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: npm ci
+      - name: Start Supabase (local)
+        run: supabase start -x studio,imgproxy,vector,logflare,edge-runtime
+      - name: Export local Supabase env
+        run: |
+          supabase status -o env \
+            | sed -n -e 's/^API_URL=/NEXT_PUBLIC_SUPABASE_URL=/p' \
+                     -e 's/^ANON_KEY=/NEXT_PUBLIC_SUPABASE_ANON_KEY=/p' \
+                     -e 's/^SERVICE_ROLE_KEY=/SUPABASE_SERVICE_ROLE_KEY=/p' \
+                     -e 's/^MAILPIT_URL=/MAILPIT_URL=/p' \
+                     -e 's/^INBUCKET_URL=/MAILPIT_URL=/p' \
+            | tr -d '"' >> "$GITHUB_ENV"
+      - name: Static (G1)
+        run: npm run qc:static
+      - name: Unit + coverage (G2)
+        run: npm run test:cov
+      - name: Secrets (G5)
+        run: npm run secrets:check
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps webkit chromium
+      - name: E2E functional (G2/G4)
+        run: npx playwright test tests/e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7

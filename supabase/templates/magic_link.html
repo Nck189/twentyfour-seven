@@ -1,0 +1,11 @@
+<h2>Sign in to 24/7</h2>
+<p>Your sign-in code / รหัสเข้าสู่ระบบ:</p>
+<p style="font-size: 32px; font-weight: 700; letter-spacing: 6px">{{ .Token }}</p>
+<p>
+  Type this code in the 24/7 app (best for the iPhone home-screen app).<br />พิมพ์รหัสนี้ในแอป 24/7
+  (แนะนำสำหรับแอปบนหน้าจอโฮม iPhone)
+</p>
+<p>
+  Or open in this browser:
+  <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email">Sign in</a>
+</p>

@@ -1,0 +1,13 @@
+.next
+node_modules
+coverage
+playwright-report
+test-results
+.lighthouseci
+public
+supabase/.temp
+package-lock.json
+design
+docs
+*.md
+tests/visual/**/*-snapshots

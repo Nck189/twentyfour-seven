@@ -1,0 +1,31 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# deps & builds
+node_modules/
+.next/
+out/
+dist/
+coverage/
+.vercel/
+
+# supabase local
+supabase/.branches/
+supabase/.temp/
+
+# test artifacts
+playwright-report/
+test-results/
+screenshots/
+
+# os / editor
+.DS_Store
+*.log
+.claude/settings.local.json
+
+# next
+*.tsbuildinfo
+next-env.d.ts
+.lighthouseci/

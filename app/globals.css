@@ -1,0 +1,70 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+@theme inline {
+  --color-bg: var(--ui-bg);
+  --color-surface: var(--ui-surface);
+  --color-surface-2: var(--ui-surface-2);
+  --color-line: var(--ui-border);
+  --color-ink: var(--ui-text);
+  --color-muted: var(--ui-text-muted);
+  --color-primary: var(--ui-primary);
+  --color-primary-soft: var(--ui-primary-soft);
+  --color-on-primary: var(--ui-on-primary);
+  --color-accent: var(--ui-accent);
+  --color-accent-soft: var(--ui-accent-soft);
+  --color-warn: var(--ui-warn);
+  --color-warn-soft: var(--ui-warn-soft);
+  --font-sans: var(--font-nunito), var(--font-thai), ui-rounded, system-ui, sans-serif;
+  --radius-card: var(--radius-lg);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--ui-bg);
+}
+
+body {
+  background: var(--ui-bg);
+  color: var(--ui-text);
+  font-family: var(--font-nunito), var(--font-thai), ui-rounded, system-ui, sans-serif;
+  line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html[lang="th"] body {
+  font-family: var(--font-thai), var(--font-nunito), system-ui, sans-serif;
+  line-height: 1.6;
+}
+
+:focus-visible {
+  outline: 3px solid var(--ui-focus);
+  outline-offset: 2px;
+}
+
+/* Pressed-state feedback within 100ms on every tappable control. */
+.tap {
+  transition:
+    transform 120ms ease-out,
+    background-color 150ms ease-out;
+}
+.tap:active {
+  transform: scale(0.96);
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

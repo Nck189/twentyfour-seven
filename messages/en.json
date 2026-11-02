@@ -1,0 +1,81 @@
+{
+  "app": {
+    "name": "24/7",
+    "tagline": "1 day = 24 hours = 7 blocks"
+  },
+  "common": {
+    "loading": "Loading…",
+    "retry": "Try again",
+    "close": "Close",
+    "back": "Back",
+    "save": "Save",
+    "error": "Something went wrong. Your data is safe — please try again.",
+    "offline": "You're offline. Changes will need a connection.",
+    "empty": "Nothing here yet."
+  },
+  "tabs": {
+    "today": "Today",
+    "plan": "Plan",
+    "farm": "Farm",
+    "stats": "Stats",
+    "more": "More",
+    "nav": "Main navigation"
+  },
+  "login": {
+    "title": "Welcome to 24/7",
+    "subtitle": "Plan tonight, grow tomorrow.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "send": "Send magic link",
+    "sending": "Sending…",
+    "sent": "Check your email and tap the link to sign in.",
+    "sentHint": "On iPhone, open the link, then return to the home-screen app.",
+    "invalidEmail": "Please enter a valid email address.",
+    "google": "Continue with Google",
+    "error": "Couldn't send the link. Please try again.",
+    "callbackError": "That sign-in link has expired or was already used. Request a new one.",
+    "codeLabel": "6-digit code",
+    "codeHint": "We emailed a code to {email}. Type it here, or tap the link in the email.",
+    "verify": "Sign in",
+    "verifying": "Signing in…",
+    "invalidCode": "That code didn't work. Check it, or send a new one.",
+    "changeEmail": "Use a different email",
+    "resend": "Send a new code"
+  },
+  "today": {
+    "title": "Today",
+    "placeholder": "Your 7 blocks will live here.",
+    "comingSoon": "Check-ins arrive in M3."
+  },
+  "plan": {
+    "title": "Plan",
+    "placeholder": "Plan tomorrow and your week here.",
+    "comingSoon": "Planning arrives in M4."
+  },
+  "farm": {
+    "title": "Farm",
+    "placeholder": "Your farm grows from real behavior.",
+    "comingSoon": "The farm arrives in M6."
+  },
+  "stats": {
+    "title": "Stats",
+    "placeholder": "Day OEE, control charts and more.",
+    "comingSoon": "Stats arrive in M10."
+  },
+  "more": {
+    "title": "More",
+    "settings": "Settings",
+    "language": "Language",
+    "languageEn": "English",
+    "languageTh": "ไทย",
+    "theme": "Appearance",
+    "themeSystem": "System",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "account": "Account",
+    "signedInAs": "Signed in as {email}",
+    "signOut": "Sign out",
+    "install": "Install on iPhone",
+    "installSteps": "In Safari, tap Share, then “Add to Home Screen”."
+  }
+}
