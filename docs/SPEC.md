@@ -78,9 +78,10 @@ Owner/first user: Minnie (Bangkok, Asia/Bangkok). Personal use first, designed s
   1. Free
   2. Gradation
   3. Focus
-  4. Down (min 30m)
-  5. Wake (min 30m)
-  6. Sleep, last — with a warning "only Xh sleep"
+  4. Work (min 50% of its length) — skipped on a day with a fixed event in Work (class or appointment): she has to show up for those anyway *(Minnie, 2026-11-02: protect sleep before Work, but keep balance)*
+  5. Down (min 30m)
+  6. Wake (min 30m)
+  7. Sleep, last — with a warning "only Xh sleep"
 - **Guardrails:**
   - Warn when planned bedtime deviates more than 60 min from the 7-day mean.
   - Show a sleep regularity score.

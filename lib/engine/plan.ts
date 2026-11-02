@@ -11,7 +11,8 @@ import type { DayPlan, PlanInput, PlannedBlock, PlannedFixedEvent, PlannedSubSlo
  * - B is the anchor: pushing it later pushes D's wake and every block of D.
  * - B' snaps back to D+1's template target, so lost time comes out of flexible blocks and
  *   drift never accumulates.
- * - When something must give, compress in COMPRESSION_ORDER down to MIN_DURATION.
+ * - When something must give, compress in COMPRESSION_ORDER down to MIN_DURATION (Work: down to
+ *   WORK_MIN_SHARE of its length, and not at all on a day with a class/appointment in Work).
  * - Fixed events never move; blocks before their host block get compressed instead.
  * The plan also shows the Down block before B (the evening D's night ritual starts).
  */
@@ -26,8 +27,16 @@ export const MIN_DURATION: Record<BlockKey, number> = {
   free: 0,
 };
 
-/** SPEC §3: Free → Gradation → Focus → Down → Wake → Sleep (last). */
-export const COMPRESSION_ORDER: BlockKey[] = ["free", "gradation", "focus", "down", "wake", "sleep"];
+/**
+ * SPEC §3: Free → Gradation → Focus → Work → Down → Wake → Sleep (last).
+ * Work gives way before sleep (Minnie's call on review M2-F3), but keeps at least
+ * WORK_MIN_SHARE of its length, and doesn't shrink on a day with a fixed event in Work
+ * (class or appointment): she has to show up for those anyway.
+ */
+export const COMPRESSION_ORDER: BlockKey[] = ["free", "gradation", "focus", "work", "down", "wake", "sleep"];
+
+/** Work never shrinks below this share of its planned length. */
+export const WORK_MIN_SHARE = 0.5;
 
 /** Blocks after bedtime B in day D's window; "down" here is the NEXT night's Down. */
 export const CHAIN_AFTER_BEDTIME: BlockKey[] = [
@@ -62,11 +71,11 @@ export function targetBedtime(date: string, targetWake: string, sleepMin: number
 type Durations = Record<BlockKey, number>;
 
 /** Takes up to `amount` minutes from `blocks` in order, respecting minimums. Returns what's left. */
-function compress(d: Durations, blocks: BlockKey[], amount: number): number {
+function compress(d: Durations, blocks: BlockKey[], amount: number, mins: Durations): number {
   let left = amount;
   for (const k of blocks) {
     if (left <= 0) break;
-    const take = Math.min(left, Math.max(0, d[k] - MIN_DURATION[k]));
+    const take = Math.min(left, Math.max(0, d[k] - mins[k]));
     d[k] -= take;
     left -= take;
   }
@@ -121,20 +130,7 @@ export function planDay(input: PlanInput): DayPlan {
     input.nextBedtimeOverride ??
     targetBedtime(nextDate, input.nextTargetWake, input.nextSleepMin ?? desired.sleep, tz);
 
-  // --- Fit the chain into [bedtime, nextBedtime] -----------------------------------------
-  // The chain ends with the NEXT night's Down, which may be shorter (late night tomorrow).
-  const chainDesired: Durations = { ...desired, down: input.nextDownMin ?? desired.down };
-  const d: Durations = { ...chainDesired };
-  const window = minutesBetween(bedtime, nextBedtime);
-  const wanted = CHAIN_AFTER_BEDTIME.reduce((s, k) => s + d[k], 0);
-  if (wanted > window) {
-    const short = compress(d, COMPRESSION_ORDER, wanted - window);
-    if (short > 0) warnings.push({ type: "day_overfull", shortByMin: short });
-  } else if (wanted < window) {
-    d.free += window - wanted; // an earlier night gives the extra time to Free
-  }
-
-  // --- Fixed events win ------------------------------------------------------------------
+  // --- Fixed events (placed below; known up front so Work can be protected) ---------------
   const events = (input.fixedEvents ?? [])
     .map((e) => {
       const startMin = parseHHMM(e.start);
@@ -149,6 +145,27 @@ export function planDay(input: PlanInput): DayPlan {
     })
     .sort((a, b) => a.start.getTime() - b.start.getTime());
 
+  // Work keeps at least WORK_MIN_SHARE, or all of it when a class/appointment lives in Work.
+  const workProtected = events.some((e) => e.host === "work");
+  const mins: Durations = {
+    ...MIN_DURATION,
+    work: workProtected ? desired.work : Math.ceil(desired.work * WORK_MIN_SHARE),
+  };
+
+  // --- Fit the chain into [bedtime, nextBedtime] -----------------------------------------
+  // The chain ends with the NEXT night's Down, which may be shorter (late night tomorrow).
+  const chainDesired: Durations = { ...desired, down: input.nextDownMin ?? desired.down };
+  const d: Durations = { ...chainDesired };
+  const window = minutesBetween(bedtime, nextBedtime);
+  const wanted = CHAIN_AFTER_BEDTIME.reduce((s, k) => s + d[k], 0);
+  if (wanted > window) {
+    const short = compress(d, COMPRESSION_ORDER, wanted - window, mins);
+    if (short > 0) warnings.push({ type: "day_overfull", shortByMin: short });
+  } else if (wanted < window) {
+    d.free += window - wanted; // an earlier night gives the extra time to Free
+  }
+
+  // --- Fixed events win ------------------------------------------------------------------
   for (const ev of events) {
     const hostIdx = CHAIN_AFTER_BEDTIME.indexOf(ev.host);
     const before = CHAIN_AFTER_BEDTIME.slice(0, hostIdx);
@@ -159,7 +176,7 @@ export function planDay(input: PlanInput): DayPlan {
     const over = prefixBefore(d, ev.host) - available;
     if (over > 0) {
       const order = COMPRESSION_ORDER.filter((k) => before.includes(k));
-      const late = compress(d, order, over);
+      const late = compress(d, order, over, mins);
       if (late > 0) warnings.push({ type: "fixed_event_conflict", eventId: ev.id, lateByMin: late });
       // Time freed before the host goes to the end of the day (Down, then Gradation, then Free).
       const freed = over - late;
@@ -173,7 +190,7 @@ export function planDay(input: PlanInput): DayPlan {
     if (hostEnd < needEnd) {
       const grow = needEnd - hostEnd;
       const order = COMPRESSION_ORDER.filter((k) => after.includes(k));
-      const missing = compress(d, order, grow);
+      const missing = compress(d, order, grow, mins);
       d[ev.host] += grow - missing;
       if (missing > 0) warnings.push({ type: "fixed_event_conflict", eventId: ev.id, lateByMin: missing });
     }

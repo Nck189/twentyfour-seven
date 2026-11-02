@@ -16,9 +16,9 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 - **When she's back**, she wants one short Thai summary of everything done + the questions list. Then delete this section and `MINNIE_IS_OUT.md`.
 
 ### Questions for Minnie (when back)
-- Should **Work** shrink when an evening event doesn't fit? Today the spec order cuts Sleep and moves wake earlier instead (review M2-F3).
-- Should pressing "I'm up" **early** (up to 3 h before target) earn the Sunrise ticket? Currently yes (review M3-F10).
-- Please test the offline page once on your real iPhone (Playwright can't automate WebKit offline on this Mac).
+- ~~Should Work shrink when an evening event doesn't fit? (M2-F3)~~ **Answered 2026-11-02:** yes — Work gives way (down to 50%) before Down/Wake/Sleep, except on days with a class/appointment in Work. Done in `lib/engine/plan.ts` + SPEC §3.
+- ~~Should an early "I'm up" (up to 3 h before target) earn the Sunrise ticket? (M3-F10)~~ **Answered:** yes, keep as is.
+- Please test the offline page once on your real iPhone — link + steps sent in chat 2026-11-02; waiting for her result.
 
 ---
 
