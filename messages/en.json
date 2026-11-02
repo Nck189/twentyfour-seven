@@ -49,8 +49,75 @@
   },
   "today": {
     "title": "Today",
-    "placeholder": "Your 7 blocks will live here.",
-    "comingSoon": "Check-ins are coming soon."
+    "now": "Now",
+    "next": "Next",
+    "dateLabel": "{date}",
+    "wake": {
+      "button": "I'm up — out of bed",
+      "hint": "Tap the moment you leave the bed.",
+      "target": "Target {time}",
+      "doneInWindow": "Up at {time} — on time! +1 Sunrise ticket",
+      "doneLate": "Up at {time}. Logged — no ticket this time.",
+      "pressing": "Logging…"
+    },
+    "status": {
+      "notStarted": "Not started",
+      "inProgress": "In progress",
+      "done": "Done",
+      "missed": "Missed",
+      "backfilled": "Backfilled",
+      "upcoming": "Upcoming"
+    },
+    "block": {
+      "start": "Start",
+      "started": "Started {time}",
+      "onTime": "On time",
+      "late": "Started late",
+      "first10": "First 10 minutes",
+      "first10Unset": "Set your first-10 action in Plan",
+      "checklist": "Checklist",
+      "noChecklist": "No checklist items. Add them in Plan.",
+      "items": "{done}/{total} items",
+      "close": "Close block",
+      "closed": "Closed {time}",
+      "reopen": "Reopen",
+      "mood": "Mood",
+      "energy": "Energy",
+      "optional": "optional",
+      "location": "Where are you?",
+      "home": "Home",
+      "out": "Out",
+      "backfillNote": "This block is over. Logging it now counts toward your %, labeled backfilled, with no tickets or mutations.",
+      "current": "Current block",
+      "open": "Open {block}",
+      "fixedEvent": "Fixed"
+    },
+    "nap": {
+      "title": "Power nap",
+      "start": "{minutes} min",
+      "running": "Nap ends at {time}",
+      "stop": "Stop",
+      "done": "Time to get up!",
+      "dismiss": "I'm up"
+    },
+    "mode": {
+      "title": "Day mode",
+      "normal": "Normal",
+      "vacation": "Vacation",
+      "sick": "Sick",
+      "note": "Vacation and Sick pause your streak and freeze farm penalties.",
+      "badge": "{mode} mode"
+    },
+    "warnings": {
+      "short_sleep": "Only {hours}h sleep planned",
+      "bedtime_drift": "Bedtime is {minutes} min off your usual",
+      "fixed_event_conflict": "A fixed event can't fit — check your plan",
+      "gym_after_close": "A gym slot ends after the gym closes",
+      "day_overfull": "Not enough time for every block"
+    },
+    "loadError": "Couldn't load today. Check your connection.",
+    "saveError": "Couldn't save that. Nothing was lost — try again.",
+    "empty": "No plan for today yet."
   },
   "plan": {
     "title": "Plan",

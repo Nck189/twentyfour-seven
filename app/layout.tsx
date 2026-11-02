@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans_Thai_Looped, Nunito } from "next/font/google";
 import { AppProviders } from "@/components/providers/AppProviders";
 import { ServiceWorkerRegister } from "@/components/providers/ServiceWorkerRegister";
+import { SoundUnlock } from "@/components/providers/SoundUnlock";
 import "./globals.css";
 
 const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito", display: "swap" });
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full">
         <AppProviders>{children}</AppProviders>
         <ServiceWorkerRegister />
+        <SoundUnlock />
       </body>
     </html>
   );

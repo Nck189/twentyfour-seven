@@ -1,5 +1,5 @@
-import { Placeholder } from "@/components/ui/Placeholder";
+import { TodayScreen } from "@/components/today/TodayScreen";
 
 export default function Page() {
-  return <Placeholder section="today" />;
+  return <TodayScreen />;
 }

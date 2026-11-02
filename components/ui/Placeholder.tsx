@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { AppMark } from "@/components/art/AppMark";
 import { ScreenHeader } from "./ScreenHeader";
 
-type Section = "today" | "plan" | "farm" | "stats" | "backlog";
+type Section = "plan" | "farm" | "stats" | "backlog";
 
 /** Temporary screen body until the milestone that builds the real screen. */
 export function Placeholder({ section, asAside = false }: { section: Section; asAside?: boolean }) {

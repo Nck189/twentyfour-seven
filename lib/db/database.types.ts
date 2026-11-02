@@ -617,8 +617,87 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      _grant_tickets: {
+        Args: { amount: number; meta?: Json; reason: string; uid: string };
+        Returns: undefined;
+      };
+      _target_wake: { Args: { d: string; uid: string }; Returns: string };
+      backfill_wake: {
+        Args: { p_date: string; p_pressed_at: string };
+        Returns: {
+          backfilled: boolean;
+          created_at: string;
+          date: string;
+          id: string;
+          in_window: boolean;
+          pressed_at: string;
+          target_wake: string;
+          user_id: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "wake_events";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       keepalive: { Args: Record<PropertyKey, never>; Returns: string };
+      press_wake: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          backfilled: boolean;
+          created_at: string;
+          date: string;
+          id: string;
+          in_window: boolean;
+          pressed_at: string;
+          target_wake: string;
+          user_id: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "wake_events";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       seed_user_defaults: { Args: { uid: string }; Returns: undefined };
+      set_block_item: {
+        Args: {
+          p_block: string;
+          p_date: string;
+          p_done: boolean;
+          p_item: string;
+          p_items_planned: number;
+          p_planned_start: string;
+        };
+        Returns: {
+          backfilled: boolean;
+          block: string;
+          closed_at: string | null;
+          created_at: string;
+          date: string;
+          energy: number | null;
+          first10_at: string | null;
+          id: string;
+          items_done: NonNullable<Json>;
+          items_planned: number;
+          location: string | null;
+          miss_reason: string | null;
+          mood: number | null;
+          planned_deviation: boolean;
+          planned_start: string | null;
+          started_at: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "block_logs";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
     };
     Enums: {
       [_ in never]: never;
