@@ -222,3 +222,35 @@ test("R-M4-3: a block that was started closes as done (no miss reason); 'same fo
   expect(logs.find((l) => l.block === "focus")?.closed_at).toBeTruthy();
   expect(logs.filter((l) => l.miss_reason === "sleepy")).toHaveLength(4);
 });
+
+test("R-M4-5: Goodnight waits until tomorrow's plan is saved (offline edit isn't lost)", async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName === "webkit", "WebKit can't intercept requests to the local API");
+  const id = await newUserOn(page);
+  await setWakeMinutesAgo(id, DOWN_TIME_MINUTES_AFTER_WAKE);
+  await page.goto("/today");
+  const sheet = page.getByRole("dialog", { name: "Night ritual" });
+  await expect(sheet).toBeVisible();
+  await sheet.getByRole("button", { name: "Next" }).click();
+  await sheet
+    .getByRole("region", { name: "Same reason for all" })
+    .getByRole("button", { name: "Sleepy" })
+    .click();
+  await sheet.getByRole("button", { name: "Next" }).click();
+  await page.route("**/rest/v1/day_plans**", (r) =>
+    r.request().method() === "POST" ? r.abort("internetdisconnected") : r.continue(),
+  );
+  await sheet.getByRole("button", { name: "15 min later" }).click();
+  await sheet.getByRole("button", { name: "Next" }).click();
+  await sheet.getByRole("checkbox", { name: "Alarm set + phone away" }).click();
+  await sheet.getByRole("button", { name: "Goodnight" }).click();
+  await expect(sheet.getByRole("alert")).toContainText("Tomorrow's plan isn't saved yet");
+  expect((await gameState(id)).tickets).toBe(0);
+
+  await page.unroute("**/rest/v1/day_plans**");
+  await sheet.getByRole("button", { name: "Goodnight" }).click();
+  await expect(sheet.getByText("+1 Night ticket. Sleep well.")).toBeVisible();
+  await expect.poll(async () => (await dayPlans(id)).some((r) => r.bedtime_override)).toBe(true);
+});

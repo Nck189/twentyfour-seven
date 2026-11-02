@@ -62,7 +62,7 @@ export function NightRitual({ timeline, logFor, markMissed, closeDone, complete,
   const [phoneEnds, setPhoneEnds] = useState<number | null>(null);
   const [left, setLeft] = useState(PHONE_MIN * 60);
   const [alarmSet, setAlarmSet] = useState(false);
-  const [result, setResult] = useState<"ticket" | "already" | "error" | null>(null);
+  const [result, setResult] = useState<"ticket" | "already" | "error" | "unsaved" | null>(null);
   const [busy, setBusy] = useState(false);
   const tomorrow = addDays(timeline.date, 1);
   const total = 4;
@@ -269,13 +269,17 @@ export function NightRitual({ timeline, logFor, markMissed, closeDone, complete,
       <h3 className="text-lg font-bold">{t("goodnightTitle")}</h3>
       <p className="text-muted">{t("goodnightHint")}</p>
       <CheckRow checked={alarmSet} label={t("alarmSet")} emphasis onToggle={() => setAlarmSet((v) => !v)} />
-      {result === null || result === "error" ? (
+      {result === null || result === "error" || result === "unsaved" ? (
         <Button
           disabled={!alarmSet || busy}
           onClick={async () => {
             setBusy(true);
             try {
-              await plan.flush();
+              // No ticket while tomorrow's plan isn't saved (R-M4-5): fix the connection first.
+              if (!(await plan.flush())) {
+                setResult("unsaved");
+                return;
+              }
               const r = await complete();
               setResult(r.ticket_granted ? "ticket" : "already");
               sfx.sunrise();
@@ -291,10 +295,10 @@ export function NightRitual({ timeline, logFor, markMissed, closeDone, complete,
       ) : null}
       {result && (
         <p
-          role={result === "error" ? "alert" : "status"}
-          className={`rounded-xl p-3 font-bold ${result === "error" ? "bg-accent-soft text-accent" : "bg-primary-soft text-primary"}`}
+          role={result === "error" || result === "unsaved" ? "alert" : "status"}
+          className={`rounded-xl p-3 font-bold ${result === "error" || result === "unsaved" ? "bg-accent-soft text-accent" : "bg-primary-soft text-primary"}`}
         >
-          {t(result === "ticket" ? "ticket" : result === "already" ? "already" : "error")}
+          {t(result)}
         </p>
       )}
     </div>,

@@ -405,7 +405,8 @@
     "already": "Already done tonight. Sleep well.",
     "error": "Couldn't finish. Try again.",
     "reasonAll": "Same reason for all",
-    "tomorrowAppt": "Tomorrow: {list}"
+    "tomorrowAppt": "Tomorrow: {list}",
+    "unsaved": "Tomorrow's plan isn't saved yet. Check your connection, then tap Goodnight again."
   },
   "onboarding": {
     "cardTitle": "Make 24/7 yours in 2 minutes",

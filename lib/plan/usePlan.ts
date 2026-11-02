@@ -44,6 +44,8 @@ export function usePlan() {
   const [saving, setSaving] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [reload, setReload] = useState(0);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  /** Days whose last save failed: kept and retried, never silently dropped. */
+  const failed = useRef<Set<string>>(new Set());
   const ctxRef = useRef<DayContext | null>(null);
 
   useEffect(() => {
@@ -73,7 +75,7 @@ export function usePlan() {
   const persist = useCallback(
     async (date: string) => {
       const row = ctxRef.current?.dayPlans[date];
-      if (!row || !userId) return;
+      if (!row || !userId) return false;
       setSaving("saving");
       let planned: ReturnType<typeof plannedWake> | null = null;
       try {
@@ -95,8 +97,11 @@ export function usePlan() {
         },
         { onConflict: "user_id,date" },
       );
+      if (error) failed.current.add(date);
+      else failed.current.delete(date);
       setSaving(error ? "error" : "saved");
       if (!error) void logEvent("day_planned", { date });
+      return !error;
     },
     [client, userId],
   );
@@ -115,13 +120,24 @@ export function usePlan() {
     [persist],
   );
 
-  /** Flush pending saves now (e.g. before Goodnight). */
+  /**
+   * Saves pending and previously failed days now (e.g. before Goodnight). Resolves false if any
+   * still failed; those stay queued and are retried when the connection comes back (R-M4-5).
+   */
   const flush = useCallback(async () => {
-    const dates = Object.keys(timers.current);
-    dates.forEach((d) => clearTimeout(timers.current[d]));
+    const dates = [...new Set([...Object.keys(timers.current), ...failed.current])];
+    Object.values(timers.current).forEach((t) => clearTimeout(t));
     timers.current = {};
-    await Promise.all(dates.map((d) => persist(d)));
+    const results = await Promise.all(dates.map((d) => persist(d)));
+    return results.every(Boolean);
   }, [persist]);
+  useEffect(() => {
+    const onOnline = () => {
+      if (failed.current.size) void flush();
+    };
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, [flush]);
 
   /** "Save as my default" for a block's checklist / first-10 (settings, all future days). */
   const saveBlockDefault = useCallback(
