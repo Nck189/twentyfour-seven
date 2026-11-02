@@ -31,3 +31,6 @@ next-env.d.ts
 .lighthouseci/
 .vercel
 .env*
+
+# reviewer / debug scratch tests
+tests/e2e/zz-*/

@@ -28,6 +28,7 @@ test.describe("app shell", () => {
   test("G4: a11y, touch targets, no horizontal scroll on every screen (EN + TH, light + dark)", async ({
     page,
   }) => {
+    test.setTimeout(120_000); // 20 page loads × axe; CI runners are slower
     const labels = { en: "English", th: "ไทย" } as const;
     const themeLabels = {
       en: { light: "Light", dark: "Dark" },
