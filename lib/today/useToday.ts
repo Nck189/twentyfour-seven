@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BlockKey } from "@/content/blocks";
 import { logEvent } from "@/lib/db/events";
+import { saveDirty } from "@/lib/plan/patch";
 import { getSupabase } from "@/lib/supabase/client";
 import { addDays, DEFAULT_TZ } from "@/lib/time";
 
@@ -177,6 +178,13 @@ export function useToday(now: Date) {
             setLogs(logsRef.current);
           }
         },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "day_plans", filter: `user_id=eq.${userId}` },
+        // A day plan changed elsewhere (Plan, another device): refetch; unchanged data keeps the
+        // same objects, and blocks with saves in flight keep their local state.
+        () => setReload((r) => r + 1),
       )
       .on(
         "postgres_changes",
@@ -465,14 +473,16 @@ export function useToday(now: Date) {
         if (!loaded) return;
         const row = loaded.ctx.dayPlans[b.logDate];
         const blocks = row?.overrides.blocks ?? {};
-        const overrides = {
-          ...row?.overrides,
-          blocks: { ...blocks, [b.key]: { ...blocks[b.key], first10: value } },
-        };
-        const { error } = await client
-          .from("day_plans")
-          .upsert({ user_id: loaded.userId, date: b.logDate, overrides }, { onConflict: "user_id,date" });
-        if (error) throw error;
+        const block = { ...blocks[b.key], first10: value };
+        // Only this block's override: other blocks, the mode, the bedtime stay as saved (R-M3-4).
+        const ok = await saveDirty(
+          client,
+          loaded.userId,
+          b.logDate,
+          { set: {}, blocks: { [b.key]: block } },
+          row && { ...row, overrides: { ...row.overrides, blocks: { ...blocks, [b.key]: block } } },
+        );
+        if (!ok) throw new Error("first-10 not saved");
         void logEvent("first10_changed", { date: b.logDate, block: b.key });
         setReload((r) => r + 1);
       },

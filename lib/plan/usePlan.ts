@@ -6,6 +6,7 @@ import type { FixedEvent } from "@/content/defaults";
 import { hostFor, parseHHMM } from "@/lib/engine";
 import { addDays, zonedInstant } from "@/lib/time";
 import { logEvent } from "@/lib/db/events";
+import { markDirty, requeue, saveDirty, type DirtyDay } from "./patch";
 import { getSupabase } from "@/lib/supabase/client";
 import { currentDayDate, planFor, plannedWake, type DayContext, type DayPlanRow } from "@/lib/today/day";
 import { DAY_PLAN_COLUMNS, emptyDayPlan, loadDayContext } from "@/lib/today/loadContext";
@@ -46,6 +47,8 @@ export function usePlan() {
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   /** Days whose last save failed: kept and retried, never silently dropped. */
   const failed = useRef<Set<string>>(new Set());
+  /** Per day, only the fields changed since the last successful save (R-M3-4). */
+  const dirty = useRef<Record<string, DirtyDay>>({});
   const ctxRef = useRef<DayContext | null>(null);
 
   useEffect(() => {
@@ -77,33 +80,27 @@ export function usePlan() {
   const persist = useCallback(
     async (date: string) => {
       const row = ctxRef.current?.dayPlans[date];
+      const pending = dirty.current[date];
       if (!row || !userId) return false;
+      if (!pending) return true;
+      // Take what's pending; edits made while this save is in flight queue up separately.
+      delete dirty.current[date];
       setSaving("saving");
-      let planned: ReturnType<typeof plannedWake> | null = null;
+      const change = { ...pending, set: { ...pending.set } };
       try {
-        planned = plannedWake(ctxRef.current!, date); // so the server honors a planned push
+        change.set.planned = plannedWake(ctxRef.current!, date); // so the server honors a planned push
       } catch {
         // No template for that day: the server falls back to its own target.
       }
-      const { error } = await client.from("day_plans").upsert(
-        {
-          user_id: userId,
-          date,
-          template_id: row.template_id,
-          attending: row.attending,
-          bedtime_override: row.bedtime_override,
-          late_night: row.late_night,
-          mode: row.mode,
-          overrides: row.overrides,
-          ...(planned ? { planned } : {}),
-        },
-        { onConflict: "user_id,date" },
-      );
-      if (error) failed.current.add(date);
-      else failed.current.delete(date);
-      setSaving(error ? "error" : "saved");
-      if (!error) void logEvent("day_planned", { date });
-      return !error;
+      const ok = await saveDirty(client, userId, date, change, row);
+      if (ok) failed.current.delete(date);
+      else {
+        failed.current.add(date);
+        dirty.current[date] = requeue(pending, dirty.current[date]);
+      }
+      setSaving(ok ? "saved" : "error");
+      if (ok) void logEvent("day_planned", { date });
+      return ok;
     },
     [client, userId],
   );
@@ -114,6 +111,7 @@ export function usePlan() {
       if (!current) return;
       const row = applyDayPatch(current.dayPlans[date] ?? emptyDayPlan(date), patch);
       const next = { ...current, dayPlans: { ...current.dayPlans, [date]: row } };
+      dirty.current[date] = markDirty(dirty.current[date], patch, row);
       ctxRef.current = next;
       setCtx(next);
       clearTimeout(timers.current[date]);
