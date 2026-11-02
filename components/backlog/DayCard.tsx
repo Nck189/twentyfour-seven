@@ -8,7 +8,7 @@ import { CalendarIcon } from "@/components/shell/TabIcons";
 import { CloseIcon, MoonIcon, PencilIcon, SunriseIcon, WarnIcon } from "@/components/ui/Icons";
 import type { FixedEvent } from "@/content/defaults";
 import type { BlockKey } from "@/content/blocks";
-import { dayCapacity, type BacklogItem } from "@/lib/backlog";
+import { dayCapacity, sortBacklog, type BacklogItem } from "@/lib/backlog";
 import type { DayPlan } from "@/lib/engine";
 import { formatTime } from "@/lib/format";
 import { CapacityBar } from "./CapacityBar";
@@ -68,7 +68,9 @@ export function DayCard({
   const text = useBlockText();
   const { setNodeRef, isOver } = useDroppable({ id: `card:${date}` });
   const dayItems = items.filter((i) => i.scheduled_date === date && i.status !== "dropped");
-  const open = dayItems.filter((i) => i.status !== "done");
+  // Done tasks stay in place, struck through (R-M5-2): no row jumps under the finger, the coin pop
+  // plays, and a tap on a done task opens it ("Not done yet"). Near deadlines first (SPEC §5).
+  const list = sortBacklog(dayItems, today);
 
   return (
     <section
@@ -147,9 +149,9 @@ export function DayCard({
 
       {dayItems.length > 0 && <CapacityBar cap={dayCapacity(plan, dayItems)} />}
 
-      {open.length > 0 && (
+      {list.length > 0 && (
         <ul aria-label={t("dayTasks", { day: label })} className="flex flex-col gap-2">
-          {open.map((i) => (
+          {list.map((i) => (
             <TaskRow
               key={i.id}
               item={i}

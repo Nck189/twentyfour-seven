@@ -200,3 +200,31 @@ test("R-M5-4 / R-M4-10: a failed load says so with Retry (never 'Nothing here' o
   await planAlert.getByRole("button", { name: "Try again" }).click();
   await expect(page.getByRole("textbox", { name: "Add to backlog" })).toBeVisible();
 });
+
+test("R-M5-2: finishing a task on the day card keeps its row (coins pop, nothing shifts); done can be undone", async ({
+  page,
+}) => {
+  const id = await setup(page);
+  const planned = { scheduled_date: tomorrow(), block: "work", status: "scheduled", priority: "just_start" };
+  await addBacklogItem(id, { title: "Slides", ...planned });
+  await addBacklogItem(id, { title: "Email", ...planned });
+  await page.goto("/plan");
+  await page.getByRole("button", { name: "Tomorrow", exact: true }).click();
+  const list = page.getByRole("list", { name: "Tasks for Tomorrow" });
+  const first = list.getByRole("button", { name: "Finish Slides" });
+  await first.click();
+  await expect(page.getByRole("status", { name: "+10 coins" })).toBeAttached();
+  await expect(first).toHaveAttribute("aria-pressed", "true");
+  // A quick second tap on the same spot doesn't finish the next task.
+  await first.click({ force: true });
+  await expect(list.getByRole("button", { name: "Finish Email" })).toHaveAttribute("aria-pressed", "false");
+  await expect
+    .poll(async () => (await backlogItems(id)).find((i) => i.title === "Email")?.status)
+    .toBe("scheduled");
+  // Undo from the sheet.
+  await list.getByRole("button", { name: "Edit Slides" }).click();
+  await page.getByRole("button", { name: "Not done yet" }).click();
+  await expect
+    .poll(async () => (await backlogItems(id)).find((i) => i.title === "Slides")?.status)
+    .toBe("scheduled");
+});
