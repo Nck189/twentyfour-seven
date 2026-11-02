@@ -37,8 +37,11 @@ jobs:
             | tr -d '"' >> "$GITHUB_ENV"
       - name: Install Playwright browsers
         run: npx playwright install --with-deps webkit chromium
-      - name: CJ-15 under load (8 workers × 16 repeats, no retries)
-        run: npx playwright test tests/e2e/today.spec.ts tests/e2e/regressions-m3.spec.ts -g "CJ-15" --workers=8 --repeat-each=16 --retries=0
+      # Same parallelism as QC (2 workers). 8 workers on a hosted runner starved WebKit
+      # (click "waiting for element to be stable" for 30 s, "WebKit encountered an internal
+      # error"), which measured the runner, not the app. Many repeats, no retries instead.
+      - name: CJ-15 repeated (2 workers × 24 repeats, no retries)
+        run: npx playwright test tests/e2e/today.spec.ts tests/e2e/regressions-m3.spec.ts -g "CJ-15" --workers=2 --repeat-each=24 --retries=0
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
