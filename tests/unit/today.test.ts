@@ -10,6 +10,7 @@ import {
   isPastBlock,
   pickWakeCard,
   planFor,
+  plannedWake,
   templateFor,
   timelineFor,
   type DayContext,
@@ -246,5 +247,45 @@ describe("wake card (review M3-F2a/b)", () => {
       canPress: false,
     });
     expect(pickWakeCard(ctx(), at("2026-11-03", "01:00"), "2026-11-02", {})).toBeNull();
+  });
+});
+
+describe("plannedWake (what the server needs to honor a planned push)", () => {
+  it("a +90 bedtime push on a free day: wake 11:30 planned from the 10:00 template target", () => {
+    const c = ctx({
+      dayPlans: {
+        "2026-11-02": {
+          date: "2026-11-02",
+          template_id: null,
+          attending: null,
+          bedtime_override: at("2026-11-02", "04:00").toISOString(),
+          late_night: null,
+          mode: "normal",
+          overrides: {},
+        },
+      },
+    });
+    const p = plannedWake(c, "2026-11-02");
+    expect(hm(new Date(p.wake))).toBe("11:30");
+    expect(hm(new Date(p.base))).toBe("10:00");
+  });
+
+  it("skipping the optional Thursday class plans from the alternate target", () => {
+    const c = ctx({
+      dayPlans: {
+        "2026-11-05": {
+          date: "2026-11-05",
+          template_id: null,
+          attending: false,
+          bedtime_override: null,
+          late_night: null,
+          mode: "normal",
+          overrides: {},
+        },
+      },
+    });
+    const p = plannedWake(c, "2026-11-05");
+    expect(hm(new Date(p.base))).toBe("10:00");
+    expect(p.wake).toBe(p.base);
   });
 });

@@ -1,16 +1,23 @@
 import { describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { addDays, localDate, localParts } from "@/lib/time";
-import { newUser } from "./helpers";
+import { admin, newUser } from "./helpers";
 
 const TZ = "Asia/Bangkok";
-/** Sets every template's target wake to (now − minutesAgo) in Bangkok local time. */
-async function setTargetMinutesAgo(c: SupabaseClient, minutesAgo: number) {
+/**
+ * Sets every template's target wake to (now − minutesAgo) in Bangkok local time, as if planned
+ * long ago (an edit this close to the target is frozen out by the server; drop that snapshot).
+ */
+async function setTargetMinutesAgo(u: { id: string }, minutesAgo: number) {
   const t = new Date(Date.now() - minutesAgo * 60_000);
   const p = localParts(t, TZ);
   const hhmm = `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
-  const { error } = await c.from("templates").update({ target_wake: hhmm, options: {} }).neq("key", "");
+  const { error } = await admin()
+    .from("templates")
+    .update({ target_wake: hhmm, options: {} })
+    .eq("user_id", u.id);
   expect(error).toBeNull();
+  await admin().from("wake_snapshots").delete().eq("user_id", u.id);
 }
 const tickets = async (c: SupabaseClient) =>
   (await c.from("game_state").select("tickets").single()).data!.tickets;
@@ -20,7 +27,7 @@ describe("press_wake (CJ-03 / CJ-04)", () => {
     const u = await newUser("wake-in");
     // Avoid flakiness right at local midnight (target would fall on the previous date).
     if (localParts(new Date(), TZ).hour === 0 && localParts(new Date(), TZ).minute < 30) return;
-    await setTargetMinutesAgo(u.client, 10);
+    await setTargetMinutesAgo(u, 10);
     const { data, error } = await u.client.rpc("press_wake");
     expect(error).toBeNull();
     expect(data).toMatchObject({ in_window: true, backfilled: false });
@@ -37,7 +44,7 @@ describe("press_wake (CJ-03 / CJ-04)", () => {
   it("CJ-04 too late: time logged, NO ticket, in_window false", async () => {
     const u = await newUser("wake-late");
     if (localParts(new Date(), TZ).hour === 0 && localParts(new Date(), TZ).minute < 30) return;
-    await setTargetMinutesAgo(u.client, 20);
+    await setTargetMinutesAgo(u, 20);
     const { data } = await u.client.rpc("press_wake");
     expect(data).toMatchObject({ in_window: false });
     expect(Math.abs(new Date(data.pressed_at).getTime() - Date.now())).toBeLessThan(60_000);
@@ -47,7 +54,7 @@ describe("press_wake (CJ-03 / CJ-04)", () => {
   it("concurrent presses grant at most one ticket", async () => {
     const u = await newUser("wake-race");
     if (localParts(new Date(), TZ).hour === 0 && localParts(new Date(), TZ).minute < 30) return;
-    await setTargetMinutesAgo(u.client, 5);
+    await setTargetMinutesAgo(u, 5);
     await Promise.all(Array.from({ length: 5 }, () => u.client.rpc("press_wake")));
     expect(await tickets(u.client)).toBe(1);
   });

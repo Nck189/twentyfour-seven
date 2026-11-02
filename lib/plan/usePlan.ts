@@ -7,7 +7,7 @@ import { hostFor, parseHHMM } from "@/lib/engine";
 import { addDays, zonedInstant } from "@/lib/time";
 import { logEvent } from "@/lib/db/events";
 import { getSupabase } from "@/lib/supabase/client";
-import { planFor, type DayContext, type DayPlanRow } from "@/lib/today/day";
+import { planFor, plannedWake, type DayContext, type DayPlanRow } from "@/lib/today/day";
 import { DAY_PLAN_COLUMNS, emptyDayPlan, loadDayContext } from "@/lib/today/loadContext";
 
 export type DayPatch = Partial<Omit<DayPlanRow, "date" | "overrides">> & {
@@ -75,6 +75,12 @@ export function usePlan() {
       const row = ctxRef.current?.dayPlans[date];
       if (!row || !userId) return;
       setSaving("saving");
+      let planned: ReturnType<typeof plannedWake> | null = null;
+      try {
+        planned = plannedWake(ctxRef.current!, date); // so the server honors a planned push
+      } catch {
+        // No template for that day: the server falls back to its own target.
+      }
       const { error } = await client.from("day_plans").upsert(
         {
           user_id: userId,
@@ -85,6 +91,7 @@ export function usePlan() {
           late_night: row.late_night,
           mode: row.mode,
           overrides: row.overrides,
+          ...(planned ? { planned } : {}),
         },
         { onConflict: "user_id,date" },
       );

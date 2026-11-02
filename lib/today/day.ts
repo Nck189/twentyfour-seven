@@ -1,6 +1,7 @@
 import type { BlockKey, BlockSetting, ChecklistItem } from "@/content/blocks";
 import type { FixedEvent, TemplateDefault } from "@/content/defaults";
 import {
+  parseHHMM,
   planDay,
   resolveDay,
   templateForWeekday,
@@ -9,7 +10,7 @@ import {
   type SubSlot,
   type Warning,
 } from "@/lib/engine";
-import { addDays, isoWeekday, localDate } from "@/lib/time";
+import { addDays, isoWeekday, localDate, zonedInstant } from "@/lib/time";
 
 /** A template row as stored (id + content). */
 export type TemplateRow = TemplateDefault & { id: string; name: string | null };
@@ -96,6 +97,21 @@ export function planFor(ctx: DayContext, date: string, depth = 0): DayPlan {
     lateNightReturn: row?.late_night?.return_at ? new Date(row.late_night.return_at) : undefined,
     gymClose: ctx.gymClose,
   });
+}
+
+/**
+ * What the server needs to honor a planned push (Sunrise window, SPEC §4.2): the engine's wake
+ * for D and the template target it was planned from. Saved with the day plan as `planned`; the
+ * server only trusts it when it was set ≥ 4 h before that wake and the template is unchanged.
+ */
+export function plannedWake(ctx: DayContext, date: string): { wake: string; base: string } {
+  const tpl = templateFor(ctx, date);
+  if (!tpl) throw new Error(`no template for ${date}`);
+  const base = resolveDay(tpl, ctx.blocks, { attending: ctx.dayPlans[date]?.attending }).targetWake;
+  return {
+    wake: planFor(ctx, date).wake.toISOString(),
+    base: zonedInstant(date, parseHHMM(base), ctx.timezone).toISOString(),
+  };
 }
 
 /**

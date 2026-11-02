@@ -39,6 +39,16 @@ export async function setWakeMinutesAgo(userId: string, minutesAgo: number) {
     method: "PATCH",
     body: JSON.stringify({ target_wake: hhmmFromNow(-minutesAgo), fixed_events: [], options: {} }),
   });
+  await clearWakeSnapshots(userId);
+}
+
+/**
+ * Test setup edits targets right before pressing, which the server treats as a late edit and
+ * freezes the old target (anti-cheat). Clearing the snapshot makes the setup count as planned
+ * long ago.
+ */
+export async function clearWakeSnapshots(userId: string) {
+  await rest(`wake_snapshots?user_id=eq.${userId}`, { method: "DELETE" });
 }
 
 /** Gives a block a checklist in the user's settings. */
@@ -71,6 +81,7 @@ export async function setAllTemplates(
     method: "PATCH",
     body: JSON.stringify({ target_wake: target, fixed_events: fixedEvents, options: {} }),
   });
+  await clearWakeSnapshots(userId);
 }
 
 export async function dayPlans(userId: string) {
