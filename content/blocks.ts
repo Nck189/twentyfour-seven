@@ -7,8 +7,13 @@ export type ChecklistItem = { id: string; label: string };
 export type BlockSetting = {
   key: BlockKey;
   duration_min: number;
-  /** null = use the default first-10 text from i18n (`blocks.first10.<key>`). */
+  /**
+   * null = the built-in default text (`blocks.first10.<key>`); "" = no first-10 for this block;
+   * "@s:<key>:<n>" = built-in suggestion n (follows the app language); anything else = own text.
+   */
   first10: string | null;
+  /** The user's own first-10 texts to pick from (in addition to the built-in ones). */
+  first10_options?: string[];
   checklist: ChecklistItem[];
 };
 

@@ -107,3 +107,19 @@ export async function backlogItems(userId: string) {
     unknown
   >[];
 }
+
+export async function settingsBlocks(userId: string) {
+  const [row] = (await rest(`settings?user_id=eq.${userId}&select=blocks`)) as {
+    blocks: Record<string, unknown>[];
+  }[];
+  return row.blocks;
+}
+
+export async function profile(userId: string) {
+  const [row] = (await rest(`profiles?user_id=eq.${userId}&select=*`)) as Record<string, unknown>[];
+  return row;
+}
+
+export async function templates(userId: string) {
+  return (await rest(`templates?user_id=eq.${userId}&select=*&order=sort`)) as Record<string, unknown>[];
+}

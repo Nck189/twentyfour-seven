@@ -5,8 +5,16 @@ export function uniqueEmail(tag = "e2e") {
   return `${tag}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@test.local`;
 }
 
-/** Signs a (new) user in through the real /auth/callback route using an admin-generated link. */
-export async function signIn(page: Page, email = IS_PROD_RUN ? PROD_SMOKE_EMAIL : uniqueEmail()) {
+/**
+ * Signs a (new) user in through the real /auth/callback route using an admin-generated link.
+ * First-run setup is marked done unless `onboarded: false` (only the onboarding tests need it):
+ * its card changes Today (e.g. the Night ritual isn't offered by itself while it shows).
+ */
+export async function signIn(
+  page: Page,
+  email = IS_PROD_RUN ? PROD_SMOKE_EMAIL : uniqueEmail(),
+  { onboarded = true }: { onboarded?: boolean } = {},
+) {
   const res = await fetch(`${SB_URL}/auth/v1/admin/generate_link`, {
     method: "POST",
     headers: {
@@ -17,7 +25,27 @@ export async function signIn(page: Page, email = IS_PROD_RUN ? PROD_SMOKE_EMAIL 
     body: JSON.stringify({ type: "magiclink", email }),
   });
   if (!res.ok) throw new Error(`generate_link failed: ${res.status} ${await res.text()}`);
-  const body = (await res.json()) as { hashed_token: string; verification_type: string };
+  const body = (await res.json()) as { id: string; hashed_token: string; verification_type: string };
+  if (onboarded && body.id) {
+    // Merge: the same jsonb remembers other first-run facts (locale_set: a 2nd device must not
+    // push its own language over the account's, CJ-14).
+    const headers = {
+      apikey: SB_SERVICE_KEY,
+      Authorization: `Bearer ${SB_SERVICE_KEY}`,
+      "Content-Type": "application/json",
+    };
+    const url = `${SB_URL}/rest/v1/profiles?user_id=eq.${body.id}`;
+    const [prof] = (await (await fetch(`${url}&select=onboarding`, { headers })).json()) as {
+      onboarding: Record<string, unknown> | null;
+    }[];
+    if (!prof?.onboarding?.done) {
+      await fetch(url, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ onboarding: { ...prof?.onboarding, done: true } }),
+      });
+    }
+  }
   if (IS_PROD_RUN) {
     // The shared smoke account must start each test in English (the app applies the account's language).
     const user = (await (

@@ -9,6 +9,8 @@ import { useNow } from "@/lib/hooks/useNow";
 import { currentBlock, type TimelineBlock } from "@/lib/today/day";
 import { useToday } from "@/lib/today/useToday";
 import { NightRitual } from "@/components/night/NightRitual";
+import { WelcomeCard } from "@/components/onboarding/WelcomeCard";
+import { useOnboardingState } from "@/lib/onboarding/useOnboardingState";
 import { BlockCheckin } from "./BlockCheckin";
 import { Sheet } from "./BlockSheet";
 import { ModeCard } from "./ModeCard";
@@ -62,6 +64,7 @@ export function TodayScreen() {
   const clock = useNow(30_000);
   const now = clock ?? EPOCH;
   const today = useToday(now);
+  const onboarding = useOnboardingState();
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [ritualOpen, setRitualOpen] = useState(false);
   const [ritualDismissed, setRitualDismissed] = useState(false);
@@ -102,7 +105,14 @@ export function TodayScreen() {
   const cur = currentBlock(tl, now);
   const open: TimelineBlock | undefined = tl.blocks.find((b) => b.key === openKey);
   const isNight = cur?.key === "down" || cur?.key === "sleep";
-  const autoOffer = cur?.key === "down" && !today.nightDoneAtLoad && !ritualDismissed && !wasOffered(tl.date);
+  // Not while the first-run card is up (or still loading): a new user sets up their day first.
+  const autoOffer =
+    cur?.key === "down" &&
+    onboarding.ready &&
+    !onboarding.show &&
+    !today.nightDoneAtLoad &&
+    !ritualDismissed &&
+    !wasOffered(tl.date);
   // One thing at a time: what's on screen depends on the part of the day.
   const next = cur ? tl.blocks[tl.blocks.indexOf(cur) + 1] : undefined;
   const wake = today.wakeCard;
@@ -137,6 +147,8 @@ export function TodayScreen() {
           </button>
         }
       />
+
+      {onboarding.show && <WelcomeCard onLater={() => void onboarding.later()} />}
 
       {tl.mode !== "normal" && (
         <p className="mx-4 mb-3 inline-block rounded-full bg-primary-soft px-3 py-1 text-sm font-bold text-primary lg:mx-6">
@@ -215,6 +227,7 @@ export function TodayScreen() {
             now={now}
             timezone={today.timezone}
             actions={today.actions}
+            ownFirst10={today.blockSettings.find((b) => b.key === cur.key)?.first10_options}
           />
         </section>
       )}
@@ -283,6 +296,7 @@ export function TodayScreen() {
             now={now}
             timezone={today.timezone}
             actions={today.actions}
+            ownFirst10={today.blockSettings.find((b) => b.key === open.key)?.first10_options}
           />
         </Sheet>
       )}
