@@ -22,6 +22,12 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 
 ---
 
+## Overall progress (Minnie wants a % in every update)
+**≈ 33% of M0–M14 · ≈ 41% of v1 (M0–M10)** — 2026-11-02 23:10 Bangkok
+- Weight per milestone = its section size in BUILD_PLAN (M0 26 · M1 14 · M2 17 · M3 13 · M4 12 · M5 13 · M6 22 · M7 11 · M8 13 · M9 5 · M10 16 · M11 9 · M12 8 · M13 10 · M14 12 = 201; v1 = 162).
+- Credit per milestone: built = 65%, + review fixes = 80%, + G1–G5 = 90%, ✅ (G1–G7 + report) = 100%.
+- Now: M0 95% · M1 80% · M2 85% · M3 80% · M4 65% · M5–M14 0%.
+
 ## Current milestone
 **Moved to a cloud session (2026-11-02 ~22:30 Bangkok)** — the local machine hit its usage limit. Work continues on branch `claude/practical-cannon-a70ubq` → draft PR https://github.com/Nck189/twentyfour-seven/pull/1 (not `main`: the prod migration must go first).
 - The cloud container has no prod secrets and can't run Supabase locally (image downloads blocked), so **GitHub Actions is the test runner**: `QC` runs on every push; `Stress` runs when the commit message contains `[stress]` (no retries).

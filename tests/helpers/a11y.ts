@@ -21,20 +21,21 @@ export async function expectTouchTargets(page: Page, min = 44) {
         'a[href], button, [role="button"], [role="radio"], [role="tab"], input, select, textarea',
       ),
     );
-    return els
-      .filter((el) => {
-        const r = el.getBoundingClientRect();
-        const style = getComputedStyle(el);
-        return r.width > 0 && r.height > 0 && style.visibility !== "hidden" && style.display !== "none";
-      })
-      .filter((el) => {
-        const r = el.getBoundingClientRect();
-        return r.width < minSize - 0.5 || r.height < minSize - 0.5;
-      })
-      .map((el) => {
-        const r = el.getBoundingClientRect();
-        return `${el.tagName.toLowerCase()} "${(el.textContent || el.getAttribute("aria-label") || "").trim().slice(0, 30)}" ${Math.round(r.width)}×${Math.round(r.height)}`;
-      });
+    return (
+      els
+        .filter((el) => {
+          const r = el.getBoundingClientRect();
+          const style = getComputedStyle(el);
+          return r.width > 0 && r.height > 0 && style.visibility !== "hidden" && style.display !== "none";
+        })
+        // Layout size, not the on-screen box: a just-tapped control is mid press animation
+        // (.tap:active scales to 0.96), which isn't its real touch-target size.
+        .filter((el) => el.offsetWidth < minSize - 0.5 || el.offsetHeight < minSize - 0.5)
+        .map(
+          (el) =>
+            `${el.tagName.toLowerCase()} "${(el.textContent || el.getAttribute("aria-label") || "").trim().slice(0, 30)}" ${el.offsetWidth}×${el.offsetHeight}`,
+        )
+    );
   }, min);
   expect(small).toEqual([]);
 }

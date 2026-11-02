@@ -130,7 +130,9 @@ test("CJ-15 flake: a quick app switch doesn't refetch, and a tap right after it 
   await setWakeMinutesAgo(id, 150);
   await setChecklist(id, "work", ["A"]);
   await page.goto("/today");
-  const item = page.getByRole("region", { name: "Current block" }).getByRole("checkbox", { name: "A" });
+  const item = page
+    .getByRole("region", { name: "Current block" })
+    .getByRole("checkbox", { name: "A", exact: true });
   await expect(item).toBeVisible();
   let refetches = 0;
   page.on("request", (r) => {
