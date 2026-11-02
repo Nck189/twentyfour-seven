@@ -15,12 +15,18 @@ export function Sheet({
 }) {
   const tc = useTranslations("common");
   const closeRef = useRef<HTMLButtonElement>(null);
+  // Parents pass a new onClose on every render: keep the latest without re-running the effect,
+  // so focus moves to Close once (on open), never mid-typing (it closed the iPhone keyboard).
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
   useEffect(() => {
     closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onCloseRef.current();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, []);
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center">
       {/* Backdrop: tap to close; hidden from assistive tech (the visible Close button is the accessible one). */}
