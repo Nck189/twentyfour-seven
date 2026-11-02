@@ -18,6 +18,7 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 ### Questions for Minnie (when back)
 - ~~Should Work shrink when an evening event doesn't fit? (M2-F3)~~ **Answered 2026-11-02:** yes — Work gives way (down to 50%) before Down/Wake/Sleep, except on days with a class/appointment in Work. Done in `lib/engine/plan.ts` + SPEC §3.
 - ~~Should an early "I'm up" (up to 3 h before target) earn the Sunrise ticket? (M3-F10)~~ **Answered:** yes, keep as is.
+- **Login on real iPhone is unreliable (S2, found by Minnie 2026-11-02):** the pasted sign-in link is often already used — likely iOS Mail's long-press link preview opens it (one-time token), or an older email's link was pasted. Workaround given: copy the link from Gmail on the Mac and paste via Universal Clipboard. Real fix needs Minnie once: custom SMTP in Supabase (e.g. Gmail app password / Resend) → email template with the 6-digit `{{ .Token }}` (login already accepts codes) — also lifts the ~2 emails/hour limit. Then fix the login hint text.
 - Please test the offline page once on your real iPhone — link + steps sent in chat 2026-11-02; waiting for her result.
 
 ---
