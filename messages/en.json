@@ -166,7 +166,11 @@
     "saving": "Saving…",
     "saved": "Saved",
     "saveError": "Couldn't save. Your changes are kept here — check your connection.",
-    "loadError": "Couldn't load your plan."
+    "loadError": "Couldn't load your plan.",
+    "bedLabel": "Bed",
+    "wakeLabel": "Wake",
+    "warnings": "{count, plural, one {# warning} other {# warnings}}",
+    "dayTasks": "Tasks for {day}"
   },
   "farm": {
     "title": "Farm",
@@ -248,7 +252,7 @@
     "placeholder": "Everything you need to clear will live here.",
     "comingSoon": "The backlog is coming soon.",
     "captureLabel": "Add to backlog",
-    "capturePlaceholder": "Type and press Enter",
+    "capturePlaceholder": "e.g. Report 30m !must tomorrow #yop",
     "add": "Add",
     "inbox": "Inbox",
     "planned": "Planned",
@@ -302,7 +306,12 @@
     "carryHint": "Where should these go?",
     "carryTomorrow": "Tomorrow",
     "carryInbox": "Back to inbox",
-    "carryDone": "All sorted."
+    "carryDone": "All sorted.",
+    "complete": "Finish {title}",
+    "willSave": "Will be saved with:",
+    "more": "More: project, deadline, steps",
+    "titleLabel": "Task",
+    "earlier": "From earlier days"
   },
   "errors": {
     "notFoundTitle": "Page not found",
