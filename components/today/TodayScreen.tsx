@@ -13,6 +13,8 @@ import { WelcomeCard } from "@/components/onboarding/WelcomeCard";
 import { useOnboardingState } from "@/lib/onboarding/useOnboardingState";
 import { SetupRewardNotice, TodaySetupHint } from "@/components/setup/SetupCard";
 import { useSetupRewards } from "@/lib/setup/useSetupRewards";
+import { ExerciseCard } from "@/components/exercise/ExerciseCard";
+import { useAnimals } from "@/lib/animals/useAnimals";
 import { BlockCheckin } from "./BlockCheckin";
 import { Sheet } from "./BlockSheet";
 import { ModeCard } from "./ModeCard";
@@ -68,6 +70,7 @@ export function TodayScreen() {
   const today = useToday(now);
   const onboarding = useOnboardingState();
   const setup = useSetupRewards();
+  const animals = useAnimals();
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [ritualOpen, setRitualOpen] = useState(false);
   const [ritualDismissed, setRitualDismissed] = useState(false);
@@ -244,6 +247,8 @@ export function TodayScreen() {
       )}
 
       {napRunning && !menuOpen && <NapCard timezone={today.timezone} />}
+
+      <ExerciseCard animals={animals} />
 
       <div className="mx-4 mb-2 lg:mx-6">
         <button

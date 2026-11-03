@@ -59,6 +59,35 @@ html[lang="th"] body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Animals: a slow idle bob + blink (SPEC §8.6). Stopped by the reduced-motion rule below. */
+@keyframes animal-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.7px);
+  }
+}
+@keyframes animal-blink {
+  0%,
+  94%,
+  100% {
+    transform: scaleY(1);
+  }
+  97% {
+    transform: scaleY(0.1);
+  }
+}
+.animal-bob {
+  animation: animal-bob 2.6s ease-in-out infinite;
+}
+.animal-blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: animal-blink 4.2s infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

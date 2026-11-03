@@ -2,13 +2,17 @@
  * Setup rewards (SPEC §8.8c): each one-time setup step pays a small reward once, granted by the
  * server when the setting exists in the data (`claim_setup_rewards`, M7 setup migration — a unit
  * test checks the SQL mirrors these numbers). Bigger setups pay more. New features add their own
- * row when they ship (exercise goal → M8, notifications → M11).
+ * row when they ship (exercise goal + gym close: M8; notifications: M11).
  */
 import type { CropId } from "./crops";
 import type { DecorId } from "./decor";
 
 export type Reward =
-  { tickets: number } | { coins: number } | { seed: { crop: CropId; n: number } } | { decor: DecorId };
+  | { tickets: number }
+  | { coins: number }
+  | { seed: { crop: CropId; n: number } }
+  | { decor: DecorId }
+  | { feed: number };
 
 export const SETUP_STEPS = [
   "sleep_times",
@@ -17,6 +21,7 @@ export const SETUP_STEPS = [
   "backlog_estimate",
   "language",
   "home_screen",
+  "exercise",
 ] as const;
 export type SetupStep = (typeof SETUP_STEPS)[number];
 
@@ -27,6 +32,7 @@ export const SETUP_REWARD: Record<SetupStep, Reward> = {
   backlog_estimate: { coins: 15 },
   language: { coins: 5 },
   home_screen: { decor: "flowers" },
+  exercise: { feed: 3 },
 };
 
 /** Where each step is set up in the app. */
@@ -37,6 +43,7 @@ export const SETUP_HREF: Record<SetupStep, string> = {
   backlog_estimate: "/plan",
   language: "/more#language",
   home_screen: "/more#install",
+  exercise: "/more#exercise",
 };
 
 export const isSetupStep = (v: unknown): v is SetupStep =>

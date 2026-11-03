@@ -2,12 +2,15 @@
 
 import { useSearchParams } from "next/navigation";
 import { FarmView } from "@/components/farm/FarmScreen";
+import { ExerciseCard } from "@/components/exercise/ExerciseCard";
 import { BLOCK_KEYS, type BlockKey } from "@/content/blocks";
 import type { SkyPhase } from "@/lib/farm/sky";
 import { farmState, type DayFacts, type GameLog, type Planting } from "@/lib/game";
 import type { CropId } from "@/content/crops";
 import type { GachaState, PullResult } from "@/lib/farm/useGacha";
 import { addDays } from "@/lib/time";
+import type { AnimalsState } from "@/lib/animals/useAnimals";
+import type { AnimalId } from "@/content/animals";
 
 const TODAY = "2026-11-15";
 const at = (d: string, hm: string) => new Date(`${d}T${hm}:00+07:00`).toISOString();
@@ -88,13 +91,59 @@ const SAMPLE_GACHA = {
   reload: () => {},
 };
 
+const H = 3_600_000;
+function sampleAnimals() {
+  const now = Date.now();
+  const mk = (species: AnimalId, fedH: number, love: number, producedH: number | null) => ({
+    id: species,
+    species,
+    love,
+    fedUntil: new Date(now + fedH * H),
+    lastProduced: producedH === null ? null : new Date(now - producedH * H),
+    createdAt: new Date(now - 72 * H),
+  });
+  const state: AnimalsState = {
+    animals: [
+      mk("chicken", 40, 64, null),
+      mk("cow", 20, 22, 30),
+      mk("capybara", 60, 90, 2),
+      mk("sheep", -5, 10, 40),
+      mk("red_panda", 30, 41, 3),
+    ],
+    eggProgress: 2,
+    feed: 2,
+    week: [
+      { at: new Date(now - 30 * H).toISOString(), type: "gym", minutes: 45, counted: true },
+      { at: new Date(now - 6 * H).toISOString(), type: "walk", minutes: 30, counted: true },
+    ],
+    weeklyGoal: 3,
+    gymClose: "22:00",
+    timezone: "Asia/Bangkok",
+  };
+  return {
+    state,
+    status: "ready" as const,
+    reload: () => {},
+    logExercise: async () => ({
+      counted: true,
+      eggProgress: 0,
+      hatched: { id: "x", species: "alpaca" as AnimalId, rarity: "epic" as const },
+    }),
+    pet: async () => true,
+    collect: async () => "milk" as const,
+    feed: async () => true,
+  };
+}
+
 export function FarmPreview() {
   const q = useSearchParams().get("sky");
   const sky = SKIES.find((s) => s === q) ?? "day";
   const farm = farmState(PLANTINGS, sampleDays(), "preview");
   const planted = new Set(PLANTINGS.map((p) => p.slot));
+  const animals = sampleAnimals();
   return (
     <div className="mx-auto max-w-3xl py-2">
+      <ExerciseCard animals={animals as never} />
       <FarmView
         data={{
           farm,
@@ -109,6 +158,7 @@ export function FarmPreview() {
         harvest={async () => true}
         buyDecor={async () => true}
         gacha={SAMPLE_GACHA}
+        animals={animals as never}
         reload={() => {}}
       />
     </div>

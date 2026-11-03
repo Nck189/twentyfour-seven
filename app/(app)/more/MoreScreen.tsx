@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import Link from "next/link";
 import { ExportCard } from "@/components/settings/ExportCard";
+import { ExerciseSettings } from "@/components/settings/ExerciseSettings";
 import { ChevronIcon, MoonIcon, SunriseIcon } from "@/components/ui/Icons";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
@@ -28,6 +29,7 @@ function Card({ title, children, id }: { title: string; children: ReactNode; id?
 
 export function MoreScreen() {
   const t = useTranslations("more");
+  const te = useTranslations("exercise");
   const { locale, setLocale, theme, setTheme } = usePrefs();
   const [email, setEmail] = useState<string | null>(null);
   const setup = useSetupRewards();
@@ -100,6 +102,9 @@ export function MoreScreen() {
             </li>
           ))}
         </ul>
+      </Card>
+      <Card title={te("settingsTitle")} id="exercise">
+        <ExerciseSettings onSaved={setup.reload} />
       </Card>
       <Card title={t("language")} id="language">
         <Segmented<Locale>

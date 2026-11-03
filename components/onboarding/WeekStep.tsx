@@ -159,12 +159,13 @@ function Slots({ events, onChange }: { events: FixedEvent[]; onChange: (e: Fixed
 }
 
 /** One kind of day: which weekdays, class/work slots, bed → wake, and the night as a bar. */
-function DayKind({
+export function DayKind({
   tpl,
   name,
   letters,
   onSleep,
   onMoveDay,
+  onRemoveDay,
   onEvents,
 }: {
   tpl: TemplateRow;
@@ -172,6 +173,8 @@ function DayKind({
   letters: string[];
   onSleep: (wake: string, sleepMin: number) => void;
   onMoveDay: (day: number) => void;
+  /** Tapping a picked weekday again takes it off this kind of day. */
+  onRemoveDay: (day: number) => void;
   onEvents: (events: FixedEvent[]) => void;
 }) {
   const t = useTranslations("onboarding");
@@ -198,7 +201,7 @@ function DayKind({
                 type="button"
                 aria-pressed={on}
                 aria-label={letters[i]}
-                onClick={() => !on && onMoveDay(d)}
+                onClick={() => (on ? onRemoveDay(d) : onMoveDay(d))}
                 className="tap flex h-11 w-11 items-center justify-center"
               >
                 <span
@@ -345,6 +348,7 @@ export function WeekStep({
   onSleep,
   onAllSleep,
   onMoveDay,
+  onRemoveDay,
   onEvents,
   onAddKind,
   onImportIcs,
@@ -356,6 +360,7 @@ export function WeekStep({
   onSleep: (id: string, wake: string, sleepMin: number) => void;
   onAllSleep: (wake: string, sleepMin: number) => void;
   onMoveDay: (day: number, toId: string) => void;
+  onRemoveDay: (day: number, fromId: string) => void;
   onEvents: (id: string, events: FixedEvent[]) => void;
   onAddKind: () => void;
   onImportIcs: (text: string) => Promise<string>;
@@ -394,6 +399,7 @@ export function WeekStep({
             letters={letters}
             onSleep={(w, m) => onSleep(open.id, w, m)}
             onMoveDay={(d) => onMoveDay(d, open.id)}
+            onRemoveDay={(d) => onRemoveDay(d, open.id)}
             onEvents={(e) => onEvents(open.id, e)}
           />
         </ul>

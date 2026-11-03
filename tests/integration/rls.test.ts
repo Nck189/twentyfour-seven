@@ -14,7 +14,7 @@ beforeAll(async () => {
   // Give B some rows in user-writable tables.
   await B.client.from("backlog_items").insert({ user_id: B.id, title: "B secret task" });
   await B.client.from("events").insert({ user_id: B.id, type: "test", payload: { secret: true } });
-  await B.client.from("exercise_logs").insert({ user_id: B.id, type: "gym", minutes: 30 });
+  await B.client.rpc("log_exercise", { p_type: "gym", p_minutes: 30, p_key: "rls-b-workout-1" });
 });
 
 describe("CJ-02 first login seeds Minnie's defaults", () => {

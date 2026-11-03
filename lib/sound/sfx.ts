@@ -90,6 +90,25 @@ export const sfx = {
     }));
     play(notes);
   },
+  /** Pet reaction: a short two-note call, pitched per animal (small = high); sleepy = low and soft. */
+  animal: (pitch: number, sleepy = false) =>
+    play(
+      sleepy
+        ? [{ freq: pitch * 0.5, at: 0, dur: 0.3, type: "sine", gain: 0.08 }]
+        : [
+            { freq: pitch, at: 0, dur: 0.09, type: "triangle", gain: 0.16 },
+            { freq: pitch * 1.26, at: 0.08, dur: 0.12, type: "triangle", gain: 0.14 },
+          ],
+    ),
+  /** An egg hatches: wobble taps, a crack, then a rising chirp. */
+  hatch: () =>
+    play([
+      { freq: 300, at: 0, dur: 0.05, type: "triangle", gain: 0.08 },
+      { freq: 320, at: 0.12, dur: 0.05, type: "triangle", gain: 0.08 },
+      { freq: 520, at: 0.3, dur: 0.07, type: "triangle", gain: 0.14 },
+      { freq: 880, at: 0.42, dur: 0.1, type: "sine", gain: 0.18 },
+      { freq: 1175, at: 0.52, dur: 0.16, type: "sine", gain: 0.14 },
+    ]),
   sunrise: () =>
     play([
       { freq: 523, at: 0, dur: 0.15 },

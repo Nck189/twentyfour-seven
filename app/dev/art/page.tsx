@@ -12,6 +12,8 @@ import { Capsule, CapsuleMachine, RarityLight } from "@/components/art/farm/Caps
 import { RARITIES } from "@/content/crops";
 import { PlotArt } from "@/components/art/farm/PlotArt";
 import { SetupCard } from "@/components/setup/SetupCard";
+import { AnimalArt, EggArt, FeedArt, Heart, ProduceArt } from "@/components/art/farm/Animals";
+import { ANIMAL_IDS, PRODUCE_IDS } from "@/content/animals";
 import { Fence, Flowers, PathTile, Pond } from "@/components/art/farm/Plot";
 
 const STAGES = [0, 1, 2, 3] as const;
@@ -121,6 +123,44 @@ export default function ArtSheet() {
             </div>
           </Cell>
         ))}
+      </section>
+      <section className="grid gap-2" data-section="animals">
+        {ANIMAL_IDS.map((a) => (
+          <div key={a} className="flex flex-wrap items-end gap-2">
+            <span className="w-24 text-xs">{a}</span>
+            <Cell caption="48">
+              <AnimalArt species={a} idle={false} className="h-12 w-12" />
+            </Cell>
+            <Cell caption="96">
+              <AnimalArt species={a} idle={false} className="h-24 w-24" />
+            </Cell>
+            <Cell caption="sleepy">
+              <AnimalArt species={a} sleepy className="h-24 w-24" />
+            </Cell>
+          </div>
+        ))}
+      </section>
+      <section className="flex flex-wrap items-end gap-3" data-section="animal-items">
+        {[0, 1, 2].map((p) => (
+          <Cell key={p} caption={`egg ${p}`}>
+            <EggArt progress={p} className="h-24 w-24" />
+          </Cell>
+        ))}
+        {PRODUCE_IDS.map((p) => (
+          <Cell key={p} caption={p}>
+            <ProduceArt id={p} className="h-16 w-16" />
+          </Cell>
+        ))}
+        <Cell caption="feed">
+          <FeedArt className="h-16 w-16" />
+        </Cell>
+        <Cell caption="hearts">
+          <div className="flex">
+            <Heart />
+            <Heart />
+            <Heart empty />
+          </div>
+        </Cell>
       </section>
       <div className="max-w-sm" data-section="setup">
         <SetupCard state={{ done: ["first10", "language"], granted: [] }} />

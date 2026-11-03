@@ -115,6 +115,16 @@ export function useSetup() {
     [patchTemplate],
   );
 
+  /** Takes a weekday off a kind of day (tap a picked day again). It then uses the first kind until moved. */
+  const removeWeekday = useCallback(
+    async (day: number, fromId: string) => {
+      const t = templatesRef.current.find((x) => x.id === fromId);
+      if (t?.weekdays.includes(day))
+        await patchTemplate(t.id, { weekdays: t.weekdays.filter((d) => d !== day) });
+    },
+    [patchTemplate],
+  );
+
   const setFirst10 = useCallback(
     (key: BlockKey, value: string | null) =>
       saveBlocks(blocksRef.current.map((b) => (b.key === key ? { ...b, first10: value } : b))),
@@ -320,6 +330,7 @@ export function useSetup() {
     onboarding,
     setSleep,
     moveWeekday,
+    removeWeekday,
     setFirst10,
     addOwnFirst10,
     setUseFirst10,

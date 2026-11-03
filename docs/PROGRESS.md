@@ -1,5 +1,9 @@
 # PROGRESS — 24/7
 
+## Now (2026-11-03 evening)
+- ✅ M7 merged (PR #7). **Minnie: run `npx supabase db push --remote` on the Mac** if not done yet (M7 migrations), and again after M8 merges.
+- 🔨 M8 (exercise + animals) on branch `claude/practical-cannon-a70ubq` → PR; G7 review next. Plan: (1) content + pure rules ✅ (2) server RPCs ✅ (3) art ✅ (4) UI + E2E ✅ → G7 → report.
+
 ## ➡️ HANDOFF — read this first (any session: cloud or Minnie's Mac terminal)
 Minnie is asleep (from 2026-11-03 ~02:00 Bangkok). The build moved between a cloud session and her Mac; whichever session runs now continues from here.
 
