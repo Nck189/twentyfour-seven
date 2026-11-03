@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Capsule, CapsuleMachine, RarityLight } from "@/components/art/farm/Capsule";
 import { CropArt } from "@/components/art/farm/CropArt";
 import { TicketArt } from "@/components/art/Ticket";
@@ -43,39 +43,64 @@ function ResultCard({ r, big = false }: { r: PullResult; big?: boolean }) {
  * ×10 cracks the capsules one after another. Skip shows the results at once; reduced motion and
  * "skip animations" go straight to them.
  */
-function Reveal({ results, onDone }: { results: PullResult[]; onDone: () => void }) {
+export function Reveal({ results, onDone }: { results: PullResult[]; onDone: () => void }) {
   const t = useTranslations("gacha");
   const reduce = useReducedMotion();
   const skipPref = usePrefs((s) => s.skipAnimations) || Boolean(reduce);
   const [phase, setPhase] = useState<"shake" | "crack" | "shown">(skipPref ? "shown" : "shake");
   const best = useMemo(() => results.reduce((m, r) => Math.max(m, RANK[r.rarity]), 0), [results]);
   const top = results.find((r) => RANK[r.rarity] === best)!;
+  const crops = useTranslations("crops");
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const shown = useRef(false);
+  const box = useRef<HTMLDivElement>(null);
+
+  // Phases only move forward: once the results are shown (timer or Skip), nothing pulls them back.
+  const show = useCallback(() => {
+    if (shown.current) return;
+    shown.current = true;
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+    sfx.jingle(best);
+    setPhase("shown");
+  }, [best]);
 
   useEffect(() => {
     if (skipPref) {
-      sfx.jingle(best);
+      show();
       return;
     }
     sfx.shake();
-    const a = setTimeout(() => {
-      sfx.crack();
-      setPhase("crack");
-    }, 700);
-    const b = setTimeout(
-      () => {
-        sfx.jingle(best);
-        setPhase("shown");
-      },
-      700 + (results.length > 1 ? 150 * results.length : 450),
-    );
+    timers.current = [
+      setTimeout(() => {
+        if (shown.current) return;
+        sfx.crack();
+        setPhase("crack");
+      }, 700),
+      setTimeout(show, 700 + (results.length > 1 ? 150 * results.length : 450)),
+    ];
     return () => {
-      clearTimeout(a);
-      clearTimeout(b);
+      timers.current.forEach(clearTimeout);
+      timers.current = [];
     };
-  }, [skipPref, best, results.length]);
+  }, [skipPref, show, results.length]);
+
+  // Keyboard and screen-reader focus follows the one button: Skip, then Done.
+  useEffect(() => {
+    box.current?.querySelector<HTMLButtonElement>("button[data-reveal-action]")?.focus();
+  }, [phase]);
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-4 bg-bg/95 p-4">
+    <div
+      ref={box}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t("results")}
+      className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-4 bg-bg p-4"
+    >
+      <p role="status" className="sr-only">
+        {phase === "shown" ? results.map((r) => crops(r.crop)).join(", ") : ""}
+      </p>
       <AnimatePresence mode="wait">
         {phase === "shake" && (
           <motion.div
@@ -132,11 +157,11 @@ function Reveal({ results, onDone }: { results: PullResult[]; onDone: () => void
         )}
       </AnimatePresence>
       {phase === "shown" ? (
-        <Button onClick={onDone} className="min-w-40">
+        <Button data-reveal-action onClick={onDone} className="min-w-40">
           {t("done")}
         </Button>
       ) : (
-        <Button variant="secondary" onClick={() => setPhase("shown")}>
+        <Button data-reveal-action variant="secondary" onClick={show}>
           {t("skip")}
         </Button>
       )}

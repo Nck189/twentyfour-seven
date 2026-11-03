@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { CropArt } from "@/components/art/farm/CropArt";
 import { Sheet } from "@/components/today/BlockSheet";
 import { Button } from "@/components/ui/Button";
@@ -26,6 +26,8 @@ export function SeedDexSheet({
   const crops = useTranslations("crops");
   const [open, setOpen] = useState<CropId | null>(null);
   const [error, setError] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
   const have = CROP_IDS.filter((id) => state.dex[id]).length;
   const sel = open ? state.dex[open] : undefined;
   const cost = sel && sel.star < 5 ? STAR_UP_COST[sel.star as 1 | 2 | 3 | 4] : null;
@@ -80,10 +82,17 @@ export function SeedDexSheet({
           {cost !== null ? (
             <Button
               className="mt-2 w-full"
-              disabled={shards < cost}
+              disabled={busy || shards < cost}
               onClick={async () => {
+                // One star-up per tap: a double-tap must not spend twice (R-M7-4).
+                if (busyRef.current) return;
+                busyRef.current = true;
+                setBusy(true);
                 setError(false);
-                if (!(await starUp(open))) setError(true);
+                const ok = await starUp(open);
+                busyRef.current = false;
+                setBusy(false);
+                if (!ok) setError(true);
               }}
             >
               {t("starUp", { n: cost })}

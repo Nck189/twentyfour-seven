@@ -191,3 +191,31 @@ export function TodaySetupHint({ state }: { state: SetupRewards | null }) {
     />
   );
 }
+
+/** "You got …" after the server paid setup rewards on this visit (R-M7-5). Stays until OK. */
+export function SetupRewardNotice({ granted }: { granted: SetupStep[] }) {
+  const t = useTranslations("setup");
+  const label = useRewardLabel();
+  const [seen, setSeen] = useState<string | null>(null);
+  const key = granted.join();
+  if (granted.length === 0 || seen === key) return null;
+  return (
+    <section
+      role="status"
+      className="mx-4 mb-3 flex items-center gap-3 rounded-[var(--radius-lg)] bg-primary-soft p-3 lg:mx-6"
+    >
+      <RewardArt reward={SETUP_REWARD[granted[0]!]} className="h-10 w-10 shrink-0" />
+      <p className="min-w-0 flex-1 text-sm">
+        <span className="block font-bold text-primary">{t("rewardTitle")}</span>
+        {granted.map((s) => label(SETUP_REWARD[s])).join(" · ")}
+      </p>
+      <button
+        type="button"
+        onClick={() => setSeen(key)}
+        className="tap min-h-11 rounded-xl px-3 text-sm font-bold text-primary"
+      >
+        {t("ok")}
+      </button>
+    </section>
+  );
+}

@@ -44,15 +44,22 @@ describe("pull_gacha / star_up / planting owned seeds", () => {
     expect(a.data.tickets).toBe(2);
     const again = await u.client.rpc("pull_gacha", { p_n: 10, p_key: "key-aaaa-1" });
     expect(again.data).toMatchObject({ repeat: true, tickets: 2 });
-    expect(again.data.results.map((r: { crop: string }) => r.crop)).toEqual(
-      a.data.results.map((r: { crop: string }) => r.crop),
+    // A retried tap gets the very same cards back, NEW/shards included (R-M7-3).
+    expect(again.data.results).toEqual(a.data.results);
+    // Another key that merely starts with this one is a new pull, not a repeat (R-M7-11).
+    await admin().from("game_state").update({ tickets: 12 }).eq("user_id", u.id);
+    const longer = await u.client.rpc("pull_gacha", { p_n: 1, p_key: "key-aaaa-1:9" });
+    expect(longer.data.repeat).toBe(false);
+    expect((await u.client.rpc("pull_gacha", { p_n: 10, p_key: "key-aaaa-1" })).data.results).toEqual(
+      a.data.results,
     );
+    await admin().from("game_state").update({ tickets: 2 }).eq("user_id", u.id);
     expect((await u.client.rpc("pull_gacha", { p_n: 10, p_key: "key-bbbb-2" })).error?.code).toBe("P0001");
     expect((await u.client.rpc("pull_gacha", { p_n: 3, p_key: "key-cccc-3" })).error?.code).toBe("22023");
     const { data: inv } = await u.client.from("inventory").select("qty").like("item_id", "seed:%");
-    expect(inv!.reduce((n, r) => n + r.qty, 0)).toBe(10);
+    expect(inv!.reduce((n, r) => n + r.qty, 0)).toBe(11);
     const { data: dex } = await u.client.from("seed_dex").select("count");
-    expect(dex!.reduce((n, r) => n + r.count, 0)).toBe(10);
+    expect(dex!.reduce((n, r) => n + r.count, 0)).toBe(11);
     // Client can't give itself tickets or fake a pull.
     await u.client.from("game_state").update({ tickets: 999 }).eq("user_id", u.id);
     expect(

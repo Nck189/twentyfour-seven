@@ -617,6 +617,8 @@
       "backlog_estimate": "Add a task with a time estimate",
       "language": "Choose your language",
       "home_screen": "Add 24/7 to your Home Screen"
-    }
+    },
+    "rewardTitle": "Setup reward",
+    "ok": "OK"
   }
 }

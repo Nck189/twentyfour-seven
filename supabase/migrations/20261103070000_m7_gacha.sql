@@ -101,12 +101,14 @@ begin
   end if;
   -- Retried request: return what that key already pulled.
   -- Each pull row is keyed '<key>:<i>' (the index is unique per user and key).
+  -- The server-only gacha_pull event keeps the exact cards (NEW / shards) to hand back.
   if exists (select 1 from public.gacha_pulls where user_id = uid and idempotency_key = p_key || ':1') then
-    select coalesce(jsonb_agg(jsonb_build_object('crop', result, 'rarity', rarity) order by at, id), '[]')
-      into results
-      from public.gacha_pulls
-      where user_id = uid and left(idempotency_key, length(p_key) + 1) = p_key || ':';
-    return jsonb_build_object('results', results, 'tickets', gs.tickets, 'pity', gs.pity, 'repeat', true);
+    select e.payload -> 'results' into results
+      from public.events e
+      where e.user_id = uid and e.type = 'gacha_pull' and e.payload ->> 'key' = p_key
+      order by e.at desc limit 1;
+    return jsonb_build_object('results', coalesce(results, '[]'::jsonb), 'tickets', gs.tickets,
+                              'pity', gs.pity, 'repeat', true);
   end if;
   if gs.tickets < p_n then
     raise exception 'not enough tickets' using errcode = 'P0001';
@@ -137,7 +139,7 @@ begin
   where user_id = uid
   returning * into gs;
   insert into public.events (user_id, type, payload)
-  values (uid, 'gacha_pull', jsonb_build_object('n', p_n, 'results', results));
+  values (uid, 'gacha_pull', jsonb_build_object('n', p_n, 'key', p_key, 'results', results));
   return jsonb_build_object('results', results, 'tickets', gs.tickets, 'pity', gs.pity, 'repeat', false);
 end $$;
 

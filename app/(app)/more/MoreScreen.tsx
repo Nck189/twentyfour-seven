@@ -12,7 +12,7 @@ import type { Locale } from "@/lib/i18n/config";
 import { usePrefs, type ThemePref } from "@/lib/store/prefs";
 import { getSupabase } from "@/lib/supabase/client";
 import { logEvent } from "@/lib/db/events";
-import { SetupCard } from "@/components/setup/SetupCard";
+import { SetupCard, SetupRewardNotice } from "@/components/setup/SetupCard";
 import { isStandalone, useSetupRewards } from "@/lib/setup/useSetupRewards";
 
 const noop = () => () => {};
@@ -70,6 +70,7 @@ export function MoreScreen() {
   return (
     <>
       <ScreenHeader title={t("title")} />
+      {setup.state && <SetupRewardNotice granted={setup.state.granted} />}
       {setup.state && <SetupCard state={setup.state} />}
       <Card title={t("setupTitle")}>
         <ul className="flex flex-col gap-2">

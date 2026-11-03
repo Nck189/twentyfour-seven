@@ -13,7 +13,8 @@ alter table public.unlock_grants enable row level security;
 alter table public.unlock_grants force row level security;
 create policy "own rows: select" on public.unlock_grants for select to authenticated using (user_id = (select auth.uid()));
 revoke all on public.unlock_grants from anon;
-revoke insert, update, delete on public.unlock_grants from authenticated;
+revoke all on public.unlock_grants from authenticated;
+grant select on public.unlock_grants to authenticated;
 
 -- Reward per setup step: {tickets?, coins?, seed?: {crop, n}, decor?}. Null = unknown step.
 create or replace function public._setup_reward(p_id text)

@@ -92,6 +92,27 @@ for (const { locale, theme } of COMBOS) {
       await expect(page).toHaveScreenshot(`plan-week-${locale}-${theme}.png`);
     });
 
+    // The reveal itself is random (server rolls), so it's covered by CJ-12 + the unit tests instead.
+    test("capsule machine and Seed-dex", async ({ page }, info) => {
+      await fixClock(page);
+      await setPrefs(page, { locale, theme });
+      await signIn(page);
+      await page.goto("/farm");
+      await page.getByRole("button", { name: locale === "th" ? /^ตู้/ : /^Capsule machine/ }).click();
+      await page.waitForTimeout(400);
+      await page.screenshot({
+        path: `screenshots/${MILESTONE}-capsules-${info.project.name}-${locale}-${theme}.png`,
+      });
+      await expect(page).toHaveScreenshot(`capsules-${locale}-${theme}.png`);
+      await page.getByRole("button", { name: locale === "th" ? "ปิด" : "Close", exact: true }).click();
+      await page.getByRole("button", { name: locale === "th" ? /^สมุดเมล็ด/ : /^Seed-dex/ }).click();
+      await page.waitForTimeout(400);
+      await page.screenshot({
+        path: `screenshots/${MILESTONE}-seeddex-${info.project.name}-${locale}-${theme}.png`,
+      });
+      await expect(page).toHaveScreenshot(`seeddex-${locale}-${theme}.png`);
+    });
+
     test("app screens", async ({ page }, info) => {
       await fixClock(page);
       await setPrefs(page, { locale, theme });

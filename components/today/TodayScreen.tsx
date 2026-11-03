@@ -11,7 +11,7 @@ import { useToday } from "@/lib/today/useToday";
 import { NightRitual } from "@/components/night/NightRitual";
 import { WelcomeCard } from "@/components/onboarding/WelcomeCard";
 import { useOnboardingState } from "@/lib/onboarding/useOnboardingState";
-import { TodaySetupHint } from "@/components/setup/SetupCard";
+import { SetupRewardNotice, TodaySetupHint } from "@/components/setup/SetupCard";
 import { useSetupRewards } from "@/lib/setup/useSetupRewards";
 import { BlockCheckin } from "./BlockCheckin";
 import { Sheet } from "./BlockSheet";
@@ -269,6 +269,7 @@ export function TodayScreen() {
         />
       )}
 
+      {setup.state && <SetupRewardNotice granted={setup.state.granted} />}
       {!onboarding.show && <TodaySetupHint state={setup.state} />}
 
       {menuOpen && (
