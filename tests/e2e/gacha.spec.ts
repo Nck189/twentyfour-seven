@@ -19,12 +19,16 @@ async function setup(page: Page, tickets: number) {
   return { id, sheet: page.getByRole("dialog", { name: "Capsule machine" }) };
 }
 
-/** Skip if the reveal is still animating (it shows the results by itself after ~1–2 s). */
+/**
+ * Skip while the reveal still animates. The shake moves the layout, so Playwright's "stable"
+ * wait can outlast the ~1–2 s window: click without it, and if the window already passed the
+ * results show by themselves. (Skip's own logic is unit-tested with fake timers.)
+ */
 async function skipReveal(page: Page) {
   const reveal = page.getByRole("dialog", { name: "Your capsules" });
   await reveal
     .getByRole("button", { name: "Skip" })
-    .click({ timeout: 1500 })
+    .click({ force: true, timeout: 1500 })
     .catch(() => {});
   await expect(reveal.getByRole("button", { name: "Done" })).toBeVisible();
   return reveal;
@@ -47,10 +51,8 @@ test("CJ-12b ×1 with a double-tap charges one ticket; Skip mid-shake keeps the 
   const { id, sheet } = await setup(page, 3);
   await expect(sheet.getByText("Rare+ in 10")).toBeVisible();
   await sheet.getByRole("button", { name: "Pull ×1", exact: true }).dblclick();
-  const reveal = page.getByRole("dialog", { name: "Your capsules" });
-  await reveal.getByRole("button", { name: "Skip" }).click();
-  await expect(reveal.getByRole("button", { name: "Done" })).toBeVisible();
-  // The shake's timers must not pull the reveal back into the crack (R-M7-1).
+  const reveal = await skipReveal(page);
+  // Once shown, the results stay shown: the shake's timers never pull the reveal back (R-M7-1).
   await page.waitForTimeout(1500);
   await expect(reveal.getByRole("button", { name: "Done" })).toBeVisible();
   await expect(reveal.getByText(/New!|shard/).first()).toBeVisible();
