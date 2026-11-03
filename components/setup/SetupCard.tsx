@@ -149,7 +149,7 @@ export function SetupCard({
             type="button"
             aria-expanded={showDone}
             onClick={() => setShowDone((v) => !v)}
-            className="tap mt-2 min-h-11 w-full rounded-xl text-left text-sm font-bold text-muted"
+            className="tap mt-2 min-h-11 w-full rounded-xl px-2 text-left text-sm font-bold text-muted"
           >
             {t("doneCount", { n: state.done.length })}
           </button>
