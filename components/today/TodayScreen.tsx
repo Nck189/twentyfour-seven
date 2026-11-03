@@ -11,6 +11,8 @@ import { useToday } from "@/lib/today/useToday";
 import { NightRitual } from "@/components/night/NightRitual";
 import { WelcomeCard } from "@/components/onboarding/WelcomeCard";
 import { useOnboardingState } from "@/lib/onboarding/useOnboardingState";
+import { SetupRewardNotice, TodaySetupHint } from "@/components/setup/SetupCard";
+import { useSetupRewards } from "@/lib/setup/useSetupRewards";
 import { BlockCheckin } from "./BlockCheckin";
 import { Sheet } from "./BlockSheet";
 import { ModeCard } from "./ModeCard";
@@ -65,6 +67,7 @@ export function TodayScreen() {
   const now = clock ?? EPOCH;
   const today = useToday(now);
   const onboarding = useOnboardingState();
+  const setup = useSetupRewards();
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [ritualOpen, setRitualOpen] = useState(false);
   const [ritualDismissed, setRitualDismissed] = useState(false);
@@ -265,6 +268,9 @@ export function TodayScreen() {
           onOpen={(b) => setOpenKey(b.key)}
         />
       )}
+
+      {setup.state && <SetupRewardNotice granted={setup.state.granted} />}
+      {!onboarding.show && <TodaySetupHint state={setup.state} />}
 
       {menuOpen && (
         <Sheet title={t("menu.title")} onClose={() => setMenuOpen(false)}>

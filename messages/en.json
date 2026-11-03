@@ -197,7 +197,7 @@
     "plantTitle": "Plant in {block}",
     "plantHint": "It grows each day {block} goes well: started on time, or 70% of its checklist.",
     "starterSeeds": "Starter seeds",
-    "moreSeeds": "Rarer seeds come from the capsule machine (soon).",
+    "moreSeeds": "More seeds come from the capsule machine.",
     "harvest": "Harvest",
     "harvested": "+1 {crop}",
     "progress": "Day {done} of {total}",
@@ -241,7 +241,9 @@
     },
     "decor": "Decor",
     "coins": "{n} coins",
-    "buyItem": "Buy {item} for {price} coins"
+    "buyItem": "Buy {item} for {price} coins",
+    "yourSeeds": "Your seeds",
+    "seedOwned": "{crop}, {n} owned"
   },
   "crops": {
     "radish": "Radish",
@@ -271,6 +273,37 @@
     "flowers": "Flowers",
     "pond": "Pond"
   },
+  "gacha": {
+    "title": "Capsule machine",
+    "tickets": "{n, plural, one {# ticket} other {# tickets}}",
+    "pull1": "Pull ×1",
+    "pull10": "Pull ×10",
+    "pityRare": "Rare+ in {n}",
+    "pityEpic": "Epic+ in {n}",
+    "pityLegendary": "Legendary by {n}",
+    "howToEarn": "Earn tickets by waking on time and doing your Night ritual.",
+    "results": "Your capsules",
+    "new": "New!",
+    "shards": "+{n, plural, one {# shard} other {# shards}}",
+    "skip": "Skip",
+    "done": "Done",
+    "error": "Couldn't pull right now. Your tickets are safe — try again.",
+    "rarity": {
+      "common": "Common",
+      "uncommon": "Uncommon",
+      "rare": "Rare",
+      "epic": "Epic",
+      "legendary": "Legendary"
+    },
+    "dexTitle": "Seed-dex",
+    "dexProgress": "{have} of {total} found · {pct}%",
+    "dexShort": "{have} of {total}",
+    "unknown": "Not found yet",
+    "stars": "★{n}",
+    "shardsHave": "{n, plural, one {# shard} other {# shards}}",
+    "starUp": "Star up · {n, plural, one {# shard} other {# shards}}",
+    "maxStar": "★5 — fully grown up!"
+  },
   "stats": {
     "title": "Stats",
     "placeholder": "Day OEE, control charts and more.",
@@ -293,7 +326,8 @@
     "installSteps": "In Safari, tap Share, then “Add to Home Screen”.",
     "setupTitle": "Setup",
     "setupSleep": "Your week",
-    "setupFirst10": "First 10 minutes"
+    "setupFirst10": "First 10 minutes",
+    "installDone": "Added to your Home Screen."
   },
   "blocks": {
     "name": {
@@ -564,5 +598,27 @@
     "backToWeek": "Back to the week",
     "doneKind": "Done",
     "kinds": "Kinds of day"
+  },
+  "setup": {
+    "title": "Set up 24/7",
+    "progress": "{done} of {total} set up",
+    "hide": "Hide",
+    "allDone": "All set up. Thank you!",
+    "doneCount": "Done ({n})",
+    "received": "Received: {reward}",
+    "rewardTickets": "{n, plural, one {# capsule ticket} other {# capsule tickets}}",
+    "rewardCoins": "{n} coins",
+    "rewardSeeds": "{n} {crop} seeds",
+    "rewardDecor": "{item} for your farm",
+    "step": {
+      "sleep_times": "Set your wake times",
+      "first10": "Pick a first 10 minutes",
+      "checklist": "Add a checklist to a block",
+      "backlog_estimate": "Add a task with a time estimate",
+      "language": "Choose your language",
+      "home_screen": "Add 24/7 to your Home Screen"
+    },
+    "rewardTitle": "Setup reward",
+    "ok": "OK"
   }
 }

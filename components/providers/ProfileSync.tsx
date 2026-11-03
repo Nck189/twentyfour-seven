@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { isLocale } from "@/lib/i18n/config";
 import { usePrefs } from "@/lib/store/prefs";
 import { getSupabase } from "@/lib/supabase/client";
+import { reportHomeScreenOnce } from "@/lib/setup/useSetupRewards";
 
 /**
  * Language follows the account across devices (CJ-14). On the very first sign-in the device's
@@ -17,6 +18,7 @@ export function ProfileSync() {
     (async () => {
       const { data } = await client.auth.getUser();
       if (!data.user || cancelled) return;
+      void reportHomeScreenOnce();
       const { data: profile } = await client
         .from("profiles")
         .select("locale, sound_on, onboarding")

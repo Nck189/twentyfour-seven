@@ -8,7 +8,10 @@ import { CROP_IDS } from "@/content/crops";
 import { MUTATION_IDS, QUALITIES } from "@/content/game";
 import { FarmSky, type SkyPhase } from "@/components/art/farm/FarmSky";
 import { MutationIcon } from "@/components/art/farm/Fx";
+import { Capsule, CapsuleMachine, RarityLight } from "@/components/art/farm/Capsule";
+import { RARITIES } from "@/content/crops";
 import { PlotArt } from "@/components/art/farm/PlotArt";
+import { SetupCard } from "@/components/setup/SetupCard";
 import { Fence, Flowers, PathTile, Pond } from "@/components/art/farm/Plot";
 
 const STAGES = [0, 1, 2, 3] as const;
@@ -106,6 +109,23 @@ export default function ArtSheet() {
           />
         </Cell>
       </section>
+      <section className="flex flex-wrap items-end gap-3" data-section="gacha">
+        <Cell caption="machine">
+          <CapsuleMachine className="h-32 w-32" />
+        </Cell>
+        {RARITIES.map((r) => (
+          <Cell key={r} caption={r}>
+            <div className="relative h-24 w-24">
+              <RarityLight rarity={r} className="absolute inset-0 h-full w-full" />
+              <Capsule rarity={r} className="absolute inset-0 h-full w-full" />
+            </div>
+          </Cell>
+        ))}
+      </section>
+      <div className="max-w-sm" data-section="setup">
+        <SetupCard state={{ done: ["first10", "language"], granted: [] }} />
+        <SetupCard state={{ done: ["first10", "language"], granted: [] }} compact />
+      </div>
       <section className="flex flex-wrap items-end gap-3" data-section="decor">
         <Cell caption="fence">
           <Fence className="h-24 w-24" />

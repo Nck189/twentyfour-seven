@@ -17,6 +17,9 @@ export const EXPORT_TABLES = [
   "gacha_pulls",
   "events",
   "ticket_grants",
+  "coin_grants",
+  "unlock_grants",
+  "wake_snapshots",
 ] as const;
 export type ExportTable = (typeof EXPORT_TABLES)[number];
 
@@ -46,4 +49,7 @@ export const EXPORT_ORDER: Record<ExportTable, string[]> = {
   gacha_pulls: ["id"],
   events: ["id"],
   ticket_grants: ["reason", "ref_date"],
+  coin_grants: ["reason", "ref"],
+  unlock_grants: ["unlock_id"],
+  wake_snapshots: ["date"],
 };

@@ -170,6 +170,8 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 
 **Done when:** the streak behaves correctly across a simulated month with misses, freezes and vacation.
 
+**Moved here from M7:** the Perfect day (+1) and streak 7/14/30 (+5) ticket grants, through the existing `ticket_grants` ledger — after hardening client-written block logs (G7 K-M6-1, R-M6-4, R4-1).
+
 **Added 2026-11-03 (Minnie): unlocks & milestones (SPEC §8.8b).** Rules in `content/unlocks.ts`, progress as pure functions in `lib/game/unlocks.ts` (unit-tested), grants through a server RPC + read-only `unlock_grants` ledger (counters/ledger can start in M7 with the economy). Collection book on the Farm tab, one "next unlock" line on Today, feature reveals (Stats after 3 days, gacha with the first ticket). **Done when:** each tier unlocks exactly once from real data, and a new user sees fewer tabs/cards until they're earned.
 
 > Growth (docs/GROWTH.md): G1 easy first week via unlocks, G9 Thai festival events.
@@ -185,7 +187,7 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 > - home vs out comparison
 > - streak calendar
 >
-> Weekly review on Sunday night: summary + KPT + 3 tickets. Use flat pastel charts consistent with the art tokens.
+> Weekly review on Sunday night: summary + KPT + 3 tickets. (The +3 grant moved here from M7; reason `weekly_review` already exists in `ticket_grants`.) Use flat pastel charts consistent with the art tokens.
 
 **Done when:** the numbers match a hand-checked sample week. **v1 complete — use it daily for a few days and fix papercuts.**
 
@@ -245,3 +247,5 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 - [ ] M3 — G1, G2, G4, G5, G7 ✅ · `docs/qa/M3-report.md` · left: G3 (Mac visual baselines + rubric), G6 re-run on prod after the db push · deferred S3: R-M3-5..14, R4-1, R4-3
 - [ ] M4 — G1, G2, G4, G5, G7 ✅ · `docs/qa/M4-report.md` · left: G3 (Mac), G6 re-run · deferred: seed planting → M6 (R4-2 fixed)
 - [ ] M5 — G1, G2, G4, G5, G7 ✅ · `docs/qa/M5-report.md` · left: G3 (Mac), G6 re-run · deferred S3: R-M5-6..11
+- [ ] M6 — G1, G2, G4, G5, G7 ✅ (re-review PASS) · merged (PR #6) + migration on prod · `docs/qa/M6-report.md` · left: G3 Mac baselines · deferred S3: K-M6-1, R-M6-4..10, R-M6-R1
+- [ ] M7 — G1, G4, G5, G7 ✅ (re-review 2 PASS) · PR #7 · `docs/qa/M7-report.md` · left: G2 CI on PR #7, G3 Mac baselines, G6 after merge + db push · deferred: Perfect day / streak tickets → M9, Weekly review +3 → M10, S4s R-M7-8..14, R-M7-R3..R5

@@ -13,6 +13,11 @@ import type { CropId } from "@/content/crops";
 import type { DecorId } from "@/content/decor";
 import type { Quality } from "@/content/game";
 import { useFarm, type FarmData } from "@/lib/farm/useFarm";
+import { useGacha } from "@/lib/farm/useGacha";
+import { CROP_IDS } from "@/content/crops";
+import { Capsule, CapsuleMachine } from "@/components/art/farm/Capsule";
+import { CapsuleSheet } from "./CapsuleSheet";
+import { SeedDexSheet } from "./SeedDexSheet";
 import { sfx } from "@/lib/sound/sfx";
 import { HarvestPop } from "./HarvestPop";
 import { DECOR_ART, DecorShop } from "./DecorShop";
@@ -27,8 +32,10 @@ const LOCKED_FIELDS = 3;
  */
 export function FarmScreen({ compact = false }: { compact?: boolean }) {
   const { data, status, plant, harvest, buyDecor, reload } = useFarm();
+  const gacha = useGacha();
   return (
     <FarmView
+      gacha={compact ? undefined : gacha}
       compact={compact}
       data={data}
       status={status}
@@ -49,6 +56,7 @@ export function FarmView({
   harvest,
   buyDecor,
   reload,
+  gacha,
 }: {
   compact?: boolean;
   data: FarmData | null;
@@ -57,14 +65,18 @@ export function FarmView({
   harvest: (slot: BlockKey) => Promise<boolean>;
   buyDecor: (item: DecorId) => Promise<boolean>;
   reload: () => void;
+  /** Capsule machine + Seed-dex (absent in the compact side panel and the preview). */
+  gacha?: ReturnType<typeof useGacha>;
 }) {
   const t = useTranslations("farm");
   const tc = useTranslations("common");
   const crops = useTranslations("crops");
+  const tg = useTranslations("gacha");
   const blocks = useTranslations("blocks");
   const decorNames = useTranslations("decor");
   const [open, setOpen] = useState<BlockKey | null>(null);
   const [pop, setPop] = useState<{ cropId: CropId; quality: Quality } | null>(null);
+  const [sheet, setSheet] = useState<"capsules" | "dex" | null>(null);
   const endPop = useCallback(() => setPop(null), []);
 
   const header = <ScreenHeader title={t("title")} level={compact ? 2 : 1} />;
@@ -212,6 +224,48 @@ export function FarmView({
         )}
       </section>
 
+      {gacha?.state && (
+        <section aria-label={tg("title")} className="mx-4 mt-4 grid grid-cols-2 gap-2 lg:mx-6">
+          <button
+            type="button"
+            onClick={() => setSheet("capsules")}
+            className="tap flex min-h-11 items-center gap-2 rounded-[var(--radius-lg)] bg-surface p-2 text-left"
+          >
+            <CapsuleMachine className="h-12 w-12 shrink-0" />
+            <span className="min-w-0">
+              <span className="block truncate font-extrabold">{tg("title")}</span>
+              <span className="block text-sm text-muted">{tg("tickets", { n: gacha.state.tickets })}</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setSheet("dex")}
+            className="tap flex min-h-11 items-center gap-2 rounded-[var(--radius-lg)] bg-surface p-2 text-left"
+          >
+            <Capsule rarity="legendary" className="h-12 w-12 shrink-0" />
+            <span className="min-w-0">
+              <span className="block truncate font-extrabold">{tg("dexTitle")}</span>
+              <span className="block text-sm text-muted">
+                {tg("dexShort", { have: Object.keys(gacha.state.dex).length, total: CROP_IDS.length })}
+              </span>
+            </span>
+          </button>
+        </section>
+      )}
+      {sheet === "capsules" && gacha?.state && (
+        <CapsuleSheet
+          state={gacha.state}
+          pull={gacha.pull}
+          onClose={() => {
+            setSheet(null);
+            reload();
+          }}
+        />
+      )}
+      {sheet === "dex" && gacha?.state && (
+        <SeedDexSheet state={gacha.state} starUp={gacha.starUp} onClose={() => setSheet(null)} />
+      )}
+
       {!compact && <DecorShop coins={data.coins} onBuy={buyDecor} />}
 
       {!compact && (
@@ -231,11 +285,13 @@ export function FarmView({
           slot={open}
           plot={farm.plots[open]}
           onClose={() => setOpen(null)}
+          seeds={gacha?.state?.seeds}
           onPlant={async (crop, replace) => {
             const ok = await plant(open, crop, replace);
             if (ok) {
               sfx.tick();
               setOpen(null);
+              gacha?.reload();
             }
             return ok;
           }}
