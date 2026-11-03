@@ -227,8 +227,9 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 ---
 
 ## Status
-- [ ] M0 — G1–G6 ✅, G7 re-review done; report `docs/qa/M0-report.md` (final ✅ after prod deploy of the M1–M4 branch)
-- [ ] M1 — built; G6 on prod + G7 re-review pending
+- [x] M0 — ✅ 2026-11-02 · `docs/qa/M0-report.md` · live on prod
+- [ ] M1 — G1–G7 ✅ (G7 re-review 3 PASS 2026-11-03) · `docs/qa/M1-report.md` · final ✅ once PR #5 is merged and `db push --remote` puts the R-M1-4 fix on prod
 - [x] M2 — ✅ 2026-11-02 · `docs/qa/M2-report.md` · deferred: M2-F2 (S3), M2-F4/F5 (S4); open spec question M2-F3
-- [ ] M3 — built + review fixes; G6 on prod + G7 re-review pending
-- [ ] M4 — built; QC not started (seed planting deferred to M6)
+- [ ] M3 — G1, G2, G4, G5, G7 ✅ · `docs/qa/M3-report.md` · left: G3 (Mac visual baselines + rubric), G6 re-run on prod after the db push · deferred S3: R-M3-5..14, R4-1, R4-3
+- [ ] M4 — G1, G2, G4, G5, G7 ✅ · `docs/qa/M4-report.md` · left: G3 (Mac), G6 re-run · deferred: seed planting → M6 (R4-2 fixed)
+- [ ] M5 — G1, G2, G4, G5, G7 ✅ · `docs/qa/M5-report.md` · left: G3 (Mac), G6 re-run · deferred S3: R-M5-6..11

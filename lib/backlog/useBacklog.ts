@@ -6,6 +6,7 @@ import { logEvent } from "@/lib/db/events";
 import { getSupabase } from "@/lib/supabase/client";
 import { DEFAULT_BLOCK, carryOver, type BacklogItem } from "./index";
 import type { Capture } from "./parse";
+import { QUIET_RETRY_MS } from "@/lib/supabase/fetchWithTimeout";
 
 const COLUMNS =
   "id, title, tag, estimate_min, priority, deadline, scheduled_date, block, status, carry_count, checklist, done_at, created_at";
@@ -26,6 +27,7 @@ export function useBacklog(userId: string | null) {
   const [reload, setReload] = useState(0);
   const itemsRef = useRef<BacklogItem[]>([]);
 
+  const autoRetried = useRef(false);
   const show = useCallback((next: BacklogItem[]) => {
     itemsRef.current = next;
     setItems(next);
@@ -44,7 +46,11 @@ export function useBacklog(userId: string | null) {
       .then(({ data, error: err }) => {
         if (cancelled) return;
         if (err) {
-          setStatus("error");
+          // One quiet retry (a hung or dropped request), then the error with Try again.
+          if (!autoRetried.current) {
+            autoRetried.current = true;
+            setTimeout(() => setReload((r) => r + 1), QUIET_RETRY_MS);
+          } else setStatus("error");
           return;
         }
         show((data ?? []) as BacklogItem[]);
@@ -74,9 +80,9 @@ export function useBacklog(userId: string | null) {
 
   /** Quick capture: a parsed line (see `parseCapture`) becomes an item; a day word schedules it. */
   const add = useCallback(
-    async (capture: Capture) => {
+    async (capture: Capture): Promise<boolean> => {
       const clean = capture.title.trim();
-      if (!clean || !userId) return;
+      if (!clean || !userId) return false;
       const row: Record<string, unknown> = { user_id: userId, title: clean.slice(0, 500) };
       if (capture.estimate_min) row.estimate_min = capture.estimate_min;
       if (capture.priority) row.priority = capture.priority;
@@ -90,7 +96,7 @@ export function useBacklog(userId: string | null) {
       const { data, error: err } = await client.from("backlog_items").insert(row).select(COLUMNS).single();
       if (err || !data) {
         setError(true);
-        return;
+        return false;
       }
       setError(false);
       show([...itemsRef.current, data as BacklogItem]);
@@ -98,6 +104,7 @@ export function useBacklog(userId: string | null) {
         id: (data as BacklogItem).id,
         parsed: Object.keys(row).filter((k) => k !== "user_id" && k !== "title"),
       });
+      return true;
     },
     [client, userId, show],
   );
@@ -194,6 +201,9 @@ export function useBacklog(userId: string | null) {
     complete,
     reopen,
     drop,
-    reload: () => setReload((r) => r + 1),
+    reload: () => {
+      setStatus("loading");
+      setReload((r) => r + 1);
+    },
   };
 }

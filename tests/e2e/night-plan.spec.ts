@@ -1,7 +1,16 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
-import { blockLogs, dayPlans, gameState, setAllTemplates, setWakeMinutesAgo, userIdFor } from "../helpers/db";
+import {
+  blockLogs,
+  dayPlans,
+  gameState,
+  rest,
+  setAllTemplates,
+  setWakeMinutesAgo,
+  userIdFor,
+} from "../helpers/db";
+import { localDate } from "@/lib/time";
 import { IS_PROD_RUN } from "../helpers/env";
 
 test.skip(IS_PROD_RUN, "creates dedicated users");
@@ -131,7 +140,10 @@ test("CJ-10 out late tonight: planned, Down starts at return, no short-sleep war
   const preview = sheet.getByRole("list", { name: "Preview" });
   await expect(preview.getByRole("listitem").nth(0)).toContainText("03:30");
   await expect(sheet.locator("output")).toHaveText("04:00");
-  await expect(sheet.getByRole("alert")).toHaveCount(0);
+  // Out late is planned: no short-sleep warning. The SPEC §3 guardrail still says the 04:00 bed
+  // is > 60 min off this kind of day's usual (02:30) — that one is right to show.
+  await expect(sheet.getByRole("alert").filter({ hasText: "sleep planned" })).toHaveCount(0);
+  await expect(sheet.getByRole("alert").filter({ hasText: "off your usual" })).toBeVisible();
   await expect.poll(async () => (await dayPlans(id)).find((p) => p.late_night)?.late_night).toBeTruthy();
 });
 
@@ -178,4 +190,73 @@ test("Night ritual: one tap tags every open block with the same reason", async (
     .poll(async () => (await blockLogs(id)).filter((l) => l.miss_reason === "sleepy").length)
     .toBe(5);
   await expectTouchTargets(page);
+});
+
+test("R-M4-3: a block that was started closes as done (no miss reason); 'same for all' skips it", async ({
+  page,
+}) => {
+  const id = await newUserOn(page);
+  await setWakeMinutesAgo(id, DOWN_TIME_MINUTES_AFTER_WAKE);
+  // Focus was started this morning and never finished.
+  const day = localDate(new Date(Date.now() - DOWN_TIME_MINUTES_AFTER_WAKE * 60_000), "Asia/Bangkok");
+  await rest("block_logs", {
+    method: "POST",
+    body: JSON.stringify({
+      user_id: id,
+      date: day,
+      block: "focus",
+      started_at: new Date(Date.now() - (DOWN_TIME_MINUTES_AFTER_WAKE - 60) * 60_000).toISOString(),
+    }),
+  });
+  await page.goto("/today");
+  const sheet = page.getByRole("dialog", { name: "Night ritual" });
+  await expect(sheet).toBeVisible();
+  await sheet.getByRole("button", { name: "Next" }).click();
+  await sheet.getByRole("button", { name: "Mark done Focus" }).click();
+  await sheet
+    .getByRole("region", { name: "Same reason for all" })
+    .getByRole("button", { name: "Sleepy" })
+    .click();
+  await expect(sheet.getByText("Every block is closed. Nice.")).toBeVisible();
+  await expect
+    .poll(async () => (await blockLogs(id)).find((l) => l.block === "focus"))
+    .toMatchObject({ miss_reason: null });
+  const logs = await blockLogs(id);
+  expect(logs.find((l) => l.block === "focus")?.closed_at).toBeTruthy();
+  expect(logs.filter((l) => l.miss_reason === "sleepy")).toHaveLength(4);
+});
+
+test("R-M4-5: Goodnight waits until tomorrow's plan is saved (offline edit isn't lost)", async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName === "webkit", "WebKit can't intercept requests to the local API");
+  const id = await newUserOn(page);
+  await setWakeMinutesAgo(id, DOWN_TIME_MINUTES_AFTER_WAKE);
+  await page.goto("/today");
+  const sheet = page.getByRole("dialog", { name: "Night ritual" });
+  await expect(sheet).toBeVisible();
+  await sheet.getByRole("button", { name: "Next" }).click();
+  await sheet
+    .getByRole("region", { name: "Same reason for all" })
+    .getByRole("button", { name: "Sleepy" })
+    .click();
+  await sheet.getByRole("button", { name: "Next" }).click();
+  // Day-plan saves go through the merge RPC (or the plain upsert before that migration).
+  const offline = (r: import("@playwright/test").Route) =>
+    r.request().method() === "POST" ? r.abort("internetdisconnected") : r.continue();
+  await page.route("**/rest/v1/rpc/patch_day_plan**", offline);
+  await page.route("**/rest/v1/day_plans**", offline);
+  await sheet.getByRole("button", { name: "15 min later" }).click();
+  await sheet.getByRole("button", { name: "Next" }).click();
+  await sheet.getByRole("checkbox", { name: "Alarm set + phone away" }).click();
+  await sheet.getByRole("button", { name: "Goodnight" }).click();
+  await expect(sheet.getByRole("alert")).toContainText("Tomorrow's plan isn't saved yet");
+  expect((await gameState(id)).tickets).toBe(0);
+
+  await page.unroute("**/rest/v1/rpc/patch_day_plan**");
+  await page.unroute("**/rest/v1/day_plans**");
+  await sheet.getByRole("button", { name: "Goodnight" }).click();
+  await expect(sheet.getByText("+1 Night ticket. Sleep well.")).toBeVisible();
+  await expect.poll(async () => (await dayPlans(id)).some((r) => r.bedtime_override)).toBe(true);
 });

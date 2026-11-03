@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BlockKey } from "@/content/blocks";
 import { logEvent } from "@/lib/db/events";
+import { saveDirty } from "@/lib/plan/patch";
 import { getSupabase } from "@/lib/supabase/client";
 import { addDays, DEFAULT_TZ } from "@/lib/time";
 
@@ -17,6 +18,7 @@ import {
 } from "./day";
 import { sameDayContext, shouldRefreshOnForeground } from "./foreground";
 import { loadDayContext } from "./loadContext";
+import { QUIET_RETRY_MS } from "@/lib/supabase/fetchWithTimeout";
 
 export type BlockLog = {
   id?: string;
@@ -71,11 +73,14 @@ export function useToday(now: Date) {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [logs, setLogs] = useState<Record<string, BlockLog>>({});
   const [wakes, setWakes] = useState<Record<string, WakeEvent>>({});
+  const [frozen, setFrozen] = useState<Record<string, string>>({});
   const [nightDone, setNightDone] = useState<string[]>([]);
   const [nightDoneAtLoad, setNightDoneAtLoad] = useState<string[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [saveError, setSaveError] = useState(0);
   const [reload, setReload] = useState(0);
+  const autoRetried = useRef(false);
+  const loadedOnce = useRef(false);
 
   const logsRef = useRef<Record<string, BlockLog>>({});
   const serverRef = useRef<Record<string, BlockLog>>({});
@@ -96,7 +101,7 @@ export function useToday(now: Date) {
     (async () => {
       try {
         const { ctx, userId, today } = await loadDayContext(client);
-        const [blockLogs, wakeRows, nightRows] = await Promise.all([
+        const [blockLogs, wakeRows, nightRows, snapRows] = await Promise.all([
           client.from("block_logs").select("*").gte("date", addDays(today, -1)).lte("date", today),
           client
             .from("wake_events")
@@ -107,6 +112,8 @@ export function useToday(now: Date) {
             .select("ref_date")
             .eq("reason", "night")
             .gte("ref_date", addDays(today, -1)),
+          // A target the server froze after a late edit is the one "I'm up" is judged by (R2-4).
+          client.from("wake_snapshots").select("date, target_wake").gte("date", addDays(today, -1)),
         ]);
         if (cancelled) return;
         // Keep the same object when nothing changed, so actions and the timeline aren't rebuilt.
@@ -125,12 +132,30 @@ export function useToday(now: Date) {
         logsRef.current = merged;
         setLogs(merged);
         setWakes(Object.fromEntries(((wakeRows.data ?? []) as WakeEvent[]).map((w) => [w.date, w])));
+        setFrozen(
+          Object.fromEntries(
+            ((snapRows.data ?? []) as { date: string; target_wake: string }[]).map((r) => [
+              r.date,
+              r.target_wake,
+            ]),
+          ),
+        );
         const doneDates = ((nightRows.data ?? []) as { ref_date: string }[]).map((r) => r.ref_date);
         setNightDone(doneDates);
         setNightDoneAtLoad(doneDates);
+        loadedOnce.current = true;
         setStatus("ready");
       } catch {
-        if (!cancelled) setStatus("error");
+        // A failed refetch (e.g. after a day-plan change elsewhere) keeps what's on screen; only a
+        // failed first load shows the error card (an open Night ritual stays open).
+        // A failed first load retries once quietly (like Plan and the backlog) before the card.
+        if (cancelled) return;
+        if (!loadedOnce.current && !autoRetried.current) {
+          autoRetried.current = true;
+          setTimeout(() => setReload((r) => r + 1), QUIET_RETRY_MS);
+          return;
+        }
+        setStatus((st) => (st === "ready" ? st : "error"));
       }
     })();
     return () => {
@@ -180,6 +205,13 @@ export function useToday(now: Date) {
       )
       .on(
         "postgres_changes",
+        { event: "*", schema: "public", table: "day_plans", filter: `user_id=eq.${userId}` },
+        // A day plan changed elsewhere (Plan, another device): refetch; unchanged data keeps the
+        // same objects, and blocks with saves in flight keep their local state.
+        () => setReload((r) => r + 1),
+      )
+      .on(
+        "postgres_changes",
         { event: "*", schema: "public", table: "wake_events", filter: `user_id=eq.${userId}` },
         (p) => {
           const row = p.new as WakeEvent;
@@ -204,8 +236,8 @@ export function useToday(now: Date) {
    * shows the last result (e.g. yesterday's) and no button.
    */
   const wakeCard = useMemo(
-    () => (loaded && dayDate ? pickWakeCard(loaded.ctx, now, dayDate, wakes) : null),
-    [loaded, dayDate, now, wakes],
+    () => (loaded && dayDate ? pickWakeCard(loaded.ctx, now, dayDate, wakes, frozen) : null),
+    [loaded, dayDate, now, wakes, frozen],
   );
 
   const logFor = useCallback(
@@ -449,7 +481,7 @@ export function useToday(now: Date) {
         const { data, error } = await client.rpc("complete_night_ritual", { p_date: dayDate });
         if (error) throw error;
         setNightDone((prev) => [...prev, dayDate]);
-        return data as { ticket_granted: boolean };
+        return data as { ticket_granted: boolean; in_time?: boolean };
       },
       setLocation: (b: TimelineBlock, location: "home" | "out", at: Date) =>
         upsertLog(b, { location }, "location_set", at),
@@ -465,14 +497,16 @@ export function useToday(now: Date) {
         if (!loaded) return;
         const row = loaded.ctx.dayPlans[b.logDate];
         const blocks = row?.overrides.blocks ?? {};
-        const overrides = {
-          ...row?.overrides,
-          blocks: { ...blocks, [b.key]: { ...blocks[b.key], first10: value } },
-        };
-        const { error } = await client
-          .from("day_plans")
-          .upsert({ user_id: loaded.userId, date: b.logDate, overrides }, { onConflict: "user_id,date" });
-        if (error) throw error;
+        const block = { ...blocks[b.key], first10: value };
+        // Only this block's override: other blocks, the mode, the bedtime stay as saved (R-M3-4).
+        const ok = await saveDirty(
+          client,
+          loaded.userId,
+          b.logDate,
+          { set: {}, blocks: { [b.key]: block } },
+          row && { ...row, overrides: { ...row.overrides, blocks: { ...blocks, [b.key]: block } } },
+        );
+        if (!ok) throw new Error("first-10 not saved");
         void logEvent("first10_changed", { date: b.logDate, block: b.key });
         setReload((r) => r + 1);
       },

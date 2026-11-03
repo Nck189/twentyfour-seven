@@ -9,7 +9,9 @@ import {
   isOnTime,
   isPastBlock,
   pickWakeCard,
+  hasKindOfDay,
   planFor,
+  plannedWake,
   templateFor,
   timelineFor,
   type DayContext,
@@ -138,10 +140,6 @@ describe("timeline", () => {
     expect(timelineFor(c, "2026-11-03").mode).toBe("vacation");
   });
 
-  it("throws clearly when no template covers a day", () => {
-    expect(() => planFor(ctx({ templates: [] }), "2026-11-02")).toThrow(/no template/);
-  });
-
   it("finds the current block", () => {
     const t = timelineFor(ctx(), "2026-11-02");
     expect(currentBlock(t, at("2026-11-02", "13:00"))!.key).toBe("work");
@@ -246,5 +244,129 @@ describe("wake card (review M3-F2a/b)", () => {
       canPress: false,
     });
     expect(pickWakeCard(ctx(), at("2026-11-03", "01:00"), "2026-11-02", {})).toBeNull();
+  });
+});
+
+describe("plannedWake (what the server needs to honor a planned push)", () => {
+  it("a +90 bedtime push on a free day: wake 11:30 planned from the 10:00 template target", () => {
+    const c = ctx({
+      dayPlans: {
+        "2026-11-02": {
+          date: "2026-11-02",
+          template_id: null,
+          attending: null,
+          bedtime_override: at("2026-11-02", "04:00").toISOString(),
+          late_night: null,
+          mode: "normal",
+          overrides: {},
+        },
+      },
+    });
+    const p = plannedWake(c, "2026-11-02");
+    expect(hm(new Date(p.wake))).toBe("11:30");
+    expect(hm(new Date(p.base))).toBe("10:00");
+  });
+
+  it("skipping the optional Thursday class plans from the alternate target", () => {
+    const c = ctx({
+      dayPlans: {
+        "2026-11-05": {
+          date: "2026-11-05",
+          template_id: null,
+          attending: false,
+          bedtime_override: null,
+          late_night: null,
+          mode: "normal",
+          overrides: {},
+        },
+      },
+    });
+    const p = plannedWake(c, "2026-11-05");
+    expect(hm(new Date(p.base))).toBe("10:00");
+    expect(p.wake).toBe(p.base);
+  });
+});
+
+describe("a weekday without a kind of day (R-M4-11)", () => {
+  it("falls back instead of crashing Plan/Today/the ritual, and says so", () => {
+    // Wednesday (3) belongs to no auto-applied kind, e.g. after a half-saved setup.
+    const c = ctx({
+      templates: templates.map((t) => ({ ...t, weekdays: t.weekdays.filter((d) => d !== 3) })),
+    });
+    expect(() => planFor(c, "2026-11-04")).not.toThrow();
+    expect(templateFor(c, "2026-11-04")).toBeDefined();
+    expect(hasKindOfDay(c, "2026-11-04")).toBe(false);
+    expect(hasKindOfDay(c, "2026-11-03")).toBe(true);
+  });
+  it("even with no kinds at all, the built-in default keeps the app usable", () => {
+    expect(() => planFor(ctx({ templates: [] }), "2026-11-04")).not.toThrow();
+  });
+});
+
+describe("bedtime drift guardrail (SPEC §3, R-M4-8)", () => {
+  const pushed = (minutes: number) =>
+    ctx({
+      dayPlans: {
+        "2026-11-02": {
+          date: "2026-11-02",
+          template_id: null,
+          attending: null,
+          bedtime_override: new Date(at("2026-11-02", "02:30").getTime() + minutes * 60_000).toISOString(),
+          late_night: null,
+          mode: "normal",
+          overrides: {},
+        },
+      },
+    });
+  const drift = (c: DayContext) => planFor(c, "2026-11-02").warnings.find((w) => w.type === "bedtime_drift");
+  it("warns when tonight is pushed more than 60 min past this kind of day's recent bedtimes", () => {
+    expect(drift(pushed(90))).toMatchObject({ deltaMin: 90 });
+  });
+  it("stays quiet for a small push, an unpushed night, or a different kind of day", () => {
+    expect(drift(pushed(30))).toBeUndefined();
+    expect(drift(ctx())).toBeUndefined();
+    expect(planFor(ctx(), "2026-11-04").warnings.find((w) => w.type === "bedtime_drift")).toBeUndefined();
+  });
+});
+
+describe("a target the server froze is the one Today shows (R2-4)", () => {
+  it("after a late edit, the wake card uses the frozen target", () => {
+    const now = at("2026-11-02", "09:50");
+    const plain = pickWakeCard(ctx(), now, "2026-11-02", {});
+    expect(hm(plain!.target)).toBe("10:00");
+    const frozen = pickWakeCard(
+      ctx(),
+      now,
+      "2026-11-02",
+      {},
+      { "2026-11-02": at("2026-11-02", "08:00").toISOString() },
+    );
+    expect(hm(frozen!.target)).toBe("08:00");
+  });
+});
+
+describe("an early appointment pulls the wake (R3-1: the server honours it within −6 h)", () => {
+  it("06:00 flight on a 10:00 free day: Today and the planned wake both say 06:00", () => {
+    const c = ctx({
+      dayPlans: {
+        "2026-11-02": {
+          date: "2026-11-02",
+          template_id: null,
+          attending: null,
+          bedtime_override: null,
+          late_night: null,
+          mode: "normal",
+          overrides: {
+            fixed_events: [
+              { id: "f", key: "appointment", title: "Flight", start: "06:00", end: "07:00", host: "wake" },
+            ],
+          },
+        },
+      },
+    });
+    const p = plannedWake(c, "2026-11-02");
+    expect(hm(new Date(p.wake))).toBe("06:00");
+    expect(hm(new Date(p.base))).toBe("10:00");
+    expect(hm(pickWakeCard(c, at("2026-11-02", "05:30"), "2026-11-02", {})!.target)).toBe("06:00");
   });
 });

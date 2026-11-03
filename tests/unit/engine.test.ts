@@ -8,6 +8,7 @@ import {
   WORK_MIN_SHARE,
   bedtimeDrift,
   dayMinutes,
+  hostFor,
   nextKaizenTarget,
   parseHHMM,
   planDay,
@@ -243,6 +244,29 @@ describe("fixed events", () => {
     const p = planDay(input({ date: "2026-11-07", ...sat, nextTargetWake: "10:00" }));
     expect(block(p, "work").start.getTime()).toBeLessThanOrEqual(at("2026-11-07", "12:00").getTime());
     expect(p.warnings).toEqual([]);
+  });
+});
+
+describe("appointment host (one-off appointments live in the block their time falls in)", () => {
+  // Free day: wake 10:00-11:00 · focus 11:00-12:30 · work 12:30-21:30 · gradation 21:30-22:30 · free 22:30-01:00
+  const p = planDay(input());
+  it("inside a block → that block", () => {
+    expect(hostFor(p, at("2026-11-02", "15:00"))).toBe("work");
+    expect(hostFor(p, at("2026-11-02", "11:30"))).toBe("focus");
+    expect(hostFor(p, at("2026-11-02", "22:00"))).toBe("gradation");
+    expect(hostFor(p, at("2026-11-02", "23:00"))).toBe("free");
+  });
+
+  it("before wake-up → Wake (the morning moves earlier, not Work)", () => {
+    const host = hostFor(p, at("2026-11-02", "08:00"));
+    expect(host).toBe("wake");
+    const q = planDay(input({ fixedEvents: [{ id: "dentist", start: "08:00", end: "09:00", host }] }));
+    expect(block(q, "wake").start.getTime()).toBeLessThanOrEqual(at("2026-11-02", "08:00").getTime());
+  });
+
+  it("after the day's last block (in Down) → Free, never a 10-hour Work", () => {
+    const early = planDay(input({ targetWake: "07:30", nextTargetWake: "07:30" })); // free ends 22:30
+    expect(hostFor(early, at("2026-11-02", "23:00"))).toBe("free");
   });
 });
 

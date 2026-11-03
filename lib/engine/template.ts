@@ -33,7 +33,7 @@ export function resolveDay(
       skipping && template.options.alt_target_wake ? template.options.alt_target_wake : template.target_wake,
     ),
     durations,
-    fixedEvents: events.map((e) => ({ id: e.id, start: hhmm(e.start), end: hhmm(e.end) })),
+    fixedEvents: events.map((e) => ({ id: e.id, start: hhmm(e.start), end: hhmm(e.end), host: e.host })),
   };
 }
 

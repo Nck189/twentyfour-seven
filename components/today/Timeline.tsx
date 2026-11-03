@@ -9,6 +9,8 @@ import { useBlockText } from "./useBlockText";
 export type BlockStatus = "upcoming" | "notStarted" | "inProgress" | "done" | "missed";
 
 export function blockStatus(b: TimelineBlock, log: BlockLog, now: Date): BlockStatus {
+  // Closed with a miss reason (Night ritual) = didn't happen, even though it's closed.
+  if (log.miss_reason) return "missed";
   if (log.closed_at) return "done";
   if (log.started_at || log.first10_at || log.items_done.length) return "inProgress";
   if (now.getTime() >= b.end.getTime()) return "missed";
@@ -41,6 +43,7 @@ export function Timeline({
   onOpen: (b: TimelineBlock) => void;
 }) {
   const t = useTranslations("today");
+  const tf = useTranslations("fixedEvents");
   const text = useBlockText();
   return (
     <ol className="mx-4 mb-3 flex flex-col gap-2 lg:mx-6" aria-label={t("title")}>
@@ -77,7 +80,11 @@ export function Timeline({
                 )}
                 {events.map((e) => (
                   <span key={e.id} className="mt-0.5 block text-xs text-muted">
-                    {t("block.fixedEvent")} {formatTime(e.start, timezone)}–{formatTime(e.end, timezone)}
+                    {e.title ??
+                      (tf.has(e.key as Parameters<typeof tf>[0])
+                        ? tf(e.key as Parameters<typeof tf>[0])
+                        : t("block.fixedEvent"))}{" "}
+                    {formatTime(e.start, timezone)}–{formatTime(e.end, timezone)}
                   </span>
                 ))}
                 {b.subSlots.map((s) => (

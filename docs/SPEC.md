@@ -150,6 +150,11 @@ Extras:
 - **Capacity bar per day** (RCCP-style): sum of estimates vs free minutes in the target blocks; red when overloaded.
 - **Unfinished items:** the Night ritual asks where to carry them; a `carry_count` is kept.
 - **Deadlines:** near-deadline items float to the top.
+- **Appointments, any distance ahead** *(Minnie, 2026-11-03: the dentist or a friend can book months ahead)*:
+  - Typed in the same capture line: a date + a time (`Dentist 15/3 14:00`, `หมอฟัน 15 มี.ค. 10:00`, `Dinner mar 15 7pm`, ranges `13:00-16:00`) becomes a one-off fixed event on that day's plan, not a backlog task. A date without a time plans the task that day.
+  - A date without a year means the next time that date comes round; Buddhist-era years are accepted.
+  - The block the time falls in holds it (before wake-up → Wake moves earlier; after the last block → Free), so the engine fits the day around it (§3).
+  - Plan shows the next appointment under the week strip, a month view (dots: appointment / tasks) reaches any month, and the Night ritual mentions tomorrow's appointments.
 
 ---
 

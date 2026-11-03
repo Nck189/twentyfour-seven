@@ -244,6 +244,16 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# Sign-in emails carry only the 6-digit code (no link): iOS Mail's link preview used up
+# one-time links (Minnie, 2026-11-02). Prod uses the same template, pasted in the dashboard.
+[auth.email.template.magic_link]
+subject = "รหัสเข้าสู่ระบบ 24/7 · Your 24/7 sign-in code"
+content_path = "./supabase/templates/sign-in-code.html"
+
+[auth.email.template.confirmation]
+subject = "รหัสเข้าสู่ระบบ 24/7 · Your 24/7 sign-in code"
+content_path = "./supabase/templates/sign-in-code.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"

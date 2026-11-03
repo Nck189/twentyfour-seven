@@ -39,6 +39,16 @@ export async function setWakeMinutesAgo(userId: string, minutesAgo: number) {
     method: "PATCH",
     body: JSON.stringify({ target_wake: hhmmFromNow(-minutesAgo), fixed_events: [], options: {} }),
   });
+  await clearWakeSnapshots(userId);
+}
+
+/**
+ * Test setup edits targets right before pressing, which the server treats as a late edit and
+ * freezes the old target (anti-cheat). Clearing the snapshot makes the setup count as planned
+ * long ago.
+ */
+export async function clearWakeSnapshots(userId: string) {
+  await rest(`wake_snapshots?user_id=eq.${userId}`, { method: "DELETE" });
 }
 
 /** Gives a block a checklist in the user's settings. */
@@ -71,6 +81,7 @@ export async function setAllTemplates(
     method: "PATCH",
     body: JSON.stringify({ target_wake: target, fixed_events: fixedEvents, options: {} }),
   });
+  await clearWakeSnapshots(userId);
 }
 
 export async function dayPlans(userId: string) {
@@ -93,10 +104,12 @@ export async function addWakeEvent(userId: string, date: string, inWindow: boole
 }
 
 /** Adds a backlog item directly (setup for M5 journeys). */
+/** Adds a task as if added yesterday (so it pays its full priority amount, not the quick-finish one). */
 export async function addBacklogItem(userId: string, item: Record<string, unknown>) {
+  const yesterday = new Date(Date.now() - 86_400_000).toISOString();
   const [row] = (await rest("backlog_items", {
     method: "POST",
-    body: JSON.stringify({ user_id: userId, ...item }),
+    body: JSON.stringify({ user_id: userId, created_at: yesterday, priority_set_at: yesterday, ...item }),
   })) as Record<string, unknown>[];
   return row;
 }

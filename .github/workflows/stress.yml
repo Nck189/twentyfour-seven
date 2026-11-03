@@ -52,8 +52,22 @@ jobs:
       # Same parallelism as QC (2 workers). 8 workers on a hosted runner starved WebKit
       # (click "waiting for element to be stable" for 30 s, "WebKit encountered an internal
       # error"), which measured the runner, not the app. Many repeats, no retries instead.
-      - name: CJ-15 repeated (2 workers × 24 repeats, no retries)
-        run: npx playwright test tests/e2e/today.spec.ts tests/e2e/regressions-m3.spec.ts -g "CJ-15" --workers=2 --repeat-each=24 --retries=0
+      # Point the targets at the flake being hunted (history: CJ-15 → 0/576 failures, 2026-11-02;
+      # CJ-07 → 0/40 after the sheet-focus fix, 2026-11-03).
+      - name: Flake hunt (2 workers × 20 repeats, no retries)
+        run: >-
+          npx playwright test tests/e2e/backlog.spec.ts tests/e2e/today.spec.ts
+          -g "one tap on the circle|CJ-05|CJ-06"
+          --project=ipad-landscape --project=iphone-small
+          --workers=2 --repeat-each=15 --retries=0
+      # The artifact store isn't reachable from every debugging environment: print the page
+      # snapshot (aria tree + error) of each failed attempt into the log as well.
+      - name: Failure snapshots in the log
+        if: always()
+        run: |
+          find test-results -name error-context.md 2>/dev/null | head -12 | while read -r f; do
+            echo "::group::$f"; head -c 4000 "$f"; echo; echo "::endgroup::"
+          done
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

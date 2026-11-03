@@ -1,5 +1,24 @@
 # PROGRESS — 24/7
 
+## ➡️ HANDOFF — read this first (any session: cloud or Minnie's Mac terminal)
+Minnie is asleep (from 2026-11-03 ~02:00 Bangkok). The build moved between a cloud session and her Mac; whichever session runs now continues from here.
+
+**0. Only one session at a time.** `git fetch origin`, then look at the newest commit on `origin/claude/practical-cannon-a70ubq` and `origin/main`: if either was pushed less than 30 min ago by another session, it's probably still running. Don't push; re-check in 30 min. Otherwise you're the driver. Work on branch `claude/practical-cannon-a70ubq` (`git checkout claude/practical-cannon-a70ubq && git pull`).
+
+**1. State (2026-11-03 06:55 Bangkok):**
+- ✅ PR #3 (Plan redesign) and ✅ PR #4 (onboarding) are merged and live.
+- **PR #5 — appointments + 6-digit code login + every G7 S1/S2 fix + 5 new migrations.** Minnie approved merging ("merge นัดได้") — merge when QC is green AND the G7 re-review passes. Fix CI if red (always run `npx playwright test --list` before pushing E2E changes).
+  - Stress (head commit `[stress]`): CJ-07 is 0/40 since the sheet-focus fix. The one-tap finish was stuck on "Loading…" (a request that never answered) → every Supabase request now times out at 15 s and the first Plan/backlog load retries once; the stress run verifies it. Failure snapshots + `[diag]` lines are printed into the CI log (the artifact store isn't reachable from the cloud).
+  - G7: review 1 (`G7-M1-M3.md`, `G7-M4-M5.md`) → fixed → re-review 1 FAIL → fixed → re-review 2 (`G7-rereview-2-2026-11-03.md`, no S1) → fixed → **re-review 3 PASS** (`G7-rereview-3-2026-11-03.md`, 2026-11-03 07:15 Bangkok). Open S3s: R4-1 (one server target for Today), R4-2 (Plan reload vs a pending edit; next fix), R4-3 (tests).
+- **After PR #5 merges, Minnie runs once on the Mac:** `git checkout main && git pull && npx supabase db push --remote` (5 migrations: wake freeze, coin rules, day-plan merge, night window, re-review fixes). The app works before and after; the fixes take effect after.
+
+**2. Then QC, in order (QA_QC.md gates G1–G7, reports in `docs/qa/`):**
+- Report drafts exist: `docs/qa/M1-report.md`, `M3-report.md`, `M4-report.md`, `M5-report.md` — fill in G7 (re-review 2) and the final CI numbers; update BUILD_PLAN "Status".
+- **On the Mac only:** `supabase start` + `npm run e2e` locally, the live "try to break it" pass, re-record the visual baselines (`npm run e2e:update`; Today/Plan changed on purpose) for G3 of M3–M5, and G6 on prod (`npm run qc:prod`) after the db push.
+- Then **M6 (art system + farm scene)**: strict art rules in CLAUDE.md, style = `design/reference-style-a.svg`, no emoji, no AI images.
+
+**3. Rules that still hold:** prod DB migrations only with `npx supabase db push --remote` (the Mac has the credentials; the cloud doesn't), and never merge code that needs a migration before the migration is applied. No destructive remote-DB ops, no force push, no paid upgrades, no secrets in git. Commit per logical step. Give Minnie a short casual-Thai update with **% progress** (formula below) when she's back.
+
 ## 🚨 MINNIE IS OUT — maximum autopilot (from 2026-11-02 19:23 Bangkok)
 Message from Minnie, relayed via Claude chat: she's away from the computer and wants you to get **as far as possible without stopping**.
 - **Don't stop, don't wait, don't ask.** Keep going through the milestones in order: finish M0/M1/M2 QC → M3 → M4 → … → M14.
@@ -18,16 +37,22 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 ### Questions for Minnie (when back)
 - ~~Should Work shrink when an evening event doesn't fit? (M2-F3)~~ **Answered 2026-11-02:** yes — Work gives way (down to 50%) before Down/Wake/Sleep, except on days with a class/appointment in Work. Done in `lib/engine/plan.ts` + SPEC §3.
 - ~~Should an early "I'm up" (up to 3 h before target) earn the Sunrise ticket? (M3-F10)~~ **Answered:** yes, keep as is.
-- **Login on real iPhone is unreliable (S2, found by Minnie 2026-11-02):** the pasted sign-in link is often already used — likely iOS Mail's long-press link preview opens it (one-time token), or an older email's link was pasted. Workaround given: copy the link from Gmail on the Mac and paste via Universal Clipboard. Real fix needs Minnie once: custom SMTP in Supabase (e.g. Gmail app password / Resend) → email template with the 6-digit `{{ .Token }}` (login already accepts codes) — also lifts the ~2 emails/hour limit. Then fix the login hint text.
+- **Login with a 6-digit code (Minnie asked 2026-11-03):** the app side is done (the email carries only the code; the field takes it, iPhone can offer it above the keyboard; a pasted link from an old email still works). **Minnie, once (≈ 5 min, copy-paste):**
+  1. **SMTP first (the free plan only sends custom templates through your own SMTP — M0-4):** make a Gmail **app password** at myaccount.google.com/apppasswords (needs 2-Step Verification; name it "24/7"). Then supabase.com → project **twentyfour-seven** → **Authentication** → **Emails** → **SMTP Settings** → enable custom SMTP: host `smtp.gmail.com`, port `587`, username = your Gmail, password = the app password, sender email = your Gmail, sender name `24/7` → Save. (Also lifts the ~2 emails/hour limit.)
+  2. **Authentication** → **Emails** → **Templates** → **Magic Link**: Subject `รหัสเข้าสู่ระบบ 24/7 · Your 24/7 sign-in code`; Body = everything in `supabase/templates/sign-in-code.html` (GitHub, main branch) → Save. Same for **Confirm signup**.
+  3. Tell Claude "ตั้งรหัสแล้ว" → the login screen switches from "code or link" wording to code-only.
+- **Run the new DB migrations on prod once (after PR #5 is merged):** on the Mac, in the project folder: `git checkout main && git pull && npx supabase db push --remote`. They add: the Sunrise anti-cheat + planned pushes, coin anti-farming, day-plan merge (two devices), Night ticket "before bed only". The app works before and after (no deploy-order risk), but the fixes only take effect after this.
+- **Honor system (G7 R2-3 + R3-1), please confirm:** early nights and early appointments now count as planned (an early 06:00 flight → "I'm up" at 06:00 earns the Sunrise ticket, as Today shows). The flip side: you could plan a much earlier wake for tomorrow (≥ 4 h ahead) and press "I'm up" up to 3 h early — before going to bed. The app can't know whether you slept. Fine as an honor system, or should "I'm up" also require that last night's ritual was closed ≥ 3 h earlier?
+- **Judgment calls to confirm (DECISIONS 2026-11-03):** backlog coins: 150/day cap, a task finished < 10 min after being added (or its priority raised) pays 10 · Night ticket counts from 14 h to 3 h before the next wake (a short night, e.g. home 03:00 before a 07:00 class, still counts) · Sunrise target freezes 4 h before the wake · bedtime-drift warning compares with the same kind of day.
 - Please test the offline page once on your real iPhone — link + steps sent in chat 2026-11-02; waiting for her result.
 
 ---
 
 ## Overall progress (Minnie wants a % in every update)
-**≈ 40% of M0–M14 · ≈ 49% of v1 (M0–M10)** — 2026-11-03 00:30 Bangkok
+**≈ 43% of M0–M14 · ≈ 52% of v1 (M0–M10)** — 2026-11-03 02:00 Bangkok
 - Weight per milestone = its section size in BUILD_PLAN (M0 26 · M1 14 · M2 17 · M3 13 · M4 12 · M5 13 · M6 22 · M7 11 · M8 13 · M9 5 · M10 16 · M11 9 · M12 8 · M13 10 · M14 12 = 201; v1 = 162).
-- Credit per milestone: built = 65%, + review fixes = 80%, + G1–G5 = 90%, ✅ (G1–G7 + report) = 100%.
-- Now: M0 95% · M1 80% · **M2 100% ✅** · M3 85% · M4 65% · M5 65% · M6–M14 0%.
+- Credit per milestone: built = 65%, + review fixes = 80%, + G1–G5 = 90%, ✅ (G1–G7 + report) = 100%. Partial features count by share of the milestone's bullets.
+- Now: M0 95% · M1 80% · **M2 100% ✅** · M3 85% · M4 80% · M5 80% · M11 5% (.ics import) · M14 15% (onboarding) · M6–M10, M12, M13 0%.
 
 ## Current milestone
 **Moved to a cloud session (2026-11-02 ~22:30 Bangkok)** — the local machine hit its usage limit. Work continues on branch `claude/practical-cannon-a70ubq` → draft PR https://github.com/Nck189/twentyfour-seven/pull/1 (not `main`: the prod migration must go first).
@@ -38,6 +63,10 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 1. ✅ ~~CJ-15 flake (S2)~~ **fixed test-first** (`lib/today/foreground.ts`): the foreground refetch now runs only after ≥ 60 s hidden, and a refetch with unchanged data keeps the same `loaded` object (actions/timeline aren't rebuilt). Tests: `tests/unit/foreground.test.ts`, 2 E2E in `tests/e2e/regressions-m3.spec.ts`. **Stress verdict (2 workers × 24, no retries, 2 runs = 576 tests): 0 dropped taps / failed saves; the original two-device CJ-15 never failed.** The 4 failures were setup on Linux WebKit: 2× `page.goto: WebKit encountered an internal error`, 1× goto timeout, 1× a 5 s `toBeVisible` (raised to 15 s). Logged as M3-K1 (S4, test infra).
 1b. ✅ Today redesign "one thing at a time" (Minnie's feedback) + auto-retry of failed saves when back online. ⚠️ Visual baselines for Today in `tests/visual` (recorded on the Mac; CI doesn't run them) need re-recording → part of M3's G3.
 1c. ✅ PR #1 merged to `main` 2026-11-03 00:25 Bangkok → Vercel deploy.
+1e. ✅ 2026-11-03 01:40 — **PR #3 merged** (Plan "feels quick" redesign, no-emoji guard, Night ritual with fewer words). **PR #4 opened: first-run setup (onboarding) + unlocks ladder spec** — Minnie approved merging on green.
+1f. Appointments any distance ahead (Minnie: dentist/friends book months ahead) built on top of PR #4: capture line `Dentist 15/3 14:00`, month view, next-appointment line, Night-ritual mention. Ask Minnie before merging.
+1g. Flake hunt: QC run #60 had CJ-07 (ipad-landscape) + one-tap finish (iphone-small) flaky with no trace → Stress run targets both (20× each, no retries); QC now keeps the Playwright report on every run.
+1h. G7 reviews running in the cloud (code-level; the cloud can't run Supabase, live checks come from CI E2E): re-review M1+M3, first review M4+M5. Then write M1/M3/M4/M5 reports.
 1d. ✅ **M5 Backlog** built and merged (PR #2, 2026-11-03 00:50): `lib/backlog` (sort, RCCP capacity, carry-over), `complete_backlog_item` RPC + `coin_grants` ledger, Plan screen backlog + dnd-kit drop targets + capacity bars + item sheet with Move to…, Night-ritual carry-over. CI green (incl. 5 new E2E). Pending: M5 QC report (G3 visual, G7) + touch drag on a real iPhone.
 2. ✅ **Prod DB caught up 2026-11-03 ~00:45:** ⚠️ the Supabase CLI now targets the LOCAL stack by default — `npx supabase db push` alone does NOT touch prod. **Always use `npx supabase db push --remote`.** (The first two pushes went to Minnie's local stack; prod was missing M4 + the M1–M3 security migration until the `--remote` push, which also applied M5.)
    ✅ **G6 on prod (M1/M3/M4 code):** `npm run qc:prod` 22/22 passed (iphone + chrome-desktop; dedicated-user tests skip on prod by design), incl. CJ-17 export, smoke, PWA manifest/SW; Lighthouse assertions passed.

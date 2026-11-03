@@ -26,26 +26,25 @@
     "subtitle": "Plan tonight, grow tomorrow.",
     "emailLabel": "Email",
     "emailPlaceholder": "you@example.com",
-    "send": "Email me a sign-in link",
+    "send": "Email me a sign-in code",
     "sending": "Sending…",
     "invalidEmail": "Please enter a valid email address.",
     "google": "Continue with Google",
-    "error": "Couldn't send the link. Please try again.",
+    "error": "Couldn't send the code. Please try again.",
     "callbackError": "That sign-in link has expired or was already used. Request a new one.",
-    "codeLabel": "Sign-in link",
-    "codeHint": "We emailed a sign-in link to {email}.",
+    "codeLabel": "Code or link",
+    "codeHint": "Check {email} for your sign-in code.",
     "verify": "Sign in",
     "verifying": "Signing in…",
-    "invalidCode": "That link didn't work. It may have expired — send a new one.",
+    "invalidCode": "That code didn't work. It may have expired, so send a new one.",
     "changeEmail": "Use a different email",
-    "resend": "Send a new link",
-    "pasteHint": "In Mail, press and hold the link → Copy → come back and paste it here.",
-    "pastePlaceholder": "Paste the link here",
-    "dontTap": "Don't tap the link on iPhone — it opens Safari and gets used up there.",
-    "resendIn": "Send a new link ({seconds}s)",
-    "resent": "New link sent. Check your email.",
-    "rateLimited": "Please wait a minute before asking for another link. Your earlier link still works.",
-    "language": "Language"
+    "resend": "Send a new code",
+    "resendIn": "Send a new code ({seconds}s)",
+    "resent": "New code sent. Check your email.",
+    "rateLimited": "Please wait a minute before asking for another code. Your earlier code still works.",
+    "language": "Language",
+    "codePlaceholder": "123456",
+    "codeTip": "Type the 6-digit code (iPhone may offer it above the keyboard), or paste the link from the email."
   },
   "today": {
     "title": "Today",
@@ -172,7 +171,17 @@
     "bedLabel": "Bed",
     "wakeLabel": "Wake",
     "warnings": "{count, plural, one {# warning} other {# warnings}}",
-    "dayTasks": "Tasks for {day}"
+    "dayTasks": "Tasks for {day}",
+    "month": "Month",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "nextAppointment": "Next appointment:",
+    "appointments": "Appointments",
+    "removeAppointment": "Remove {title}",
+    "noKind": "{day} has no kind of day yet. Set it up",
+    "bedtimeBefore": "Bedtime the night before {day}",
+    "lateNightBefore": "Out late the night before {day}",
+    "attendingOn": "Class on {day}?"
   },
   "farm": {
     "title": "Farm",
@@ -354,7 +363,8 @@
     "willSave": "Will be saved with:",
     "more": "More: project, deadline, steps",
     "titleLabel": "Task",
-    "earlier": "From earlier days"
+    "earlier": "From earlier days",
+    "loadError": "Couldn't load your tasks."
   },
   "errors": {
     "notFoundTitle": "Page not found",
@@ -381,7 +391,7 @@
     "closeHint": "Which blocks didn't happen? Tag why — no judgement, it's data.",
     "allClosed": "Every block is closed. Nice.",
     "reason": "Reason for {block}",
-    "closeBlock": "Mark closed",
+    "closeBlock": "Mark done",
     "reasons": {
       "sleepy": "Sleepy",
       "phone": "Phone",
@@ -398,7 +408,10 @@
     "ticket": "+1 Night ticket. Sleep well.",
     "already": "Already done tonight. Sleep well.",
     "error": "Couldn't finish. Try again.",
-    "reasonAll": "Same reason for all"
+    "reasonAll": "Same reason for all",
+    "tomorrowAppt": "Tomorrow: {list}",
+    "unsaved": "Tomorrow's plan isn't saved yet. Check your connection, then tap Goodnight again.",
+    "late": "Done. The Night ticket counts until 3 h before your wake-up."
   },
   "onboarding": {
     "cardTitle": "Make 24/7 yours in 2 minutes",

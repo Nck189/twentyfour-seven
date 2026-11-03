@@ -234,6 +234,13 @@ function CapturePreview({ capture, timezone }: { capture: Capture; timezone: str
         {formatDayShort(capture.scheduled_date, locale, timezone)}
       </Pill>,
     );
+  if (capture.appointment)
+    bits.push(
+      <Pill key="a" icon={<CalendarIcon className="h-3.5 w-3.5" />} tone="warn">
+        {formatDayShort(capture.appointment.date, locale, timezone)} · {capture.appointment.start}–
+        {capture.appointment.end}
+      </Pill>,
+    );
   if (capture.deadline)
     bits.push(
       <Pill key="d" icon={<FlagIcon className="h-3.5 w-3.5" />} tone="warn">
@@ -261,6 +268,8 @@ export function BacklogList({
   today,
   timezone,
   error,
+  loadState = "ready",
+  onRetry,
   onAdd,
   onOpen,
   onComplete,
@@ -269,12 +278,17 @@ export function BacklogList({
   today: string;
   timezone: string;
   error: boolean;
-  onAdd: (capture: Capture) => Promise<void>;
+  loadState?: "loading" | "ready" | "error";
+  onRetry?: () => void;
+  /** Resolves true when saved; the typed text stays until then (offline: nothing is lost). */
+  onAdd: (capture: Capture) => Promise<boolean>;
   onOpen: (id: string) => void;
   onComplete: (id: string) => Promise<number | null>;
 }) {
   const t = useTranslations("backlog");
+  const tc = useTranslations("common");
   const [draft, setDraft] = useState("");
+  const [adding, setAdding] = useState(false);
   // Just-finished rows stay for a moment (struck through, coin pop) before leaving the list.
   const [justDone, setJustDone] = useState<string[]>([]);
   const capture = draft.trim() ? parseCapture(draft, today) : null;
@@ -301,9 +315,13 @@ export function BacklogList({
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!capture) return;
-    setDraft("");
-    await onAdd(capture);
+    if (!capture || adding) return;
+    setAdding(true);
+    const sent = draft;
+    const ok = await onAdd(capture);
+    setAdding(false);
+    // Clear only once saved, and only if nothing new was typed meanwhile.
+    if (ok) setDraft((d) => (d === sent ? "" : d));
   }
 
   const rows = (list: BacklogItem[], showDay: boolean) =>
@@ -350,7 +368,23 @@ export function BacklogList({
           {t("error")}
         </p>
       )}
-      {inbox.length + earlier.length === 0 ? (
+      {loadState === "loading" ? (
+        <p role="status" className="text-muted">
+          {tc("loading")}
+        </p>
+      ) : loadState === "error" ? (
+        <div
+          role="alert"
+          className="flex flex-col items-start gap-2 rounded-xl bg-accent-soft p-3 text-accent"
+        >
+          <p>{t("loadError")}</p>
+          {onRetry && (
+            <Button variant="secondary" onClick={onRetry}>
+              {tc("retry")}
+            </Button>
+          )}
+        </div>
+      ) : inbox.length + earlier.length === 0 ? (
         <p className="text-muted">{t("empty")}</p>
       ) : (
         <>

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>24/7</title>
+  </head>
+  <!-- Code only, no link: mail apps that preview links would use up a one-time link. -->
+  <body
+    style="
+      margin: 0;
+      padding: 24px 16px;
+      background: #f7f4ec;
+      font-family:
+        Nunito,
+        &quot;IBM Plex Sans Thai Looped&quot;,
+        -apple-system,
+        &quot;Segoe UI&quot;,
+        sans-serif;
+      color: #3f3a33;
+    "
+  >
+    <div
+      style="
+        max-width: 420px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 28px 24px;
+        text-align: center;
+      "
+    >
+      <p style="margin: 0 0 4px; font-size: 15px; font-weight: 700; color: #3f7236">24/7</p>
+      <p style="margin: 0 0 20px; font-size: 16px; font-weight: 700">
+        รหัสเข้าสู่ระบบของคุณ · Your sign-in code
+      </p>
+      <p
+        style="
+          margin: 0 0 20px;
+          padding: 16px 8px;
+          background: #dcefd2;
+          border-radius: 16px;
+          font-size: 36px;
+          font-weight: 800;
+          letter-spacing: 8px;
+          color: #3f7236;
+        "
+      >
+        {{ .Token }}
+      </p>
+      <p style="margin: 0 0 6px; font-size: 14px; color: #6e665a">
+        กลับไปที่แอปแล้วใส่รหัสนี้ ใช้ได้ 1 ชั่วโมง
+      </p>
+      <p style="margin: 0; font-size: 14px; color: #6e665a">
+        Type this code in the app. It works for 1 hour.
+      </p>
+    </div>
+    <p style="max-width: 420px; margin: 16px auto 0; font-size: 12px; color: #6e665a; text-align: center">
+      ถ้าคุณไม่ได้ขอรหัสนี้ ไม่ต้องทำอะไร · If you didn't ask for this, you can ignore it.
+    </p>
+  </body>
+</html>

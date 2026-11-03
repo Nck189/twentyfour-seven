@@ -4,9 +4,11 @@ import { useDroppable } from "@dnd-kit/core";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { useBlockText } from "@/components/today/useBlockText";
-import { MoonIcon, PencilIcon, SunriseIcon, WarnIcon } from "@/components/ui/Icons";
+import { CalendarIcon } from "@/components/shell/TabIcons";
+import { CloseIcon, MoonIcon, PencilIcon, SunriseIcon, WarnIcon } from "@/components/ui/Icons";
+import type { FixedEvent } from "@/content/defaults";
 import type { BlockKey } from "@/content/blocks";
-import { dayCapacity, type BacklogItem } from "@/lib/backlog";
+import { dayCapacity, sortBacklog, type BacklogItem } from "@/lib/backlog";
 import type { DayPlan } from "@/lib/engine";
 import { formatTime } from "@/lib/format";
 import { CapacityBar } from "./CapacityBar";
@@ -43,6 +45,8 @@ export function DayCard({
   onEdit,
   onOpen,
   onComplete,
+  appointments = [],
+  onRemoveAppointment,
 }: {
   date: string;
   label: string;
@@ -56,12 +60,17 @@ export function DayCard({
   onEdit: () => void;
   onOpen: (id: string) => void;
   onComplete: (id: string) => Promise<number | null>;
+  /** One-off appointments on this day. */
+  appointments?: FixedEvent[];
+  onRemoveAppointment?: (id: string) => void;
 }) {
   const t = useTranslations("plan");
   const text = useBlockText();
   const { setNodeRef, isOver } = useDroppable({ id: `card:${date}` });
   const dayItems = items.filter((i) => i.scheduled_date === date && i.status !== "dropped");
-  const open = dayItems.filter((i) => i.status !== "done");
+  // Done tasks stay in place, struck through (R-M5-2): no row jumps under the finger, the coin pop
+  // plays, and a tap on a done task opens it ("Not done yet"). Near deadlines first (SPEC §5).
+  const list = sortBacklog(dayItems, today);
 
   return (
     <section
@@ -113,11 +122,36 @@ export function DayCard({
         )}
       </div>
 
+      {appointments.length > 0 && (
+        <ul aria-label={t("appointments")} className="flex flex-col gap-1.5">
+          {appointments.map((a) => (
+            <li
+              key={a.id}
+              className="flex items-center gap-2 rounded-xl bg-warn-soft py-1 pr-1 pl-3 text-warn"
+            >
+              <CalendarIcon className="h-4 w-4 shrink-0" />
+              <span className="min-w-0 flex-1 font-bold [overflow-wrap:anywhere]">{a.title}</span>
+              <span className="shrink-0 text-sm font-bold tabular-nums">{`${a.start}–${a.end}`}</span>
+              {onRemoveAppointment && (
+                <button
+                  type="button"
+                  aria-label={t("removeAppointment", { title: a.title ?? "" })}
+                  onClick={() => onRemoveAppointment(a.id)}
+                  className="tap flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
+                >
+                  <CloseIcon className="h-4 w-4" />
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
       {dayItems.length > 0 && <CapacityBar cap={dayCapacity(plan, dayItems)} />}
 
-      {open.length > 0 && (
+      {list.length > 0 && (
         <ul aria-label={t("dayTasks", { day: label })} className="flex flex-col gap-2">
-          {open.map((i) => (
+          {list.map((i) => (
             <TaskRow
               key={i.id}
               item={i}
