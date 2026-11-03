@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
-import { rest, setAllTemplates, userIdFor } from "../helpers/db";
+import { rest, setAllTemplates, setWakeMinutesAgo, userIdFor } from "../helpers/db";
 import { wakeDay } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
 import { addDays, zonedInstant } from "@/lib/time";
@@ -76,4 +76,24 @@ test("CJ-M6-3 an unripe crop has no Harvest; replacing it asks first", async ({ 
   await expect(sheet.getByText("Replace Carrot?")).toBeVisible();
   await sheet.getByRole("button", { name: "Lettuce" }).click();
   await expect(page.getByRole("button", { name: "Work: Lettuce, day 0 of 1" })).toBeVisible();
+});
+
+test("CJ-07 step 3: one tap plants tomorrow's seeds in every empty plot (SPEC §4.1)", async ({ page }) => {
+  const id = await setup(page);
+  await setWakeMinutesAgo(id, 910); // Down Time: the ritual opens by itself
+  await page.goto("/today");
+  const sheet = page.getByRole("dialog", { name: "Night ritual" });
+  await expect(sheet).toBeVisible();
+  await sheet.getByRole("button", { name: "Next" }).click();
+  await sheet
+    .getByRole("region", { name: "Same reason for all" })
+    .getByRole("button", { name: "Sleepy" })
+    .click();
+  await sheet.getByRole("button", { name: "Next" }).click();
+  await expect(sheet.getByText("Step 3 of 4")).toBeVisible();
+  await sheet.getByRole("button", { name: "Plant Carrot in 7 empty plots" }).click();
+  await expect(sheet.getByText("Planted in 7 plots", { exact: false })).toBeVisible();
+  await expect
+    .poll(async () => (await rest(`plots?user_id=eq.${id}&select=crop_id`)) as { crop_id: string }[])
+    .toEqual(Array(7).fill({ crop_id: "carrot" }));
 });

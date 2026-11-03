@@ -32,6 +32,11 @@ export type DayFacts = {
    * counts, nothing else does. Omit for finished days.
    */
   open?: BlockKey[];
+  /**
+   * Blocks a planned deviation covers that day (a planned late night excuses that evening's
+   * Free): a miss there is excused, a success still counts (SPEC §3, §8.4).
+   */
+  excused?: BlockKey[];
   /** Blocks set to have no first-10 that day: left out of the first-10 rate. */
   noFirst10?: BlockKey[];
 };
@@ -72,10 +77,11 @@ export function blockResult(day: DayFacts, block: BlockKey): BlockResult {
   const log = day.logs[block];
   if (day.mode !== "normal") return "excused";
   if (log?.planned_deviation) return "excused";
-  if (log?.miss_reason) return "miss";
+  if (log?.miss_reason) return day.excused?.includes(block) ? "excused" : "miss";
   if (log?.backfilled) return "backfilled";
   if (log && succeeded(log)) return "success";
   if (day.open?.includes(block)) return "open";
+  if (day.excused?.includes(block)) return "excused";
   if (log?.started_at) return "partial";
   return "miss";
 }

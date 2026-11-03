@@ -409,3 +409,31 @@ describe("day facts from rows (lib/game/facts)", () => {
     expect(isMinimumDay(f[1]!)).toBe(true);
   });
 });
+
+describe("a planned late night is a planned deviation (SPEC §3, §8.4; G7 R-M6-2)", () => {
+  it("out late before D excuses D−1's Free: no miss, no weeds — a success still grows", () => {
+    const p = plant("free", "sunflower", "2026-11-09"); // 3 days
+    const d10 = day("2026-11-10", { free: good("2026-11-10") });
+    const d11 = day("2026-11-11", {}, { excused: ["free"] }); // out late on the night of the 11th
+    const d12 = day("2026-11-12", { free: good("2026-11-12") });
+    expect(blockResult(d11, "free")).toBe("excused");
+    expect(simulatePlot(p, [d10, d11, d12])).toMatchObject({ growthDays: 2, weeds: false, missStreak: 0 });
+    expect(blockResult(day("2026-11-11", { free: good("2026-11-11") }, { excused: ["free"] }), "free")).toBe(
+      "success",
+    );
+  });
+  it("buildDayFacts turns day_plans.late_night on D into an excused Free on D−1", () => {
+    const f = buildDayFacts({
+      from: "2026-11-10",
+      today: "2026-11-12",
+      timezone: "Asia/Bangkok",
+      logs: [],
+      modes: {},
+      lateNights: ["2026-11-12"],
+      wakes: [],
+      nights: [],
+      exercise: [],
+    });
+    expect(f.map((d) => d.excused ?? [])).toEqual([[], ["free"], []]);
+  });
+});

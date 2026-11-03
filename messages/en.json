@@ -494,7 +494,13 @@
     "reasonAll": "Same reason for all",
     "tomorrowAppt": "Tomorrow: {list}",
     "unsaved": "Tomorrow's plan isn't saved yet. Check your connection, then tap Goodnight again.",
-    "late": "Done. The Night ticket counts until 3 h before your wake-up."
+    "late": "Done. The Night ticket counts until 3 h before your wake-up.",
+    "seedsTitle": "Seeds for tomorrow",
+    "seedsHint": "Tap a seed to plant it in every empty plot ({n}).",
+    "seedsPlant": "Plant {crop} in {n} empty plots",
+    "seedsPlanted": "Planted in {n} plots. They grow each day their block goes well.",
+    "seedsAllGrowing": "All 7 plots are growing.",
+    "seedsError": "Some plots couldn't be planted. Try again from the Farm tab."
   },
   "onboarding": {
     "cardTitle": "Make 24/7 yours in 2 minutes",

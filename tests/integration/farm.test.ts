@@ -37,7 +37,7 @@ async function loadFacts(id: string, from: string, today: string) {
   const a = admin();
   const [logs, plans, wakes, grants, ex] = await Promise.all([
     a.from("block_logs").select("*").eq("user_id", id).gte("date", from),
-    a.from("day_plans").select("date, mode").eq("user_id", id).gte("date", from),
+    a.from("day_plans").select("date, mode, late_night").eq("user_id", id).gte("date", from),
     a.from("wake_events").select("date, in_window, backfilled").eq("user_id", id).gte("date", from),
     a.from("ticket_grants").select("ref_date").eq("user_id", id).eq("reason", "night").gte("ref_date", from),
     a.from("exercise_logs").select("at").eq("user_id", id),
@@ -47,6 +47,7 @@ async function loadFacts(id: string, from: string, today: string) {
     today,
     timezone: TZ,
     logs: (logs.data ?? []) as LogRow[],
+    lateNights: (plans.data ?? []).filter((p) => p.late_night).map((p) => p.date as string),
     modes: Object.fromEntries((plans.data ?? []).map((p) => [p.date, p.mode as DayMode])),
     wakes: wakes.data ?? [],
     nights: (grants.data ?? []).map((g) => g.ref_date as string),
@@ -238,5 +239,53 @@ describe("buy_decor (SPEC §8.9)", () => {
     expect((await u.client.rpc("buy_decor", { p_item: "castle" })).error?.code).toBe("22023");
     const fake = await u.client.from("events").insert({ user_id: u.id, type: "decor_bought", payload: {} });
     expect(fake.error?.code).toBe("42501");
+  });
+});
+
+describe("G7 M6 review fixes", () => {
+  it("R-M6-1: a client can't log a block for a future day", async () => {
+    const u = await newUser("future");
+    const later = addDays(T(), 7);
+    const ins = await u.client.from("block_logs").insert({
+      user_id: u.id,
+      date: later,
+      block: "wake",
+      items_planned: 1,
+      items_done: ["x"],
+    });
+    expect(ins.error?.code).toBe("22023");
+    const rpc = await u.client.rpc("set_block_item", {
+      p_date: later,
+      p_block: "wake",
+      p_item: "x",
+      p_done: true,
+      p_items_planned: 1,
+      p_planned_start: null,
+    });
+    expect(rpc.error).not.toBeNull();
+  });
+
+  it("R-M6-2: out late before D excuses D−1's Free on the server too", async () => {
+    const u = await newUser("late");
+    const t = T();
+    const d = (n: number) => addDays(t, -n);
+    const a = admin();
+    await a
+      .from("plots")
+      .update({ crop_id: "carrot", planted_on: d(5), state: "growing" })
+      .eq("user_id", u.id)
+      .eq("slot", "free");
+    // d4: Free skipped while out late (planned on d3's day plan); d3: Free on time → ripe.
+    await a
+      .from("day_plans")
+      .upsert(
+        { user_id: u.id, date: d(3), late_night: { return_at: at(d(3), 60) } },
+        { onConflict: "user_id,date" },
+      );
+    expect((await a.from("block_logs").insert(logRow(u.id, d(3), "free", "good"))).error).toBeNull();
+    const plantings: Planting[] = [{ slot: "free", cropId: "carrot", star: 1, plantedOn: d(5) }];
+    const farm = farmState(plantings, await loadFacts(u.id, d(6), t), u.id);
+    expect(farm.plots.free).toMatchObject({ status: "ready", weeds: false });
+    expect((await u.client.rpc("harvest_plot", { p_slot: "free" })).error).toBeNull();
   });
 });

@@ -133,6 +133,12 @@ begin
     select * into lg from public.block_logs where user_id = uid and date = d and block = p.slot;
     select mode into md from public.day_plans where user_id = uid and date = d;
     r := public._block_result(lg, md, d = p_today);
+    -- A planned late night (out late before d + 1) excuses that evening's Free (G7 R-M6-2).
+    if r in ('miss', 'partial') and p.slot = 'free'
+       and exists (select 1 from public.day_plans
+                   where user_id = uid and date = d + 1 and late_night is not null) then
+      r := 'excused';
+    end if;
     if r = 'success' then
       streak := 0;
       if not weeds then
@@ -249,8 +255,8 @@ begin
   return jsonb_build_object('crop', p.crop_id, 'regrow', regrow, 'date', day);
 end $$;
 
--- M3-F8 still holds for clients; the service role may write a past log as live (test setup only:
--- it already bypasses RLS, so this adds no new power).
+-- M3-F8 still holds for clients, and a client can't log a future day (G7 R-M6-1); the service
+-- role may write a past log as live (test setup only: it already bypasses RLS).
 create or replace function public.block_logs_guard()
 returns trigger
 language plpgsql
@@ -271,6 +277,10 @@ begin
   end if;
   select timezone into tz from public.profiles where user_id = new.user_id;
   today := (now() at time zone coalesce(tz, 'Asia/Bangkok'))::date;
+  -- G7 R-M6-1: no check-ins for a day that hasn't come (they'd count as live when it does).
+  if new.date > today then
+    raise exception 'a check-in can''t be for a future day' using errcode = '22023';
+  end if;
   if new.date < today - 1 then
     is_backfill := true;
   end if;

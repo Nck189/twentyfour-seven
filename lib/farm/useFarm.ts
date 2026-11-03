@@ -79,7 +79,7 @@ export function useFarm() {
       const from = [addDays(oldest, -1), addDays(today, -FARM_HISTORY_DAYS)].sort().at(-1)!;
       const [logs, plans, wakes, nights, ex, game, decorRows] = await Promise.all([
         client.from("block_logs").select("*").gte("date", from),
-        client.from("day_plans").select("date, mode").gte("date", from),
+        client.from("day_plans").select("date, mode, late_night").gte("date", from),
         client.from("wake_events").select("date, in_window, backfilled").gte("date", from),
         client.from("ticket_grants").select("ref_date").eq("reason", "night").gte("ref_date", from),
         client
@@ -97,6 +97,9 @@ export function useFarm() {
         today,
         timezone: ctx.timezone,
         logs: logs.data as LogRow[],
+        lateNights: (plans.data as { date: string; late_night: unknown }[])
+          .filter((p) => p.late_night)
+          .map((p) => p.date),
         modes: Object.fromEntries(
           (plans.data as { date: string; mode: DayMode }[]).map((p) => [p.date, p.mode]),
         ),

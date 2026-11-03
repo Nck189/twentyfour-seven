@@ -14,6 +14,8 @@ export type FactsInput = {
   logs: readonly LogRow[];
   /** day_plans.mode by date (missing = normal). */
   modes: Readonly<Record<string, DayMode>>;
+  /** Dates D whose day plan has a late night (out late the night before D): D−1's Free is excused. */
+  lateNights?: readonly string[];
   wakes: readonly WakeRow[];
   /** Dates whose Night ritual was done in time (the server's `night` ticket grants). */
   nights: readonly string[];
@@ -35,6 +37,7 @@ export function buildDayFacts(i: FactsInput): DayFacts[] {
   }
   const wakeOk = new Set(i.wakes.filter((w) => w.in_window && !w.backfilled).map((w) => w.date));
   const nights = new Set(i.nights);
+  const lateNights = new Set(i.lateNights ?? []);
   const exercised = new Set(i.exercise.map((at) => localDate(new Date(at), i.timezone)));
   const out: DayFacts[] = [];
   for (let d = i.from; d <= i.today; d = addDays(d, 1)) {
@@ -46,6 +49,7 @@ export function buildDayFacts(i: FactsInput): DayFacts[] {
       nightRitualDone: nights.has(d),
       exercised: exercised.has(d),
       ...(d === i.today ? { open: [...BLOCK_KEYS] } : {}),
+      ...(lateNights.has(addDays(d, 1)) ? { excused: ["free" as BlockKey] } : {}),
     });
   }
   return out;
