@@ -1,3 +1,4 @@
+import { ON_TIME_MIN } from "@/content/game";
 import type { BlockKey, BlockSetting, ChecklistItem } from "@/content/blocks";
 import { DEFAULT_TEMPLATES, type FixedEvent, type TemplateDefault } from "@/content/defaults";
 import {
@@ -222,7 +223,7 @@ export function currentBlock(t: Timeline, now: Date): TimelineBlock | undefined 
   return t.blocks.find((b) => b.start.getTime() <= now.getTime() && now.getTime() < b.end.getTime());
 }
 
-export const ON_TIME_MIN = 10;
+export { ON_TIME_MIN };
 
 /** SPEC §4.3: on time = started within ±10 min of the planned start. */
 export function isOnTime(plannedStart: Date, startedAt: Date): boolean {
