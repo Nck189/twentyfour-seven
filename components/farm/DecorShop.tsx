@@ -23,9 +23,10 @@ export function DecorShop({ coins, onBuy }: { coins: number; onBuy: (item: Decor
     <section aria-label={t("decor")} className="mx-4 mt-4 lg:mx-6">
       <div className="mb-1 flex items-center justify-between">
         <h2 className="text-sm font-bold text-muted">{t("decor")}</h2>
-        <p className="flex items-center gap-1 text-sm font-bold" aria-label={t("coins", { n: coins })}>
+        <p className="flex items-center gap-1 text-sm font-bold">
           <Coin className="h-5 w-5" />
           <span aria-hidden="true">{coins}</span>
+          <span className="sr-only">{t("coins", { n: coins })}</span>
         </p>
       </div>
       <ul className="grid grid-cols-4 gap-2">
