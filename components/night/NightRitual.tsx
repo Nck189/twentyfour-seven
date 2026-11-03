@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useEffect, useState, type JSX } from "react";
+import { PlantAll } from "@/components/farm/PlantAll";
 import { DayEditor } from "@/components/plan/DayEditor";
 import { SaveStatus } from "@/components/plan/SaveStatus";
 import { CheckRow } from "@/components/today/Checkbox";
@@ -47,7 +48,7 @@ type Props = {
 };
 
 /**
- * SPEC §4.1 Night ritual: 10-min free phone → close today (miss reasons) → plan tomorrow →
+ * SPEC §4.1 Night ritual: 10-min free phone → close today (miss reasons) → plan tomorrow (+ seeds) →
  * alarm + phone away → Goodnight (Night ticket, server-side).
  */
 export function NightRitual({ timeline, logFor, markMissed, closeDone, complete, onClose }: Props) {
@@ -241,6 +242,7 @@ export function NightRitual({ timeline, logFor, markMissed, closeDone, complete,
         </p>
       )}
       <SaveStatus state={plan.saving} />
+      <PlantAll />
       {plan.ctx ? (
         <DayEditor
           today={timeline.date}

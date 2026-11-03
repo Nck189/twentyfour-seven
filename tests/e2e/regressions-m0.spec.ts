@@ -14,9 +14,9 @@ test.describe("M0 review regressions", () => {
     await page.goto("/login");
     await page.getByLabel("Email").fill(email);
     await page.getByRole("button", { name: "Email me a sign-in code" }).click();
-    await expect(page.getByLabel("Code or link")).toBeVisible();
+    await expect(page.getByLabel("6-digit code")).toBeVisible();
     await page.reload();
-    await expect(page.getByLabel("Code or link")).toBeVisible();
+    await expect(page.getByLabel("6-digit code")).toBeVisible();
     await expect(page.getByText(email)).toBeVisible();
   });
 
@@ -26,9 +26,9 @@ test.describe("M0 review regressions", () => {
     await page.goto("/login");
     await page.getByLabel("Email").fill(email);
     await page.getByRole("button", { name: "Email me a sign-in code" }).click();
-    await expect(page.getByLabel("Code or link")).toBeVisible();
+    await expect(page.getByLabel("6-digit code")).toBeVisible();
     await page.reload(); // iOS reloads the home-screen app while you're in Mail
-    await page.getByLabel("Code or link").fill(await latestSignInCode(email));
+    await page.getByLabel("6-digit code").fill(await latestSignInCode(email));
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(/\/today$/);
   });
@@ -59,7 +59,7 @@ test.describe("M0 review regressions", () => {
     await page.goto("/login");
     await page.getByLabel("Email").fill(uniqueEmail("f5b"));
     await page.getByRole("button", { name: "Email me a sign-in code" }).click();
-    await expect(page.getByLabel("Code or link")).toBeVisible();
+    await expect(page.getByLabel("6-digit code")).toBeVisible();
     await page.clock.fastForward(61_000);
     await page.route("**/auth/v1/otp**", (route) =>
       route.fulfill({
@@ -72,15 +72,15 @@ test.describe("M0 review regressions", () => {
     await expect(page.getByRole("main").getByRole("alert")).toContainText("earlier code still works");
   });
 
-  test("F6/F4: wording fits both emails (code now; link until the prod template is switched)", async ({
+  test("F6/F4: the sign-in screen asks for the 6-digit code (prod emails carry it since 2026-11-03)", async ({
     page,
   }) => {
     await setPrefs(page, { locale: "en", theme: "light" });
     await page.goto("/login");
     await page.getByLabel("Email").fill(uniqueEmail("f6"));
     await page.getByRole("button", { name: "Email me a sign-in code" }).click();
-    await expect(page.getByText(/6-digit code/)).toBeVisible();
-    await expect(page.getByLabel("Code or link")).toHaveAttribute("autocomplete", "one-time-code");
+    await expect(page.getByText(/Type the 6-digit code from the email/)).toBeVisible();
+    await expect(page.getByLabel("6-digit code")).toHaveAttribute("autocomplete", "one-time-code");
     await expectTouchTargets(page);
   });
 

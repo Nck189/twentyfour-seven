@@ -37,22 +37,21 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 ### Questions for Minnie (when back)
 - ~~Should Work shrink when an evening event doesn't fit? (M2-F3)~~ **Answered 2026-11-02:** yes — Work gives way (down to 50%) before Down/Wake/Sleep, except on days with a class/appointment in Work. Done in `lib/engine/plan.ts` + SPEC §3.
 - ~~Should an early "I'm up" (up to 3 h before target) earn the Sunrise ticket? (M3-F10)~~ **Answered:** yes, keep as is.
-- **Login with a 6-digit code (Minnie asked 2026-11-03):** the app side is done (the email carries only the code; the field takes it, iPhone can offer it above the keyboard; a pasted link from an old email still works). **Minnie, once (≈ 5 min, copy-paste):**
-  1. **SMTP first (the free plan only sends custom templates through your own SMTP — M0-4):** make a Gmail **app password** at myaccount.google.com/apppasswords (needs 2-Step Verification; name it "24/7"). Then supabase.com → project **twentyfour-seven** → **Authentication** → **Emails** → **SMTP Settings** → enable custom SMTP: host `smtp.gmail.com`, port `587`, username = your Gmail, password = the app password, sender email = your Gmail, sender name `24/7` → Save. (Also lifts the ~2 emails/hour limit.)
-  2. **Authentication** → **Emails** → **Templates** → **Magic Link**: Subject `รหัสเข้าสู่ระบบ 24/7 · Your 24/7 sign-in code`; Body = everything in `supabase/templates/sign-in-code.html` (GitHub, main branch) → Save. Same for **Confirm signup**.
-  3. Tell Claude "ตั้งรหัสแล้ว" → the login screen switches from "code or link" wording to code-only.
-- **Run the new DB migrations on prod once (after PR #5 is merged):** on the Mac, in the project folder: `git checkout main && git pull && npx supabase db push --remote`. They add: the Sunrise anti-cheat + planned pushes, coin anti-farming, day-plan merge (two devices), Night ticket "before bed only". The app works before and after (no deploy-order risk), but the fixes only take effect after this.
+- ~~Login with a 6-digit code~~ **Done 2026-11-03:** Minnie set up Gmail SMTP + the code templates + OTP length 6 on prod (`scripts/setup-email.mjs`); the login screen now asks for the 6-digit code only (an old link pasted there still works).
+- ~~Run the new DB migrations on prod (PR #5)~~ **Done by Minnie 2026-11-03 ~12:15 Bangkok.** Next on the Mac: `npm run qc:prod` (G6 re-run for M1/M3–M5).
 - **Honor system (G7 R2-3 + R3-1), please confirm:** early nights and early appointments now count as planned (an early 06:00 flight → "I'm up" at 06:00 earns the Sunrise ticket, as Today shows). The flip side: you could plan a much earlier wake for tomorrow (≥ 4 h ahead) and press "I'm up" up to 3 h early — before going to bed. The app can't know whether you slept. Fine as an honor system, or should "I'm up" also require that last night's ritual was closed ≥ 3 h earlier?
 - **Judgment calls to confirm (DECISIONS 2026-11-03):** backlog coins: 150/day cap, a task finished < 10 min after being added (or its priority raised) pays 10 · Night ticket counts from 14 h to 3 h before the next wake (a short night, e.g. home 03:00 before a 07:00 class, still counts) · Sunrise target freezes 4 h before the wake · bedtime-drift warning compares with the same kind of day.
+- **Farm (M6), please confirm:** an "Out late" night excuses that evening's **Free** block only (no weeds). Should it also cover Gradation (if you leave early)? · Decor prices fence 40 / path 30 / flowers 50 / pond 300 coins? · Starter seeds = radish, turnip, lettuce, carrot (free) until the capsule machine (M7).
+- **Later (Minnie, 2026-11-03 — "ค่อยทำ โน้ตไว้ก่อน"):** (1) send sign-in emails from a dedicated Gmail (e.g. a new app-only address) instead of Minnie's own — re-run `scripts/setup-email.mjs` with it; later a real email service + own domain (`no-reply@…`) if many friends join. (2) Invite-only sign-up (only friends Minnie invites can create an account) — today anyone with the link can sign up.
 - Please test the offline page once on your real iPhone — link + steps sent in chat 2026-11-02; waiting for her result.
 
 ---
 
 ## Overall progress (Minnie wants a % in every update)
-**≈ 43% of M0–M14 · ≈ 52% of v1 (M0–M10)** — 2026-11-03 02:00 Bangkok
+**≈ 52% of M0–M14 · ≈ 63% of v1 (M0–M10)** — 2026-11-03 12:00 Bangkok
 - Weight per milestone = its section size in BUILD_PLAN (M0 26 · M1 14 · M2 17 · M3 13 · M4 12 · M5 13 · M6 22 · M7 11 · M8 13 · M9 5 · M10 16 · M11 9 · M12 8 · M13 10 · M14 12 = 201; v1 = 162).
 - Credit per milestone: built = 65%, + review fixes = 80%, + G1–G5 = 90%, ✅ (G1–G7 + report) = 100%. Partial features count by share of the milestone's bullets.
-- Now: M0 95% · M1 80% · **M2 100% ✅** · M3 85% · M4 80% · M5 80% · M11 5% (.ics import) · M14 15% (onboarding) · M6–M10, M12, M13 0%.
+- Now: **M0 100% ✅** · M1 92% · **M2 100% ✅** · M3 90% · M4 90% · M5 90% (G7 PASS; left: Mac G3 + G6 after db push) · **M6 55%** (rules, 20-crop art, farm screen, plant/harvest/decor RPCs, tests; left: CI, G7, Mac G3; Minnie approved the screenshots 2026-11-03) · M11 5% · M14 15% · M7–M10, M12, M13 0%.
 
 ## Current milestone
 **Moved to a cloud session (2026-11-02 ~22:30 Bangkok)** — the local machine hit its usage limit. Work continues on branch `claude/practical-cannon-a70ubq` → draft PR https://github.com/Nck189/twentyfour-seven/pull/1 (not `main`: the prod migration must go first).

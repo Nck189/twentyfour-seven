@@ -53,6 +53,14 @@ export const sfx = {
       { freq: 660, at: 0, dur: 0.08, type: "sine", gain: 0.25 },
       { freq: 990, at: 0.05, dur: 0.12, type: "sine", gain: 0.2 },
     ]),
+  /** Juicy harvest: a quick rising "bloop" and a bright sparkle on top. */
+  harvest: () =>
+    play([
+      { freq: 392, at: 0, dur: 0.07, type: "sine", gain: 0.22 },
+      { freq: 587, at: 0.04, dur: 0.09, type: "sine", gain: 0.24 },
+      { freq: 880, at: 0.1, dur: 0.12, type: "triangle", gain: 0.16 },
+      { freq: 1319, at: 0.17, dur: 0.16, type: "triangle", gain: 0.1 },
+    ]),
   sunrise: () =>
     play([
       { freq: 523, at: 0, dur: 0.15 },
