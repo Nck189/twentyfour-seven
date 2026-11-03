@@ -42,6 +42,17 @@
   --art-sun: #ffdb8e;
   --art-cloud: #ffffff;
   --art-shadow: #cdbfa6; /* soft flat ellipse under objects */
+  --art-silver: #c9d3dc;
+  --art-silver-light: #e8eef3;
+  --art-silver-dark: #a6b4c1;
+  --art-wood: #d6ab7f;
+  --art-wood-light: #e6c6a2;
+  --art-wood-dark: #b98a60;
+  --art-stone: #ddd6c7;
+  --art-stone-light: #ece7dc;
+  --art-stone-dark: #c3baa7;
+  --art-wilt: #dccb8e; /* dry, yellowed leaf spots */
+  --art-wilt-dark: #c2ad6f;
 
   /* ---------- Art: sky by time of day (gradients allowed only here) ---------- */
   --sky-day-top: #bfe3f2;
@@ -54,6 +65,7 @@
   --sky-night-bottom: #5d6a93;
   --sky-star: #fff4d1;
   --sky-moon: #fff1c7;
+  --sky-night-veil: #3b4a72; /* the farm's night palette: a flat veil over the field */
 
   /* ---------- UI chrome (light) ---------- */
   --ui-bg: #f7f4ec;
