@@ -9,7 +9,7 @@ Minnie is asleep (from 2026-11-03 ~02:00 Bangkok). The build moved between a clo
 - ✅ PR #3 (Plan redesign) and ✅ PR #4 (onboarding) are merged and live.
 - **PR #5 — appointments + 6-digit code login + every G7 S1/S2 fix + 5 new migrations.** Minnie approved merging ("merge นัดได้") — merge when QC is green AND the G7 re-review passes. Fix CI if red (always run `npx playwright test --list` before pushing E2E changes).
   - Stress (head commit `[stress]`): CJ-07 is 0/40 since the sheet-focus fix. The one-tap finish was stuck on "Loading…" (a request that never answered) → every Supabase request now times out at 15 s and the first Plan/backlog load retries once; the stress run verifies it. Failure snapshots + `[diag]` lines are printed into the CI log (the artifact store isn't reachable from the cloud).
-  - G7: review 1 (`G7-M1-M3.md`, `G7-M4-M5.md`) → fixed → re-review 1 (`G7-rereview-2026-11-03.md`) FAIL → fixed → re-review 2 running (scratchpad `g7-rereview-2.md`; copy it into `docs/qa/` when done).
+  - G7: review 1 (`G7-M1-M3.md`, `G7-M4-M5.md`) → fixed → re-review 1 FAIL → fixed → re-review 2 (`G7-rereview-2-2026-11-03.md`, no S1) → fixed → **re-review 3 PASS** (`G7-rereview-3-2026-11-03.md`, 2026-11-03 07:15 Bangkok). Open S3s: R4-1 (one server target for Today), R4-2 (Plan reload vs a pending edit; next fix), R4-3 (tests).
 - **After PR #5 merges, Minnie runs once on the Mac:** `git checkout main && git pull && npx supabase db push --remote` (5 migrations: wake freeze, coin rules, day-plan merge, night window, re-review fixes). The app works before and after; the fixes take effect after.
 
 **2. Then QC, in order (QA_QC.md gates G1–G7, reports in `docs/qa/`):**

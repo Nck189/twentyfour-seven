@@ -10,7 +10,7 @@ Date: 2026-11-03 · Branch: PR #5 (`claude/practical-cannon-a70ubq`) · Prod URL
 | G4 UX QC | ✅ | shell G4 sweep: axe serious/critical 0, controls ≥ 44 px, no horizontal scroll (EN/TH, light/dark) |
 | G5 Data & security | ✅ | RLS on every table, user A can't read/write B (integration) · ledgers read-only · wake events immutable (R-M1-4 fixed) · server-only event types blocked (M1-F3) · secrets check clean |
 | G6 Production smoke | ✅ | `npm run qc:prod` 22/22 on prod (2026-11-03 00:45, incl. CJ-17 export) · Lighthouse assertions passed |
-| G7 Independent review | ⏳ | review 1 (local, M1–M3): M1-F1..F4 fixed · re-review 2026-11-03 (`G7-M1-M3.md`): no M1 S1/S2; R-M1-4 fixed with the S1 wake work · re-review of fixes: see below |
+| G7 Independent review | ✅ | review 1 → fixes → re-review 1 FAIL → fixes → re-review 2 (no S1) → fixes → **re-review 3 PASS** (`G7-rereview-3-2026-11-03.md`, head a1f4f90): no open S1/S2; R4-1..3 S3 + S4s logged below |
 
 ## Issues found & fixed
 | ID | Sev | Found by | Description | Regression test | Fixed in |

@@ -10,7 +10,7 @@ Date: 2026-11-03 · Branch: PR #5 · Prod URL: https://twentyfour-seven.vercel.a
 | G4 UX QC | ✅ | add a task with estimate/priority/day = 1 line + Enter; move = 1 drag or Move to…; targets ≥ 44 px; axe 0 |
 | G5 Data & security | ✅ | coins only via `complete_backlog_item` (once per item, 10-min quick-finish, 150/day cap, dropped pays 0, server timestamps) · ledger read-only |
 | G6 Production smoke | ✅ (pre-fix) | prod 22/22 2026-11-03; re-run after PR #5 |
-| G7 Independent review | ⏳ | review 1 FAIL: R-M5-1..5 S2 → fixed in PR #5 → re-review of fixes: see below |
+| G7 Independent review | ✅ | review 1 → fixes → re-review 1 FAIL → fixes → re-review 2 (no S1) → fixes → **re-review 3 PASS** (`G7-rereview-3-2026-11-03.md`, head a1f4f90): no open S1/S2; R4-1..3 S3 + S4s logged below |
 
 ## Issues found & fixed
 | ID | Sev | Description | Regression test | Fixed in |
