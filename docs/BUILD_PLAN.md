@@ -247,3 +247,5 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 - [ ] M3 — G1, G2, G4, G5, G7 ✅ · `docs/qa/M3-report.md` · left: G3 (Mac visual baselines + rubric), G6 re-run on prod after the db push · deferred S3: R-M3-5..14, R4-1, R4-3
 - [ ] M4 — G1, G2, G4, G5, G7 ✅ · `docs/qa/M4-report.md` · left: G3 (Mac), G6 re-run · deferred: seed planting → M6 (R4-2 fixed)
 - [ ] M5 — G1, G2, G4, G5, G7 ✅ · `docs/qa/M5-report.md` · left: G3 (Mac), G6 re-run · deferred S3: R-M5-6..11
+- [ ] M6 — G1, G2, G4, G5, G7 ✅ (re-review PASS) · merged (PR #6) + migration on prod · `docs/qa/M6-report.md` · left: G3 Mac baselines · deferred S3: K-M6-1, R-M6-4..10, R-M6-R1
+- [ ] M7 — G1, G4, G5, G7 ✅ (re-review 2 PASS) · PR #7 · `docs/qa/M7-report.md` · left: G2 CI on PR #7, G3 Mac baselines, G6 after merge + db push · deferred: Perfect day / streak tickets → M9, Weekly review +3 → M10, S4s R-M7-8..14, R-M7-R3..R5

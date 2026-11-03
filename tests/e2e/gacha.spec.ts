@@ -19,6 +19,17 @@ async function setup(page: Page, tickets: number) {
   return { id, sheet: page.getByRole("dialog", { name: "Capsule machine" }) };
 }
 
+/** Skip if the reveal is still animating (it shows the results by itself after ~1–2 s). */
+async function skipReveal(page: Page) {
+  const reveal = page.getByRole("dialog", { name: "Your capsules" });
+  await reveal
+    .getByRole("button", { name: "Skip" })
+    .click({ timeout: 1500 })
+    .catch(() => {});
+  await expect(reveal.getByRole("button", { name: "Done" })).toBeVisible();
+  return reveal;
+}
+
 const pulls = async (id: string) => (await rest(`gacha_pulls?user_id=eq.${id}&select=id`)) as unknown[];
 
 test("CJ-12a 0 tickets: both pulls are disabled and the sheet says how to earn", async ({ page }) => {
@@ -62,8 +73,7 @@ test("CJ-12c ×10 costs 10 tickets, shows 10 capsules, and the pity counter foll
   const { id, sheet } = await setup(page, 12);
   await expect(sheet.getByText("12 tickets", { exact: true })).toBeVisible();
   await sheet.getByRole("button", { name: "Pull ×10", exact: true }).click();
-  const reveal = page.getByRole("dialog", { name: "Your capsules" });
-  await reveal.getByRole("button", { name: "Skip" }).click();
+  const reveal = await skipReveal(page);
   await expect(reveal.getByRole("listitem")).toHaveCount(10);
   await reveal.getByRole("button", { name: "Done" }).click();
 
@@ -81,8 +91,7 @@ test("CJ-12c ×10 costs 10 tickets, shows 10 capsules, and the pity counter foll
 test("CJ-12d Seed-dex shows found crops and silhouettes with completion", async ({ page }) => {
   const { sheet } = await setup(page, 1);
   await sheet.getByRole("button", { name: "Pull ×1", exact: true }).click();
-  const reveal = page.getByRole("dialog", { name: "Your capsules" });
-  await reveal.getByRole("button", { name: "Skip" }).click();
+  const reveal = await skipReveal(page);
   await reveal.getByRole("button", { name: "Done" }).click();
   await sheet.getByRole("button", { name: "Close" }).click();
   await page.getByRole("button", { name: /^Seed-dex/ }).click();

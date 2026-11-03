@@ -14,6 +14,12 @@ import type { GachaState, PullResult } from "@/lib/farm/useGacha";
 import { sfx } from "@/lib/sound/sfx";
 import { usePrefs } from "@/lib/store/prefs";
 
+/** A unique key per tap; randomUUID is missing on plain http and older iOS. */
+const newKey = () =>
+  typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `${Date.now().toString(36)}-${Array.from(crypto.getRandomValues(new Uint32Array(4)), (x) => x.toString(36)).join("")}`;
+
 const RANK = Object.fromEntries(RARITIES.map((r, i) => [r, i])) as Record<PullResult["rarity"], number>;
 
 /** One result card: the crop on its rarity light, NEW or +shards. */
@@ -196,12 +202,18 @@ export function CapsuleSheet({
     busyRef.current = true;
     setBusy(true);
     setError(false);
-    // One key per tap: a retried request after a dropped connection is never charged twice.
-    const key = `${n}-${crypto.randomUUID()}`;
-    let out = await pull(n, key);
-    if (!out) out = await pull(n, key);
-    busyRef.current = false;
-    setBusy(false);
+    let out: PullResult[] | null = null;
+    try {
+      // One key per tap: a retried request after a dropped connection is never charged twice.
+      const key = `${n}-${newKey()}`;
+      out = await pull(n, key);
+      if (!out) out = await pull(n, key);
+    } catch {
+      out = null;
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
     // An empty answer (shouldn't happen) is treated as a failed pull, never an empty reveal.
     if (out && out.length > 0) setResults(out);
     else setError(true);

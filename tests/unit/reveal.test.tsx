@@ -81,7 +81,10 @@ it("a double-tap on Pull ×1 starts one pull (CJ-12)", async () => {
     </NextIntlClientProvider>,
   );
   const btn = screen.getByRole("button", { name: "Pull ×1" });
-  fireEvent.click(btn);
-  fireEvent.click(btn);
+  // Both taps in one tick, before React can disable the button: only the guard stops the 2nd.
+  act(() => {
+    btn.click();
+    btn.click();
+  });
   expect(pull).toHaveBeenCalledTimes(1);
 });
