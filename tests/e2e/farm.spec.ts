@@ -1,0 +1,79 @@
+import { expect, test, type Page } from "@playwright/test";
+import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
+import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
+import { rest, setAllTemplates, userIdFor } from "../helpers/db";
+import { wakeDay } from "../helpers/day";
+import { IS_PROD_RUN } from "../helpers/env";
+import { addDays, zonedInstant } from "@/lib/time";
+
+/** M6 farm: plant a seed, watch it ripen from real check-ins, harvest it (server-checked). */
+test.skip(IS_PROD_RUN, "creates dedicated users");
+
+async function setup(page: Page) {
+  const email = uniqueEmail("farm");
+  await setPrefs(page, { locale: "en", theme: "light" });
+  await signIn(page, email);
+  const id = await userIdFor(email);
+  await setAllTemplates(id, "10:00");
+  return id;
+}
+
+test("CJ-M6-1 plant a starter seed in an empty plot (2 taps, pictures)", async ({ page }) => {
+  const id = await setup(page);
+  await page.goto("/farm");
+  await page.getByRole("button", { name: "Focus: empty" }).click();
+  const sheet = page.getByRole("dialog", { name: "Plant in Focus" });
+  await sheet.getByRole("button", { name: "Radish" }).click();
+  await expect(sheet).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Focus: Radish, day 0 of 1" })).toBeVisible();
+  expect(await rest(`plots?user_id=eq.${id}&slot=eq.focus&select=crop_id`)).toEqual([{ crop_id: "radish" }]);
+  await expectNoSeriousA11y(page);
+  await expectTouchTargets(page);
+  await expectNoHorizontalScroll(page);
+});
+
+test("CJ-M6-2 a crop that grew yesterday is ripe: harvest it, the produce is kept, the plot empties", async ({
+  page,
+}) => {
+  const id = await setup(page);
+  const today = wakeDay();
+  const yesterday = addDays(today, -1);
+  await rest(`plots?user_id=eq.${id}&slot=eq.focus`, {
+    method: "PATCH",
+    body: JSON.stringify({ crop_id: "radish", planted_on: addDays(today, -2), state: "growing" }),
+  });
+  // Yesterday's Focus started on time (written as a live check-in).
+  await rest("block_logs", {
+    method: "POST",
+    body: JSON.stringify({
+      user_id: id,
+      date: yesterday,
+      block: "focus",
+      planned_start: zonedInstant(yesterday, 12 * 60, "Asia/Bangkok").toISOString(),
+      started_at: zonedInstant(yesterday, 12 * 60 + 4, "Asia/Bangkok").toISOString(),
+    }),
+  });
+  await page.goto("/farm");
+  await page.getByRole("button", { name: "Focus: Radish, ready to harvest" }).click();
+  await page.getByRole("dialog", { name: "Focus" }).getByRole("button", { name: "Harvest" }).click();
+  await expect(page.getByRole("button", { name: "Focus: empty" })).toBeVisible();
+  expect(await rest(`inventory?user_id=eq.${id}&select=item_id,qty`)).toEqual([
+    { item_id: "crop:radish", qty: 1 },
+  ]);
+});
+
+test("CJ-M6-3 an unripe crop has no Harvest; replacing it asks first", async ({ page }) => {
+  const id = await setup(page);
+  await rest(`plots?user_id=eq.${id}&slot=eq.work`, {
+    method: "PATCH",
+    body: JSON.stringify({ crop_id: "carrot", planted_on: wakeDay(), state: "growing" }),
+  });
+  await page.goto("/farm");
+  await page.getByRole("button", { name: "Work: Carrot, day 0 of 1" }).click();
+  const sheet = page.getByRole("dialog", { name: "Work" });
+  await expect(sheet.getByRole("button", { name: "Harvest" })).toHaveCount(0);
+  await sheet.getByRole("button", { name: "Replace" }).click();
+  await expect(sheet.getByText("Replace Carrot?")).toBeVisible();
+  await sheet.getByRole("button", { name: "Lettuce" }).click();
+  await expect(page.getByRole("button", { name: "Work: Lettuce, day 0 of 1" })).toBeVisible();
+});

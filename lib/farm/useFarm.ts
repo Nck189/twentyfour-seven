@@ -23,7 +23,7 @@ type PlotRow = {
   crop_id: string | null;
   star: number;
   planted_on: string | null;
-  harvested_on: string | null;
+  harvested_on?: string | null;
 };
 
 export type FarmData = {
@@ -52,7 +52,11 @@ export function useFarm() {
       const { ctx, userId: uid } = await loadDayContext(client, -1, 1);
       const now = new Date();
       const today = currentDayDate(ctx, now);
-      const plots = await client.from("plots").select("slot, crop_id, star, planted_on, harvested_on");
+      let plots = await client.from("plots").select("slot, crop_id, star, planted_on, harvested_on");
+      // Before the M6 migration reaches prod there's no harvested_on: read without it (the farm
+      // shows; planting answers "Couldn't do that" until the RPCs exist).
+      if (plots.error?.code === "42703")
+        plots = await client.from("plots").select("slot, crop_id, star, planted_on");
       if (plots.error) throw plots.error;
       const plantings: Planting[] = (plots.data as PlotRow[]).flatMap((p) =>
         (BLOCK_KEYS as readonly string[]).includes(p.slot) && isCropId(p.crop_id) && p.planted_on
@@ -62,7 +66,7 @@ export function useFarm() {
                 cropId: p.crop_id as CropId,
                 star: p.star,
                 plantedOn: p.planted_on,
-                harvestedOn: p.harvested_on,
+                harvestedOn: p.harvested_on ?? null,
               },
             ]
           : [],
