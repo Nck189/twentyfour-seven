@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { FixedEvent } from "@/content/defaults";
+import { logEvent } from "@/lib/db/events";
 import type { DayPlanRow } from "@/lib/today/day";
 
 type Fields = Partial<
@@ -77,6 +78,8 @@ export async function saveDirty(
   });
   if (!error) return true;
   if (error.code !== "PGRST202" && !/patch_day_plan/.test(error.message ?? "")) return false;
+  // Server without the merge RPC yet (before `db push`): visible in events, so it isn't silent.
+  void logEvent("day_plan_save_fallback", { date });
   const fallback: Record<string, unknown> = { user_id: userId, date, ...dirty.set };
   if ((dirty.blocks || dirty.addEvents || dirty.removeEventIds) && row) fallback.overrides = row.overrides;
   const res = await client.from("day_plans").upsert(fallback, { onConflict: "user_id,date" });

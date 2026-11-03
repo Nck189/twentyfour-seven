@@ -128,10 +128,28 @@ export function usePlan() {
     };
   }, [client, userId]);
 
+  // Back after a while (the device slept, realtime missed events): reload, unless edits are
+  // waiting to be saved (R3-2).
+  useEffect(() => {
+    let hiddenAt = 0;
+    const onVisible = () => {
+      if (document.visibilityState === "hidden") {
+        hiddenAt = Date.now();
+        return;
+      }
+      const busy =
+        Object.keys(dirty.current).length || Object.keys(timers.current).length || inflight.current.size;
+      if (hiddenAt && Date.now() - hiddenAt >= 60_000 && !busy) setReload((r) => r + 1);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
+
   const persist = useCallback(
     async (date: string) => {
       const row = ctxRef.current?.dayPlans[date];
       const pending = dirty.current[date];
+      delete timers.current[date]; // the timer fired (or was flushed): live updates resume (R3-2)
       if (!row || !userId) return false;
       if (!pending) return true;
       // Take what's pending; edits made while this save is in flight queue up separately.

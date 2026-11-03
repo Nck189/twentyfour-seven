@@ -411,7 +411,7 @@
     "reasonAll": "Same reason for all",
     "tomorrowAppt": "Tomorrow: {list}",
     "unsaved": "Tomorrow's plan isn't saved yet. Check your connection, then tap Goodnight again.",
-    "late": "Done. The Night ticket only counts before bed."
+    "late": "Done. The Night ticket counts until 3 h before your wake-up."
   },
   "onboarding": {
     "cardTitle": "Make 24/7 yours in 2 minutes",

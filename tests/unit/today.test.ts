@@ -344,3 +344,29 @@ describe("a target the server froze is the one Today shows (R2-4)", () => {
     expect(hm(frozen!.target)).toBe("08:00");
   });
 });
+
+describe("an early appointment pulls the wake (R3-1: the server honours it within −6 h)", () => {
+  it("06:00 flight on a 10:00 free day: Today and the planned wake both say 06:00", () => {
+    const c = ctx({
+      dayPlans: {
+        "2026-11-02": {
+          date: "2026-11-02",
+          template_id: null,
+          attending: null,
+          bedtime_override: null,
+          late_night: null,
+          mode: "normal",
+          overrides: {
+            fixed_events: [
+              { id: "f", key: "appointment", title: "Flight", start: "06:00", end: "07:00", host: "wake" },
+            ],
+          },
+        },
+      },
+    });
+    const p = plannedWake(c, "2026-11-02");
+    expect(hm(new Date(p.wake))).toBe("06:00");
+    expect(hm(new Date(p.base))).toBe("10:00");
+    expect(hm(pickWakeCard(c, at("2026-11-02", "05:30"), "2026-11-02", {})!.target)).toBe("06:00");
+  });
+});

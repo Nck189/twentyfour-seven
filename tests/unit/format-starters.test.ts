@@ -12,6 +12,9 @@ import {
 } from "@/lib/format";
 import { saveDirty } from "@/lib/plan/patch";
 
+const logged = vi.hoisted(() => vi.fn(async () => {}));
+vi.mock("@/lib/db/events", () => ({ logEvent: logged }));
+
 const TZ = "Asia/Bangkok";
 
 describe("format (Bangkok time, EN + TH)", () => {
@@ -79,6 +82,7 @@ describe("saveDirty (R-M3-4 day-plan patch)", () => {
       { user_id: "u", date: "2026-11-04", mode: "sick", overrides: row.overrides },
       { onConflict: "user_id,date" },
     );
+    expect(logged).toHaveBeenCalledWith("day_plan_save_fallback", { date: "2026-11-04" });
   });
   it("any other error is a failed save (kept for retry)", async () => {
     const { client } = fake({ code: "08006", message: "network" });
