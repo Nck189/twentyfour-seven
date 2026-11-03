@@ -4,6 +4,7 @@ import { CROPS, CROP_IDS, GROW_DAYS, STARTER_CROPS } from "@/content/crops";
 import { MUTATION_MULTIPLIER } from "@/content/game";
 import {
   blockResult,
+  buildDayFacts,
   dayOee,
   earnedMutations,
   farmState,
@@ -375,5 +376,31 @@ describe("a seeded week produces the right farm (M6 done-when)", () => {
       expect(roll(k)).toBeGreaterThanOrEqual(0);
       expect(roll(k)).toBeLessThan(1);
     }
+  });
+});
+
+describe("day facts from rows (lib/game/facts)", () => {
+  const log = (date: string, block: BlockKey) => ({ ...good(date), date, block });
+  it("one day per wake-day; only live in-window wakes and Night tickets count; today is open", () => {
+    const f = buildDayFacts({
+      from: "2026-11-08",
+      today: "2026-11-10",
+      timezone: "Asia/Bangkok",
+      logs: [log("2026-11-09", "focus"), log("2026-11-10", "wake")],
+      modes: { "2026-11-08": "sick" },
+      wakes: [
+        { date: "2026-11-09", in_window: true, backfilled: false },
+        { date: "2026-11-08", in_window: true, backfilled: true },
+      ],
+      nights: ["2026-11-09"],
+      exercise: ["2026-11-09T18:30:00Z"], // 01:30 on the 10th in Bangkok
+    });
+    expect(f.map((d) => d.date)).toEqual(["2026-11-08", "2026-11-09", "2026-11-10"]);
+    expect(f[0]).toMatchObject({ mode: "sick", wakeInWindow: false });
+    expect(f[0]!.open).toBeUndefined();
+    expect(f[1]).toMatchObject({ mode: "normal", wakeInWindow: true, nightRitualDone: true, exercised: false });
+    expect(Object.keys(f[1]!.logs)).toEqual(["focus"]);
+    expect(f[2]).toMatchObject({ exercised: true, open: [...BLOCK_KEYS] });
+    expect(isMinimumDay(f[1]!)).toBe(true);
   });
 });

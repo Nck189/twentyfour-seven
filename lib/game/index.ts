@@ -4,3 +4,4 @@ export * from "./mutations";
 export * from "./quality";
 export * from "./growth";
 export * from "./farm";
+export * from "./facts";
