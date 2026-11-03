@@ -11,29 +11,56 @@ import type { BlockKey } from "@/content/blocks";
 import { STARTER_CROPS, type CropId } from "@/content/crops";
 import type { PlotView } from "@/lib/game";
 
-/** Seed picker: starter seeds as pictures (rarer ones arrive with the gacha in M7). */
-function SeedPicker({ onPick, busy }: { onPick: (crop: CropId) => void; busy: boolean }) {
+/** Seed picker: seeds you own (from capsules) first, then the free starter seeds — as pictures. */
+function SeedPicker({
+  onPick,
+  busy,
+  seeds = {},
+}: {
+  onPick: (crop: CropId) => void;
+  busy: boolean;
+  seeds?: Partial<Record<CropId, number>>;
+}) {
   const t = useTranslations("farm");
   const crops = useTranslations("crops");
+  const owned = (Object.entries(seeds) as [CropId, number][]).filter(
+    ([id, n]) => n > 0 && !STARTER_CROPS.includes(id),
+  );
+  const tile = (id: CropId, qty?: number) => (
+    <li key={id}>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => onPick(id)}
+        aria-label={qty ? t("seedOwned", { crop: crops(id), n: qty }) : crops(id)}
+        className="tap relative flex min-h-11 w-full flex-col items-center rounded-xl bg-surface-2 p-1 disabled:opacity-50"
+      >
+        <CropArt cropId={id} stage={3} status="ready" className="h-14 w-14" />
+        <span className="w-full truncate text-center text-xs font-bold" aria-hidden="true">
+          {crops(id)}
+        </span>
+        {qty !== undefined && (
+          <span
+            aria-hidden="true"
+            className="absolute top-1 right-1 rounded-full bg-primary px-1.5 text-[11px] font-bold text-on-primary"
+          >
+            {qty}
+          </span>
+        )}
+      </button>
+    </li>
+  );
   return (
     <div>
+      {owned.length > 0 && (
+        <>
+          <p className="mb-2 text-sm font-bold text-muted">{t("yourSeeds")}</p>
+          <ul className="mb-3 grid grid-cols-4 gap-2">{owned.map(([id, n]) => tile(id, n))}</ul>
+        </>
+      )}
       <p className="mb-2 text-sm font-bold text-muted">{t("starterSeeds")}</p>
-      <ul className="grid grid-cols-4 gap-2">
-        {STARTER_CROPS.map((id) => (
-          <li key={id}>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => onPick(id)}
-              className="tap flex min-h-11 w-full flex-col items-center rounded-xl bg-surface-2 p-1 disabled:opacity-50"
-            >
-              <CropArt cropId={id} stage={3} status="ready" className="h-14 w-14" />
-              <span className="text-xs font-bold">{crops(id)}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-2 text-sm text-muted">{t("moreSeeds")}</p>
+      <ul className="grid grid-cols-4 gap-2">{STARTER_CROPS.map((id) => tile(id))}</ul>
+      {owned.length === 0 && <p className="mt-2 text-sm text-muted">{t("moreSeeds")}</p>}
     </div>
   );
 }
@@ -43,12 +70,15 @@ export function PlotSheet({
   slot,
   plot,
   onPlant,
+  seeds,
   onHarvest,
   onClose,
 }: {
   slot: BlockKey;
   plot: PlotView | undefined;
   onPlant: (crop: CropId, replace: boolean) => Promise<boolean>;
+  /** Seeds you own (capsules), shown first in the picker. */
+  seeds?: Partial<Record<CropId, number>>;
   onHarvest: () => Promise<boolean>;
   onClose: () => void;
 }) {
@@ -77,7 +107,7 @@ export function PlotSheet({
     return (
       <Sheet title={t("plantTitle", { block })} onClose={onClose}>
         <p className="mb-3 text-muted">{t("plantHint", { block })}</p>
-        <SeedPicker busy={busy} onPick={(c) => void act(() => onPlant(c, false))} />
+        <SeedPicker seeds={seeds} busy={busy} onPick={(c) => void act(() => onPlant(c, false))} />
         {errorLine}
       </Sheet>
     );
@@ -158,7 +188,7 @@ export function PlotSheet({
         {stage === "dead" && (
           <>
             <p className="mb-2 font-bold">{t("clear")}</p>
-            <SeedPicker busy={busy} onPick={(c) => void act(() => onPlant(c, true))} />
+            <SeedPicker seeds={seeds} busy={busy} onPick={(c) => void act(() => onPlant(c, true))} />
           </>
         )}
         {stage === "growing" &&
@@ -166,7 +196,7 @@ export function PlotSheet({
             <div className="rounded-xl bg-surface-2 p-3">
               <p className="font-bold">{t("replaceTitle", { crop: name })}</p>
               <p className="mb-3 text-sm text-muted">{t("replaceBody")}</p>
-              <SeedPicker busy={busy} onPick={(c) => void act(() => onPlant(c, true))} />
+              <SeedPicker seeds={seeds} busy={busy} onPick={(c) => void act(() => onPlant(c, true))} />
             </div>
           ) : (
             <Button variant="secondary" className="w-full" onClick={() => setReplacing(true)}>

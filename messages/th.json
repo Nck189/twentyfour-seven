@@ -197,7 +197,7 @@
     "plantTitle": "ปลูกในแปลง {block}",
     "plantHint": "จะโตทุกวันที่ {block} ไปได้ดี: เริ่มตรงเวลา หรือเช็กลิสต์ครบ 70%",
     "starterSeeds": "เมล็ดเริ่มต้น",
-    "moreSeeds": "เมล็ดหายากได้จากตู้กาชา (เร็วๆ นี้)",
+    "moreSeeds": "ได้เมล็ดเพิ่มจากตู้กาชา",
     "harvest": "เก็บเกี่ยว",
     "harvested": "+1 {crop}",
     "progress": "วันที่ {done} จาก {total}",
@@ -241,7 +241,9 @@
     },
     "decor": "ของแต่งฟาร์ม",
     "coins": "{n} เหรียญ",
-    "buyItem": "ซื้อ{item} {price} เหรียญ"
+    "buyItem": "ซื้อ{item} {price} เหรียญ",
+    "yourSeeds": "เมล็ดของเรา",
+    "seedOwned": "{crop} มี {n} เมล็ด"
   },
   "crops": {
     "radish": "แรดิช",
@@ -270,6 +272,37 @@
     "path": "ทางเดิน",
     "flowers": "แปลงดอกไม้",
     "pond": "บ่อน้ำ"
+  },
+  "gacha": {
+    "title": "ตู้กาชาเมล็ด",
+    "tickets": "{n} ตั๋ว",
+    "pull1": "สุ่ม ×1",
+    "pull10": "สุ่ม ×10",
+    "pityRare": "Rare+ อีก {n}",
+    "pityEpic": "Epic+ อีก {n}",
+    "pityLegendary": "Legendary ภายใน {n}",
+    "howToEarn": "ได้ตั๋วจากการตื่นตรงเวลาและทำ Night ritual",
+    "results": "แคปซูลของเรา",
+    "new": "ใหม่!",
+    "shards": "+{n} ชิ้นส่วน",
+    "skip": "ข้าม",
+    "done": "เสร็จ",
+    "error": "สุ่มไม่สำเร็จ ตั๋วยังอยู่ครบ ลองใหม่อีกครั้งนะ",
+    "rarity": {
+      "common": "ธรรมดา",
+      "uncommon": "ไม่ธรรมดา",
+      "rare": "หายาก",
+      "epic": "มหากาพย์",
+      "legendary": "ตำนาน"
+    },
+    "dexTitle": "สมุดเมล็ด",
+    "dexProgress": "เจอแล้ว {have} จาก {total} · {pct}%",
+    "dexShort": "{have} จาก {total}",
+    "unknown": "ยังไม่เจอ",
+    "stars": "★{n}",
+    "shardsHave": "{n} ชิ้นส่วน",
+    "starUp": "อัปดาว · {n} ชิ้นส่วน",
+    "maxStar": "★5 — เต็มที่แล้ว!"
   },
   "stats": {
     "title": "สถิติ",

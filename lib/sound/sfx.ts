@@ -61,6 +61,35 @@ export const sfx = {
       { freq: 880, at: 0.1, dur: 0.12, type: "triangle", gain: 0.16 },
       { freq: 1319, at: 0.17, dur: 0.16, type: "triangle", gain: 0.1 },
     ]),
+  /** Capsule machine: a soft rattle while it shakes. */
+  shake: () =>
+    play(
+      [0, 0.08, 0.16, 0.24].map((at, i) => ({
+        freq: i % 2 ? 300 : 340,
+        at,
+        dur: 0.05,
+        type: "triangle" as OscillatorType,
+        gain: 0.08,
+      })),
+    ),
+  /** The capsule cracks open. */
+  crack: () =>
+    play([
+      { freq: 180, at: 0, dur: 0.05, type: "square", gain: 0.08 },
+      { freq: 520, at: 0.03, dur: 0.08, type: "triangle", gain: 0.15 },
+    ]),
+  /** Reveal jingle: the higher the rarity (0 common … 4 legendary), the higher and longer it goes. */
+  jingle: (rank: number) => {
+    const scale = [523, 587, 659, 784, 880, 988, 1047, 1175, 1319];
+    const notes = Array.from({ length: 3 + rank }, (_, i) => ({
+      freq: scale[Math.min(scale.length - 1, i + rank)]!,
+      at: i * 0.09,
+      dur: 0.14,
+      type: "triangle" as OscillatorType,
+      gain: 0.14,
+    }));
+    play(notes);
+  },
   sunrise: () =>
     play([
       { freq: 523, at: 0, dur: 0.15 },

@@ -5,6 +5,8 @@ import { FarmView } from "@/components/farm/FarmScreen";
 import { BLOCK_KEYS, type BlockKey } from "@/content/blocks";
 import type { SkyPhase } from "@/lib/farm/sky";
 import { farmState, type DayFacts, type GameLog, type Planting } from "@/lib/game";
+import type { CropId } from "@/content/crops";
+import type { GachaState, PullResult } from "@/lib/farm/useGacha";
 import { addDays } from "@/lib/time";
 
 const TODAY = "2026-11-15";
@@ -53,6 +55,39 @@ const PLANTINGS: Planting[] = [
 
 const SKIES: SkyPhase[] = ["day", "sunrise", "dusk", "night"];
 
+const SAMPLE_GACHA = {
+  state: {
+    tickets: 23,
+    pity: { since_rare: 4, since_epic: 17, since_legendary: 52 },
+    shards: { tomato: 7, radish: 3 } as Partial<Record<CropId, number>>,
+    dex: Object.fromEntries(
+      (["radish", "carrot", "tomato", "strawberry", "pumpkin", "lavender", "star_fruit"] as CropId[]).map(
+        (c, i) => [c, { crop: c, count: 1 + (i % 3), star: 1 + (i % 2) }],
+      ),
+    ) as GachaState["dex"],
+    seeds: { pumpkin: 1, star_fruit: 1, tomato: 2 } as Partial<Record<CropId, number>>,
+  },
+  pull: async (n: 1 | 10): Promise<PullResult[]> =>
+    n === 1
+      ? [{ crop: "moon_melon", rarity: "legendary", new: true, shards: 0 }]
+      : (
+          [
+            ["radish", "common", false, 1],
+            ["lettuce", "common", true, 0],
+            ["corn", "uncommon", true, 0],
+            ["carrot", "common", false, 1],
+            ["blueberry", "uncommon", true, 0],
+            ["sunflower", "rare", true, 0],
+            ["turnip", "common", true, 0],
+            ["tomato", "uncommon", false, 2],
+            ["grape", "epic", true, 0],
+            ["radish", "common", false, 1],
+          ] as const
+        ).map(([crop, rarity, isNew, shards]) => ({ crop, rarity, new: isNew, shards })),
+  starUp: async () => true,
+  reload: () => {},
+};
+
 export function FarmPreview() {
   const q = useSearchParams().get("sky");
   const sky = SKIES.find((s) => s === q) ?? "day";
@@ -73,6 +108,7 @@ export function FarmPreview() {
         plant={async () => true}
         harvest={async () => true}
         buyDecor={async () => true}
+        gacha={SAMPLE_GACHA}
         reload={() => {}}
       />
     </div>
