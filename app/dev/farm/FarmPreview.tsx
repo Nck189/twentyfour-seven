@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { FarmView } from "@/components/farm/FarmScreen";
 import { BLOCK_KEYS, type BlockKey } from "@/content/blocks";
 import type { SkyPhase } from "@/lib/farm/sky";
@@ -50,7 +51,11 @@ const PLANTINGS: Planting[] = [
   { slot: "free", cropId: "carrot", star: 1, plantedOn: addDays(TODAY, -4) },
 ];
 
-export function FarmPreview({ sky }: { sky: SkyPhase }) {
+const SKIES: SkyPhase[] = ["day", "sunrise", "dusk", "night"];
+
+export function FarmPreview() {
+  const q = useSearchParams().get("sky");
+  const sky = SKIES.find((s) => s === q) ?? "day";
   const farm = farmState(PLANTINGS, sampleDays(), "preview");
   const planted = new Set(PLANTINGS.map((p) => p.slot));
   return (
