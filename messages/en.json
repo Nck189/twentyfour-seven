@@ -32,7 +32,7 @@
     "google": "Continue with Google",
     "error": "Couldn't send the code. Please try again.",
     "callbackError": "That sign-in link has expired or was already used. Request a new one.",
-    "codeLabel": "Code or link",
+    "codeLabel": "6-digit code",
     "codeHint": "Check {email} for your sign-in code.",
     "verify": "Sign in",
     "verifying": "Signing in…",
@@ -44,7 +44,7 @@
     "rateLimited": "Please wait a minute before asking for another code. Your earlier code still works.",
     "language": "Language",
     "codePlaceholder": "123456",
-    "codeTip": "Type the 6-digit code (iPhone may offer it above the keyboard), or paste the link from the email."
+    "codeTip": "Type the 6-digit code from the email (iPhone may offer it above the keyboard)."
   },
   "today": {
     "title": "Today",
