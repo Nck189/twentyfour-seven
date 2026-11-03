@@ -100,9 +100,12 @@ describe("block_logs backfill guard (CJ-06)", () => {
   it("a live check-in stays live; an old timestamp is forced to backfilled", async () => {
     const u = await newUser("guard");
     const now = new Date().toISOString();
+    // Dates follow the clock: a fixed date ages into "older than yesterday" (forced backfilled).
+    const today = localDate(new Date(), TZ);
+    const before = addDays(today, -3);
     const live = await u.client
       .from("block_logs")
-      .insert({ user_id: u.id, date: "2026-11-02", block: "focus", started_at: now, backfilled: false })
+      .insert({ user_id: u.id, date: today, block: "focus", started_at: now, backfilled: false })
       .select()
       .single();
     expect(live.data!.backfilled).toBe(false);
@@ -110,9 +113,9 @@ describe("block_logs backfill guard (CJ-06)", () => {
       .from("block_logs")
       .insert({
         user_id: u.id,
-        date: "2026-11-01",
+        date: before,
         block: "focus",
-        started_at: "2026-11-01T04:00:00Z",
+        started_at: `${before}T04:00:00Z`,
         backfilled: false,
       })
       .select()
