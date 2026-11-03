@@ -295,6 +295,7 @@ Something is always "almost unlocked", so there's a reason to come back. Small a
 Each one-time setup step pays a small reward, once, granted **server-side** when the setting really exists in the data (never on a button tap alone). Same ledger and rules as §8.8b; numbers in `content/unlocks.ts`. Bigger setups pay more; nothing pays twice; undoing a setting doesn't take the reward back, redoing it doesn't pay again.
 - **Examples (sized to effort):** set your kinds of day / wake times → seeds; your own first-10 for a block → 1 ticket; a checklist on a block → coins; first backlog task with an estimate → coins; weekly exercise goal + gym close time → animal feed; install to the Home Screen / turn on notifications (v1 push) → decor; Thai or English picked + timezone checked → small coins.
 - **UI:** a calm "Set up 24/7" card (pictures, a progress ring "3 of 8") on More and, for new users, once on Today; each row shows its reward picture. Done rows fold away. No emoji.
+- **Home Screen install** (Minnie, 2026-11-03): the app can tell it was opened from the Home Screen (`display-mode: standalone`, or `navigator.standalone` on iPhone); the first such launch reports it once and the server grants a small decor reward. It's the device's word (no server can see an install), so the reward stays small and one-time per account. The setup card shows "Add to Home Screen" with the iPhone steps (Share → Add to Home Screen) until it's done.
 - Lands with the economy (M7) and the unlock ladder; new features add their own setup row when they ship.
 
 ### 8.9 Decor & sky
