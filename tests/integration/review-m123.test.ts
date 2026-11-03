@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addDays, localDate, localParts } from "@/lib/time";
-import { newUser } from "./helpers";
+import { admin, newUser } from "./helpers";
 
 const today = () => localDate(new Date(), "Asia/Bangkok");
 
@@ -12,7 +12,10 @@ describe("review M1–M3 security regressions", () => {
     // of day), so only the fake snapshot could make this "on time".
     const far = localParts(new Date(Date.now() + 12 * 3_600_000), "Asia/Bangkok");
     const target = `${String(far.hour).padStart(2, "0")}:${String(far.minute).padStart(2, "0")}`;
-    await u.client.from("templates").update({ target_wake: target, options: {} }).neq("key", "");
+    // Set up as admin and drop any snapshot: a client edit here can freeze today's default target
+    // (e.g. Tuesday 10:00 at 07:03 is inside its 3 h early window), which is correct but not this test.
+    await admin().from("templates").update({ target_wake: target, options: {} }).eq("user_id", u.id);
+    await admin().from("wake_snapshots").delete().eq("user_id", u.id);
     await u.client
       .from("day_plans")
       .upsert(
