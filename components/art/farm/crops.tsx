@@ -540,10 +540,18 @@ function CrystalRose() {
       />
       <path d="M14 15.5 Q14.4 24.4 23.4 24.6 L24 19.5 Q19 19.5 14 15.5Z" fill="var(--art-pink)" />
       <path d="M24 19.5 L23.4 24.6 Q31.6 24.2 33.4 17.6 Q29 19.5 24 19.5Z" fill="var(--art-blue-light)" />
-      {/* the heart of the rose: a spiral of two petals */}
+      {/* the heart: a folded inner petal (no lines, so it never reads as a face) */}
       <ellipse cx={24} cy={15.5} rx={5.4} ry={4} fill="var(--art-pink-light)" />
-      <path d="M20.6 15.2 Q24 11.6 27.4 15.2 Q24 13.8 20.6 15.2Z" fill="var(--art-pink-dark)" />
-      <polygon points="18.5,9.5 21,7.6 22.6,10.2" fill="var(--art-white)" opacity={0.85} />
+      <ellipse cx={25.3} cy={16.4} rx={3.2} ry={2.3} fill="var(--art-pink)" />
+      <ellipse
+        cx={15.6}
+        cy={12.6}
+        rx={1.8}
+        ry={1.1}
+        fill="var(--art-white)"
+        opacity={0.7}
+        transform="rotate(-40 15.6 12.6)"
+      />
       <Sparkle cx={36} cy={8} r={2.4} fill="var(--art-white)" />
       <Sparkle cx={11.5} cy={21} r={1.6} fill="var(--art-blue-light)" />
     </g>
