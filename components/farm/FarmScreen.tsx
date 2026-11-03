@@ -10,10 +10,12 @@ import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { Button } from "@/components/ui/Button";
 import { BLOCK_KEYS, type BlockKey } from "@/content/blocks";
 import type { CropId } from "@/content/crops";
+import type { DecorId } from "@/content/decor";
 import type { Quality } from "@/content/game";
 import { useFarm, type FarmData } from "@/lib/farm/useFarm";
 import { sfx } from "@/lib/sound/sfx";
 import { HarvestPop } from "./HarvestPop";
+import { DECOR_ART, DecorShop } from "./DecorShop";
 import { PlotSheet } from "./PlotSheet";
 
 const LOCKED_FIELDS = 3;
@@ -24,9 +26,17 @@ const LOCKED_FIELDS = 3;
  * `compact` = the iPad/Mac side panel (read-only, no sheets).
  */
 export function FarmScreen({ compact = false }: { compact?: boolean }) {
-  const { data, status, plant, harvest, reload } = useFarm();
+  const { data, status, plant, harvest, buyDecor, reload } = useFarm();
   return (
-    <FarmView compact={compact} data={data} status={status} plant={plant} harvest={harvest} reload={reload} />
+    <FarmView
+      compact={compact}
+      data={data}
+      status={status}
+      plant={plant}
+      harvest={harvest}
+      buyDecor={buyDecor}
+      reload={reload}
+    />
   );
 }
 
@@ -37,6 +47,7 @@ export function FarmView({
   status,
   plant,
   harvest,
+  buyDecor,
   reload,
 }: {
   compact?: boolean;
@@ -44,12 +55,14 @@ export function FarmView({
   status: "loading" | "ready" | "error";
   plant: (slot: BlockKey, crop: CropId, replace?: boolean) => Promise<boolean>;
   harvest: (slot: BlockKey) => Promise<boolean>;
+  buyDecor: (item: DecorId) => Promise<boolean>;
   reload: () => void;
 }) {
   const t = useTranslations("farm");
   const tc = useTranslations("common");
   const crops = useTranslations("crops");
   const blocks = useTranslations("blocks");
+  const decorNames = useTranslations("decor");
   const [open, setOpen] = useState<BlockKey | null>(null);
   const [pop, setPop] = useState<{ cropId: CropId; quality: Quality } | null>(null);
   const endPop = useCallback(() => setPop(null), []);
@@ -157,6 +170,21 @@ export function FarmView({
               </li>
             ))}
           </ul>
+          {data.decor.length > 0 && (
+            <ul
+              aria-label={t("decor")}
+              className={`flex flex-wrap items-end gap-1 px-3 pb-3 ${night ? "bg-[var(--sky-night-bottom)]" : "bg-[var(--art-leaf-light)]"}`}
+            >
+              {data.decor.map((id, k) => {
+                const Art = DECOR_ART[id];
+                return (
+                  <li key={`${id}-${k}`} aria-label={decorNames(id)}>
+                    <Art className="h-10 w-10" />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
           {/* The farm's own night palette: one soft veil over the field (not the UI dark mode). */}
           {night && (
             <div
@@ -183,6 +211,8 @@ export function FarmView({
           </ul>
         )}
       </section>
+
+      {!compact && <DecorShop coins={data.coins} onBuy={buyDecor} />}
 
       {!compact && (
         <section aria-label={t("fields")} className="mx-4 mt-4 mb-6 lg:mx-6">

@@ -31,3 +31,14 @@ describe("farm SQL mirrors the static content", () => {
     expect(sql).toContain(`streak >= ${DEAD_AT_MISSES}`);
   });
 });
+
+describe("decor prices mirror content/decor.ts", () => {
+  it("every item, same price", async () => {
+    const { DECOR_IDS, DECOR_PRICE } = await import("@/content/decor");
+    const body = sql.match(/_decor_price[\s\S]*?end;/)![0];
+    const fromSql = Object.fromEntries(
+      [...body.matchAll(/when '([a-z_]+)' then (\d+)/g)].map((m) => [m[1], Number(m[2])]),
+    );
+    expect(fromSql).toEqual(Object.fromEntries(DECOR_IDS.map((id) => [id, DECOR_PRICE[id]])));
+  });
+});

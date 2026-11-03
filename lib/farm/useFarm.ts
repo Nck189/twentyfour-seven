@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BLOCK_KEYS, type BlockKey } from "@/content/blocks";
 import { isCropId, type CropId } from "@/content/crops";
+import { isDecorId, type DecorId } from "@/content/decor";
 import {
   buildDayFacts,
   farmState,
@@ -30,6 +31,9 @@ export type FarmData = {
   farm: FarmState;
   /** Block plots with nothing planted. */
   empty: BlockKey[];
+  coins: number;
+  /** Decor bought, oldest first (SPEC §8.9). */
+  decor: DecorId[];
   sky: SkyPhase;
   today: string;
 };
@@ -73,7 +77,7 @@ export function useFarm() {
       );
       const oldest = plantings.reduce((m, p) => (p.plantedOn < m ? p.plantedOn : m), today);
       const from = [addDays(oldest, -1), addDays(today, -FARM_HISTORY_DAYS)].sort().at(-1)!;
-      const [logs, plans, wakes, nights, ex] = await Promise.all([
+      const [logs, plans, wakes, nights, ex, game, decorRows] = await Promise.all([
         client.from("block_logs").select("*").gte("date", from),
         client.from("day_plans").select("date, mode").gte("date", from),
         client.from("wake_events").select("date, in_window, backfilled").gte("date", from),
@@ -82,8 +86,11 @@ export function useFarm() {
           .from("exercise_logs")
           .select("at")
           .gte("at", `${addDays(from, -1)}T00:00:00Z`),
+        client.from("game_state").select("coins").maybeSingle(),
+        client.from("decor").select("item_id").order("created_at"),
       ]);
-      const err = logs.error ?? plans.error ?? wakes.error ?? nights.error ?? ex.error;
+      const err =
+        logs.error ?? plans.error ?? wakes.error ?? nights.error ?? ex.error ?? game.error ?? decorRows.error;
       if (err) throw err;
       const days = buildDayFacts({
         from,
@@ -105,6 +112,8 @@ export function useFarm() {
           farm: farmState(plantings, days, uid),
           empty: BLOCK_KEYS.filter((b) => !planted.has(b)),
           sky: skyPhaseFor(block),
+          coins: (game.data?.coins as number | undefined) ?? 0,
+          decor: ((decorRows.data ?? []) as { item_id: string }[]).map((d) => d.item_id).filter(isDecorId),
           today,
         },
       };
@@ -167,8 +176,17 @@ export function useFarm() {
     [client],
   );
 
+  const buyDecor = useCallback(
+    async (item: DecorId) => {
+      const { error } = await client.rpc("buy_decor", { p_item: item });
+      if (!error) setReload((r) => r + 1);
+      return !error;
+    },
+    [client],
+  );
+
   return useMemo(
-    () => ({ data, status, plant, harvest, reload: () => setReload((r) => r + 1) }),
-    [data, status, plant, harvest],
+    () => ({ data, status, plant, harvest, buyDecor, reload: () => setReload((r) => r + 1) }),
+    [data, status, plant, harvest, buyDecor],
   );
 }

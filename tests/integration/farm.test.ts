@@ -216,3 +216,27 @@ describe("harvest_plot", () => {
     expect((await u.client.rpc("harvest_plot", { p_slot: "sleep" })).error?.code).toBe("22023");
   });
 });
+
+describe("buy_decor (SPEC §8.9)", () => {
+  it("costs coins atomically, never below zero; the item lands on the farm", async () => {
+    const u = await newUser("decor");
+    expect((await u.client.rpc("buy_decor", { p_item: "fence" })).error?.code).toBe("P0001");
+    await admin().from("game_state").update({ coins: 100 }).eq("user_id", u.id);
+    const r = await u.client.rpc("buy_decor", { p_item: "fence" });
+    expect(r.error).toBeNull();
+    expect(r.data).toMatchObject({ item: "fence", coins: 60 });
+    // Two at once with 60 coins and a 50-coin item: exactly one goes through.
+    const both = await Promise.all([
+      u.client.rpc("buy_decor", { p_item: "flowers" }),
+      u.client.rpc("buy_decor", { p_item: "flowers" }),
+    ]);
+    expect(both.filter((x) => x.error === null)).toHaveLength(1);
+    const { data: gs } = await u.client.from("game_state").select("coins").single();
+    expect(gs!.coins).toBe(10);
+    const { data: decor } = await u.client.from("decor").select("item_id").order("item_id");
+    expect(decor).toEqual([{ item_id: "fence" }, { item_id: "flowers" }]);
+    expect((await u.client.rpc("buy_decor", { p_item: "castle" })).error?.code).toBe("22023");
+    const fake = await u.client.from("events").insert({ user_id: u.id, type: "decor_bought", payload: {} });
+    expect(fake.error?.code).toBe("42501");
+  });
+});

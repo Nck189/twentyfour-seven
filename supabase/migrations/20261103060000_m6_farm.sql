@@ -292,14 +292,57 @@ begin
   return new;
 end $$;
 
--- Planting is a server-only event too (the audit log can't be faked).
+-- Decor shop basics (SPEC §8.9): coins buy fences, paths, flowers, a pond (content/decor.ts).
+create or replace function public._decor_price(p_item text)
+returns integer
+language sql
+immutable
+set search_path = ''
+as $$
+  select case p_item when 'fence' then 40 when 'path' then 30 when 'flowers' then 50 when 'pond' then 300 end;
+$$;
+
+-- Buy one decor item: the coins come off atomically (never below zero), the item lands on the farm.
+create or replace function public.buy_decor(p_item text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  uid uuid := auth.uid();
+  price integer := public._decor_price(p_item);
+  left_coins integer;
+  n integer;
+  item public.decor;
+begin
+  if uid is null then
+    raise exception 'not authenticated' using errcode = '42501';
+  end if;
+  if price is null then
+    raise exception 'unknown item' using errcode = '22023';
+  end if;
+  update public.game_state set coins = coins - price
+  where user_id = uid and coins >= price
+  returning coins into left_coins;
+  if not found then
+    raise exception 'not enough coins' using errcode = 'P0001';
+  end if;
+  select count(*) into n from public.decor where user_id = uid and item_id = p_item;
+  insert into public.decor (user_id, item_id, x, y) values (uid, p_item, n, 0) returning * into item;
+  insert into public.events (user_id, type, payload)
+  values (uid, 'decor_bought', jsonb_build_object('item', p_item, 'price', price));
+  return jsonb_build_object('id', item.id, 'item', p_item, 'coins', left_coins);
+end $$;
+
+-- Planting and buying decor are server-only events too (the audit log can't be faked).
 drop policy if exists "own rows: insert" on public.events;
 create policy "own rows: insert" on public.events for insert to authenticated
   with check (
     user_id = (select auth.uid())
     and type not in ('ticket_granted', 'wake_pressed', 'wake_backfilled', 'night_ritual_completed',
                      'gacha_pull', 'coins_granted', 'essence_granted', 'egg_hatched', 'harvest',
-                     'seed_planted')
+                     'seed_planted', 'decor_bought')
   );
 
 -- The farm follows other devices live (planting/harvest on the phone shows on the Mac).
@@ -313,5 +356,8 @@ revoke all on function public._block_result(public.block_logs, text, boolean) fr
 revoke all on function public._plot_ripe(uuid, public.plots, date) from public, anon, authenticated;
 revoke all on function public.plant_seed(text, text, boolean) from public, anon;
 grant execute on function public.plant_seed(text, text, boolean) to authenticated;
+revoke all on function public._decor_price(text) from public, anon, authenticated;
+revoke all on function public.buy_decor(text) from public, anon;
+grant execute on function public.buy_decor(text) to authenticated;
 revoke all on function public.harvest_plot(text) from public, anon;
 grant execute on function public.harvest_plot(text) to authenticated;

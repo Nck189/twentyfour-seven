@@ -61,10 +61,18 @@ export function FarmPreview() {
   return (
     <div className="mx-auto max-w-3xl py-2">
       <FarmView
-        data={{ farm, sky, today: TODAY, empty: BLOCK_KEYS.filter((b) => !planted.has(b)) }}
+        data={{
+          farm,
+          sky,
+          today: TODAY,
+          empty: BLOCK_KEYS.filter((b) => !planted.has(b)),
+          coins: 120,
+          decor: ["fence", "fence", "flowers"],
+        }}
         status="ready"
         plant={async () => true}
         harvest={async () => true}
+        buyDecor={async () => true}
         reload={() => {}}
       />
     </div>

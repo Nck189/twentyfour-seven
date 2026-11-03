@@ -238,7 +238,10 @@
       "breeze": "Focus หรือ Work นอกบ้าน",
       "spark": "ได้ออกกำลังกาย",
       "rainbow": "วันเพอร์เฟกต์"
-    }
+    },
+    "decor": "ของแต่งฟาร์ม",
+    "coins": "{n} เหรียญ",
+    "buyItem": "ซื้อ{item} {price} เหรียญ"
   },
   "crops": {
     "radish": "แรดิช",
@@ -261,6 +264,12 @@
     "moon_melon": "เมลอนจันทรา",
     "crystal_rose": "กุหลาบคริสตัล",
     "rainbow_corn": "ข้าวโพดสายรุ้ง"
+  },
+  "decor": {
+    "fence": "รั้ว",
+    "path": "ทางเดิน",
+    "flowers": "แปลงดอกไม้",
+    "pond": "บ่อน้ำ"
   },
   "stats": {
     "title": "สถิติ",

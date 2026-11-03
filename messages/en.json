@@ -238,7 +238,10 @@
       "breeze": "Focus or Work out of home",
       "spark": "Exercised",
       "rainbow": "Perfect day"
-    }
+    },
+    "decor": "Decor",
+    "coins": "{n} coins",
+    "buyItem": "Buy {item} for {price} coins"
   },
   "crops": {
     "radish": "Radish",
@@ -261,6 +264,12 @@
     "moon_melon": "Moon melon",
     "crystal_rose": "Crystal rose",
     "rainbow_corn": "Rainbow corn"
+  },
+  "decor": {
+    "fence": "Fence",
+    "path": "Path",
+    "flowers": "Flowers",
+    "pond": "Pond"
   },
   "stats": {
     "title": "Stats",
