@@ -11,6 +11,7 @@ import { MutationIcon } from "@/components/art/farm/Fx";
 import { Capsule, CapsuleMachine, RarityLight } from "@/components/art/farm/Capsule";
 import { RARITIES } from "@/content/crops";
 import { PlotArt } from "@/components/art/farm/PlotArt";
+import { SetupCard } from "@/components/setup/SetupCard";
 import { Fence, Flowers, PathTile, Pond } from "@/components/art/farm/Plot";
 
 const STAGES = [0, 1, 2, 3] as const;
@@ -121,6 +122,10 @@ export default function ArtSheet() {
           </Cell>
         ))}
       </section>
+      <div className="max-w-sm" data-section="setup">
+        <SetupCard state={{ done: ["first10", "language"], granted: [] }} />
+        <SetupCard state={{ done: ["first10", "language"], granted: [] }} compact />
+      </div>
       <section className="flex flex-wrap items-end gap-3" data-section="decor">
         <Cell caption="fence">
           <Fence className="h-24 w-24" />

@@ -27,8 +27,12 @@ function ResultCard({ r, big = false }: { r: PullResult; big?: boolean }) {
         <CropArt cropId={r.crop} stage={3} status="ready" className="absolute inset-0 h-full w-full" />
       </div>
       <p className={`${big ? "text-xl" : "text-xs"} max-w-full truncate font-extrabold`}>{crop}</p>
-      <p className={`${big ? "text-sm" : "text-[11px]"} text-muted`}>
-        {t(`rarity.${r.rarity}`)} · {r.new ? t("new") : t("shards", { n: r.shards })}
+      <p className={`${big ? "text-sm" : "text-[11px] leading-tight"} text-center text-muted`}>
+        {t(`rarity.${r.rarity}`)}
+        {big ? " · " : <br />}
+        <span className={r.new ? "font-bold text-primary" : undefined}>
+          {r.new ? t("new") : t("shards", { n: r.shards })}
+        </span>
       </p>
     </div>
   );

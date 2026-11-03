@@ -326,7 +326,8 @@
     "installSteps": "ใน Safari กดปุ่มแชร์ แล้วเลือก “เพิ่มไปยังหน้าจอโฮม”",
     "setupTitle": "ตั้งค่า",
     "setupSleep": "ตารางแต่ละแบบวัน",
-    "setupFirst10": "10 นาทีแรก"
+    "setupFirst10": "10 นาทีแรก",
+    "installDone": "เพิ่มลงหน้าจอโฮมแล้ว"
   },
   "blocks": {
     "name": {
@@ -597,5 +598,25 @@
     "backToWeek": "กลับไปหน้าสัปดาห์",
     "doneKind": "เสร็จ",
     "kinds": "แบบวัน"
+  },
+  "setup": {
+    "title": "ตั้งค่า 24/7",
+    "progress": "ตั้งค่าแล้ว {done} จาก {total}",
+    "hide": "ซ่อน",
+    "allDone": "ตั้งค่าครบแล้ว ขอบคุณนะ!",
+    "doneCount": "เสร็จแล้ว ({n})",
+    "received": "ได้รับแล้ว: {reward}",
+    "rewardTickets": "ตั๋วตู้กาชา {n} ใบ",
+    "rewardCoins": "{n} เหรียญ",
+    "rewardSeeds": "เมล็ด{crop} {n} เมล็ด",
+    "rewardDecor": "{item} สำหรับฟาร์ม",
+    "step": {
+      "sleep_times": "ตั้งเวลาตื่น",
+      "first10": "เลือก 10 นาทีแรก",
+      "checklist": "เพิ่มเช็กลิสต์ให้บล็อก",
+      "backlog_estimate": "เพิ่มงานพร้อมเวลาโดยประมาณ",
+      "language": "เลือกภาษา",
+      "home_screen": "เพิ่ม 24/7 ลงหน้าจอโฮม"
+    }
   }
 }

@@ -284,7 +284,7 @@
     "howToEarn": "Earn tickets by waking on time and doing your Night ritual.",
     "results": "Your capsules",
     "new": "New!",
-    "shards": "+{n} shards",
+    "shards": "+{n, plural, one {# shard} other {# shards}}",
     "skip": "Skip",
     "done": "Done",
     "error": "Couldn't pull right now. Your tickets are safe — try again.",
@@ -300,8 +300,8 @@
     "dexShort": "{have} of {total}",
     "unknown": "Not found yet",
     "stars": "★{n}",
-    "shardsHave": "{n} shards",
-    "starUp": "Star up · {n} shards",
+    "shardsHave": "{n, plural, one {# shard} other {# shards}}",
+    "starUp": "Star up · {n, plural, one {# shard} other {# shards}}",
     "maxStar": "★5 — fully grown up!"
   },
   "stats": {
@@ -326,7 +326,8 @@
     "installSteps": "In Safari, tap Share, then “Add to Home Screen”.",
     "setupTitle": "Setup",
     "setupSleep": "Your week",
-    "setupFirst10": "First 10 minutes"
+    "setupFirst10": "First 10 minutes",
+    "installDone": "Added to your Home Screen."
   },
   "blocks": {
     "name": {
@@ -597,5 +598,25 @@
     "backToWeek": "Back to the week",
     "doneKind": "Done",
     "kinds": "Kinds of day"
+  },
+  "setup": {
+    "title": "Set up 24/7",
+    "progress": "{done} of {total} set up",
+    "hide": "Hide",
+    "allDone": "All set up. Thank you!",
+    "doneCount": "Done ({n})",
+    "received": "Received: {reward}",
+    "rewardTickets": "{n, plural, one {# capsule ticket} other {# capsule tickets}}",
+    "rewardCoins": "{n} coins",
+    "rewardSeeds": "{n} {crop} seeds",
+    "rewardDecor": "{item} for your farm",
+    "step": {
+      "sleep_times": "Set your wake times",
+      "first10": "Pick a first 10 minutes",
+      "checklist": "Add a checklist to a block",
+      "backlog_estimate": "Add a task with a time estimate",
+      "language": "Choose your language",
+      "home_screen": "Add 24/7 to your Home Screen"
+    }
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import Link from "next/link";
 import { ExportCard } from "@/components/settings/ExportCard";
 import { ChevronIcon, MoonIcon, SunriseIcon } from "@/components/ui/Icons";
@@ -12,10 +12,14 @@ import type { Locale } from "@/lib/i18n/config";
 import { usePrefs, type ThemePref } from "@/lib/store/prefs";
 import { getSupabase } from "@/lib/supabase/client";
 import { logEvent } from "@/lib/db/events";
+import { SetupCard } from "@/components/setup/SetupCard";
+import { isStandalone, useSetupRewards } from "@/lib/setup/useSetupRewards";
 
-function Card({ title, children }: { title: string; children: ReactNode }) {
+const noop = () => () => {};
+
+function Card({ title, children, id }: { title: string; children: ReactNode; id?: string }) {
   return (
-    <section className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
+    <section id={id} className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
       <h2 className="mb-3 text-lg font-bold">{title}</h2>
       {children}
     </section>
@@ -26,6 +30,9 @@ export function MoreScreen() {
   const t = useTranslations("more");
   const { locale, setLocale, theme, setTheme } = usePrefs();
   const [email, setEmail] = useState<string | null>(null);
+  const setup = useSetupRewards();
+  // Display mode doesn't change while the app is open; the server render says "not installed".
+  const installed = useSyncExternalStore(noop, isStandalone, () => false);
 
   useEffect(() => {
     getSupabase()
@@ -50,6 +57,7 @@ export function MoreScreen() {
         .eq("user_id", data.user.id);
       if (!error && usePrefs.getState().locale === next) usePrefs.getState().markLocaleSynced();
       await logEvent("locale_changed", { locale: next });
+      setup.reload();
     }
   }
 
@@ -62,6 +70,7 @@ export function MoreScreen() {
   return (
     <>
       <ScreenHeader title={t("title")} />
+      {setup.state && <SetupCard state={setup.state} />}
       <Card title={t("setupTitle")}>
         <ul className="flex flex-col gap-2">
           {(
@@ -91,7 +100,7 @@ export function MoreScreen() {
           ))}
         </ul>
       </Card>
-      <Card title={t("language")}>
+      <Card title={t("language")} id="language">
         <Segmented<Locale>
           label={t("language")}
           value={locale}
@@ -114,8 +123,8 @@ export function MoreScreen() {
           ]}
         />
       </Card>
-      <Card title={t("install")}>
-        <p className="text-muted">{t("installSteps")}</p>
+      <Card title={t("install")} id="install">
+        <p className="text-muted">{installed ? t("installDone") : t("installSteps")}</p>
       </Card>
       <ExportCard />
       <Card title={t("account")}>
