@@ -11,8 +11,6 @@ import { MutationIcon } from "@/components/art/farm/Fx";
 import { PlotArt } from "@/components/art/farm/PlotArt";
 import { Fence, Flowers, PathTile, Pond } from "@/components/art/farm/Plot";
 
-export const dynamic = "force-static";
-
 const STAGES = [0, 1, 2, 3] as const;
 
 function Cell({ children, caption }: { children: React.ReactNode; caption: string }) {
