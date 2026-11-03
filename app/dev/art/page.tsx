@@ -25,37 +25,36 @@ function Cell({ children, caption }: { children: React.ReactNode; caption: strin
 function Sheet({ night }: { night: boolean }) {
   const bg = night ? "bg-[var(--sky-night-bottom)]" : "bg-[var(--sky-day-bottom)]";
   return (
-    <section className={`${bg} rounded-xl p-3`} data-sheet={night ? "night" : "day"}>
+    <section className={`${bg} relative rounded-xl p-3`} data-sheet={night ? "night" : "day"}>
+      {night && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 rounded-xl bg-[var(--sky-night-veil)] opacity-25"
+        />
+      )}
       <div className="grid gap-3">
         {CROP_IDS.map((id) => (
           <div key={id} className="flex flex-wrap items-end gap-2" data-crop={id}>
             <span className="w-20 text-xs">{id}</span>
             {STAGES.map((s) => (
               <Cell key={s} caption={`s${s}`}>
-                <PlotArt cropId={id} stage={s} status={s === 3 ? "ready" : "growing"} night={night} />
+                <PlotArt cropId={id} stage={s} status={s === 3 ? "ready" : "growing"} />
               </Cell>
             ))}
             <Cell caption="weeds">
-              <PlotArt cropId={id} stage={2} weeds night={night} />
+              <PlotArt cropId={id} stage={2} weeds />
             </Cell>
             <Cell caption="wilt">
-              <PlotArt cropId={id} stage={2} wiltLevel={1} night={night} />
+              <PlotArt cropId={id} stage={2} wiltLevel={1} />
             </Cell>
             <Cell caption="gold+dew">
-              <PlotArt
-                cropId={id}
-                stage={3}
-                status="ready"
-                quality="gold"
-                mutations={["dew"]}
-                night={night}
-              />
+              <PlotArt cropId={id} stage={3} status="ready" quality="gold" mutations={["dew"]} />
             </Cell>
             <Cell caption="96">
-              <PlotArt cropId={id} stage={3} status="ready" className="h-24 w-24" night={night} />
+              <PlotArt cropId={id} stage={3} status="ready" className="h-24 w-24" />
             </Cell>
             <Cell caption="192">
-              <PlotArt cropId={id} stage={3} status="ready" className="h-48 w-48" night={night} />
+              <PlotArt cropId={id} stage={3} status="ready" className="h-48 w-48" />
             </Cell>
           </div>
         ))}

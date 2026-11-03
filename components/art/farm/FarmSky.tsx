@@ -1,66 +1,85 @@
 /**
  * The farm sky (SPEC §8.9): follows the current block — Down = dusk, Sleep = stars,
  * Wake = sunrise, daytime blocks = day. The only place gradients are allowed.
+ * A gradient band of any width; the sun/moon and clouds keep their size, anchored to the edges
+ * and kept in the top part (the field covers the bottom of the band).
  */
-import { useId } from "react";
 import type { SkyPhase } from "@/lib/farm/sky";
 
 export type { SkyPhase };
 
 const STARS: [number, number, number][] = [
-  [30, 18, 1.4],
-  [70, 40, 1],
-  [110, 14, 1.6],
-  [160, 34, 1.1],
-  [205, 12, 1.3],
-  [250, 44, 1],
-  [290, 20, 1.5],
-  [340, 36, 1.1],
-  [372, 12, 1.3],
-  [140, 60, 0.9],
-  [318, 64, 0.9],
+  [30, 10, 1.4],
+  [70, 26, 1],
+  [110, 8, 1.6],
+  [160, 22, 1.1],
+  [205, 6, 1.3],
+  [250, 28, 1],
+  [290, 12, 1.5],
+  [340, 24, 1.1],
+  [372, 6, 1.3],
+  [140, 34, 0.9],
 ];
 
-export function FarmSky({ phase, className }: { phase: SkyPhase; className?: string }) {
-  const id = useId().replace(/:/g, "");
+export function FarmSky({ phase, className = "" }: { phase: SkyPhase; className?: string }) {
   return (
-    <svg viewBox="0 0 390 140" preserveAspectRatio="xMidYMid slice" className={className} aria-hidden="true">
-      <defs>
-        <linearGradient id={`sky${id}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={`var(--sky-${phase}-top)`} />
-          <stop offset="1" stopColor={`var(--sky-${phase}-bottom)`} />
-        </linearGradient>
-      </defs>
-      <rect width="390" height="140" fill={`url(#sky${id})`} />
-      {phase === "night" &&
-        STARS.map(([x, y, r]) => <circle key={`${x}-${y}`} cx={x} cy={y} r={r} fill="var(--sky-star)" />)}
+    <div
+      aria-hidden="true"
+      className={`overflow-hidden ${className.includes("absolute") ? "" : "relative"} ${className}`}
+      style={{ background: `linear-gradient(var(--sky-${phase}-top), var(--sky-${phase}-bottom))` }}
+    >
       {phase === "night" && (
-        <g>
-          <circle cx={320} cy={58} r={15} fill="var(--sky-moon)" />
-          <circle cx={327} cy={53} r={13} fill="var(--sky-night-top)" />
-        </g>
+        <svg
+          viewBox="0 0 390 70"
+          preserveAspectRatio="xMidYMin slice"
+          className="absolute inset-0 h-full w-full"
+        >
+          {STARS.map(([x, y, r]) => (
+            <circle key={`${x}-${y}`} cx={x} cy={y} r={r} fill="var(--sky-star)" />
+          ))}
+        </svg>
       )}
-      {phase === "day" && (
-        <g>
-          <circle cx={330} cy={58} r={18} fill="var(--art-sun)" />
-          <ellipse cx={80} cy={62} rx={26} ry={10} fill="var(--art-cloud)" />
-          <ellipse cx={98} cy={55} rx={16} ry={10} fill="var(--art-cloud)" />
-          <ellipse cx={220} cy={78} rx={20} ry={7} fill="var(--art-cloud)" opacity={0.85} />
-        </g>
+      {/* Sun / moon top right; the setting sun at dusk sits low on the left. */}
+      <svg
+        viewBox="0 0 80 70"
+        preserveAspectRatio="xMaxYMin meet"
+        className={`absolute top-0 h-full ${phase === "dusk" ? "left-[4%]" : "right-[4%]"}`}
+      >
+        {phase === "day" && <circle cx={46} cy={24} r={13} fill="var(--art-sun)" />}
+        {phase === "sunrise" && <circle cx={40} cy={40} r={16} fill="var(--art-sun)" />}
+        {phase === "dusk" && <circle cx={40} cy={40} r={15} fill="var(--art-orange-light)" />}
+        {phase === "night" && (
+          <g>
+            <circle cx={46} cy={22} r={11} fill="var(--sky-moon)" />
+            <circle cx={51} cy={18} r={9.5} fill="var(--sky-night-top)" />
+          </g>
+        )}
+      </svg>
+      {(phase === "day" || phase === "sunrise") && (
+        <svg
+          viewBox="0 0 160 70"
+          preserveAspectRatio="xMinYMin meet"
+          className="absolute top-0 left-[6%] h-full"
+        >
+          <ellipse
+            cx={40}
+            cy={26}
+            rx={20}
+            ry={7.5}
+            fill="var(--art-cloud)"
+            opacity={phase === "day" ? 1 : 0.85}
+          />
+          <ellipse
+            cx={54}
+            cy={20}
+            rx={12}
+            ry={7.5}
+            fill="var(--art-cloud)"
+            opacity={phase === "day" ? 1 : 0.85}
+          />
+          <ellipse cx={128} cy={34} rx={14} ry={5} fill="var(--art-cloud)" opacity={0.8} />
+        </svg>
       )}
-      {phase === "sunrise" && (
-        <g>
-          <circle cx={300} cy={118} r={24} fill="var(--art-sun)" />
-          <ellipse cx={120} cy={62} rx={24} ry={8} fill="var(--art-cloud)" opacity={0.9} />
-        </g>
-      )}
-      {phase === "dusk" && (
-        <g>
-          <circle cx={70} cy={112} r={20} fill="var(--art-orange-light)" />
-          <circle cx={300} cy={30} r={1.2} fill="var(--sky-star)" />
-          <circle cx={340} cy={50} r={1} fill="var(--sky-star)" />
-        </g>
-      )}
-    </svg>
+    </div>
   );
 }

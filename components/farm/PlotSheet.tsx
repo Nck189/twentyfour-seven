@@ -42,14 +42,12 @@ function SeedPicker({ onPick, busy }: { onPick: (crop: CropId) => void; busy: bo
 export function PlotSheet({
   slot,
   plot,
-  night,
   onPlant,
   onHarvest,
   onClose,
 }: {
   slot: BlockKey;
   plot: PlotView | undefined;
-  night: boolean;
   onPlant: (crop: CropId, replace: boolean) => Promise<boolean>;
   onHarvest: () => Promise<boolean>;
   onClose: () => void;
@@ -98,7 +96,6 @@ export function PlotSheet({
           wiltLevel={plot.wiltLevel}
           quality={plot.quality}
           mutations={plot.mutations}
-          night={night}
           className="h-32 w-32 shrink-0"
         />
         <div className="min-w-0">

@@ -1,6 +1,6 @@
 /**
  * One plot as the farm shows it: bed, mutation glow behind, the crop, mutation particles in
- * front, the quality star. Night dims it with the farm's own night veil (not the UI dark mode).
+ * front, the quality star. At night the field gets one veil (FarmView), not each plot.
  */
 import type { CropId } from "@/content/crops";
 import { MUTATION_MULTIPLIER, type MutationId, type Quality } from "@/content/game";
@@ -18,7 +18,6 @@ export type PlotArtProps = {
   quality?: Quality;
   mutations?: readonly MutationId[];
   locked?: boolean;
-  night?: boolean;
   /**
    * Small tiles (the field): only the strongest mutation, as a corner badge, and a faint sprout
    * on an empty plot inviting a seed — calm at a glance. Full effects in the close-up.
@@ -37,7 +36,6 @@ export function PlotArt({
   quality = "normal",
   mutations = [],
   locked = false,
-  night = false,
   tile = false,
   className = "h-12 w-12",
   label,
@@ -70,7 +68,6 @@ export function PlotArt({
           <MutationGlyph id={top} />
         </g>
       )}
-      {night && <rect width={48} height={48} fill="var(--sky-night-veil)" opacity={0.28} />}
     </Art>
   );
 }

@@ -101,7 +101,6 @@ export function FarmView({
           wiltLevel={p?.wiltLevel}
           quality={p?.quality}
           mutations={p?.mutations}
-          night={night}
           tile
           className="h-16 w-16 sm:h-20 sm:w-20"
         />
@@ -158,6 +157,13 @@ export function FarmView({
               </li>
             ))}
           </ul>
+          {/* The farm's own night palette: one soft veil over the field (not the UI dark mode). */}
+          {night && (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-[var(--sky-night-veil)] opacity-25"
+            />
+          )}
         </div>
       </section>
 
@@ -194,7 +200,6 @@ export function FarmView({
         <PlotSheet
           slot={open}
           plot={farm.plots[open]}
-          night={night}
           onClose={() => setOpen(null)}
           onPlant={async (crop, replace) => {
             const ok = await plant(open, crop, replace);
