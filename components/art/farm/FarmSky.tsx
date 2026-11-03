@@ -3,8 +3,9 @@
  * Wake = sunrise, daytime blocks = day. The only place gradients are allowed.
  */
 import { useId } from "react";
+import type { SkyPhase } from "@/lib/farm/sky";
 
-export type SkyPhase = "day" | "sunrise" | "dusk" | "night";
+export type { SkyPhase };
 
 const STARS: [number, number, number][] = [
   [30, 18, 1.4],

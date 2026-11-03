@@ -1,5 +1,5 @@
-import { Placeholder } from "@/components/ui/Placeholder";
+import { FarmScreen } from "@/components/farm/FarmScreen";
 
 export default function Page() {
-  return <Placeholder section="farm" />;
+  return <FarmScreen />;
 }
