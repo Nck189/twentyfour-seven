@@ -140,7 +140,10 @@ test("CJ-10 out late tonight: planned, Down starts at return, no short-sleep war
   const preview = sheet.getByRole("list", { name: "Preview" });
   await expect(preview.getByRole("listitem").nth(0)).toContainText("03:30");
   await expect(sheet.locator("output")).toHaveText("04:00");
-  await expect(sheet.getByRole("alert")).toHaveCount(0);
+  // Out late is planned: no short-sleep warning. The SPEC §3 guardrail still says the 04:00 bed
+  // is > 60 min off this kind of day's usual (02:30) — that one is right to show.
+  await expect(sheet.getByRole("alert").filter({ hasText: "sleep planned" })).toHaveCount(0);
+  await expect(sheet.getByRole("alert").filter({ hasText: "off your usual" })).toBeVisible();
   await expect.poll(async () => (await dayPlans(id)).find((p) => p.late_night)?.late_night).toBeTruthy();
 });
 
