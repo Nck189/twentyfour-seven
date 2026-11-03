@@ -5,3 +5,4 @@ export * from "./quality";
 export * from "./growth";
 export * from "./farm";
 export * from "./facts";
+export * from "./animals";
