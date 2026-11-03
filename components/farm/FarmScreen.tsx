@@ -119,7 +119,7 @@ export function FarmView({
         />
         <span
           aria-hidden="true"
-          className={`w-full truncate text-center text-xs font-bold ${night ? "text-[var(--sky-star)]" : "text-ink"}`}
+          className="max-w-full truncate rounded-full bg-surface/90 px-1.5 text-center text-xs font-bold text-ink"
         >
           {blocks(`name.${slot}`)}
         </span>
