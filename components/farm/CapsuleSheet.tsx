@@ -98,7 +98,7 @@ function Reveal({ results, onDone }: { results: PullResult[]; onDone: () => void
               >
                 <Capsule
                   rarity={r.rarity}
-                  open={0.4}
+                  open={0}
                   className={results.length > 1 ? "h-14 w-14" : "h-40 w-40"}
                 />
               </motion.div>
