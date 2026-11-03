@@ -124,6 +124,7 @@ export function Onboarding() {
               onSleep={setup.setSleep}
               onAllSleep={(w, m) => void setup.setAllSleep(w, m)}
               onMoveDay={(d, id) => void setup.moveWeekday(d, id)}
+              onRemoveDay={(d, id) => void setup.removeWeekday(d, id)}
               onEvents={setup.setEvents}
               onAddKind={() =>
                 void setup.addKind(
