@@ -189,15 +189,21 @@ export function CapsuleSheet({
     legendary: PITY.legendary - state.pity.since_legendary,
   };
 
+  const busyRef = useRef(false);
   const go = async (n: 1 | 10) => {
+    // One pull per tap: a double-tap never starts a second pull (CJ-12).
+    if (busyRef.current) return;
+    busyRef.current = true;
     setBusy(true);
     setError(false);
     // One key per tap: a retried request after a dropped connection is never charged twice.
     const key = `${n}-${crypto.randomUUID()}`;
     let out = await pull(n, key);
     if (!out) out = await pull(n, key);
+    busyRef.current = false;
     setBusy(false);
-    if (out) setResults(out);
+    // An empty answer (shouldn't happen) is treated as a failed pull, never an empty reveal.
+    if (out && out.length > 0) setResults(out);
     else setError(true);
   };
 

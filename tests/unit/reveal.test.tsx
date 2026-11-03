@@ -61,3 +61,27 @@ it("is a modal dialog: focus starts on Skip, moves to Done, results are announce
   expect(document.activeElement).toBe(screen.getByRole("button", { name: "Done" }));
   expect(screen.getByRole("status").textContent).toContain("Tomato");
 });
+
+it("a double-tap on Pull ×1 starts one pull (CJ-12)", async () => {
+  const { CapsuleSheet } = await import("@/components/farm/CapsuleSheet");
+  const pull = vi.fn(() => new Promise<null>(() => {}));
+  render(
+    <NextIntlClientProvider locale="en" messages={en}>
+      <CapsuleSheet
+        state={{
+          tickets: 3,
+          pity: { since_rare: 0, since_epic: 0, since_legendary: 0 },
+          shards: {},
+          dex: {},
+          seeds: {},
+        }}
+        pull={pull}
+        onClose={() => {}}
+      />
+    </NextIntlClientProvider>,
+  );
+  const btn = screen.getByRole("button", { name: "Pull ×1" });
+  fireEvent.click(btn);
+  fireEvent.click(btn);
+  expect(pull).toHaveBeenCalledTimes(1);
+});
