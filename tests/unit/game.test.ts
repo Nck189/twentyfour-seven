@@ -398,7 +398,12 @@ describe("day facts from rows (lib/game/facts)", () => {
     expect(f.map((d) => d.date)).toEqual(["2026-11-08", "2026-11-09", "2026-11-10"]);
     expect(f[0]).toMatchObject({ mode: "sick", wakeInWindow: false });
     expect(f[0]!.open).toBeUndefined();
-    expect(f[1]).toMatchObject({ mode: "normal", wakeInWindow: true, nightRitualDone: true, exercised: false });
+    expect(f[1]).toMatchObject({
+      mode: "normal",
+      wakeInWindow: true,
+      nightRitualDone: true,
+      exercised: false,
+    });
     expect(Object.keys(f[1]!.logs)).toEqual(["focus"]);
     expect(f[2]).toMatchObject({ exercised: true, open: [...BLOCK_KEYS] });
     expect(isMinimumDay(f[1]!)).toBe(true);

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { BLOCK_KEYS, type BlockKey } from "@/content/blocks";
 import type { CropId } from "@/content/crops";
 import type { Quality } from "@/content/game";
-import { useFarm } from "@/lib/farm/useFarm";
+import { useFarm, type FarmData } from "@/lib/farm/useFarm";
 import { sfx } from "@/lib/sound/sfx";
 import { HarvestPop } from "./HarvestPop";
 import { PlotSheet } from "./PlotSheet";
@@ -24,11 +24,32 @@ const LOCKED_FIELDS = 3;
  * `compact` = the iPad/Mac side panel (read-only, no sheets).
  */
 export function FarmScreen({ compact = false }: { compact?: boolean }) {
+  const { data, status, plant, harvest, reload } = useFarm();
+  return (
+    <FarmView compact={compact} data={data} status={status} plant={plant} harvest={harvest} reload={reload} />
+  );
+}
+
+/** The farm UI for given data (no I/O): the app passes useFarm; /dev/farm passes a sample week. */
+export function FarmView({
+  compact = false,
+  data,
+  status,
+  plant,
+  harvest,
+  reload,
+}: {
+  compact?: boolean;
+  data: FarmData | null;
+  status: "loading" | "ready" | "error";
+  plant: (slot: BlockKey, crop: CropId, replace?: boolean) => Promise<boolean>;
+  harvest: (slot: BlockKey) => Promise<boolean>;
+  reload: () => void;
+}) {
   const t = useTranslations("farm");
   const tc = useTranslations("common");
   const crops = useTranslations("crops");
   const blocks = useTranslations("blocks");
-  const { data, status, plant, harvest, reload } = useFarm();
   const [open, setOpen] = useState<BlockKey | null>(null);
   const [pop, setPop] = useState<{ cropId: CropId; quality: Quality } | null>(null);
   const endPop = useCallback(() => setPop(null), []);
