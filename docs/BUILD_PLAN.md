@@ -170,6 +170,8 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 
 **Done when:** the streak behaves correctly across a simulated month with misses, freezes and vacation.
 
+**Moved here from M7:** the Perfect day (+1) and streak 7/14/30 (+5) ticket grants, through the existing `ticket_grants` ledger — after hardening client-written block logs (G7 K-M6-1, R-M6-4, R4-1).
+
 **Added 2026-11-03 (Minnie): unlocks & milestones (SPEC §8.8b).** Rules in `content/unlocks.ts`, progress as pure functions in `lib/game/unlocks.ts` (unit-tested), grants through a server RPC + read-only `unlock_grants` ledger (counters/ledger can start in M7 with the economy). Collection book on the Farm tab, one "next unlock" line on Today, feature reveals (Stats after 3 days, gacha with the first ticket). **Done when:** each tier unlocks exactly once from real data, and a new user sees fewer tabs/cards until they're earned.
 
 > Growth (docs/GROWTH.md): G1 easy first week via unlocks, G9 Thai festival events.
@@ -185,7 +187,7 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 > - home vs out comparison
 > - streak calendar
 >
-> Weekly review on Sunday night: summary + KPT + 3 tickets. Use flat pastel charts consistent with the art tokens.
+> Weekly review on Sunday night: summary + KPT + 3 tickets. (The +3 grant moved here from M7; reason `weekly_review` already exists in `ticket_grants`.) Use flat pastel charts consistent with the art tokens.
 
 **Done when:** the numbers match a hand-checked sample week. **v1 complete — use it daily for a few days and fix papercuts.**
 
