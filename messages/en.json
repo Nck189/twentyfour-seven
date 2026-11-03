@@ -616,9 +616,11 @@
       "checklist": "Add a checklist to a block",
       "backlog_estimate": "Add a task with a time estimate",
       "language": "Choose your language",
-      "home_screen": "Add 24/7 to your Home Screen"
+      "home_screen": "Add 24/7 to your Home Screen",
+      "exercise": "Set your weekly exercise goal"
     },
     "rewardTitle": "Setup reward",
-    "ok": "OK"
+    "ok": "OK",
+    "rewardFeed": "{n} bags of animal feed"
   }
 }
