@@ -6,7 +6,7 @@ import type { FixedEvent } from "@/content/defaults";
 import { hostFor, parseHHMM } from "@/lib/engine";
 import { addDays, zonedInstant } from "@/lib/time";
 import { logEvent } from "@/lib/db/events";
-import { markDirty, requeue, saveDirty, type DirtyDay } from "./patch";
+import { keepPending, markDirty, requeue, saveDirty, type DirtyDay } from "./patch";
 import { getSupabase } from "@/lib/supabase/client";
 import { currentDayDate, planFor, plannedWake, type DayContext, type DayPlanRow } from "@/lib/today/day";
 import { DAY_PLAN_COLUMNS, emptyDayPlan, loadDayContext } from "@/lib/today/loadContext";
@@ -74,6 +74,15 @@ export function usePlan() {
         if (later.error) throw later.error;
         for (const row of (later.data ?? []) as DayPlanRow[]) r.ctx.dayPlans[row.date] = row;
         if (cancelled) return;
+        // A reload (back from sleep) keeps days edited while it was in flight (R4-2).
+        const local = ctxRef.current?.dayPlans;
+        if (local)
+          r.ctx.dayPlans = keepPending(
+            r.ctx.dayPlans,
+            local,
+            (d) =>
+              !!dirty.current[d] || !!timers.current[d] || inflight.current.has(d) || failed.current.has(d),
+          );
         ctxRef.current = r.ctx;
         setCtx(r.ctx);
         setUserId(r.userId);

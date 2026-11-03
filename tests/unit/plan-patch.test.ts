@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { markDirty, requeue } from "@/lib/plan/patch";
+import { keepPending, markDirty, requeue } from "@/lib/plan/patch";
 import type { DayPlanRow } from "@/lib/today/day";
 
 const row = (over: Partial<DayPlanRow> = {}): DayPlanRow => ({
@@ -57,5 +57,31 @@ describe("day-plan saves carry only what changed (R-M3-4)", () => {
     const failed = markDirty(undefined, { add_event: a }, row());
     expect(requeue(failed, undefined).addEvents).toEqual([a]);
     expect(requeue(failed, markDirty(undefined, { remove_event: "a" }, row())).addEvents).toBeUndefined();
+  });
+});
+
+describe("a reload never overwrites days with unsaved edits (G7 R4-2)", () => {
+  const row = (date: string, mode: DayPlanRow["mode"]): DayPlanRow => ({
+    date,
+    template_id: null,
+    attending: null,
+    bedtime_override: null,
+    late_night: null,
+    mode,
+    overrides: {},
+  });
+  it("keeps the local copy of pending days, takes the server's for the rest", () => {
+    const loaded = { "2026-11-04": row("2026-11-04", "normal"), "2026-11-05": row("2026-11-05", "normal") };
+    const local = {
+      "2026-11-04": row("2026-11-04", "sick"), // edited while the reload was in flight
+      "2026-11-05": row("2026-11-05", "vacation"), // stale: no pending edit
+      "2026-11-30": row("2026-11-30", "sick"), // new local day the server doesn't have yet
+    };
+    const pending = (d: string) => d === "2026-11-04" || d === "2026-11-30";
+    expect(keepPending(loaded, local, pending)).toEqual({
+      "2026-11-04": local["2026-11-04"],
+      "2026-11-05": loaded["2026-11-05"],
+      "2026-11-30": local["2026-11-30"],
+    });
   });
 });

@@ -59,6 +59,20 @@ export function requeue(failed: DirtyDay, newer: DirtyDay | undefined): DirtyDay
 }
 
 /**
+ * Applies a reload: the server's rows, except days with an edit waiting, in flight or failed —
+ * those keep the local copy (they merge on the server when they save) (G7 R4-2).
+ */
+export function keepPending<R extends DayPlanRow | undefined>(
+  loaded: Record<string, R>,
+  local: Record<string, R>,
+  pending: (date: string) => boolean,
+): Record<string, R> {
+  const out = { ...loaded };
+  for (const [date, row] of Object.entries(local)) if (pending(date)) out[date] = row;
+  return out;
+}
+
+/**
  * Saves a day's changes. Before the patch_day_plan migration is on the server, falls back to an
  * upsert of just the changed columns (+ the whole overrides when blocks/events changed).
  */

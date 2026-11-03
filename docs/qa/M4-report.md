@@ -30,7 +30,7 @@ Date: 2026-11-03 · Branch: PR #5 · Prod URL: https://twentyfour-seven.vercel.a
 
 ## Known issues (S3/S4 only)
 See `G7-M4-M5.md` R-M4-12+ (S3/S4) and `G7-rereview-3-2026-11-03.md`:
-- R4-2 (S3): a Plan background reload that is slower than an edit overwrites the local copy; the next edit to that block can then remove its first item on the server → reload must not replace days with pending/in-flight edits (next fix).
+- ~~R4-2 (S3)~~ **fixed**: a Plan reload keeps days with an edit waiting, in flight or failed (`keepPending`, unit test).
 - R4-3 (S3): no tests for R3-2 (live sync after an edit) / R4-2.
 - S4: a failed background reload in Plan shows the error card (Today keeps its data); E2E no longer exercises the service worker (Minnie's iPhone check: a few cold starts).
  Seed planting deferred to M6 (needs the farm). Touch drag verified by hand on a real iPhone (E2E: mouse + "Move to…").

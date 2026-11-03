@@ -22,6 +22,8 @@ Date: 2026-11-03 · Branch: PR #5 · Prod URL: https://twentyfour-seven.vercel.a
 | R-M5-5 | S2 | Same weekday went 7 days out (invisible) | unit capture | parse.ts |
 | R-M5-7 | S3 | Day card not deadline-sorted | E2E R-M5-2 (order) | DayCard |
 
+Found by CI after G7 (2026-11-03): **N-1 (S2)** "Couldn't load your tasks." took ~14 s (supabase-js's hidden GET retries, 7 s measured, stacked on the app's quiet retry; a hung request could take over a minute). Fixed test-first in `c2fdf43`: browser client `db.retry = false`, one app-level policy (15 s timeout → quiet retry after 800 ms → error card); Today's first load got the same quiet retry. Regression: unit `fetch-timeout` + E2E R-M5-4.
+
 ## Known issues (S3/S4 only)
 | ID | Sev | Description | Plan |
 |---|---|---|---|
