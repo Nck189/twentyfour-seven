@@ -10,7 +10,7 @@ Date: 2026-11-03 · Branch: `m6-local` → PR after PR #5 merges · Preview: `/d
 | G4 UX QC | ✅ (local) | plant = 2 taps (plot → seed picture) · harvest = 2 taps · pictures first (block name only label on a tile; strongest mutation as a small badge; full detail in the sheet) · touch targets ≥ 44 px · labels on every plot (`Focus: Radish, day 1 of 3`) · harvest pop ≤ 1.6 s, tap to skip, off with reduced motion / skip animations · E2E a11y check in CJ-M6-1 (CI) |
 | G5 Data & security | ✅ (local) | plots/inventory/decor/events are not client-writable; plant/harvest/buy are security-definer RPCs; ripeness re-checked server-side with the same rules; seeds limited to starters until M7; coins only drop atomically (`coins >= price` in the UPDATE); `seed_planted`, `harvest`, `decor_bought` are server-only event types |
 | G6 Production smoke | ⏳ | after merge + `npx supabase db push --remote` (the farm reads prod before the migration too) |
-| G7 Independent review | ⏳ | review 1 (`G7-M6.md`) FAIL: R-M6-1..3 S2 → all fixed test-first (below) → re-review pending. Parity fuzz: server `_plot_ripe` = `simulatePlot` on 63,700 plot-days, 0 mismatches |
+| G7 Independent review | ✅ | review 1 (`G7-M6.md`) FAIL: R-M6-1..3 S2 → all fixed test-first (below) → **re-review PASS** (`G7-M6-rereview.md`, 1e5b4ba; late-night parity fuzz 72,800 plot-days, 0 mismatches). Parity fuzz: server `_plot_ripe` = `simulatePlot` on 63,700 plot-days, 0 mismatches |
 
 ## Rubric (self-review)
 | Item | Self | Note |
@@ -56,6 +56,8 @@ Date: 2026-11-03 · Branch: `m6-local` → PR after PR #5 merges · Preview: `/d
 | R-M6-8 | S3 | Decor buys on one tap (pond 300) | confirm for ≥ 100 coins |
 | R-M6-9..10 | S3 | Moonlit = Down started on time (log in DECISIONS); harvest stores no quality/mutations | DECISIONS now; M7 harvest value |
 | R-M6-11..16 | S4 | 90-day client window; non-array items_done; case-sensitive event block list; 2 surviving mutants; lettuce vs melon at 48 px; role-name bypass | polish |
+| R-M6-R1 | S3 | "Out late" can be set after the evening is over and still excuse Free (no server timestamp check) | with R-M6-4 before M7 |
+| R-M6-R2..R5 | S4 | UTC+14 timezone trick (1 day, ≤ R-M6-4); westward tz change mid-day blocks editing today's log; falsy late_night JSON counts in SQL only; PlantAll has no loading/error state | polish |
 | K-M6-4 | S4 | Giant crop is a banner, not one sprite across 3 tiles (tiles wrap 4 + 3 on iPhone) | revisit with the wider farm |
 
 ## Screenshots reviewed (cloud, production build)
