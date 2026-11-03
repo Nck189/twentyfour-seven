@@ -12,7 +12,8 @@ const CREAM: Tone = { base: "var(--art-cream)", dark: "var(--art-stone-dark)", l
 const EYE = "var(--art-soil-deep)";
 const CHEEK = "var(--art-pink-light)";
 
-type Ears = "round" | "pointy" | "floppy" | "long" | "small" | "none";
+type Ears = "round" | "pointy" | "floppy" | "long" | "small" | "banana" | "none";
+type Extra = "spots" | "wool" | "horns" | "mask" | "neck" | "yuzu" | "beard" | "topknot";
 type Beast = {
   plan: "beast";
   body: Tone;
@@ -20,7 +21,9 @@ type Beast = {
   ears: Ears;
   snout?: Tone;
   tail?: "curl" | "up" | "stripe" | "tuft" | "puff" | "none";
-  extra?: "spots" | "wool" | "horns" | "mask" | "neck" | "yuzu";
+  extras?: Extra[];
+  /** Leg color when it differs from the body's shade (red panda). */
+  legs?: string;
 };
 type Bird = { plan: "bird"; body: Tone; comb?: boolean; long?: boolean; sparkle?: boolean };
 type Spec = Beast | Bird;
@@ -30,22 +33,36 @@ const SPECS: Record<AnimalId, Spec> = {
   duck: { plan: "bird", body: TONES.yellow },
   golden_goose: { plan: "bird", body: TONES.yellow, long: true, sparkle: true },
   bunny: { plan: "beast", body: TONES.silver, ears: "long", tail: "puff" },
-  cow: { plan: "beast", body: WHITE, ears: "small", snout: TONES.pink, tail: "tuft", extra: "spots" },
-  sheep: { plan: "beast", body: CREAM, head: TONES.stone, ears: "small", tail: "none", extra: "wool" },
+  cow: {
+    plan: "beast",
+    body: WHITE,
+    ears: "small",
+    snout: TONES.pink,
+    tail: "tuft",
+    extras: ["spots", "horns"],
+  },
+  sheep: { plan: "beast", body: CREAM, head: TONES.stone, ears: "small", tail: "none", extras: ["wool"] },
   pig: { plan: "beast", body: TONES.pink, ears: "pointy", snout: TONES.pink, tail: "curl" },
   cat: { plan: "beast", body: TONES.orange, ears: "pointy", tail: "up" },
   dog: { plan: "beast", body: TONES.wood, ears: "floppy", snout: CREAM, tail: "up" },
-  goat: { plan: "beast", body: TONES.stone, ears: "floppy", tail: "tuft", extra: "horns" },
+  goat: { plan: "beast", body: TONES.stone, ears: "floppy", tail: "tuft", extras: ["horns", "beard"] },
   capybara: {
     plan: "beast",
     body: TONES.wood,
     ears: "small",
     snout: TONES.wood,
     tail: "none",
-    extra: "yuzu",
+    extras: ["yuzu"],
   },
-  alpaca: { plan: "beast", body: CREAM, ears: "pointy", tail: "puff", extra: "neck" },
-  red_panda: { plan: "beast", body: TONES.orange, ears: "pointy", tail: "stripe", extra: "mask" },
+  alpaca: { plan: "beast", body: CREAM, ears: "banana", tail: "puff", extras: ["neck", "topknot"] },
+  red_panda: {
+    plan: "beast",
+    body: TONES.orange,
+    ears: "pointy",
+    tail: "stripe",
+    extras: ["mask"],
+    legs: "var(--art-soil-deep)",
+  },
 };
 
 /** Eyes: open dots (with a blink) or sleepy closed lids. */
@@ -72,7 +89,8 @@ function Zz({ x, y }: { x: number; y: number }) {
 
 function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
   const head = s.head ?? s.body;
-  const neck = s.extra === "neck";
+  const has = (e: Extra) => s.extras?.includes(e) ?? false;
+  const neck = has("neck");
   const hx = 15;
   const hy = (neck ? 13 : 22) + (sleepy ? 1.5 : 0);
   return (
@@ -96,19 +114,19 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
       {s.tail === "puff" && <circle cx={38.5} cy={27} r={2.6} fill={WHITE.base} />}
       {/* legs */}
       {[18, 22.5, 30, 34.5].map((x) => (
-        <rect key={x} x={x - 1.6} y={33} width={3.2} height={7} rx={1.6} fill={s.body.dark} />
+        <rect key={x} x={x - 1.6} y={33} width={3.2} height={7} rx={1.6} fill={s.legs ?? s.body.dark} />
       ))}
       {/* body: darker shape lower-right, base, top-left highlight */}
       <ellipse cx={27} cy={29.5} rx={12.5} ry={8} fill={s.body.dark} />
       <ellipse cx={26.3} cy={28.8} rx={11.8} ry={7.4} fill={s.body.base} />
       <ellipse cx={22} cy={24.5} rx={4.5} ry={1.8} fill={s.body.light} transform="rotate(-12 22 24.5)" />
-      {s.extra === "spots" && (
+      {has("spots") && (
         <g fill="var(--art-wood)">
           <ellipse cx={29} cy={27} rx={3.2} ry={2.4} />
           <ellipse cx={34} cy={31} rx={2.2} ry={1.7} />
         </g>
       )}
-      {s.extra === "wool" &&
+      {has("wool") &&
         [
           [20, 25],
           [25, 23.5],
@@ -158,6 +176,30 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
             d={`M${hx + 1.5} ${hy - 5.5} L${hx + 4.5} ${hy - 9.5} L${hx + 6} ${hy - 3}Z`}
             fill={head.dark}
           />
+          {has("mask") && (
+            <g fill="var(--art-cream)">
+              <circle cx={hx - 4.4} cy={hy - 7.8} r={1.1} />
+              <circle cx={hx + 4.4} cy={hy - 7.8} r={1.1} />
+            </g>
+          )}
+        </g>
+      )}
+      {s.ears === "banana" && (
+        <g fill={head.dark}>
+          <ellipse
+            cx={hx - 3.5}
+            cy={hy - 8}
+            rx={1.5}
+            ry={3.6}
+            transform={`rotate(-18 ${hx - 3.5} ${hy - 8})`}
+          />
+          <ellipse
+            cx={hx + 3.5}
+            cy={hy - 8}
+            rx={1.5}
+            ry={3.6}
+            transform={`rotate(18 ${hx + 3.5} ${hy - 8})`}
+          />
         </g>
       )}
       {s.ears === "small" && (
@@ -178,7 +220,7 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
           />
         </g>
       )}
-      {s.extra === "horns" && (
+      {has("horns") && (
         <g fill="var(--art-stone-dark)">
           <ellipse
             cx={hx - 2.5}
@@ -225,14 +267,24 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
           />
         </g>
       )}
-      {s.extra === "wool" && <circle cx={hx} cy={hy - 6} r={3.4} fill={s.body.light} />}
-      {s.extra === "mask" && (
+      {has("wool") && <circle cx={hx} cy={hy - 6} r={3.4} fill={s.body.light} />}
+      {has("topknot") && (
+        <g fill={s.body.light}>
+          <circle cx={hx - 2} cy={hy - 6.4} r={2.6} />
+          <circle cx={hx + 1.6} cy={hy - 6.8} r={2.8} />
+        </g>
+      )}
+      {has("spots") && <ellipse cx={hx + 3.4} cy={hy - 3.6} rx={2.4} ry={1.8} fill="var(--art-wood)" />}
+      {has("beard") && <ellipse cx={hx} cy={hy + 7.4} rx={1.6} ry={2.4} fill={head.dark} />}
+      {has("mask") && (
         <g fill="var(--art-cream)">
           <ellipse cx={hx - 2.8} cy={hy + 1.8} rx={2.4} ry={1.8} />
           <ellipse cx={hx + 2.8} cy={hy + 1.8} rx={2.4} ry={1.8} />
+          <ellipse cx={hx - 2.8} cy={hy - 3.2} rx={1.4} ry={0.8} />
+          <ellipse cx={hx + 2.8} cy={hy - 3.2} rx={1.4} ry={0.8} />
         </g>
       )}
-      {s.extra === "yuzu" && <Ball cx={hx + 1} cy={hy - 8} r={2.6} tone={TONES.yellow} />}
+      {has("yuzu") && <Ball cx={hx + 1} cy={hy - 8} r={2.6} tone={TONES.yellow} />}
       {/* face */}
       <Eyes x={hx - 2.6} y={hy - 0.5} sleepy={sleepy} />
       <Eyes x={hx + 2.6} y={hy - 0.5} sleepy={sleepy} />
