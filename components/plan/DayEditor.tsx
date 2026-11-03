@@ -1,5 +1,6 @@
 "use client";
 
+import type { SubSlot } from "@/lib/engine/types";
 import { useLocale, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import { BLOCK_KEYS, type BlockKey, type ChecklistItem } from "@/content/blocks";
@@ -17,6 +18,43 @@ const STEP_MIN = 15;
 
 function newId() {
   return `i${Math.random().toString(36).slice(2, 9)}`;
+}
+
+/** A planned workout in a block (SPEC §6 "floating item"); the engine warns if a gym slot ends after the gym closes. */
+function WorkoutSlot({ slots, onChange }: { slots: SubSlot[]; onChange: (slots: SubSlot[]) => void }) {
+  const te = useTranslations("exercise");
+  const workout = slots.find((s) => s.kind === "gym");
+  if (workout)
+    return (
+      <div className="flex items-center gap-2">
+        <span className="min-w-0 flex-1 text-sm font-bold">
+          {te("slotLabel", { n: workout.durationMin })}
+        </span>
+        <Button variant="ghost" onClick={() => onChange(slots.filter((s) => s.id !== workout.id))}>
+          {te("planRemove")}
+        </Button>
+      </div>
+    );
+  return (
+    <div>
+      <p className="mb-1 text-sm font-bold">{te("plan")}</p>
+      <div className="flex flex-wrap gap-2">
+        {[30, 45, 60, 90].map((m) => (
+          <button
+            key={m}
+            type="button"
+            aria-label={`${te("planAdd")} · ${te("minutesValue", { n: m })}`}
+            onClick={() =>
+              onChange([...slots, { id: newId(), label: "", kind: "gym", offsetMin: 0, durationMin: m }])
+            }
+            className="tap min-h-11 rounded-xl bg-surface px-3 text-sm font-bold"
+          >
+            {te("minutesValue", { n: m })}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 /** Edits one day (D): template, attending, the bedtime the night before D, late night, block checklists. */
@@ -82,6 +120,7 @@ export function DayEditor({
     const base = ctx.blocks.find((b) => b.key === key)!;
     const o = row?.overrides.blocks?.[key];
     return {
+      subSlots: o?.sub_slots ?? [],
       checklist: o?.checklist ?? tpl?.blocks?.[key]?.checklist ?? base.checklist,
       first10: o?.first10 !== undefined ? o.first10 : (tpl?.blocks?.[key]?.first10 ?? base.first10),
     };
@@ -250,6 +289,10 @@ export function DayEditor({
                 </button>
                 {isOpen && (
                   <div className="flex flex-col gap-2 px-3 pb-3">
+                    <WorkoutSlot
+                      slots={meta.subSlots}
+                      onChange={(sub_slots) => onChange(date, { block: { key, sub_slots } })}
+                    />
                     <label htmlFor={`${ids}-${key}-f10`} className="text-sm font-bold">
                       {t("first10")}
                     </label>

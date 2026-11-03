@@ -43,6 +43,7 @@ export function Timeline({
   onOpen: (b: TimelineBlock) => void;
 }) {
   const t = useTranslations("today");
+  const te = useTranslations("exercise");
   const tf = useTranslations("fixedEvents");
   const text = useBlockText();
   return (
@@ -89,7 +90,8 @@ export function Timeline({
                 ))}
                 {b.subSlots.map((s) => (
                   <span key={s.id} className="mt-0.5 block text-xs text-muted">
-                    {formatTime(s.start, timezone)} {s.label}
+                    {formatTime(s.start, timezone)}{" "}
+                    {s.kind === "gym" && !s.label ? te("slotLabel", { n: s.durationMin }) : s.label}
                   </span>
                 ))}
               </span>

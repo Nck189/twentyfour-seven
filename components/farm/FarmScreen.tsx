@@ -14,6 +14,8 @@ import type { DecorId } from "@/content/decor";
 import type { Quality } from "@/content/game";
 import { useFarm, type FarmData } from "@/lib/farm/useFarm";
 import { useGacha } from "@/lib/farm/useGacha";
+import { useAnimals } from "@/lib/animals/useAnimals";
+import { AnimalPen } from "./AnimalPen";
 import { CROP_IDS } from "@/content/crops";
 import { Capsule, CapsuleMachine } from "@/components/art/farm/Capsule";
 import { CapsuleSheet } from "./CapsuleSheet";
@@ -33,9 +35,11 @@ const LOCKED_FIELDS = 3;
 export function FarmScreen({ compact = false }: { compact?: boolean }) {
   const { data, status, plant, harvest, buyDecor, reload } = useFarm();
   const gacha = useGacha();
+  const animals = useAnimals();
   return (
     <FarmView
       gacha={compact ? undefined : gacha}
+      animals={compact ? undefined : animals}
       compact={compact}
       data={data}
       status={status}
@@ -57,6 +61,7 @@ export function FarmView({
   buyDecor,
   reload,
   gacha,
+  animals,
 }: {
   compact?: boolean;
   data: FarmData | null;
@@ -67,6 +72,8 @@ export function FarmView({
   reload: () => void;
   /** Capsule machine + Seed-dex (absent in the compact side panel and the preview). */
   gacha?: ReturnType<typeof useGacha>;
+  /** Egg incubator + animal pen (absent in the compact side panel and the preview). */
+  animals?: ReturnType<typeof useAnimals>;
 }) {
   const t = useTranslations("farm");
   const tc = useTranslations("common");
@@ -265,6 +272,8 @@ export function FarmView({
       {sheet === "dex" && gacha?.state && (
         <SeedDexSheet state={gacha.state} starUp={gacha.starUp} onClose={() => setSheet(null)} />
       )}
+
+      {animals && <AnimalPen animals={animals} />}
 
       {!compact && <DecorShop coins={data.coins} onBuy={buyDecor} />}
 

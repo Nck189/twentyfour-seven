@@ -25,22 +25,23 @@ export type AnimalId = (typeof ANIMAL_IDS)[number];
 export const PRODUCE_IDS = ["egg", "golden_egg", "milk", "wool", "truffle", "gift"] as const;
 export type ProduceId = (typeof PRODUCE_IDS)[number];
 
-export type AnimalDef = { rarity: Rarity; produce: ProduceId };
+/** `pitch` = the pet reaction's base note (Hz): small animals call higher. */
+export type AnimalDef = { rarity: Rarity; produce: ProduceId; pitch: number };
 
 export const ANIMALS: Record<AnimalId, AnimalDef> = {
-  chicken: { rarity: "common", produce: "egg" },
-  duck: { rarity: "common", produce: "egg" },
-  bunny: { rarity: "common", produce: "wool" },
-  cow: { rarity: "uncommon", produce: "milk" },
-  sheep: { rarity: "uncommon", produce: "wool" },
-  pig: { rarity: "uncommon", produce: "truffle" },
-  cat: { rarity: "rare", produce: "gift" },
-  dog: { rarity: "rare", produce: "gift" },
-  goat: { rarity: "rare", produce: "milk" },
-  capybara: { rarity: "epic", produce: "gift" },
-  alpaca: { rarity: "epic", produce: "wool" },
-  red_panda: { rarity: "legendary", produce: "gift" },
-  golden_goose: { rarity: "legendary", produce: "golden_egg" },
+  chicken: { rarity: "common", produce: "egg", pitch: 880 },
+  duck: { rarity: "common", produce: "egg", pitch: 740 },
+  bunny: { rarity: "common", produce: "wool", pitch: 988 },
+  cow: { rarity: "uncommon", produce: "milk", pitch: 262 },
+  sheep: { rarity: "uncommon", produce: "wool", pitch: 440 },
+  pig: { rarity: "uncommon", produce: "truffle", pitch: 330 },
+  cat: { rarity: "rare", produce: "gift", pitch: 784 },
+  dog: { rarity: "rare", produce: "gift", pitch: 523 },
+  goat: { rarity: "rare", produce: "milk", pitch: 494 },
+  capybara: { rarity: "epic", produce: "gift", pitch: 294 },
+  alpaca: { rarity: "epic", produce: "wool", pitch: 587 },
+  red_panda: { rarity: "legendary", produce: "gift", pitch: 659 },
+  golden_goose: { rarity: "legendary", produce: "golden_egg", pitch: 698 },
 };
 
 /** Hatch rates (an egg is rarer than a capsule: ~1 a week), no pity. Sum = 1. */

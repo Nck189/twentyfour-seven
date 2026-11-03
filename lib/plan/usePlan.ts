@@ -1,5 +1,6 @@
 "use client";
 
+import type { SubSlot } from "@/lib/engine/types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BlockKey, BlockSetting, ChecklistItem } from "@/content/blocks";
 import type { FixedEvent } from "@/content/defaults";
@@ -14,7 +15,14 @@ import { QUIET_RETRY_MS } from "@/lib/supabase/fetchWithTimeout";
 
 export type DayPatch = Partial<Omit<DayPlanRow, "date" | "overrides">> & {
   /** Merged into overrides.blocks[key]. */
-  block?: { key: BlockKey; first10?: string | null; checklist?: ChecklistItem[]; duration_min?: number };
+  block?: {
+    key: BlockKey;
+    first10?: string | null;
+    checklist?: ChecklistItem[];
+    duration_min?: number;
+    /** Floating items in the block, e.g. a planned workout (SPEC §6). */
+    sub_slots?: SubSlot[];
+  };
   /** Adds one one-off fixed event (an appointment) to this day. */
   add_event?: FixedEvent;
   /** Removes one fixed event by id. */
