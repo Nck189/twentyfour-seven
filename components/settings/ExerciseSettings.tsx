@@ -66,7 +66,7 @@ export function ExerciseSettings({ onSaved }: { onSaved?: () => void }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-bold">{t("goal")}</span>
         <div className="flex items-center gap-2">
           <button
@@ -74,11 +74,11 @@ export function ExerciseSettings({ onSaved }: { onSaved?: () => void }) {
             aria-label={t("less")}
             onClick={() => step(-1)}
             disabled={!ready || goal <= 1}
-            className="tap h-11 w-11 rounded-full bg-surface-2 text-xl font-bold disabled:opacity-40"
+            className="tap h-11 w-11 shrink-0 rounded-full bg-surface-2 text-xl font-bold disabled:opacity-40"
           >
             −
           </button>
-          <span className="min-w-28 text-center" aria-live="polite">
+          <span className="min-w-24 text-center" aria-live="polite">
             {t("goalValue", { n: goal })}
           </span>
           <button
@@ -86,7 +86,7 @@ export function ExerciseSettings({ onSaved }: { onSaved?: () => void }) {
             aria-label={t("more")}
             onClick={() => step(1)}
             disabled={!ready || goal >= 14}
-            className="tap h-11 w-11 rounded-full bg-surface-2 text-xl font-bold disabled:opacity-40"
+            className="tap h-11 w-11 shrink-0 rounded-full bg-surface-2 text-xl font-bold disabled:opacity-40"
           >
             +
           </button>

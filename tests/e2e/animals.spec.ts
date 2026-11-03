@@ -72,6 +72,8 @@ test("CJ-13 three workouts: the ring fills, the 3rd hatches an egg (with its rev
 test("CJ-13b a hungry animal sleeps (never dies); a workout feeds it; petting counts 3 a day", async ({
   page,
 }) => {
+  // Four pets, a workout and two page loads: more than the default 30 s on a slow CI WebKit.
+  test.slow();
   const id = await setup(page);
   await rest("animals", {
     method: "POST",
@@ -97,8 +99,11 @@ test("CJ-13b a hungry animal sleeps (never dies); a workout feeds it; petting co
   const log = await logWorkout(page, 20);
   // Wait for the server's answer before leaving the page (R-M8-3).
   await expect(log.getByRole("status")).toContainText("fed for 2 more days");
+  // The server fed it (checked in the data), then the farm shows it awake.
+  const [fed] = (await rest(`animals?user_id=eq.${id}&select=fed_until`)) as { fed_until: string }[];
+  expect(Date.parse(fed!.fed_until)).toBeGreaterThan(Date.now());
   await page.goto("/farm");
-  await expect(page.getByRole("button", { name: "Cow: fed" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Cow: fed" })).toBeVisible({ timeout: 15_000 });
 });
 
 test("CJ-13c a 3rd workout on the same day is logged but doesn't feed again (2 a day count)", async ({
