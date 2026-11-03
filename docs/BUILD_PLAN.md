@@ -144,6 +144,8 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 
 **Done when:** the simulated rates are within tolerance; the animation feels good on iPhone with sound.
 
+> Also in M7 (Minnie, 2026-11-03): **setup rewards** (SPEC §8.8c) — each one-time setup step pays a fitting reward once, server-checked.
+
 ## M8 — Exercise + animals
 **Prompt:**
 > Start M8. Exercise per SPEC §6: weekly ring, quick log, scheduling as a floating item, gym-close warning. Animals per SPEC §8.6:

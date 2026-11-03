@@ -291,6 +291,12 @@ Something is always "almost unlocked", so there's a reason to come back. Small a
 - **Feature reveals (progressive disclosure, also keeps a new user's screens calm):** Stats after 3 days of data; the gacha machine with the first ticket; farm expansion after the first harvest.
 - **UI:** a collection book on the Farm tab (locked = soft silhouette + a progress ring "2 more"); Today shows at most one quiet line with the next near unlock (picture + "1 more night"); unlocking uses the reward animation (skippable, reduced-motion aware). No emoji — hand-built art only.
 
+### 8.8c Setup rewards (Minnie, 2026-11-03 — "set up each thing, get a fitting reward, so people actually set up")
+Each one-time setup step pays a small reward, once, granted **server-side** when the setting really exists in the data (never on a button tap alone). Same ledger and rules as §8.8b; numbers in `content/unlocks.ts`. Bigger setups pay more; nothing pays twice; undoing a setting doesn't take the reward back, redoing it doesn't pay again.
+- **Examples (sized to effort):** set your kinds of day / wake times → seeds; your own first-10 for a block → 1 ticket; a checklist on a block → coins; first backlog task with an estimate → coins; weekly exercise goal + gym close time → animal feed; install to the Home Screen / turn on notifications (v1 push) → decor; Thai or English picked + timezone checked → small coins.
+- **UI:** a calm "Set up 24/7" card (pictures, a progress ring "3 of 8") on More and, for new users, once on Today; each row shows its reward picture. Done rows fold away. No emoji.
+- Lands with the economy (M7) and the unlock ladder; new features add their own setup row when they ship.
+
 ### 8.9 Decor & sky
 - **Coins buy:** fences, paths, flowers, house, pond, plot expansions.
 - **Sky follows the current block:** Down = dusk, Sleep = stars, Wake = sunrise, daytime blocks = day.
