@@ -102,6 +102,7 @@ export function FarmView({
           quality={p?.quality}
           mutations={p?.mutations}
           night={night}
+          tile
           className="h-16 w-16 sm:h-20 sm:w-20"
         />
         <span

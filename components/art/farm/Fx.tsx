@@ -129,7 +129,7 @@ export function MutationFx({ ids, layer }: { ids: readonly MutationId[]; layer: 
 }
 
 /** A mutation as a small standalone icon (legend, plot sheet): one centered shape each. */
-function MutationGlyph({ id }: { id: MutationId }) {
+export function MutationGlyph({ id }: { id: MutationId }) {
   switch (id) {
     case "sunrise_glow":
       return (
