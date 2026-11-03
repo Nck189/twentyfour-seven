@@ -63,15 +63,17 @@ export const EXERCISE_RULES = {
   feedDaysPerWorkout: 2,
   /** A workout counts for feed/eggs from this many minutes. */
   minMinutes: 10,
-  /** At most this many counted workouts per local day (the rest are still logged). */
+  /** At most this many counted workouts in any rolling 24 h (the rest are still logged). */
   maxCountedPerDay: 2,
   /** Feed can't be banked beyond this many days ahead. */
   maxFeedDays: 14,
   /** A fed animal makes one produce per this many hours. */
   produceEveryHours: 24,
-  /** Love: +1 per pet (up to petsPerDay per animal per local day), +1 per collected produce. */
+  /** Love: +1 per pet (up to petsPerDay per animal in any rolling 24 h), +1 per collected produce. */
   petsPerDay: 3,
   maxLove: 100,
+  /** Love points per heart on the 5-heart meter. */
+  loveHeart: 10,
   /** One feed item (setup reward) = this many days. */
   feedItemDays: 1,
 } as const;

@@ -16,6 +16,8 @@ export function ExerciseSettings({ onSaved }: { onSaved?: () => void }) {
   const [goal, setGoal] = useState(3);
   const [gym, setGym] = useState("22:00");
   const [state, setState] = useState<"idle" | "saved" | "error">("idle");
+  // What the server has, so a no-op blur never saves (or pays the setup reward) (R-M8-4).
+  const [saved, setSaved] = useState<{ goal: number; gym: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -31,6 +33,7 @@ export function ExerciseSettings({ onSaved }: { onSaved?: () => void }) {
       setUserId(data.user.id);
       setGoal(s.weekly_exercise_goal as number);
       setGym((s.gym_close_time as string).slice(0, 5));
+      setSaved({ goal: s.weekly_exercise_goal as number, gym: (s.gym_close_time as string).slice(0, 5) });
     })();
     return () => {
       cancelled = true;
@@ -38,13 +41,19 @@ export function ExerciseSettings({ onSaved }: { onSaved?: () => void }) {
   }, [client]);
 
   const save = async (patch: { weekly_exercise_goal?: number; gym_close_time?: string }) => {
-    if (!userId) return;
+    if (!userId || !saved) return;
     const { error } = await client.from("settings").update(patch).eq("user_id", userId);
-    setState(error ? "error" : "saved");
-    if (!error) {
-      await logEvent("exercise_settings_saved", patch);
-      onSaved?.();
+    if (error) {
+      // Roll back to what the server has.
+      setGoal(saved.goal);
+      setGym(saved.gym);
+      setState("error");
+      return;
     }
+    setSaved({ goal: patch.weekly_exercise_goal ?? saved.goal, gym: patch.gym_close_time ?? saved.gym });
+    setState("saved");
+    await logEvent("exercise_settings_saved", patch);
+    onSaved?.();
   };
 
   const step = (d: number) => {
@@ -53,6 +62,7 @@ export function ExerciseSettings({ onSaved }: { onSaved?: () => void }) {
     setGoal(next);
     void save({ weekly_exercise_goal: next });
   };
+  const ready = saved !== null;
 
   return (
     <div className="flex flex-col gap-3">
@@ -63,7 +73,7 @@ export function ExerciseSettings({ onSaved }: { onSaved?: () => void }) {
             type="button"
             aria-label={t("less")}
             onClick={() => step(-1)}
-            disabled={goal <= 1}
+            disabled={!ready || goal <= 1}
             className="tap h-11 w-11 rounded-full bg-surface-2 text-xl font-bold disabled:opacity-40"
           >
             −
@@ -75,7 +85,7 @@ export function ExerciseSettings({ onSaved }: { onSaved?: () => void }) {
             type="button"
             aria-label={t("more")}
             onClick={() => step(1)}
-            disabled={goal >= 14}
+            disabled={!ready || goal >= 14}
             className="tap h-11 w-11 rounded-full bg-surface-2 text-xl font-bold disabled:opacity-40"
           >
             +
@@ -88,13 +98,21 @@ export function ExerciseSettings({ onSaved }: { onSaved?: () => void }) {
           type="time"
           value={gym}
           onChange={(e) => setGym(e.target.value)}
-          onBlur={() => void save({ gym_close_time: gym })}
+          disabled={!ready}
+          onBlur={() => {
+            if (saved && gym && gym !== saved.gym) void save({ gym_close_time: gym });
+          }}
           className="min-h-11 rounded-xl bg-surface-2 px-3"
         />
       </label>
       {state === "saved" && (
         <p role="status" className="text-sm text-muted">
           {t("saved")}
+        </p>
+      )}
+      {state === "error" && (
+        <p role="alert" className="rounded-xl bg-accent-soft p-3 text-sm font-bold">
+          {t("saveError")}
         </p>
       )}
     </div>

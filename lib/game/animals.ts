@@ -4,23 +4,24 @@
  */
 import { ANIMAL_IDS, ANIMALS, EXERCISE_RULES as R, HATCH_RATES, type AnimalId } from "@/content/animals";
 import { RARITIES, type Rarity } from "@/content/crops";
-import { localDate } from "@/lib/time";
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 
 export type WorkoutLog = { at: string; minutes: number };
 
-/** Which logs count for feed/eggs: ≥ minMinutes, at most maxCountedPerDay per local day (in time order). */
-export function countedWorkouts<T extends WorkoutLog>(logs: T[], timezone: string): T[] {
-  const perDay = new Map<string, number>();
+/**
+ * Which logs count for feed/eggs: ≥ minMinutes, and at most maxCountedPerDay counted in any
+ * rolling 24 h (in time order). A rolling window has no midnight to move, so a timezone change
+ * can't reset it (R-M8-1).
+ */
+export function countedWorkouts<T extends WorkoutLog>(logs: T[]): T[] {
   const out: T[] = [];
   for (const l of [...logs].sort((a, b) => Date.parse(a.at) - Date.parse(b.at))) {
     if (l.minutes < R.minMinutes) continue;
-    const d = localDate(new Date(l.at), timezone);
-    const n = perDay.get(d) ?? 0;
-    if (n >= R.maxCountedPerDay) continue;
-    perDay.set(d, n + 1);
+    const t = Date.parse(l.at);
+    const inWindow = out.filter((c) => t - Date.parse(c.at) < DAY).length;
+    if (inWindow >= R.maxCountedPerDay) continue;
     out.push(l);
   }
   return out;
@@ -50,8 +51,8 @@ export function produceReady(
   return isFed(a.fedUntil, now) && now.getTime() - since >= R.produceEveryHours * HOUR;
 }
 
-/** Love as 0–5 hearts. */
-export const loveHearts = (love: number) => Math.min(5, Math.floor(Math.max(0, love) / (R.maxLove / 5)));
+/** Love as 0–5 hearts: one per loveHeart points, so the first comes within a few days (R-M8-7). */
+export const loveHearts = (love: number) => Math.min(5, Math.floor(Math.max(0, love) / R.loveHeart));
 
 /** Days of feed left (rounded up), 0 when hungry. */
 export const feedDaysLeft = (fedUntil: Date | null, now: Date) =>

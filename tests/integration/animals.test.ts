@@ -36,10 +36,10 @@ describe("log_exercise", () => {
     const capped = await u.client.rpc("log_exercise", { p_type: "run", p_minutes: 20, p_key: key() });
     expect(capped.data).toMatchObject({ counted: false, egg_progress: 2 });
 
-    // Yesterday's two counted workouts → today's counts and hatches.
+    // Two counted workouts moved 25 h back → the next one counts and hatches.
     await admin()
       .from("exercise_logs")
-      .update({ at: new Date(Date.now() - 86_400_000).toISOString() })
+      .update({ at: new Date(Date.now() - 25 * 3_600_000).toISOString() })
       .eq("user_id", u.id)
       .eq("counted", true);
     const h = await u.client.rpc("log_exercise", { p_type: "gym", p_minutes: 45, p_key: key() });
@@ -54,12 +54,42 @@ describe("log_exercise", () => {
     // The next counted workout feeds it 2 more days.
     await admin()
       .from("exercise_logs")
-      .update({ at: new Date(Date.now() - 2 * 86_400_000).toISOString() })
+      .update({ at: new Date(Date.now() - 49 * 3_600_000).toISOString() })
       .eq("user_id", u.id)
       .eq("counted", true);
     await u.client.rpc("log_exercise", { p_type: "walk", p_minutes: 30, p_key: key() });
     const { data: fed } = await u.client.from("animals").select("fed_until").single();
     expect(Date.parse(fed!.fed_until as string) - Date.now()).toBeGreaterThan(95 * 3_600_000);
+  });
+
+  it("changing the timezone can't reset the 2-a-day or 3-pets caps (R-M8-1)", async () => {
+    const u = await newUser("extz");
+    expect(
+      (await u.client.rpc("log_exercise", { p_type: "gym", p_minutes: 30, p_key: key() })).data.counted,
+    ).toBe(true);
+    expect(
+      (await u.client.rpc("log_exercise", { p_type: "run", p_minutes: 30, p_key: key() })).data.counted,
+    ).toBe(true);
+    // A fake offset zone is refused; a real far-away zone is allowed but doesn't move the window.
+    const fake = await u.client.from("profiles").update({ timezone: "XXX-04:12:07" }).eq("user_id", u.id);
+    expect(fake.error).not.toBeNull();
+    for (const tz of ["Pacific/Kiritimati", "Etc/GMT+12", "Asia/Bangkok"]) {
+      await u.client.from("profiles").update({ timezone: tz }).eq("user_id", u.id);
+      expect(
+        (await u.client.rpc("log_exercise", { p_type: "walk", p_minutes: 30, p_key: key() })).data.counted,
+      ).toBe(false);
+    }
+    const { data: born } = await admin()
+      .from("animals")
+      .insert({ user_id: u.id, species: "cat", fed_until: new Date(Date.now() + 86_400_000).toISOString() })
+      .select("id")
+      .single();
+    for (let i = 0; i < 3; i++) await u.client.rpc("pet_animal", { p_id: born!.id });
+    await u.client.from("profiles").update({ timezone: "Pacific/Kiritimati" }).eq("user_id", u.id);
+    expect((await u.client.rpc("pet_animal", { p_id: born!.id })).data).toMatchObject({
+      counted: false,
+      love: 3,
+    });
   });
 
   it("refuses bad input and direct writes", async () => {

@@ -656,7 +656,8 @@
     "planBlock": "In which block?",
     "planAdd": "Add workout",
     "planRemove": "Remove workout",
-    "slotLabel": "Workout {n} min"
+    "slotLabel": "Workout {n} min",
+    "saveError": "Couldn't save. Check your connection and try again."
   },
   "animals": {
     "chicken": "Chicken",

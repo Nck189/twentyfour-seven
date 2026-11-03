@@ -12,7 +12,6 @@ import {
   produceReady,
 } from "@/lib/game/animals";
 
-const TZ = "Asia/Bangkok";
 const DAY = 86_400_000;
 
 describe("content", () => {
@@ -23,18 +22,21 @@ describe("content", () => {
 });
 
 describe("countedWorkouts", () => {
-  it("counts ≥ 10 min, at most 2 per local day, in time order", () => {
+  it("counts ≥ 10 min, at most 2 in any rolling 24 h — no calendar or timezone midnight to game (R-M8-1)", () => {
     const logs = [
-      { at: "2026-11-03T01:00:00Z", minutes: 30 }, // 08:00 Bangkok
+      { at: "2026-11-03T01:00:00Z", minutes: 30 },
       { at: "2026-11-03T02:00:00Z", minutes: 5 }, // too short
       { at: "2026-11-03T05:00:00Z", minutes: 20 },
-      { at: "2026-11-03T10:00:00Z", minutes: 45 }, // 3rd that day → not counted
-      { at: "2026-11-03T18:00:00Z", minutes: 30 }, // 01:00 on the 4th in Bangkok → counts
+      { at: "2026-11-03T18:00:00Z", minutes: 45 }, // 3rd within 24 h → not counted (even past local midnight)
+      { at: "2026-11-04T01:30:00Z", minutes: 30 }, // 24.5 h after the 1st → counts
+      { at: "2026-11-04T04:00:00Z", minutes: 30 }, // 05:00 still within 24 h → 2 in window → not counted
+      { at: "2026-11-04T05:30:00Z", minutes: 30 }, // 05:00 left the window → counts
     ];
-    expect(countedWorkouts(logs, TZ).map((l) => l.at)).toEqual([
+    expect(countedWorkouts(logs).map((l) => l.at)).toEqual([
       "2026-11-03T01:00:00Z",
       "2026-11-03T05:00:00Z",
-      "2026-11-03T18:00:00Z",
+      "2026-11-04T01:30:00Z",
+      "2026-11-04T05:30:00Z",
     ]);
   });
 });
@@ -79,8 +81,8 @@ describe("produce and love", () => {
       produceReady({ fedUntil: new Date(now.getTime() - 1), lastProduced: null, createdAt: born }, now),
     ).toBe(false);
   });
-  it("love shows as 0–5 hearts", () => {
-    expect([0, 19, 20, 55, 100, 140].map(loveHearts)).toEqual([0, 0, 1, 2, 5, 5]);
+  it("love shows as 0–5 hearts, one per 10 love, so the first heart comes within days (R-M8-7)", () => {
+    expect([0, 9, 10, 25, 50, 100, 140].map(loveHearts)).toEqual([0, 0, 1, 2, 5, 5, 5]);
   });
 });
 

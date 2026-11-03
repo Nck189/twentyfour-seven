@@ -30,8 +30,8 @@ test("CJ-13 three workouts: the ring fills, the 3rd hatches an egg (with its rev
   page,
 }) => {
   const id = await setup(page);
-  // Two counted workouts yesterday (2 a day count), straight in the table like past check-ins.
-  const yesterday = new Date(Date.now() - 86_400_000).toISOString();
+  // Two counted workouts 25 h ago (2 per rolling 24 h count), straight in the table like past check-ins.
+  const yesterday = new Date(Date.now() - 25 * 3_600_000).toISOString();
   await rest("exercise_logs", {
     method: "POST",
     body: JSON.stringify([
@@ -45,7 +45,8 @@ test("CJ-13 three workouts: the ring fills, the 3rd hatches an egg (with its rev
   await expect(page.getByRole("region", { name: "Exercise" })).toBeVisible();
   const sheet = await logWorkout(page);
   const hatch = page.getByRole("dialog", { name: "It hatched!" });
-  await expect(hatch.getByText(/^Meet your /)).toBeVisible();
+  // The live region announces it (one element; the big visible line repeats it).
+  await expect(hatch.getByRole("status")).toContainText(/^Meet your /);
   await expectNoSeriousA11y(page);
   await hatch.getByRole("button", { name: "Done" }).click();
   await expect(hatch).toHaveCount(0);
@@ -93,7 +94,9 @@ test("CJ-13b a hungry animal sleeps (never dies); a workout feeds it; petting co
   await sheet.getByRole("button", { name: "Close" }).click();
 
   await page.goto("/today");
-  await logWorkout(page, 20);
+  const log = await logWorkout(page, 20);
+  // Wait for the server's answer before leaving the page (R-M8-3).
+  await expect(log.getByRole("status")).toContainText("fed for 2 more days");
   await page.goto("/farm");
   await expect(page.getByRole("button", { name: "Cow: fed" })).toBeVisible();
 });

@@ -17,6 +17,24 @@ alter table public.game_state add column egg_progress smallint not null default 
 
 create index if not exists animals_user on public.animals (user_id);
 
+-- ---------- profiles.timezone: only real zone names (R-M8-1) ----------
+-- POSIX offsets like 'XXX-04:12:07' or '<+99>-99' moved "local midnight" anywhere; every day
+-- rule (Sunrise, Night, farm) assumes a real IANA zone.
+create or replace function public.profiles_timezone_guard()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.timezone is distinct from old.timezone
+     and not exists (select 1 from pg_catalog.pg_timezone_names where name = new.timezone) then
+    raise exception 'unknown timezone' using errcode = '22023';
+  end if;
+  return new;
+end $$;
+create trigger profiles_timezone_guard before update of timezone on public.profiles
+  for each row execute function public.profiles_timezone_guard();
+
 -- ---------- static content mirrors ----------
 -- Hatch roll (content/animals.ts HATCH_RATES; species evenly within a rarity, catalog order).
 create or replace function public._hatch_roll(r float8, c float8)
@@ -72,7 +90,7 @@ as $$
 $$;
 
 -- ---------- log a workout ----------
--- Counts for feed + eggs when ≥ 10 min and fewer than 2 counted workouts that local day.
+-- Counts for feed + eggs when ≥ 10 min and fewer than 2 counted workouts in the last 24 h.
 -- A counted workout feeds every animal 2 days; every 3rd fills the egg, which hatches here.
 create or replace function public.log_exercise(p_type text, p_minutes integer, p_key text)
 returns jsonb
@@ -82,8 +100,6 @@ set search_path = ''
 as $$
 declare
   uid uuid := auth.uid();
-  tz text;
-  d date;
   gs public.game_state;
   log public.exercise_logs;
   is_counted boolean;
@@ -119,11 +135,10 @@ begin
       'egg_progress', gs.egg_progress, 'hatched', prev -> 'hatched');
   end if;
 
-  select timezone into tz from public.profiles where user_id = uid;
-  d := (now() at time zone coalesce(tz, 'Asia/Bangkok'))::date;
+  -- A rolling 24 h window: no midnight to move, so a timezone change can't reset it (R-M8-1).
   is_counted := p_minutes >= 10 and (
     select count(*) from public.exercise_logs l
-    where l.user_id = uid and l.counted and (l.at at time zone coalesce(tz, 'Asia/Bangkok'))::date = d
+    where l.user_id = uid and l.counted and l.at > now() - interval '24 hours'
   ) < 2;
 
   insert into public.exercise_logs (user_id, at, type, minutes, counted, idempotency_key)
@@ -153,7 +168,7 @@ begin
     'egg_progress', gs.egg_progress, 'hatched', hatched);
 end $$;
 
--- ---------- pet an animal: +1 love, at most 3 counted pets per animal per local day ----------
+-- ---------- pet an animal: +1 love, at most 3 counted pets per animal in the last 24 h ----------
 create or replace function public.pet_animal(p_id uuid)
 returns jsonb
 language plpgsql
@@ -162,7 +177,6 @@ set search_path = ''
 as $$
 declare
   uid uuid := auth.uid();
-  tz text;
   pet public.animals;
   today integer;
 begin
@@ -173,10 +187,9 @@ begin
   if not found then
     raise exception 'not your animal' using errcode = 'P0002';
   end if;
-  select timezone into tz from public.profiles where user_id = uid;
   select count(*) into today from public.events e
   where e.user_id = uid and e.type = 'animal_petted' and e.payload ->> 'animal' = p_id::text
-    and (e.at at time zone coalesce(tz, 'Asia/Bangkok'))::date = (now() at time zone coalesce(tz, 'Asia/Bangkok'))::date;
+    and e.at > now() - interval '24 hours';
   if today >= 3 then
     return jsonb_build_object('love', pet.love, 'counted', false);
   end if;
