@@ -34,6 +34,16 @@ describe("animals SQL mirrors the content", () => {
     expect(sql).toContain(`now() + interval '${R.maxFeedDays} days'`);
     expect(sql).toContain(`interval '${R.produceEveryHours} hours'`);
     expect(sql).toContain(`if today >= ${R.petsPerDay} then`);
+    // Rolling 24 h windows, never a calendar day in some timezone (R-M8-1).
+    const fn = (name: string) =>
+      sql.slice(
+        sql.indexOf(`function public.${name}`),
+        sql.indexOf("end $$;", sql.indexOf(`function public.${name}`)),
+      );
+    for (const name of ["log_exercise", "pet_animal"]) {
+      expect(fn(name)).toContain("> now() - interval '24 hours'");
+      expect(fn(name)).not.toMatch(/at time zone/);
+    }
     expect(sql).toContain(`least(${R.maxLove}, love + 1)`);
     expect(sql).toContain(`public._add_feed(fed_until, ${R.feedItemDays})`);
   });

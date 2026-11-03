@@ -18,8 +18,8 @@ alter table public.game_state add column egg_progress smallint not null default 
 create index if not exists animals_user on public.animals (user_id);
 
 -- ---------- profiles.timezone: only real zone names (R-M8-1) ----------
--- POSIX offsets like 'XXX-04:12:07' or '<+99>-99' moved "local midnight" anywhere; every day
--- rule (Sunrise, Night, farm) assumes a real IANA zone.
+-- POSIX offsets like 'XXX-04:12:07' or '<+99>-99' moved "local midnight" anywhere. Real zones can
+-- still be switched, so reward caps don't use a local day at all (rolling 24 h below).
 create or replace function public.profiles_timezone_guard()
 returns trigger
 language plpgsql
@@ -369,6 +369,67 @@ as $$
     ) then 'exercise' end
   ], null)
 $$;
+
+-- ---------- backlog coins: the 150 cap over a rolling 24 h (G7 R-M8-R1) ----------
+-- The local-day cap reset whenever the user switched to a zone whose midnight had just passed.
+create or replace function public.complete_backlog_item(p_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  uid uuid := auth.uid();
+  item public.backlog_items;
+  amount integer;
+  inserted integer;
+  earned_today integer;
+begin
+  if uid is null then
+    raise exception 'not authenticated' using errcode = '42501';
+  end if;
+  perform 1 from public.game_state where user_id = uid for update;
+  select * into item from public.backlog_items where id = p_id and user_id = uid for update;
+  if not found then
+    raise exception 'backlog item not found' using errcode = 'P0002';
+  end if;
+  if item.status = 'dropped' then
+    return jsonb_build_object('coins_granted', 0);
+  end if;
+  update public.backlog_items
+     set status = 'done', done_at = coalesce(done_at, now())
+   where id = p_id;
+
+  amount := case item.priority when 'must' then 30 when 'should' then 20 else 10 end;
+  if now() - item.created_at < interval '10 minutes'
+     or now() - item.priority_set_at < interval '10 minutes' then
+    amount := least(amount, 10);
+  end if;
+
+  -- Rolling 24 h (no local midnight to move by switching zones).
+  select coalesce(sum(g.amount), 0) into earned_today
+    from public.coin_grants g
+   where g.user_id = uid and g.reason = 'backlog_done' and g.at > now() - interval '24 hours';
+  amount := least(amount, greatest(0, 150 - earned_today));
+  if amount <= 0 then
+    return jsonb_build_object('coins_granted', 0, 'capped', true);
+  end if;
+
+  insert into public.coin_grants (user_id, reason, ref, amount)
+  values (uid, 'backlog_done', p_id::text, amount)
+  on conflict do nothing;
+  get diagnostics inserted = row_count;
+  if inserted = 0 then
+    return jsonb_build_object('coins_granted', 0);
+  end if;
+
+  update public.game_state set coins = coins + amount where user_id = uid;
+  insert into public.events (user_id, type, payload)
+  values (uid, 'coins_granted', jsonb_build_object('amount', amount, 'reason', 'backlog_done', 'item', p_id));
+  return jsonb_build_object('coins_granted', amount);
+end $$;
+revoke all on function public.complete_backlog_item(uuid) from public, anon;
+grant execute on function public.complete_backlog_item(uuid) to authenticated;
 
 -- Workouts, hatches, petting, produce and feeding are server-only events.
 drop policy if exists "own rows: insert" on public.events;

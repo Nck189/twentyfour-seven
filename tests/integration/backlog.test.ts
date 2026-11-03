@@ -104,6 +104,35 @@ describe("coins come from real work, not farming (R-M5-1)", () => {
     expect(await coins(u)).toBe(BACKLOG_DAILY_COIN_CAP);
   });
 
+  it("the cap is a rolling 24 h: coins earned 23 h ago still count, whatever the timezone (R-M8-R1)", async () => {
+    const u = await newUser("farm-cap-24h");
+    let total = 0;
+    for (let i = 0; i < 5; i++) {
+      const id = await addItem(u, "must");
+      total += (await u.client.rpc("complete_backlog_item", { p_id: id })).data.coins_granted;
+    }
+    expect(total).toBe(BACKLOG_DAILY_COIN_CAP);
+    // Earned "yesterday" by the local calendar (23 h ago), and a zone whose midnight just passed.
+    await admin()
+      .from("coin_grants")
+      .update({ at: new Date(Date.now() - 23 * 3_600_000).toISOString() })
+      .eq("user_id", u.id);
+    for (const tz of ["Asia/Bangkok", "Pacific/Kiritimati", "Etc/GMT+12"]) {
+      await u.client.from("profiles").update({ timezone: tz }).eq("user_id", u.id);
+      const id = await addItem(u, "must");
+      expect((await u.client.rpc("complete_backlog_item", { p_id: id })).data.coins_granted).toBe(0);
+    }
+    // 25 h later they've left the window: coins again.
+    await admin()
+      .from("coin_grants")
+      .update({ at: new Date(Date.now() - 25 * 3_600_000).toISOString() })
+      .eq("user_id", u.id);
+    const id = await addItem(u, "must");
+    expect((await u.client.rpc("complete_backlog_item", { p_id: id })).data.coins_granted).toBe(
+      COINS_BY_PRIORITY.must,
+    );
+  });
+
   it("a removed task pays nothing", async () => {
     const u = await newUser("farm-drop");
     const id = await addItem(u, "must");

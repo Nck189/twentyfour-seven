@@ -14,5 +14,5 @@ export const COINS_BY_PRIORITY: Record<Priority, number> = {
  */
 export const QUICK_FINISH_MIN = 10;
 export const QUICK_FINISH_COINS = COINS_BY_PRIORITY.just_start;
-/** At most this many backlog coins per local day. */
+/** At most this many backlog coins in any rolling 24 h (no local midnight to game, R-M8-R1). */
 export const BACKLOG_DAILY_COIN_CAP = 150;

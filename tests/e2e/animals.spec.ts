@@ -87,7 +87,7 @@ test("CJ-13b a hungry animal sleeps (never dies); a workout feeds it; petting co
   const sheet = page.getByRole("dialog", { name: "Cow" });
   await expect(sheet.getByText(/Sleepy and hungry/)).toBeVisible();
   for (let i = 0; i < 4; i++) await sheet.getByRole("button", { name: "Pet" }).click();
-  await expect(sheet.getByRole("status")).toContainText("Pets count 3 times a day");
+  await expect(sheet.getByRole("status")).toContainText("Pets count 3 times every 24 hours");
   const [cow] = (await rest(`animals?user_id=eq.${id}&select=love`)) as { love: number }[];
   expect(cow!.love).toBe(3);
   await expectNoSeriousA11y(page);
@@ -115,7 +115,7 @@ test("CJ-13c a 3rd workout on the same day is logged but doesn't feed again (2 a
   });
   await page.goto("/today");
   const sheet = await logWorkout(page, 20);
-  await expect(sheet.getByRole("status")).toContainText("already counted");
+  await expect(sheet.getByRole("status")).toContainText("already counted twice");
   const logs = (await rest(`exercise_logs?user_id=eq.${id}&select=counted&order=at`)) as {
     counted: boolean;
   }[];

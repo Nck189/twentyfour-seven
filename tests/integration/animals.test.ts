@@ -71,6 +71,14 @@ describe("log_exercise", () => {
       (await u.client.rpc("log_exercise", { p_type: "run", p_minutes: 30, p_key: key() })).data.counted,
     ).toBe(true);
     // A fake offset zone is refused; a real far-away zone is allowed but doesn't move the window.
+    // 23 h ago is "yesterday" on the local calendar almost always: still inside the rolling 24 h (R-M8-R2).
+    await admin()
+      .from("exercise_logs")
+      .update({ at: new Date(Date.now() - 23 * 3_600_000).toISOString() })
+      .eq("user_id", u.id);
+    expect(
+      (await u.client.rpc("log_exercise", { p_type: "gym", p_minutes: 30, p_key: key() })).data.counted,
+    ).toBe(false);
     const fake = await u.client.from("profiles").update({ timezone: "XXX-04:12:07" }).eq("user_id", u.id);
     expect(fake.error).not.toBeNull();
     for (const tz of ["Pacific/Kiritimati", "Etc/GMT+12", "Asia/Bangkok"]) {
