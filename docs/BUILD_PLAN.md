@@ -146,6 +146,8 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 
 > Also in M7 (Minnie, 2026-11-03): **setup rewards** (SPEC §8.8c) — each one-time setup step pays a fitting reward once, server-checked.
 
+> Growth (docs/GROWTH.md): G2 setup rewards, G5 invite-a-friend reward.
+
 ## M8 — Exercise + animals
 **Prompt:**
 > Start M8. Exercise per SPEC §6: weekly ring, quick log, scheduling as a floating item, gym-close warning. Animals per SPEC §8.6:
@@ -160,6 +162,8 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 
 **Done when:** logging a workout visibly feeds animals; a hatch works with its animation.
 
+> Growth (docs/GROWTH.md): G3 retention dashboard (cohorts from events), G4 weekly share card, G11 in-app feedback.
+
 ## M9 — Streaks, modes, seasons
 **Prompt:**
 > Start M9. Implement minimum day, perfect day, scarecrow freezes (earned every 7-day streak, max 2, auto-used) and Vacation/Sick freezes per SPEC §8.7. Add monthly seasons per SPEC §8.8: limited banner, festival decor, and the month-end harvest festival screen. Write tests for the streak logic, including freeze and planned-deviation cases.
@@ -167,6 +171,8 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 **Done when:** the streak behaves correctly across a simulated month with misses, freezes and vacation.
 
 **Added 2026-11-03 (Minnie): unlocks & milestones (SPEC §8.8b).** Rules in `content/unlocks.ts`, progress as pure functions in `lib/game/unlocks.ts` (unit-tested), grants through a server RPC + read-only `unlock_grants` ledger (counters/ledger can start in M7 with the economy). Collection book on the Farm tab, one "next unlock" line on Today, feature reveals (Stats after 3 days, gacha with the first ticket). **Done when:** each tier unlocks exactly once from real data, and a new user sees fewer tabs/cards until they're earned.
+
+> Growth (docs/GROWTH.md): G1 easy first week via unlocks, G9 Thai festival events.
 
 ## M10 — Stats + weekly review
 **Prompt:**
@@ -184,6 +190,8 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 **Done when:** the numbers match a hand-checked sample week. **v1 complete — use it daily for a few days and fix papercuts.**
 
 ---
+
+> Growth (docs/GROWTH.md): G10 gentle, well-timed reminders.
 
 ## M11 — Push notifications + .ics
 **Prompt:**
@@ -227,6 +235,8 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 > - final export/import
 
 ---
+
+> Growth (docs/GROWTH.md): G1/G8 onboarding presets by audience, G15 privacy promise.
 
 ## Status
 - [x] M0 — ✅ 2026-11-02 · `docs/qa/M0-report.md` · live on prod
