@@ -115,25 +115,4 @@ describe("a push planned the night before moves the target (R-M3-2 / R-M4-1)", (
     expect(data.in_window).toBe(true);
     expect(await tickets(u.id)).toBe(1);
   });
-
-  it("a 'push' that pulls the wake more than 2 h earlier doesn't count (R2-3)", async () => {
-    // Template wakes in 5 h; a plan saying "wake now" (5 h earlier) would open the window now.
-    const u = await newUser("frz-early");
-    if (localDate(new Date(Date.now() + 5 * 60 * MIN), TZ) !== today()) return;
-    await plannedLongAgo(u.id, hhmm(5 * 60 * MIN));
-    await admin()
-      .from("day_plans")
-      .upsert(
-        {
-          user_id: u.id,
-          date: today(),
-          planned: { wake: new Date().toISOString(), base: baseAt(5 * 60 * MIN).toISOString() },
-          wake_planned_at: new Date(Date.now() - 6 * 60 * MIN).toISOString(),
-        },
-        { onConflict: "user_id,date" },
-      );
-    await admin().from("wake_snapshots").delete().eq("user_id", u.id);
-    const { data } = await u.client.rpc("press_wake");
-    expect(data.in_window).toBe(false);
-  });
 });

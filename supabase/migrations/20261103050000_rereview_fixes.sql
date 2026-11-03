@@ -16,8 +16,7 @@ as $$
 $$;
 
 -- R2-4: the server picks the same kind of day as the app when a weekday has none (first kind,
--- then any); a planned push counts within −2 h / +8 h of it (R2-3: no pulling the target hours
--- earlier), no longer only when planned from the exact same template target.
+-- then any). Planned wakes: see the rule below (R3-1).
 create or replace function public._target_wake(uid uuid, d date)
 returns timestamptz
 language plpgsql
@@ -32,6 +31,7 @@ declare
   wake_time time;
   base timestamptz;
   pw timestamptz;
+  pbase timestamptz;
 begin
   select timezone into tz from public.profiles where user_id = uid;
   tz := coalesce(tz, 'Asia/Bangkok');
@@ -61,13 +61,21 @@ begin
 
   begin
     pw := (plan.planned ->> 'wake')::timestamptz;
+    pbase := (plan.planned ->> 'base')::timestamptz;
   exception when others then
     pw := null;
+    pbase := null;
   end;
+  -- (Re-review 2, R3-1: the server judges what Today shows.) A planned wake counts when it was
+  -- planned ≥ 4 h ahead, within −6 h / +8 h of the kind's time, and either planned from the
+  -- current kind (planned.base) or anchored by an absolute push (bedtime push / out late).
   if pw is not null
      and plan.wake_planned_at is not null
      and plan.wake_planned_at <= pw - interval '4 hours'
-     and pw between base - interval '2 hours' and base + interval '8 hours' then
+     and pw between base - interval '6 hours' and base + interval '8 hours'
+     and (plan.bedtime_override is not null
+          or plan.late_night is not null
+          or pbase = base) then
     return pw;
   end if;
   return base;
@@ -96,7 +104,8 @@ begin
     end if;
     -- In a statement that changes several rows, later rows' BEFORE triggers already see the
     -- earlier rows changed: the target remembered at the first row is the real "old" one.
-    k := 'wake.old_' || to_char(d, 'YYYYMMDD');
+    -- Per user and day (R3-4: one statement can touch several users).
+    k := 'wake.old_' || replace(uid::text, '-', '') || '_' || to_char(d, 'YYYYMMDD');
     old := coalesce(nullif(current_setting(k, true), '')::timestamptz, public._target_wake(uid, d));
     if old is null then
       continue;
@@ -126,7 +135,7 @@ begin
     return;
   end if;
   foreach d in array days loop
-    old := nullif(current_setting('wake.old_' || to_char(d, 'YYYYMMDD'), true), '')::timestamptz;
+    old := nullif(current_setting('wake.old_' || replace(uid::text, '-', '') || '_' || to_char(d, 'YYYYMMDD'), true), '')::timestamptz;
     if old is null
        or exists (select 1 from public.wake_events where user_id = uid and date = d)
        or exists (select 1 from public.wake_snapshots where user_id = uid and date = d) then
@@ -218,7 +227,8 @@ end $$;
 revoke all on function public.complete_backlog_item(uuid) from public, anon;
 grant execute on function public.complete_backlog_item(uuid) to authenticated;
 
--- R2-8: the Night ticket counts from 14 h to 5 h before the next wake (frozen target if any),
+-- R2-8 / R3-3: the Night ticket counts from 14 h to 3 h before the next wake (frozen target if any;
+-- a short night like home 03:00 before a 07:00 class still counts),
 -- and not once "I'm up" was pressed for that morning.
 create or replace function public.complete_night_ritual(p_date date)
 returns jsonb
@@ -246,7 +256,7 @@ begin
     (select target_wake from public.wake_snapshots where user_id = uid and date = p_date + 1),
     public._target_wake(uid, p_date + 1));
   in_time := next_wake is not null
-    and now() between next_wake - interval '14 hours' and next_wake - interval '5 hours'
+    and now() between next_wake - interval '14 hours' and next_wake - interval '3 hours'
     and not exists (select 1 from public.wake_events where user_id = uid and date = p_date + 1);
   if in_time then
     granted := public._grant_once(uid, 'night', p_date, 1);
