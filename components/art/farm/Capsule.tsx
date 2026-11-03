@@ -22,8 +22,8 @@ export function CapsuleShape({ rarity, open = 0 }: { rarity: Rarity; open?: numb
     <g>
       <Shadow rx={11} cy={42} />
       {/* bottom half */}
-      <path d="M12 26 A12 12 0 0 0 36 26Z" fill="var(--art-cream)" />
-      <path d="M24 26 L36 26 A12 12 0 0 1 24 38Z" fill="var(--art-stone)" />
+      <path d="M12 26 A12 12 0 0 0 36 26Z" fill="var(--art-stone-dark)" />
+      <path d="M12 26 A11 11 0 0 0 34 26Z" fill="var(--art-stone-light)" />
       {/* top half */}
       <g transform={`translate(0 ${-lift}) rotate(${tilt} 12 26)`}>
         <path d="M12 26 A12 12 0 0 1 36 26Z" fill={tone.dark} />
