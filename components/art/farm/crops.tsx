@@ -156,15 +156,20 @@ function Strawberry() {
 function Blueberry() {
   return (
     <g>
-      <Shadow rx={13} />
-      <circle cx={24} cy={28} r={12} fill="var(--art-leaf-4)" />
-      <circle cx={22.5} cy={26.5} r={10.5} fill="var(--art-leaf-3)" />
-      <Leaf cx={18} cy={21} rx={4.5} ry={2.6} rot={-30} fill="var(--art-leaf-1)" />
-      <Leaf cx={29} cy={20} rx={4} ry={2.4} rot={25} fill="var(--art-leaf-2)" />
-      <Ball cx={18.5} cy={30} r={3.4} tone={blue} />
-      <Ball cx={24} cy={32} r={3.6} tone={blue} />
-      <Ball cx={29.5} cy={29} r={3.4} tone={blue} />
-      <Ball cx={24.5} cy={25} r={3.2} tone={blue} />
+      <Shadow rx={14} />
+      <circle cx={15.5} cy={31} r={8} fill="var(--art-leaf-4)" />
+      <circle cx={32.5} cy={30.5} r={8} fill="var(--art-leaf-4)" />
+      <circle cx={24} cy={24} r={10} fill="var(--art-leaf-4)" />
+      <circle cx={14.8} cy={30.2} r={7.2} fill="var(--art-leaf-3)" />
+      <circle cx={31.6} cy={29.6} r={7.2} fill="var(--art-leaf-3)" />
+      <circle cx={23.2} cy={23.2} r={9.2} fill="var(--art-leaf-3)" />
+      <Leaf cx={19.5} cy={18} rx={4.5} ry={2.5} rot={-30} fill="var(--art-leaf-1)" />
+      <Leaf cx={11.5} cy={26.5} rx={3} ry={1.8} rot={-30} fill="var(--art-leaf-1)" />
+      <Ball cx={16.5} cy={32} r={3.4} tone={blue} />
+      <Ball cx={22} cy={28.5} r={3.6} tone={blue} />
+      <Ball cx={30.5} cy={31} r={3.4} tone={blue} />
+      <Ball cx={27.5} cy={23} r={3.2} tone={blue} />
+      <Ball cx={24.5} cy={34} r={3} tone={blue} />
     </g>
   );
 }
@@ -190,8 +195,8 @@ function Cob({ rows }: { rows?: string[] }) {
   for (let r = 0; r < 6; r++) {
     const y = 14 + r * 2.6;
     const fill = rows ? rows[r]! : r % 2 ? "var(--art-yellow-dark)" : "var(--art-yellow-light)";
-    for (const dx of [-1.6, 1.6])
-      kernels.push(<circle key={`${r}${dx}`} cx={27 + dx} cy={y} r={1.05} fill={fill} />);
+    for (const dx of [-2.2, 0, 2.2])
+      kernels.push(<circle key={`${r}${dx}`} cx={26.8 + dx} cy={y} r={1.15} fill={fill} />);
   }
   return (
     <g>
@@ -452,19 +457,19 @@ function Grape() {
 
 function CherryTree() {
   const pairs: [number, number][] = [
-    [15, 22],
-    [27, 25],
-    [33, 17],
+    [15, 25],
+    [27, 28],
+    [33, 20],
   ];
   return (
     <g>
       <Shadow rx={12} />
-      <rect x={21.5} y={22} width={5} height={18} rx={2} fill="var(--art-wood-dark)" />
-      <rect x={21.5} y={22} width={3.4} height={18} rx={1.7} fill="var(--art-wood)" />
-      <circle cx={17} cy={17} r={8} fill="var(--art-leaf-4)" />
-      <circle cx={31} cy={16} r={8} fill="var(--art-leaf-3)" />
-      <circle cx={23.5} cy={11} r={9} fill="var(--art-leaf-1)" />
-      <circle cx={20.5} cy={8.5} r={3.4} fill="var(--art-leaf-light)" />
+      <rect x={21.5} y={25} width={5} height={15} rx={2} fill="var(--art-wood-dark)" />
+      <rect x={21.5} y={25} width={3.4} height={15} rx={1.7} fill="var(--art-wood)" />
+      <circle cx={16.5} cy={20.5} r={8} fill="var(--art-leaf-4)" />
+      <circle cx={31.5} cy={19.5} r={8} fill="var(--art-leaf-3)" />
+      <circle cx={23.5} cy={15} r={9} fill="var(--art-leaf-1)" />
+      <circle cx={20.5} cy={12.5} r={3.4} fill="var(--art-leaf-light)" />
       {pairs.map(([x, y]) => (
         <g key={x}>
           <path d={`M${x} ${y - 4} L${x - 2} ${y}`} stroke="var(--art-stem)" strokeWidth={0.9} />
@@ -521,16 +526,26 @@ function CrystalRose() {
   return (
     <g>
       <Shadow rx={9} />
-      <Stem top={20} w={2.4} />
-      <Leaf cx={18.5} cy={31} rx={5} ry={2.6} rot={-25} fill="var(--art-leaf-3)" />
-      <Leaf cx={29.5} cy={27} rx={5} ry={2.6} rot={25} fill="var(--art-leaf-4)" />
-      <polygon points="24,5 33,12 31,22 24,25 17,22 15,12" fill="var(--art-pink-dark)" />
-      <polygon points="24,5 31.4,11.8 24,15 16.6,11.8" fill="var(--art-pink-light)" />
-      <polygon points="16.6,11.8 24,15 24,24.2 17.2,21.4" fill="var(--art-pink)" />
-      <polygon points="24,15 31.4,11.8 30.6,21.4 24,24.2" fill="var(--art-blue-light)" />
-      <polygon points="20.5,10.5 24,8 27.5,10.5 24,12.5" fill="var(--art-white)" opacity={0.8} />
-      <Sparkle cx={35} cy={7} r={2.2} fill="var(--art-white)" />
-      <Sparkle cx={12.5} cy={17} r={1.6} fill="var(--art-blue-light)" />
+      <Stem top={22} w={2.4} />
+      <Leaf cx={18.5} cy={32} rx={5} ry={2.6} rot={-25} fill="var(--art-leaf-3)" />
+      <Leaf cx={29.5} cy={28} rx={5} ry={2.6} rot={25} fill="var(--art-leaf-4)" />
+      {/* back petals */}
+      <circle cx={17.5} cy={14.5} r={6} fill="var(--art-pink-dark)" />
+      <circle cx={30.5} cy={14.5} r={6} fill="var(--art-pink-dark)" />
+      <circle cx={24} cy={11} r={6.5} fill="var(--art-pink)" />
+      {/* the cup: front petals, one crystal-blue facet each side */}
+      <path
+        d="M14 15.5 Q14 25.5 24 25.5 Q34 25.5 34 15.5 Q29 19.5 24 19.5 Q19 19.5 14 15.5Z"
+        fill="var(--art-pink-dark)"
+      />
+      <path d="M14 15.5 Q14.4 24.4 23.4 24.6 L24 19.5 Q19 19.5 14 15.5Z" fill="var(--art-pink)" />
+      <path d="M24 19.5 L23.4 24.6 Q31.6 24.2 33.4 17.6 Q29 19.5 24 19.5Z" fill="var(--art-blue-light)" />
+      {/* the heart of the rose: a spiral of two petals */}
+      <ellipse cx={24} cy={15.5} rx={5.4} ry={4} fill="var(--art-pink-light)" />
+      <path d="M20.6 15.2 Q24 11.6 27.4 15.2 Q24 13.8 20.6 15.2Z" fill="var(--art-pink-dark)" />
+      <polygon points="18.5,9.5 21,7.6 22.6,10.2" fill="var(--art-white)" opacity={0.85} />
+      <Sparkle cx={36} cy={8} r={2.4} fill="var(--art-white)" />
+      <Sparkle cx={11.5} cy={21} r={1.6} fill="var(--art-blue-light)" />
     </g>
   );
 }

@@ -40,7 +40,7 @@ export function PlotArt({
     <Art className={className} label={label}>
       <PlotBed locked={locked} />
       {cropId && !locked && (
-        <g transform="translate(0 -3)">
+        <g transform="translate(0 -3)" style={{ ["--shadow-on" as string]: "var(--art-soil-dark)" }}>
           <MutationFx ids={mutations} layer="behind" />
           <CropBody cropId={cropId} stage={stage} status={status} weeds={weeds} wiltLevel={wiltLevel} />
           <MutationFx ids={mutations} layer="front" />

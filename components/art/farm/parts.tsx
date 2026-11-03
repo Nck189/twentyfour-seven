@@ -32,7 +32,8 @@ export const GROUND_Y = 40;
 
 /** The soft flat ellipse under an object (the only "shadow" allowed). */
 export function Shadow({ cx = 24, rx = 11, cy = GROUND_Y + 1 }: { cx?: number; rx?: number; cy?: number }) {
-  return <ellipse cx={cx} cy={cy} rx={rx} ry={rx * 0.22} fill="var(--art-shadow)" />;
+  // On a soil bed the plot sets --shadow-on to a darker soil, so the shadow never reads paler.
+  return <ellipse cx={cx} cy={cy} rx={rx} ry={rx * 0.22} fill="var(--shadow-on, var(--art-shadow))" />;
 }
 
 /**

@@ -102,7 +102,7 @@ export function Flowers({ className = "h-12 w-12" }: { className?: string }) {
               transform={`rotate(${a} ${x} ${y})`}
             />
           ))}
-          <Ball cx={x} cy={y} r={2} tone={TONES.yellow} />
+          <Ball cx={x} cy={y} r={2} tone={tone === "yellow" ? TONES.orange : TONES.yellow} />
         </g>
       ))}
     </Art>

@@ -35,22 +35,22 @@ export function FarmSky({ phase, className }: { phase: SkyPhase; className?: str
         STARS.map(([x, y, r]) => <circle key={`${x}-${y}`} cx={x} cy={y} r={r} fill="var(--sky-star)" />)}
       {phase === "night" && (
         <g>
-          <circle cx={320} cy={38} r={15} fill="var(--sky-moon)" />
-          <circle cx={327} cy={33} r={13} fill="var(--sky-night-top)" />
+          <circle cx={320} cy={58} r={15} fill="var(--sky-moon)" />
+          <circle cx={327} cy={53} r={13} fill="var(--sky-night-top)" />
         </g>
       )}
       {phase === "day" && (
         <g>
-          <circle cx={330} cy={36} r={18} fill="var(--art-sun)" />
-          <ellipse cx={80} cy={42} rx={26} ry={10} fill="var(--art-cloud)" />
-          <ellipse cx={98} cy={35} rx={16} ry={10} fill="var(--art-cloud)" />
-          <ellipse cx={220} cy={60} rx={20} ry={7} fill="var(--art-cloud)" opacity={0.85} />
+          <circle cx={330} cy={58} r={18} fill="var(--art-sun)" />
+          <ellipse cx={80} cy={62} rx={26} ry={10} fill="var(--art-cloud)" />
+          <ellipse cx={98} cy={55} rx={16} ry={10} fill="var(--art-cloud)" />
+          <ellipse cx={220} cy={78} rx={20} ry={7} fill="var(--art-cloud)" opacity={0.85} />
         </g>
       )}
       {phase === "sunrise" && (
         <g>
           <circle cx={300} cy={118} r={24} fill="var(--art-sun)" />
-          <ellipse cx={120} cy={50} rx={24} ry={8} fill="var(--art-cloud)" opacity={0.9} />
+          <ellipse cx={120} cy={62} rx={24} ry={8} fill="var(--art-cloud)" opacity={0.9} />
         </g>
       )}
       {phase === "dusk" && (

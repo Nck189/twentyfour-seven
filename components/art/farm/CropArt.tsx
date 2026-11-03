@@ -102,9 +102,25 @@ export function Weeds() {
 function WiltSpots() {
   return (
     <g>
-      <ellipse cx={17} cy={28} rx={2} ry={1.2} fill="var(--art-wilt)" />
-      <ellipse cx={30} cy={23} rx={1.8} ry={1.1} fill="var(--art-wilt-dark)" />
-      <ellipse cx={21} cy={16} rx={1.5} ry={0.9} fill="var(--art-wilt)" />
+      <ellipse
+        cx={16.5}
+        cy={28.5}
+        rx={3.2}
+        ry={1.8}
+        fill="var(--art-wilt)"
+        transform="rotate(-25 16.5 28.5)"
+      />
+      <ellipse cx={31} cy={24.5} rx={3} ry={1.7} fill="var(--art-wilt-dark)" transform="rotate(25 31 24.5)" />
+      <ellipse
+        cx={19.5}
+        cy={17.5}
+        rx={2.4}
+        ry={1.4}
+        fill="var(--art-wilt)"
+        transform="rotate(-35 19.5 17.5)"
+      />
+      <circle cx={36} cy={36} r={1.4} fill="var(--art-wilt-dark)" />
+      <circle cx={12} cy={37} r={1.1} fill="var(--art-wilt)" />
     </g>
   );
 }

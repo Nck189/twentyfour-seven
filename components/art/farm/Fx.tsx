@@ -15,8 +15,8 @@ const QUALITY_FILL: Record<Exclude<Quality, "normal">, [string, string]> = {
 export function QualityStar({
   quality,
   cx = 40,
-  cy = 8,
-  r = 6,
+  cy = 11,
+  r = 5.5,
 }: {
   quality: Quality;
   cx?: number;
@@ -30,24 +30,15 @@ export function QualityStar({
       <Star5 cx={cx + 0.5} cy={cy + 0.5} r={r} fill={dark} />
       <Star5 cx={cx} cy={cy} r={r * 0.9} fill={base} />
       {quality === "prismatic" && (
-        <g>
-          <polygon
-            points={`${cx},${cy - r * 0.85} ${cx + r * 0.25},${cy} ${cx},${cy + r * 0.2}`}
-            fill="var(--art-blue-light)"
-          />
-          <polygon
-            points={`${cx},${cy + r * 0.2} ${cx + r * 0.25},${cy} ${cx + r * 0.8},${cy - r * 0.25}`}
-            fill="var(--art-yellow-light)"
-          />
-        </g>
+        <Star5 cx={cx + 0.4} cy={cy + 0.6} r={r * 0.45} fill="var(--art-blue-light)" />
       )}
       <ellipse
         cx={cx - r * 0.3}
         cy={cy - r * 0.25}
-        rx={r * 0.18}
-        ry={r * 0.12}
+        rx={r * 0.2}
+        ry={r * 0.13}
         fill="var(--art-white)"
-        opacity={0.8}
+        opacity={0.85}
       />
     </g>
   );
