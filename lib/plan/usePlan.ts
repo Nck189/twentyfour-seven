@@ -10,6 +10,7 @@ import { markDirty, requeue, saveDirty, type DirtyDay } from "./patch";
 import { getSupabase } from "@/lib/supabase/client";
 import { currentDayDate, planFor, plannedWake, type DayContext, type DayPlanRow } from "@/lib/today/day";
 import { DAY_PLAN_COLUMNS, emptyDayPlan, loadDayContext } from "@/lib/today/loadContext";
+import { QUIET_RETRY_MS } from "@/lib/supabase/fetchWithTimeout";
 
 export type DayPatch = Partial<Omit<DayPlanRow, "date" | "overrides">> & {
   /** Merged into overrides.blocks[key]. */
@@ -86,7 +87,7 @@ export function usePlan() {
         // One quiet retry (a hung or dropped request), then the error with Try again.
         if (!autoRetried.current) {
           autoRetried.current = true;
-          setReload((r) => r + 1);
+          setTimeout(() => setReload((r) => r + 1), QUIET_RETRY_MS);
         } else setStatus("error");
       });
     return () => {

@@ -39,3 +39,20 @@ describe("fetchWithTimeout (no endless 'Loading…')", () => {
     expect(await p).toMatchObject({ name: "AbortError" });
   });
 });
+
+describe("the browser client has no hidden retries (QC 2026-11-03: 'Couldn't load' took 14 s)", () => {
+  it("supabase-js's built-in GET retries (1 s + 2 s + 4 s) are off; the app's own policy applies", async () => {
+    vi.resetModules();
+    const created: unknown[] = [];
+    vi.doMock("@supabase/ssr", () => ({
+      createBrowserClient: (...args: unknown[]) => {
+        created.push(args[2]);
+        return {};
+      },
+    }));
+    const { getSupabase } = await import("@/lib/supabase/client");
+    getSupabase();
+    expect(created[0]).toMatchObject({ db: { retry: false } });
+    vi.doUnmock("@supabase/ssr");
+  });
+});

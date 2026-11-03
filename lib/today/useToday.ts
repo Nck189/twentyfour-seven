@@ -18,6 +18,7 @@ import {
 } from "./day";
 import { sameDayContext, shouldRefreshOnForeground } from "./foreground";
 import { loadDayContext } from "./loadContext";
+import { QUIET_RETRY_MS } from "@/lib/supabase/fetchWithTimeout";
 
 export type BlockLog = {
   id?: string;
@@ -78,6 +79,8 @@ export function useToday(now: Date) {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [saveError, setSaveError] = useState(0);
   const [reload, setReload] = useState(0);
+  const autoRetried = useRef(false);
+  const loadedOnce = useRef(false);
 
   const logsRef = useRef<Record<string, BlockLog>>({});
   const serverRef = useRef<Record<string, BlockLog>>({});
@@ -140,11 +143,19 @@ export function useToday(now: Date) {
         const doneDates = ((nightRows.data ?? []) as { ref_date: string }[]).map((r) => r.ref_date);
         setNightDone(doneDates);
         setNightDoneAtLoad(doneDates);
+        loadedOnce.current = true;
         setStatus("ready");
       } catch {
         // A failed refetch (e.g. after a day-plan change elsewhere) keeps what's on screen; only a
         // failed first load shows the error card (an open Night ritual stays open).
-        if (!cancelled) setStatus((st) => (st === "ready" ? st : "error"));
+        // A failed first load retries once quietly (like Plan and the backlog) before the card.
+        if (cancelled) return;
+        if (!loadedOnce.current && !autoRetried.current) {
+          autoRetried.current = true;
+          setTimeout(() => setReload((r) => r + 1), QUIET_RETRY_MS);
+          return;
+        }
+        setStatus((st) => (st === "ready" ? st : "error"));
       }
     })();
     return () => {

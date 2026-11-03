@@ -6,6 +6,7 @@ import { logEvent } from "@/lib/db/events";
 import { getSupabase } from "@/lib/supabase/client";
 import { DEFAULT_BLOCK, carryOver, type BacklogItem } from "./index";
 import type { Capture } from "./parse";
+import { QUIET_RETRY_MS } from "@/lib/supabase/fetchWithTimeout";
 
 const COLUMNS =
   "id, title, tag, estimate_min, priority, deadline, scheduled_date, block, status, carry_count, checklist, done_at, created_at";
@@ -48,7 +49,7 @@ export function useBacklog(userId: string | null) {
           // One quiet retry (a hung or dropped request), then the error with Try again.
           if (!autoRetried.current) {
             autoRetried.current = true;
-            setReload((r) => r + 1);
+            setTimeout(() => setReload((r) => r + 1), QUIET_RETRY_MS);
           } else setStatus("error");
           return;
         }

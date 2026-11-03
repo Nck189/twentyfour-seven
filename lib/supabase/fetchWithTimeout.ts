@@ -19,3 +19,6 @@ export function fetchWithTimeout(ms = 15_000): typeof fetch {
     }
   };
 }
+
+/** Pause before a first load's one quiet retry (a network blip usually passes by then). */
+export const QUIET_RETRY_MS = 800;
