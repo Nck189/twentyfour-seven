@@ -14,6 +14,9 @@ import { PlotArt } from "@/components/art/farm/PlotArt";
 import { SetupCard } from "@/components/setup/SetupCard";
 import { AnimalArt, EggArt, FeedArt, Heart, ProduceArt } from "@/components/art/farm/Animals";
 import { ANIMAL_IDS, PRODUCE_IDS } from "@/content/animals";
+import { ScarecrowArt, StreakSun } from "@/components/art/Streak";
+import { DECOR_ART } from "@/components/farm/DecorShop";
+import { DECOR_IDS } from "@/content/decor";
 import { Fence, Flowers, PathTile, Pond } from "@/components/art/farm/Plot";
 
 const STAGES = [0, 1, 2, 3] as const;
@@ -166,6 +169,28 @@ export default function ArtSheet() {
         <SetupCard state={{ done: ["first10", "language"], granted: [] }} />
         <SetupCard state={{ done: ["first10", "language"], granted: [] }} compact />
       </div>
+      <section className="flex flex-wrap items-end gap-3" data-section="m9">
+        {DECOR_IDS.map((id) => {
+          const A = DECOR_ART[id];
+          return (
+            <Cell key={id} caption={id}>
+              <A className="h-16 w-16" />
+            </Cell>
+          );
+        })}
+        <Cell caption="streak">
+          <StreakSun className="h-16 w-16" />
+        </Cell>
+        <Cell caption="streak 0">
+          <StreakSun className="h-16 w-16" dim />
+        </Cell>
+        <Cell caption="scarecrow">
+          <ScarecrowArt className="h-16 w-16" />
+        </Cell>
+        <Cell caption="used">
+          <ScarecrowArt className="h-16 w-16" used />
+        </Cell>
+      </section>
       <section className="flex flex-wrap items-end gap-3" data-section="decor">
         <Cell caption="fence">
           <Fence className="h-24 w-24" />
