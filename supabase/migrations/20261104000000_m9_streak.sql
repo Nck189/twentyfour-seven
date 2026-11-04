@@ -12,7 +12,7 @@ security definer
 set search_path = ''
 as $$
 begin
-  if current_user = 'service_role' then
+  if current_user = 'service_role' or current_setting('role', true) = 'service_role' then
     return new;
   end if;
   if new.planned_deviation and (tg_op = 'INSERT' or not old.planned_deviation)
@@ -35,7 +35,7 @@ as $$
 declare
   today date;
 begin
-  if current_user = 'service_role' then
+  if current_user = 'service_role' or current_setting('role', true) = 'service_role' then
     return new;
   end if;
   today := public._wake_day(new.user_id);
