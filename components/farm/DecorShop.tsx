@@ -1,36 +1,13 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState, type ComponentType } from "react";
+import { useState } from "react";
+import { DECOR_ART } from "@/components/art/farm/DecorArt";
 import { Coin } from "@/components/art/Coin";
-import { Fence, Flowers, PathTile, Pond } from "@/components/art/farm/Plot";
-import {
-  Fireworks,
-  GardenLantern,
-  Jasmine,
-  Krathong,
-  Mailbox,
-  RedLantern,
-  StarTree,
-  WaterBowl,
-} from "@/components/art/farm/Festival";
 import { BASIC_DECOR, DECOR_PRICE, type DecorId, type ShopDecorId } from "@/content/decor";
 import type { Season } from "@/content/seasons";
 
-export const DECOR_ART: Record<DecorId, ComponentType<{ className?: string }>> = {
-  fence: Fence,
-  path: PathTile,
-  flowers: Flowers,
-  pond: Pond,
-  fireworks: Fireworks,
-  red_lantern: RedLantern,
-  water_bowl: WaterBowl,
-  jasmine: Jasmine,
-  krathong: Krathong,
-  star_tree: StarTree,
-  garden_lantern: GardenLantern,
-  mailbox: Mailbox,
-};
+export { DECOR_ART };
 
 /** Decor shop basics (SPEC §8.9): pictures + price; the server takes the coins. */
 export function DecorShop({

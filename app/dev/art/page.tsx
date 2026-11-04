@@ -15,7 +15,7 @@ import { SetupCard } from "@/components/setup/SetupCard";
 import { AnimalArt, EggArt, FeedArt, Heart, ProduceArt } from "@/components/art/farm/Animals";
 import { ANIMAL_IDS, PRODUCE_IDS } from "@/content/animals";
 import { ScarecrowArt, StreakSun } from "@/components/art/Streak";
-import { DECOR_ART } from "@/components/farm/DecorShop";
+import { DECOR_ART } from "@/components/art/farm/DecorArt";
 import { DECOR_IDS } from "@/content/decor";
 import { Fence, Flowers, PathTile, Pond } from "@/components/art/farm/Plot";
 
