@@ -13,11 +13,15 @@ export const FESTIVAL_DECOR = [
   "krathong",
   "star_tree",
 ] as const;
-export const DECOR_IDS = [...BASIC_DECOR, ...FESTIVAL_DECOR] as const;
+/** Earned only (unlock ladder, SPEC §8.8b): never in the shop. */
+export const REWARD_DECOR = ["garden_lantern", "mailbox"] as const;
+export const SHOP_DECOR = [...BASIC_DECOR, ...FESTIVAL_DECOR] as const;
+export const DECOR_IDS = [...SHOP_DECOR, ...REWARD_DECOR] as const;
 export type DecorId = (typeof DECOR_IDS)[number];
+export type ShopDecorId = (typeof SHOP_DECOR)[number];
 export type FestivalDecorId = (typeof FESTIVAL_DECOR)[number];
 
-export const DECOR_PRICE: Record<DecorId, number> = {
+export const DECOR_PRICE: Record<ShopDecorId, number> = {
   fence: 40,
   path: 30,
   flowers: 50,

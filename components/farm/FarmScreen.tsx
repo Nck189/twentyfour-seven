@@ -17,6 +17,8 @@ import { useGacha } from "@/lib/farm/useGacha";
 import { useAnimals } from "@/lib/animals/useAnimals";
 import { AnimalPen } from "./AnimalPen";
 import { SeasonBanner } from "./SeasonBanner";
+import { CollectionBook, UnlockNotice } from "./CollectionBook";
+import { useUnlocks } from "@/lib/unlocks/useUnlocks";
 import { seasonOf } from "@/content/seasons";
 import { CROP_IDS } from "@/content/crops";
 import { Capsule, CapsuleMachine } from "@/components/art/farm/Capsule";
@@ -38,8 +40,10 @@ export function FarmScreen({ compact = false }: { compact?: boolean }) {
   const { data, status, plant, harvest, buyDecor, reload } = useFarm();
   const gacha = useGacha();
   const animals = useAnimals();
+  const unlocks = useUnlocks();
   return (
     <FarmView
+      unlocks={compact ? undefined : (unlocks ?? undefined)}
       gacha={compact ? undefined : gacha}
       animals={compact ? undefined : animals}
       compact={compact}
@@ -64,6 +68,7 @@ export function FarmView({
   reload,
   gacha,
   animals,
+  unlocks,
 }: {
   compact?: boolean;
   data: FarmData | null;
@@ -76,6 +81,8 @@ export function FarmView({
   gacha?: ReturnType<typeof useGacha>;
   /** Egg incubator + animal pen (absent in the compact side panel and the preview). */
   animals?: ReturnType<typeof useAnimals>;
+  /** The unlock ladder (absent in the compact side panel). */
+  unlocks?: NonNullable<ReturnType<typeof useUnlocks>>;
 }) {
   const t = useTranslations("farm");
   const tc = useTranslations("common");
@@ -234,7 +241,9 @@ export function FarmView({
         )}
       </section>
 
-      {gacha?.state && (
+      {unlocks && <UnlockNotice granted={unlocks.granted} />}
+      {/* Feature reveal (SPEC §8.8b): the capsule machine appears with the first ticket. */}
+      {gacha?.state && (gacha.state.tickets > 0 || Object.keys(gacha.state.dex).length > 0) && (
         <section aria-label={tg("title")} className="mx-4 mt-4 grid grid-cols-2 gap-2 lg:mx-6">
           <button
             type="button"
@@ -276,11 +285,14 @@ export function FarmView({
         <SeedDexSheet state={gacha.state} starUp={gacha.starUp} onClose={() => setSheet(null)} />
       )}
 
+      {unlocks && <CollectionBook state={unlocks} />}
+
       {animals && <AnimalPen animals={animals} />}
 
       {!compact && <DecorShop coins={data.coins} onBuy={buyDecor} season={seasonOf(data.today)} />}
 
-      {!compact && (
+      {/* Feature reveal: the farm expansion shows after the first harvest. */}
+      {!compact && (gacha?.state?.harvested ?? true) && (
         <section aria-label={t("fields")} className="mx-4 mt-4 mb-6 lg:mx-6">
           <h2 className="mb-1 text-sm font-bold text-muted">{t("fields")}</h2>
           <div className="flex items-center gap-2">

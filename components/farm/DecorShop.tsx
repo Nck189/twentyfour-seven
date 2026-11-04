@@ -6,13 +6,15 @@ import { Coin } from "@/components/art/Coin";
 import { Fence, Flowers, PathTile, Pond } from "@/components/art/farm/Plot";
 import {
   Fireworks,
+  GardenLantern,
   Jasmine,
   Krathong,
+  Mailbox,
   RedLantern,
   StarTree,
   WaterBowl,
 } from "@/components/art/farm/Festival";
-import { BASIC_DECOR, DECOR_PRICE, type DecorId } from "@/content/decor";
+import { BASIC_DECOR, DECOR_PRICE, type DecorId, type ShopDecorId } from "@/content/decor";
 import type { Season } from "@/content/seasons";
 
 export const DECOR_ART: Record<DecorId, ComponentType<{ className?: string }>> = {
@@ -26,6 +28,8 @@ export const DECOR_ART: Record<DecorId, ComponentType<{ className?: string }>> =
   jasmine: Jasmine,
   krathong: Krathong,
   star_tree: StarTree,
+  garden_lantern: GardenLantern,
+  mailbox: Mailbox,
 };
 
 /** Decor shop basics (SPEC §8.9): pictures + price; the server takes the coins. */
@@ -54,7 +58,7 @@ export function DecorShop({
         </p>
       </div>
       <ul className="grid grid-cols-4 gap-2">
-        {[...(season?.festival ? [season.festival] : []), ...BASIC_DECOR].map((id: DecorId) => {
+        {[...(season?.festival ? [season.festival] : []), ...BASIC_DECOR].map((id: ShopDecorId) => {
           const Art = DECOR_ART[id];
           const price = DECOR_PRICE[id];
           const short = coins < price;

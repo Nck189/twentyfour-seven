@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { setPrefs, signIn } from "../helpers/auth";
 import { fixClock } from "../helpers/clock";
+import { rest, userIdFor } from "../helpers/db";
 
 /**
  * G3 visual matrix: every screen × light/dark × EN/TH on every WebKit project.
@@ -96,7 +97,9 @@ for (const { locale, theme } of COMBOS) {
     test("capsule machine and Seed-dex", async ({ page }, info) => {
       await fixClock(page);
       await setPrefs(page, { locale, theme });
-      await signIn(page);
+      const id = await userIdFor(await signIn(page));
+      // The machine shows from the first ticket (SPEC §8.8b reveal).
+      await rest(`game_state?user_id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ tickets: 1 }) });
       await page.goto("/farm");
       await page.getByRole("button", { name: locale === "th" ? /^ตู้/ : /^Capsule machine/ }).click();
       await page.waitForTimeout(400);

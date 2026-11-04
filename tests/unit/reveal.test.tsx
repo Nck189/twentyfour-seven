@@ -74,6 +74,7 @@ it("a double-tap on Pull ×1 starts one pull (CJ-12)", async () => {
           shards: {},
           dex: {},
           seeds: {},
+          harvested: false,
         }}
         pull={pull}
         onClose={() => {}}

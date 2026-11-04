@@ -278,7 +278,9 @@
     "water_bowl": "Songkran bowl",
     "jasmine": "Jasmine garland",
     "krathong": "Krathong",
-    "star_tree": "Star tree"
+    "star_tree": "Star tree",
+    "garden_lantern": "Garden lantern",
+    "mailbox": "Mailbox"
   },
   "gacha": {
     "title": "Capsule machine",
@@ -628,7 +630,8 @@
     },
     "rewardTitle": "Setup reward",
     "ok": "OK",
-    "rewardFeed": "{n} bags of animal feed"
+    "rewardFeed": "{n} bags of animal feed",
+    "rewardEgg": "An animal egg"
   },
   "exercise": {
     "title": "Exercise",
@@ -767,5 +770,37 @@
     "statHatched": "Animals hatched",
     "nextSeason": "Next: {name}",
     "close": "Close"
+  },
+  "unlocks": {
+    "title": "Collection",
+    "count": "{have} of {total} unlocked",
+    "unlocked": "Unlocked",
+    "left": "{have} of {need} · {n} more",
+    "unlockedTitle": "Unlocked!",
+    "ok": "OK",
+    "tier": {
+      "small": "First steps",
+      "medium": "Weekly",
+      "big": "Big goals"
+    },
+    "goal": {
+      "first_night": "First Night ritual",
+      "first_backlog": "First task done",
+      "all_first10_day": "Every first 10 in one day",
+      "first10_20": "20 first-10s",
+      "must_10": "10 Must tasks done",
+      "streak_7": "A 7-day streak",
+      "streak_30": "A 30-day streak",
+      "blocks_100": "100 blocks finished"
+    },
+    "next": {
+      "nights": "{n, plural, one {# more Night ritual} other {# more Night rituals}} to the next unlock",
+      "backlog_done": "{n, plural, one {# more task} other {# more tasks}} to the next unlock",
+      "all_first10_days": "Do every first 10 in one day to unlock",
+      "first10s": "{n} more first-10s to the next unlock",
+      "must_done": "{n, plural, one {# more Must task} other {# more Must tasks}} to the next unlock",
+      "best_streak": "{n, plural, one {# more streak day} other {# more streak days}} to the next unlock",
+      "blocks_closed": "{n} more blocks to the next unlock"
+    }
   }
 }

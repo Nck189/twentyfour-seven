@@ -148,3 +148,38 @@ export function StarTree({ className = "h-12 w-12" }: { className?: string }) {
     </Art>
   );
 }
+
+/** Reward decor (unlock ladder): a garden lantern for the first Night ritual. */
+export function GardenLantern({ className = "h-12 w-12" }: { className?: string }) {
+  return (
+    <Art className={className}>
+      <Shadow rx={8} />
+      <rect x={21} y={34} width={6} height={6} rx={1.5} fill="var(--art-stone-dark)" />
+      <rect x={22.8} y={26} width={2.4} height={9} rx={1.2} fill="var(--art-stone-dark)" />
+      <path d="M14 15 L24 8 L34 15 Z" fill="var(--art-stone-dark)" />
+      <rect x={16} y={15} width={16} height={11} rx={2.5} fill="var(--art-stone)" />
+      <rect x={19} y={17.5} width={10} height={6.5} rx={1.5} fill="var(--art-yellow)" />
+      <rect x={20} y={18.5} width={3.4} height={2.2} rx={1} fill="var(--art-yellow-light)" />
+      <rect x={15} y={25} width={18} height={2.5} rx={1.2} fill="var(--art-stone-dark)" />
+    </Art>
+  );
+}
+
+/** Reward decor: a mailbox for the first backlog task done. */
+export function Mailbox({ className = "h-12 w-12" }: { className?: string }) {
+  return (
+    <Art className={className}>
+      <Shadow rx={7} />
+      <rect x={22.6} y={24} width={3} height={16} rx={1.5} fill="var(--art-wood-dark)" />
+      <path d="M12 24 L12 17 Q12 11 18 11 L30 11 Q36 11 36 17 L36 24 Z" fill={TONES.blue.dark} />
+      <path
+        d="M12.8 23 L12.8 17 Q12.8 11.8 18 11.8 L29.6 11.8 Q34.8 11.8 34.8 17 L34.8 23 Z"
+        fill={TONES.blue.base}
+      />
+      <ellipse cx={17} cy={15} rx={2.4} ry={1.3} fill={TONES.blue.light} transform="rotate(-25 17 15)" />
+      <rect x={33} y={8} width={2} height={9} rx={1} fill="var(--art-red-dark)" />
+      <rect x={33} y={8} width={5} height={3.4} rx={1.2} fill="var(--art-red)" />
+      <rect x={16} y={18} width={9} height={1.8} rx={0.9} fill={TONES.blue.dark} />
+    </Art>
+  );
+}

@@ -17,6 +17,8 @@ import { ExerciseCard } from "@/components/exercise/ExerciseCard";
 import { useAnimals } from "@/lib/animals/useAnimals";
 import { StreakChip, StreakNotice } from "@/components/streak/StreakChip";
 import { useStreak } from "@/lib/streak/useStreak";
+import { TodayUnlockLine, UnlockNotice } from "@/components/farm/CollectionBook";
+import { useUnlocks } from "@/lib/unlocks/useUnlocks";
 import { BlockCheckin } from "./BlockCheckin";
 import { Sheet } from "./BlockSheet";
 import { ModeCard } from "./ModeCard";
@@ -74,6 +76,8 @@ export function TodayScreen() {
   const setup = useSetupRewards();
   const animals = useAnimals();
   const streak = useStreak();
+  // Re-claim once the streak has settled (a 7-day streak unlocks an egg).
+  const unlocks = useUnlocks(streak.view?.best);
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [ritualOpen, setRitualOpen] = useState(false);
   const [ritualDismissed, setRitualDismissed] = useState(false);
@@ -256,6 +260,8 @@ export function TodayScreen() {
 
       <ExerciseCard animals={animals} />
 
+      {unlocks && !onboarding.show && <TodayUnlockLine state={unlocks} />}
+
       <div className="mx-4 mb-2 lg:mx-6">
         <button
           type="button"
@@ -281,6 +287,7 @@ export function TodayScreen() {
       )}
 
       {streak.view && <StreakNotice view={streak.view} />}
+      {unlocks && <UnlockNotice granted={unlocks.granted} />}
       {setup.state && <SetupRewardNotice granted={setup.state.granted} />}
       {!onboarding.show && <TodaySetupHint state={setup.state} />}
 

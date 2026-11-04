@@ -304,3 +304,152 @@ revoke all on function public._festival_month(text) from public, anon, authentic
 revoke all on function public._decor_price(text) from public, anon, authenticated;
 revoke all on function public.buy_decor(text) from public, anon;
 grant execute on function public.buy_decor(text) to authenticated;
+
+
+-- ---------- unlock ladder (SPEC §8.8b) ----------
+create or replace function public._setup_reward(p_id text)
+returns jsonb
+language sql
+immutable
+set search_path = ''
+as $$
+  select case p_id
+    when 'sleep_times' then '{"seed": {"crop": "strawberry", "n": 2}}'::jsonb
+    when 'first10' then '{"tickets": 1}'::jsonb
+    when 'checklist' then '{"coins": 20}'::jsonb
+    when 'backlog_estimate' then '{"coins": 15}'::jsonb
+    when 'language' then '{"coins": 5}'::jsonb
+    when 'home_screen' then '{"decor": "flowers"}'::jsonb
+    when 'exercise' then '{"feed": 3}'::jsonb
+    -- unlock ladder (SPEC §8.8b, content/unlocks.ts UNLOCKS)
+    when 'first_night' then '{"decor": "garden_lantern"}'::jsonb
+    when 'first_backlog' then '{"decor": "mailbox"}'::jsonb
+    when 'all_first10_day' then '{"seed": {"crop": "sunflower", "n": 1}}'::jsonb
+    when 'first10_20' then '{"tickets": 2}'::jsonb
+    when 'must_10' then '{"coins": 50}'::jsonb
+    when 'streak_7' then '{"egg": 1}'::jsonb
+    when 'streak_30' then '{"decor": "pond"}'::jsonb
+    when 'blocks_100' then '{"coins": 150}'::jsonb
+  end
+$$;
+
+create or replace function public._grant_unlock(uid uuid, p_id text)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  reward jsonb := public._setup_reward(p_id);
+  inserted integer;
+  n integer;
+  roll jsonb;
+begin
+  if reward is null then
+    raise exception 'unknown unlock' using errcode = '22023';
+  end if;
+  insert into public.unlock_grants (user_id, unlock_id, reward) values (uid, p_id, reward)
+  on conflict do nothing;
+  get diagnostics inserted = row_count;
+  if inserted = 0 then
+    return false;
+  end if;
+  if reward ? 'tickets' then
+    update public.game_state set tickets = tickets + (reward ->> 'tickets')::integer where user_id = uid;
+  end if;
+  if reward ? 'coins' then
+    update public.game_state set coins = coins + (reward ->> 'coins')::integer where user_id = uid;
+  end if;
+  if reward ? 'seed' then
+    insert into public.inventory (user_id, item_id, qty)
+    values (uid, 'seed:' || (reward -> 'seed' ->> 'crop'), (reward -> 'seed' ->> 'n')::integer)
+    on conflict (user_id, item_id) do update set qty = public.inventory.qty + excluded.qty;
+  end if;
+  if reward ? 'feed' then
+    insert into public.inventory (user_id, item_id, qty) values (uid, 'feed', (reward ->> 'feed')::integer)
+    on conflict (user_id, item_id) do update set qty = public.inventory.qty + excluded.qty;
+  end if;
+  if reward ? 'egg' then
+    roll := public._hatch_roll(random(), random());
+    insert into public.animals (user_id, species, fed_until)
+    values (uid, roll ->> 'species', public._add_feed(null, 2));
+    insert into public.events (user_id, type, payload)
+    values (uid, 'egg_hatched', jsonb_build_object('species', roll ->> 'species', 'rarity', roll ->> 'rarity', 'unlock', p_id));
+  end if;
+  if reward ? 'decor' then
+    select count(*) into n from public.decor where user_id = uid and item_id = reward ->> 'decor';
+    insert into public.decor (user_id, item_id, x, y) values (uid, reward ->> 'decor', n, 0);
+  end if;
+  insert into public.events (user_id, type, payload)
+  values (uid, 'unlock_granted', jsonb_build_object('unlock', p_id, 'reward', reward));
+  return true;
+end $$;
+
+-- What the ladder counts, from server facts or guarded logs.
+create or replace function public._unlock_counts(uid uuid)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select jsonb_build_object(
+    'nights', (select count(*) from public.ticket_grants g where g.user_id = uid and g.reason = 'night'),
+    'backlog_done', (select count(*) from public.coin_grants c where c.user_id = uid and c.reason = 'backlog_done'),
+    'must_done', (select count(*) from public.coin_grants c join public.backlog_items i
+                    on i.id::text = c.ref and i.user_id = uid
+                  where c.user_id = uid and c.reason = 'backlog_done' and i.priority = 'must'),
+    'first10s', (select count(*) from public.block_logs l
+                 where l.user_id = uid and l.first10_at is not null and not l.backfilled),
+    'all_first10_days', (select count(*) from (
+                           select l.date from public.block_logs l
+                           where l.user_id = uid and l.first10_at is not null and not l.backfilled
+                           group by l.date having count(distinct l.block) >= 7) x),
+    'blocks_closed', (select count(*) from public.block_logs l
+                      where l.user_id = uid and l.closed_at is not null and not l.backfilled),
+    'best_streak', (select coalesce(best_streak, 0) from public.game_state where user_id = uid)
+  )
+$$;
+
+-- Pays every unlock reached and not yet paid (once, same ledger as setup rewards).
+-- Returns {counts, done, granted}.
+create or replace function public.claim_unlocks()
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  uid uuid := auth.uid();
+  c jsonb;
+  granted text[] := '{}';
+  paid text[];
+  r record;
+begin
+  if uid is null then
+    raise exception 'not authenticated' using errcode = '42501';
+  end if;
+  perform 1 from public.game_state where user_id = uid for update;
+  c := public._unlock_counts(uid);
+  for r in
+    select * from (values
+      ('first_night', 'nights', 1), ('first_backlog', 'backlog_done', 1),
+      ('all_first10_day', 'all_first10_days', 1), ('first10_20', 'first10s', 20),
+      ('must_10', 'must_done', 10), ('streak_7', 'best_streak', 7),
+      ('streak_30', 'best_streak', 30), ('blocks_100', 'blocks_closed', 100)
+    ) as t(id, metric, need)
+  loop
+    if (c ->> r.metric)::integer >= r.need and public._grant_unlock(uid, r.id) then
+      granted := granted || r.id;
+    end if;
+  end loop;
+  select coalesce(array_agg(unlock_id order by unlock_id), '{}') into paid
+  from public.unlock_grants where user_id = uid;
+  return jsonb_build_object('counts', c, 'done', to_jsonb(paid), 'granted', to_jsonb(granted));
+end $$;
+
+revoke all on function public._setup_reward(text) from public, anon, authenticated;
+revoke all on function public._grant_unlock(uuid, text) from public, anon, authenticated;
+revoke all on function public._unlock_counts(uuid) from public, anon, authenticated;
+revoke all on function public.claim_unlocks() from public, anon;
+grant execute on function public.claim_unlocks() to authenticated;

@@ -69,6 +69,7 @@ const SAMPLE_GACHA = {
       ),
     ) as GachaState["dex"],
     seeds: { pumpkin: 1, star_fruit: 1, tomato: 2 } as Partial<Record<CropId, number>>,
+    harvested: true,
   },
   pull: async (n: 1 | 10): Promise<PullResult[]> =>
     n === 1
