@@ -6,3 +6,4 @@ export * from "./growth";
 export * from "./farm";
 export * from "./facts";
 export * from "./animals";
+export * from "./streak";
