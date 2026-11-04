@@ -16,6 +16,13 @@ describe("unlock ladder progress (SPEC §8.8b)", () => {
     expect(by.blocks_100).toMatchObject({ have: 100, done: true });
     expect(p.map((x) => x.id)).toEqual([...UNLOCK_IDS]);
   });
+  it("streak goals not yet earned count the current streak, not the best (R-M9-7)", () => {
+    const by = Object.fromEntries(unlockProgress({ best_streak: 9, streak: 0 }).map((x) => [x.id, x]));
+    expect(by.streak_7!.done).toBe(true);
+    expect(by.streak_30).toMatchObject({ have: 0, left: 30, done: false });
+    const now = Object.fromEntries(unlockProgress({ best_streak: 9, streak: 4 }).map((x) => [x.id, x]));
+    expect(now.streak_30).toMatchObject({ have: 4, left: 26 });
+  });
   it("the next unlock is the one closest to done", () => {
     const p = unlockProgress({
       nights: 1,

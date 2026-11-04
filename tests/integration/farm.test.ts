@@ -276,12 +276,16 @@ describe("G7 M6 review fixes", () => {
       .eq("user_id", u.id)
       .eq("slot", "free");
     // d4: Free skipped while out late (planned on d3's day plan); d3: Free on time → ripe.
-    await a
-      .from("day_plans")
-      .upsert(
-        { user_id: u.id, date: d(3), late_night: { return_at: at(d(3), 60) } },
-        { onConflict: "user_id,date" },
-      );
+    await a.from("day_plans").upsert(
+      // Saved on d4's evening, before the night (only an Out late saved in time excuses, R-M9-1).
+      {
+        user_id: u.id,
+        date: d(3),
+        late_night: { return_at: at(d(3), 60) },
+        late_night_set_at: at(d(4), 18 * 60),
+      },
+      { onConflict: "user_id,date" },
+    );
     expect((await a.from("block_logs").insert(logRow(u.id, d(3), "free", "good"))).error).toBeNull();
     const plantings: Planting[] = [{ slot: "free", cropId: "carrot", star: 1, plantedOn: d(5) }];
     const farm = farmState(plantings, await loadFacts(u.id, d(6), t), u.id);

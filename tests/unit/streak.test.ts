@@ -41,9 +41,16 @@ function day(i: number, o: Opt = {}): DayFacts {
 }
 
 describe("dayKind", () => {
-  it("vacation/sick pause; a planned late night stands in for the ritual; no wake = not a minimum day", () => {
+  it("vacation/sick pause; a planned late night pauses (no +1) instead of the ritual; no wake = not a minimum day", () => {
     expect(dayKind(day(0, { mode: "vacation", wake: false }), 0)).toBe("paused");
-    expect(dayKind(day(0, { night: false, lateNight: true }), 0)).toBe("minimum");
+    // G7 R-M9-2: "no penalty" (SPEC §8.4) means the streak waits, not that the day counts.
+    expect(dayKind(day(0, { night: false, lateNight: true }), 0)).toBe("paused");
+    expect(dayKind(day(0, { night: false, lateNight: true, perfect: true }), 0)).toBe("paused");
+    // The late night excuses the ritual only: a missed wake still misses.
+    expect(dayKind(day(0, { wake: false, night: false, lateNight: true }), 0)).toBe("missed");
+    expect(dayKind(day(0, { wake: false, night: false, lateNight: true }), 1)).toBe("frozen");
+    // Did the ritual anyway: a normal minimum day.
+    expect(dayKind(day(0, { lateNight: true }), 0)).toBe("minimum");
     expect(dayKind(day(0, { night: false }), 0)).toBe("missed");
     expect(dayKind(day(0, { wake: false }), 1)).toBe("frozen");
     expect(dayKind(day(0, { perfect: true }), 0)).toBe("perfect");
@@ -56,7 +63,7 @@ describe("settleStreak over a simulated month (BUILD_PLAN M9 'done when')", () =
     for (let i = 0; i < 7; i++) days.push(day(i)); // 1–7: streak 7 → scarecrow, +5
     days.push(day(7, { wake: false })); // 8: missed → scarecrow used
     days.push(day(8, { mode: "vacation", wake: false, night: false }), day(9, { mode: "sick", wake: false }));
-    days.push(day(10, { night: false, lateNight: true })); // 11: planned late night still counts
+    days.push(day(10, { night: false, lateNight: true })); // 11: planned late night → paused
     days.push(day(11, { night: false })); // 12: missed, no scarecrow → 0
     for (let i = 12; i < 26; i++) days.push(day(i)); // 13–26: 14 days → scarecrows at 7 and 14
     days.push(day(26, { perfect: true })); // 27: perfect → +1
@@ -69,7 +76,7 @@ describe("settleStreak over a simulated month (BUILD_PLAN M9 'done when')", () =
       "frozen",
       "paused",
       "paused",
-      "minimum",
+      "paused",
       "missed",
       ...Array(14).fill("minimum"),
       "perfect",

@@ -20,9 +20,15 @@ async function setup(page: Page) {
   return id;
 }
 
-/** n good days (live in-window "I'm up" + Night ticket) ending the day before yesterday. */
+/** The server's wake-day with a 10:00 wake (before it, the day is still yesterday). */
+function wakeDay(now = new Date()): string {
+  const d = localDate(now, TZ);
+  return now < new Date(zonedInstant(d, 600, TZ)) ? addDays(d, -1) : d;
+}
+
+/** n good days (live in-window "I'm up" + Night ticket) ending the wake-day before this one. */
 async function goodDays(id: string, n: number) {
-  const last = addDays(localDate(new Date(), TZ), -2);
+  const last = addDays(wakeDay(), -1);
   const first = addDays(last, -(n - 1));
   await rest(`profiles?user_id=eq.${id}`, {
     method: "PATCH",
@@ -55,7 +61,7 @@ test("CJ-M9-1 seven good days: streak 7, +5 tickets, a scarecrow, and the 7-day 
   const id = await setup(page);
   await goodDays(id, 7);
   await page.goto("/today");
-  // Yesterday had nothing → the scarecrow just earned saves it: still 7.
+  // The 7 days end yesterday (by wake-day, whatever the clock): streak 7 and one scarecrow held.
   const chip = page.getByRole("button", { name: "Streak: 7 days" });
   await expect(chip).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("status").filter({ hasText: "7 days in a row" })).toBeVisible();
@@ -63,7 +69,7 @@ test("CJ-M9-1 seven good days: streak 7, +5 tickets, a scarecrow, and the 7-day 
   await chip.click();
   const sheet = page.getByRole("dialog", { name: "Streak" });
   await expect(sheet.getByText("7 days in a row")).toBeVisible();
-  await expect(sheet.getByRole("img", { name: /scarecrow/ })).toBeVisible();
+  await expect(sheet.getByRole("img", { name: "1 scarecrow", exact: true })).toBeVisible();
   await expectNoSeriousA11y(page);
   await expectTouchTargets(page);
 
@@ -105,7 +111,8 @@ test("CJ-M9-2 the collection book shows progress; the first Night ritual unlocks
 test("CJ-M9-3 this month's season banner; a festival month sells its item", async ({ page }) => {
   await setup(page);
   await page.goto("/farm");
-  const season = seasonOf(localDate(new Date(), TZ));
+  // The app and the shop both go by the wake-day (the 1st before wake is still last month).
+  const season = seasonOf(wakeDay());
   await expect(page.getByRole("region", { name: /^This month: / })).toBeVisible();
   const shop = page.getByRole("region", { name: "Decor" });
   if (season.festival) await expect(shop.getByText("This month")).toBeVisible();

@@ -14,7 +14,8 @@ const CELL: Record<DayKind, string> = {
   minimum: "bg-primary-soft ring-1 ring-primary ring-inset",
   frozen: "bg-[var(--art-blue-light)]",
   paused: "bg-[var(--art-stone)]",
-  missed: "bg-surface-2",
+  // Distinct from "before you started" (R-M9-13), soft rather than alarming.
+  missed: "bg-warn-soft ring-1 ring-warn/40 ring-inset",
 };
 
 /** 5 weeks, Monday first, ending this week: how each settled day went (GitHub-style, SPEC §7). */

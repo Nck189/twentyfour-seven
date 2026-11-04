@@ -80,7 +80,8 @@ export function SeasonBanner({ today }: { today: string }) {
         new Date(`${fest}-15T00:00:00Z`),
       )
     : "";
-  const next = SEASONS[Number(today.slice(5, 7)) % 12]!;
+  // The season after the month being looked back on (on Dec 2 that's December, R-M9-11).
+  const next = SEASONS[Number((fest ?? today).slice(5, 7)) % 12]!;
 
   return (
     <section

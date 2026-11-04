@@ -4,6 +4,45 @@
 -- First, close the "excuse it afterwards" holes (G7 R-M6-4, R-M6-R1) the streak would otherwise pay for.
 
 -- ---------- guards ----------
+-- "Past" is judged by the wake-day, so the wake-day must never move backwards (G7 R-M9-3): a
+-- timezone change that would make a finished day "today" again is refused until the next wake.
+create or replace function public.profiles_timezone_guard()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.timezone is distinct from old.timezone
+     and not exists (select 1 from pg_catalog.pg_timezone_names where name = new.timezone) then
+    raise exception 'unknown timezone' using errcode = '22023';
+  end if;
+  if new.timezone is distinct from old.timezone then
+    perform set_config('app.wake_day_before', public._wake_day(new.user_id)::text, true);
+  end if;
+  return new;
+end $$;
+
+create or replace function public.profiles_timezone_after()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if current_user = 'service_role' or current_setting('role', true) = 'service_role' then
+    return null;
+  end if;
+  if new.timezone is distinct from old.timezone
+     and public._wake_day(new.user_id) < nullif(current_setting('app.wake_day_before', true), '')::date then
+    raise exception 'this timezone would reopen a finished day; switch after your next wake'
+      using errcode = '22023';
+  end if;
+  return null;
+end $$;
+create trigger profiles_timezone_after after update of timezone on public.profiles
+  for each row execute function public.profiles_timezone_after();
+
 -- A block can't be tagged a planned deviation after its day (it would erase a miss after the fact).
 create or replace function public.block_logs_planned_guard()
 returns trigger
@@ -24,8 +63,195 @@ end $$;
 create trigger block_logs_planned_guard before insert or update of planned_deviation on public.block_logs
   for each row execute function public.block_logs_planned_guard();
 
+-- A check-in written for a wake-day that's already over is a backfill, even with fresh times
+-- (G7 R-M9-4: yesterday's 7 logs written the next morning looked live). A planned start that
+-- isn't on the log's own day doesn't count either. Closing or ticking items on an earlier log
+-- later is fine (the end of a block often comes after the next wake).
+create or replace function public.block_logs_guard()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  grace interval := interval '10 minutes';
+  is_backfill boolean := false;
+  tz text;
+  today date;
+  day_start timestamptz;
+begin
+  -- Admin (service role) may write logs as they are, e.g. to set up a past week in a test.
+  if current_user = 'service_role' or current_setting('role', true) = 'service_role' then
+    return new;
+  end if;
+  if tg_op = 'UPDATE' and old.backfilled then
+    new.backfilled := true;
+  end if;
+  select timezone into tz from public.profiles where user_id = new.user_id;
+  tz := coalesce(tz, 'Asia/Bangkok');
+  today := (now() at time zone tz)::date;
+  -- G7 R-M6-1: no check-ins for a day that hasn't come (they'd count as live when it does).
+  if new.date > today then
+    raise exception 'a check-in can''t be for a future day' using errcode = '22023';
+  end if;
+  if new.date < today - 1 then
+    is_backfill := true;
+  end if;
+  if new.date < public._wake_day(new.user_id)
+     and (tg_op = 'INSERT'
+          or new.started_at is distinct from old.started_at
+          or new.first10_at is distinct from old.first10_at
+          or new.planned_start is distinct from old.planned_start) then
+    is_backfill := true;
+  end if;
+  day_start := new.date::timestamp at time zone tz;
+  if new.planned_start is not null
+     and (tg_op = 'INSERT' or new.planned_start is distinct from old.planned_start)
+     and new.planned_start not between day_start - interval '6 hours' and day_start + interval '36 hours' then
+    is_backfill := true;
+  end if;
+  if new.started_at is not null and (tg_op = 'INSERT' or new.started_at is distinct from old.started_at)
+     and abs(extract(epoch from (now() - new.started_at))) > extract(epoch from grace) then
+    is_backfill := true;
+  end if;
+  if new.first10_at is not null and (tg_op = 'INSERT' or new.first10_at is distinct from old.first10_at)
+     and abs(extract(epoch from (now() - new.first10_at))) > extract(epoch from grace) then
+    is_backfill := true;
+  end if;
+  if new.closed_at is not null and (tg_op = 'INSERT' or new.closed_at is distinct from old.closed_at)
+     and abs(extract(epoch from (now() - new.closed_at))) > extract(epoch from grace) then
+    is_backfill := true;
+  end if;
+  if is_backfill then
+    new.backfilled := true;
+  end if;
+  return new;
+end $$;
+
+-- When "Out late" was last set (server time; whatever a client sends is ignored, like
+-- wake_planned_at). Only a late night saved before that night is over counts (G7 R-M9-1).
+alter table public.day_plans add column late_night_set_at timestamptz;
+
+create or replace function public._stamp_late_night()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  -- Admin (service role) may set it directly, e.g. to set up a test.
+  if (current_user = 'service_role' or current_setting('role', true) = 'service_role')
+     and new.late_night_set_at is not null then
+    return new;
+  end if;
+  if tg_op = 'INSERT' or new.late_night is distinct from old.late_night then
+    new.late_night_set_at := case when new.late_night is not null then now() end;
+  else
+    new.late_night_set_at := old.late_night_set_at;
+  end if;
+  return new;
+end $$;
+create trigger stamp_late_night before insert or update on public.day_plans
+  for each row execute function public._stamp_late_night();
+
+-- The night before wake-day p_date is over 1 h before that wake (when the Night ticket window
+-- closes; the wake as pressed, else as frozen, else as planned), and at 06:00 at the latest.
+create or replace function public._night_over_at(uid uuid, p_date date)
+returns timestamptz
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select least(
+    coalesce(
+      (select w.target_wake from public.wake_events w where w.user_id = uid and w.date = p_date),
+      (select s.target_wake from public.wake_snapshots s where s.user_id = uid and s.date = p_date),
+      public._target_wake(uid, p_date)) - interval '1 hour',
+    (p_date + time '06:00') at time zone coalesce(
+      (select timezone from public.profiles where user_id = uid), 'Asia/Bangkok'));
+$$;
+
+-- Out late the night after wake-day d (saved on d + 1's plan, before that night was over).
+create or replace function public._late_night_planned(uid uuid, d date)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.day_plans p
+    where p.user_id = uid and p.date = d + 1 and p.late_night is not null
+      and p.late_night_set_at is not null
+      and p.late_night_set_at <= public._night_over_at(uid, d + 1));
+$$;
+
+-- The farm honours only a late night saved in time, like the streak (G7 R-M9-1).
+create or replace function public._plot_ripe(uid uuid, p public.plots, p_today date)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  need smallint := public._crop_grow_days(p.crop_id);
+  d date;
+  growth integer := 0;
+  weeds boolean := false;
+  streak integer := 0;
+  lg public.block_logs;
+  md text;
+  r text;
+begin
+  if need is null or p.planted_on is null then
+    return false;
+  end if;
+  d := greatest(p.planted_on, coalesce(p.harvested_on, p.planted_on)) + 1;
+  while d <= p_today loop
+    select * into lg from public.block_logs where user_id = uid and date = d and block = p.slot;
+    select mode into md from public.day_plans where user_id = uid and date = d;
+    r := public._block_result(lg, md, d = p_today);
+    -- A planned late night (out late before d + 1, saved before that night) excuses that evening's
+    -- Free (G7 R-M6-2, R-M9-1).
+    if r in ('miss', 'partial') and p.slot = 'free'
+       and public._late_night_planned(uid, d) then
+      r := 'excused';
+    end if;
+    if r = 'success' then
+      streak := 0;
+      if not weeds then
+        growth := growth + 1;
+        if growth >= need then
+          return true;
+        end if;
+      end if;
+    elsif r = 'miss' then
+      weeds := true;
+      streak := streak + 1;
+      if streak >= 5 then
+        return false; -- dead
+      end if;
+      d := d + 1;
+      continue; -- fresh weeds don't clear the same day
+    elsif r in ('partial', 'backfilled') then
+      streak := 0;
+    end if;
+    -- Minimum day: a live in-window "I'm up" + the Night ticket for that day.
+    if weeds and r <> 'open'
+       and exists (select 1 from public.wake_events
+                   where user_id = uid and date = d and in_window and not backfilled)
+       and exists (select 1 from public.ticket_grants
+                   where user_id = uid and reason = 'night' and ref_date = d) then
+      weeds := false;
+    end if;
+    d := d + 1;
+  end loop;
+  return false;
+end $$;
+
 -- Vacation/Sick can't be set for a day that's over; "Out late" can't be set once that night is
--- well past (an hour of slack for setting it on the way out).
+-- over (by server time, never the return time the client sends) and needs a return time.
 create or replace function public.day_plans_past_guard()
 returns trigger
 language plpgsql
@@ -34,6 +260,7 @@ set search_path = ''
 as $$
 declare
   today date;
+  ret timestamptz;
 begin
   if current_user = 'service_role' or current_setting('role', true) = 'service_role' then
     return new;
@@ -44,10 +271,18 @@ begin
     raise exception 'Vacation/Sick can''t be set for a past day' using errcode = '22023';
   end if;
   if new.late_night is not null
-     and (tg_op = 'INSERT' or new.late_night is distinct from old.late_night)
-     and (new.late_night ->> 'return_at') is not null
-     and (new.late_night ->> 'return_at')::timestamptz < now() - interval '1 hour' then
-    raise exception 'that night is already over' using errcode = '22023';
+     and (tg_op = 'INSERT' or new.late_night is distinct from old.late_night) then
+    begin
+      ret := (new.late_night ->> 'return_at')::timestamptz;
+    exception when others then
+      ret := null;
+    end;
+    if ret is null then
+      raise exception 'a late night needs a return time' using errcode = '22023';
+    end if;
+    if ret < now() - interval '1 hour' or now() > public._night_over_at(new.user_id, new.date) then
+      raise exception 'that night is already over' using errcode = '22023';
+    end if;
   end if;
   return new;
 end $$;
@@ -123,8 +358,9 @@ begin
 end $$;
 
 -- Settles every finished wake-day since the last one (at most 60 days back, never before sign-up):
--- paused (Vacation/Sick) · perfect/minimum ("I'm up" in the window + the Night ticket, or a planned
--- late night; perfect = Day OEE ≥ 0.8) · frozen (a scarecrow used) · missed (streak to 0).
+-- paused (Vacation/Sick, or "I'm up" in the window after a planned late night with no ritual) ·
+-- perfect/minimum ("I'm up" in the window + the Night ticket; perfect = Day OEE ≥ 0.8) ·
+-- frozen (a scarecrow used) · missed (streak to 0).
 -- A scarecrow is earned every 7 days of streak (max 2). Tickets: Perfect day +1, streak 7/14/30 +5.
 create or replace function public.settle_days()
 returns jsonb
@@ -140,6 +376,7 @@ declare
   d date;
   first_day date;
   m text;
+  is_wake boolean;
   is_min boolean;
   o real;
   k text;
@@ -160,8 +397,11 @@ begin
   today := public._wake_day(uid);
   select greatest(
            coalesce((select max(r.date) + 1 from public.day_results r where r.user_id = uid),
-                    (select (p.created_at at time zone coalesce(tz, 'Asia/Bangkok'))::date
-                       from public.profiles p where p.user_id = uid)),
+                    -- The sign-up day counts only if it had a wake (signing up at 14:00 isn't a miss).
+                    (select c.d + case when exists (select 1 from public.wake_events w
+                                                     where w.user_id = uid and w.date = c.d) then 0 else 1 end
+                       from (select (p.created_at at time zone coalesce(tz, 'Asia/Bangkok'))::date as d
+                               from public.profiles p where p.user_id = uid) c)),
            today - 60)
     into first_day;
   v_streak := gs.streak;
@@ -175,14 +415,16 @@ begin
       k := 'paused';
       o := null;
     else
-      is_min := exists (select 1 from public.wake_events w
-                        where w.user_id = uid and w.date = d and w.in_window and not w.backfilled)
-            and (exists (select 1 from public.ticket_grants g
-                         where g.user_id = uid and g.reason = 'night' and g.ref_date = d)
-                 or exists (select 1 from public.day_plans p
-                            where p.user_id = uid and p.date = d + 1 and p.late_night is not null));
+      is_wake := exists (select 1 from public.wake_events w
+                         where w.user_id = uid and w.date = d and w.in_window and not w.backfilled);
+      is_min := is_wake
+            and exists (select 1 from public.ticket_grants g
+                        where g.user_id = uid and g.reason = 'night' and g.ref_date = d);
       o := public._day_oee(uid, d);
-      if is_min then
+      if not is_min and is_wake and public._late_night_planned(uid, d) then
+        -- A planned late night: no penalty, but no +1 either (SPEC §8.4, G7 R-M9-2).
+        k := 'paused';
+      elsif is_min then
         k := case when o is not null and o >= 0.8 then 'perfect' else 'minimum' end;
         v_streak := v_streak + 1;
         v_best := greatest(v_best, v_streak);
@@ -233,6 +475,13 @@ create policy "own rows: insert" on public.events for insert to authenticated
 
 revoke all on function public.block_logs_planned_guard() from public, anon, authenticated;
 revoke all on function public.day_plans_past_guard() from public, anon, authenticated;
+revoke all on function public.block_logs_guard() from public, anon, authenticated;
+revoke all on function public.profiles_timezone_guard() from public, anon, authenticated;
+revoke all on function public.profiles_timezone_after() from public, anon, authenticated;
+revoke all on function public._stamp_late_night() from public, anon, authenticated;
+revoke all on function public._night_over_at(uuid, date) from public, anon, authenticated;
+revoke all on function public._late_night_planned(uuid, date) from public, anon, authenticated;
+revoke all on function public._plot_ripe(uuid, public.plots, date) from public, anon, authenticated;
 revoke all on function public._day_oee(uuid, date) from public, anon, authenticated;
 grant execute on function public._day_oee(uuid, date) to service_role;
 revoke all on function public.settle_days() from public, anon;
@@ -271,7 +520,6 @@ declare
   uid uuid := auth.uid();
   price integer := public._decor_price(p_item);
   month integer := public._festival_month(p_item);
-  tz text;
   left_coins integer;
   n integer;
   item public.decor;
@@ -282,9 +530,10 @@ begin
   if price is null then
     raise exception 'unknown item' using errcode = '22023';
   end if;
+  -- The wake-day's month, the same day the app shows (R-M9-9: the 1st before wake is still the
+  -- last day of the old month).
   if month is not null then
-    select timezone into tz from public.profiles where user_id = uid;
-    if extract(month from (now() at time zone coalesce(tz, 'Asia/Bangkok')))::integer <> month then
+    if extract(month from public._wake_day(uid))::integer <> month then
       raise exception 'not in season' using errcode = 'P0001';
     end if;
   end if;
@@ -385,6 +634,76 @@ begin
   return true;
 end $$;
 
+-- ---------- backlog: remember the priority a task was paid as (G7 R-M9-5) ----------
+-- The Must unlock counted a task's current priority, so relabelling done tasks paid it.
+alter table public.coin_grants add column paid_as text
+  check (paid_as is null or paid_as in ('must', 'should', 'just_start'));
+-- Earlier grants: 30 coins was only ever paid for a Must at full rate.
+update public.coin_grants set paid_as = case amount when 30 then 'must' when 20 then 'should' else 'just_start' end
+where reason = 'backlog_done' and paid_as is null;
+
+create or replace function public.complete_backlog_item(p_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  uid uuid := auth.uid();
+  item public.backlog_items;
+  amount integer;
+  paid_as text;
+  inserted integer;
+  earned_today integer;
+begin
+  if uid is null then
+    raise exception 'not authenticated' using errcode = '42501';
+  end if;
+  perform 1 from public.game_state where user_id = uid for update;
+  select * into item from public.backlog_items where id = p_id and user_id = uid for update;
+  if not found then
+    raise exception 'backlog item not found' using errcode = 'P0002';
+  end if;
+  if item.status = 'dropped' then
+    return jsonb_build_object('coins_granted', 0);
+  end if;
+  update public.backlog_items
+     set status = 'done', done_at = coalesce(done_at, now())
+   where id = p_id;
+
+  amount := case item.priority when 'must' then 30 when 'should' then 20 else 10 end;
+  paid_as := item.priority;
+  if now() - item.created_at < interval '10 minutes'
+     or now() - item.priority_set_at < interval '10 minutes' then
+    amount := least(amount, 10);
+    paid_as := 'just_start';
+  end if;
+
+  -- Rolling 24 h (no local midnight to move by switching zones).
+  select coalesce(sum(g.amount), 0) into earned_today
+    from public.coin_grants g
+   where g.user_id = uid and g.reason = 'backlog_done' and g.at > now() - interval '24 hours';
+  amount := least(amount, greatest(0, 150 - earned_today));
+  if amount <= 0 then
+    return jsonb_build_object('coins_granted', 0, 'capped', true);
+  end if;
+
+  insert into public.coin_grants (user_id, reason, ref, amount, paid_as)
+  values (uid, 'backlog_done', p_id::text, amount, paid_as)
+  on conflict do nothing;
+  get diagnostics inserted = row_count;
+  if inserted = 0 then
+    return jsonb_build_object('coins_granted', 0);
+  end if;
+
+  update public.game_state set coins = coins + amount where user_id = uid;
+  insert into public.events (user_id, type, payload)
+  values (uid, 'coins_granted', jsonb_build_object('amount', amount, 'reason', 'backlog_done', 'item', p_id));
+  return jsonb_build_object('coins_granted', amount);
+end $$;
+revoke all on function public.complete_backlog_item(uuid) from public, anon;
+grant execute on function public.complete_backlog_item(uuid) to authenticated;
+
 -- What the ladder counts, from server facts or guarded logs.
 create or replace function public._unlock_counts(uid uuid)
 returns jsonb
@@ -396,9 +715,8 @@ as $$
   select jsonb_build_object(
     'nights', (select count(*) from public.ticket_grants g where g.user_id = uid and g.reason = 'night'),
     'backlog_done', (select count(*) from public.coin_grants c where c.user_id = uid and c.reason = 'backlog_done'),
-    'must_done', (select count(*) from public.coin_grants c join public.backlog_items i
-                    on i.id::text = c.ref and i.user_id = uid
-                  where c.user_id = uid and c.reason = 'backlog_done' and i.priority = 'must'),
+    'must_done', (select count(*) from public.coin_grants c
+                  where c.user_id = uid and c.reason = 'backlog_done' and c.paid_as = 'must'),
     'first10s', (select count(*) from public.block_logs l
                  where l.user_id = uid and l.first10_at is not null and not l.backfilled),
     'all_first10_days', (select count(*) from (
@@ -407,7 +725,8 @@ as $$
                            group by l.date having count(distinct l.block) >= 7) x),
     'blocks_closed', (select count(*) from public.block_logs l
                       where l.user_id = uid and l.closed_at is not null and not l.backfilled),
-    'best_streak', (select coalesce(best_streak, 0) from public.game_state where user_id = uid)
+    'best_streak', (select coalesce(best_streak, 0) from public.game_state where user_id = uid),
+    'streak', (select coalesce(streak, 0) from public.game_state where user_id = uid)
   )
 $$;
 

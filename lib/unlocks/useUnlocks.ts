@@ -36,21 +36,31 @@ export function useUnlocks(dep?: unknown) {
 /**
  * Feature reveals (SPEC §8.8b): Stats shows after a few settled days. Unknown (still loading, or
  * the table isn't on the server yet) counts as revealed, so nothing an existing user had goes away.
+ * An account older than that is revealed too: its days settle when Today opens, which may run
+ * after this check (R-M9-8).
  */
 export function useStatsRevealed(): boolean {
   const [shown, setShown] = useState(true);
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const { count, error } = await getSupabase()
-        .from("day_results")
-        .select("date", { count: "exact", head: true });
+      const client = getSupabase();
+      const [{ count, error }, profile] = await Promise.all([
+        client.from("day_results").select("date", { count: "exact", head: true }),
+        client.from("profiles").select("created_at").maybeSingle(),
+      ]);
       if (cancelled || error || count === null) return;
-      setShown(count >= REVEALS.statsAfterDays);
+      setShown(count >= REVEALS.statsAfterDays || accountOldEnough(profile.data?.created_at, new Date()));
     })();
     return () => {
       cancelled = true;
     };
   }, []);
   return shown;
+}
+
+/** Old enough that settling gives the Stats days (a full day more, for the wake-day boundary). */
+export function accountOldEnough(createdAt: string | null | undefined, now: Date): boolean {
+  if (!createdAt) return false;
+  return now.getTime() - Date.parse(createdAt) >= (REVEALS.statsAfterDays + 1) * 86_400_000;
 }

@@ -164,6 +164,7 @@ export type Database = {
           date: string;
           id: string;
           late_night: Json | null;
+          late_night_set_at: string | null;
           mode: string;
           overrides: NonNullable<Json>;
           planned: Json | null;
@@ -179,6 +180,7 @@ export type Database = {
           date: string;
           id?: string;
           late_night?: Json | null;
+          late_night_set_at?: string | null;
           mode?: string;
           overrides?: NonNullable<Json>;
           planned?: Json | null;
@@ -193,6 +195,7 @@ export type Database = {
           date?: string;
           id?: string;
           late_night?: Json | null;
+          late_night_set_at?: string | null;
           mode?: string;
           overrides?: NonNullable<Json>;
           planned?: Json | null;

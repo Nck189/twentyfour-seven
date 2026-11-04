@@ -1,9 +1,10 @@
 /**
  * Streak (SPEC §8.7): pure rules, mirrored by the server's `settle_days` (which grants the
  * tickets). A finished wake-day is one of:
- * - paused: a Vacation/Sick day — the streak waits, nothing is used up
- * - perfect / minimum: "I'm up" in the window + the Night ritual (a planned late night stands
- *   in for the ritual that night) → +1; perfect also needs Day OEE ≥ 80%
+ * - paused: a Vacation/Sick day, or an in-window wake after a planned late night with no ritual
+ *   ("no penalty", SPEC §8.4) — the streak waits, nothing is used up
+ * - perfect / minimum: "I'm up" in the window + the Night ritual → +1; perfect also needs Day
+ *   OEE ≥ 80%
  * - frozen: not a minimum day, but a scarecrow saved the streak (one is used up)
  * - missed: not a minimum day and no scarecrow → the streak starts over
  */
@@ -24,9 +25,9 @@ export const NO_STREAK: StreakState = { streak: 0, best: 0, freezes: 0 };
 /** A planned late night (out late the night before the next day) excuses that night's ritual. */
 const plannedLateNight = (d: DayFacts) => d.excused?.includes("free") ?? false;
 
-/** Minimum day for the streak (SPEC §8.7; planned deviations don't break it, SPEC §8.4). */
+/** Minimum day for the streak (SPEC §8.7): "I'm up" in the window + the Night ritual. */
 export function streakMinimum(d: DayFacts): boolean {
-  return d.wakeInWindow && (d.nightRitualDone || plannedLateNight(d));
+  return d.wakeInWindow && d.nightRitualDone;
 }
 
 export function dayKind(d: DayFacts, freezes: number): DayKind {
@@ -35,6 +36,8 @@ export function dayKind(d: DayFacts, freezes: number): DayKind {
     const o = dayOee(d);
     return o !== null && o.oee >= PERFECT_DAY_OEE ? "perfect" : "minimum";
   }
+  // A planned deviation doesn't break the streak (SPEC §8.4) — it waits, it doesn't count (G7 R-M9-2).
+  if (d.wakeInWindow && plannedLateNight(d)) return "paused";
   return freezes > 0 ? "frozen" : "missed";
 }
 

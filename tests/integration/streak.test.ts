@@ -31,7 +31,7 @@ describe("settle_days", () => {
       ...Array.from({ length: 7 }, () => ({ wake: true, night: true })), // 0–6 → 7, scarecrow, +5
       { wake: false, night: true }, // 7 frozen
       { wake: false, night: false, mode: "vacation" }, // 8 paused
-      { wake: true, night: false, late: true }, // 9 minimum via a planned late night
+      { wake: true, night: false, late: true }, // 9 paused: a planned late night (R-M9-2)
       { wake: true, night: true, perfect: true }, // 10 perfect → +1
       { wake: true, night: false }, // 11 missed → 0
       { wake: true, night: true }, // 12
@@ -43,25 +43,35 @@ describe("settle_days", () => {
     for (let i = 0; i < pattern.length; i++) {
       const p = pattern[i]!;
       const d = addDays(start, i);
+      // Every seed must land (an ignored error once hid a refused seed, R-M9-12).
+      const ok = ({ error }: { error: unknown }) => expect(error).toBeNull();
       if (p.wake)
-        await a.from("wake_events").insert({
-          user_id: u.id,
-          date: d,
-          target_wake: at(d, 600),
-          pressed_at: at(d, 602),
-          in_window: true,
-          backfilled: false,
-        });
+        ok(
+          await a.from("wake_events").insert({
+            user_id: u.id,
+            date: d,
+            target_wake: at(d, 600),
+            pressed_at: at(d, 602),
+            in_window: true,
+            backfilled: false,
+          }),
+        );
       if (p.night)
-        await a.from("ticket_grants").insert({ user_id: u.id, reason: "night", ref_date: d, amount: 1 });
-      if (p.mode) await a.from("day_plans").insert({ user_id: u.id, date: d, mode: p.mode });
+        ok(await a.from("ticket_grants").insert({ user_id: u.id, reason: "night", ref_date: d, amount: 1 }));
+      if (p.mode) ok(await a.from("day_plans").insert({ user_id: u.id, date: d, mode: p.mode }));
       if (p.late)
-        await a
-          .from("day_plans")
-          .upsert(
-            { user_id: u.id, date: addDays(d, 1), late_night: { return_at: at(addDays(d, 1), 60) } },
+        ok(
+          await a.from("day_plans").upsert(
+            {
+              user_id: u.id,
+              date: addDays(d, 1),
+              late_night: { return_at: at(addDays(d, 1), 60) },
+              // Saved that evening, before the night (R-M9-1).
+              late_night_set_at: at(d, 18 * 60),
+            },
             { onConflict: "user_id,date" },
-          );
+          ),
+        );
       const logs: Partial<Record<BlockKey, GameLog>> = {};
       if (p.perfect)
         for (const b of BLOCK_KEYS) {
@@ -77,7 +87,7 @@ describe("settle_days", () => {
             miss_reason: null,
           };
           logs[b] = log;
-          await a.from("block_logs").insert({ user_id: u.id, date: d, block: b, ...log });
+          ok(await a.from("block_logs").insert({ user_id: u.id, date: d, block: b, ...log }));
         }
       facts.push({
         date: d,
@@ -157,5 +167,113 @@ describe("settle_days", () => {
     expect(
       (await u.client.from("events").insert({ user_id: u.id, type: "days_settled", payload: {} })).error,
     ).not.toBeNull();
+  });
+
+  it("a late night saved after that night doesn't excuse it (R-M9-1)", async () => {
+    const u = await newUser("streak-late");
+    const a = admin();
+    const today: string = (await u.client.rpc("settle_days")).data.today;
+    const y = addDays(today, -1);
+    await a
+      .from("profiles")
+      .update({ created_at: zonedInstant(addDays(today, -3), 6 * 60, TZ).toISOString() })
+      .eq("user_id", u.id);
+    await a.from("day_results").delete().eq("user_id", u.id);
+    const target = zonedInstant(y, 7 * 60, TZ).toISOString();
+    expect(
+      (
+        await a.from("wake_events").insert({
+          user_id: u.id,
+          date: y,
+          target_wake: target,
+          pressed_at: target,
+          in_window: true,
+          backfilled: false,
+        })
+      ).error,
+    ).toBeNull();
+    // The morning after: no return time, a return time of "now", or a forged stamp — all refused.
+    for (const late_night of [{}, { return_at: new Date().toISOString() }])
+      expect(
+        (await u.client.rpc("patch_day_plan", { p_date: today, p_set: { late_night } })).error,
+      ).not.toBeNull();
+    expect(
+      (
+        await u.client.from("day_plans").upsert(
+          {
+            user_id: u.id,
+            date: today,
+            late_night: { return_at: new Date().toISOString() },
+            late_night_set_at: zonedInstant(y, 18 * 60, TZ).toISOString(),
+          },
+          { onConflict: "user_id,date" },
+        )
+      ).error,
+    ).not.toBeNull();
+    const r = await u.client.rpc("settle_days");
+    expect(r.error).toBeNull();
+    const { data } = await u.client.from("day_results").select("kind").eq("date", y).single();
+    expect(data!.kind).toBe("missed");
+  });
+
+  it("a timezone change can't reopen a finished day (R-M9-3)", async () => {
+    const u = await newUser("streak-tz");
+    const today: string = (await u.client.rpc("settle_days")).data.today;
+    for (const timezone of ["Pacific/Pago_Pago", "Etc/GMT+12", "Pacific/Honolulu"]) {
+      await u.client.from("profiles").update({ timezone }).eq("user_id", u.id);
+      // Whatever the clock, the wake-day never moves back…
+      const now: string = (await u.client.rpc("settle_days")).data.today;
+      expect(now >= today).toBe(true);
+      // …so yesterday stays closed to Vacation/Sick.
+      expect(
+        (await u.client.rpc("patch_day_plan", { p_date: addDays(today, -1), p_set: { mode: "sick" } })).error,
+      ).not.toBeNull();
+    }
+  });
+
+  it("yesterday's check-ins written the next morning are backfills (R-M9-4)", async () => {
+    const u = await newUser("streak-bf");
+    const today: string = (await u.client.rpc("settle_days")).data.today;
+    const y = addDays(today, -1);
+    const now = new Date().toISOString();
+    const rows = BLOCK_KEYS.map((block) => ({
+      user_id: u.id,
+      date: y,
+      block,
+      planned_start: now,
+      started_at: now,
+      first10_at: now,
+    }));
+    expect((await u.client.from("block_logs").insert(rows)).error).toBeNull();
+    const { data } = await u.client.from("block_logs").select("backfilled").eq("date", y);
+    expect(data!.map((r) => r.backfilled)).toEqual(BLOCK_KEYS.map(() => true));
+  });
+});
+
+describe("claim_unlocks", () => {
+  it("counts Must tasks as paid, not as relabelled afterwards (R-M9-5)", async () => {
+    const u = await newUser("unlock-must");
+    const day = new Date(Date.now() - 86_400_000).toISOString();
+    const { data: items, error } = await admin()
+      .from("backlog_items")
+      .insert(
+        Array.from({ length: 10 }, (_, i) => ({
+          user_id: u.id,
+          title: `t${i}`,
+          priority: "just_start",
+          created_at: day,
+          priority_set_at: day,
+        })),
+      )
+      .select("id");
+    expect(error).toBeNull();
+    for (const { id } of items!) {
+      expect((await u.client.rpc("complete_backlog_item", { p_id: id })).error).toBeNull();
+    }
+    await u.client.from("backlog_items").update({ priority: "must" }).eq("user_id", u.id);
+    const r = await u.client.rpc("claim_unlocks");
+    expect(r.error).toBeNull();
+    expect(r.data.counts.must_done).toBe(0);
+    expect(r.data.done).not.toContain("must_10");
   });
 });

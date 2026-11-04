@@ -761,8 +761,8 @@
     "banner": "This month: {name}",
     "festivalItem": "{item} is in the shop until the month ends.",
     "festivalTitle": "Harvest festival · {month}",
-    "festivalOpen": "See how {month} went",
-    "festivalHint": "The month's harvest festival: a look back at the month.",
+    "festivalOpen": "Look back on {month}",
+    "festivalHint": "The month's harvest festival: a look back at the whole month.",
     "statPerfect": "Perfect days",
     "statKept": "Streak days",
     "statBest": "Best streak",
@@ -797,10 +797,10 @@
       "nights": "{n, plural, one {# more Night ritual} other {# more Night rituals}} to the next unlock",
       "backlog_done": "{n, plural, one {# more task} other {# more tasks}} to the next unlock",
       "all_first10_days": "Do every first 10 in one day to unlock",
-      "first10s": "{n} more first-10s to the next unlock",
+      "first10s": "{n, plural, one {# more first 10} other {# more first-10s}} to the next unlock",
       "must_done": "{n, plural, one {# more Must task} other {# more Must tasks}} to the next unlock",
       "best_streak": "{n, plural, one {# more streak day} other {# more streak days}} to the next unlock",
-      "blocks_closed": "{n} more blocks to the next unlock"
+      "blocks_closed": "{n, plural, one {# more block} other {# more blocks}} to the next unlock"
     }
   }
 }
