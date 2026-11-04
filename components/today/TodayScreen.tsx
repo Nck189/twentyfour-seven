@@ -15,6 +15,8 @@ import { SetupRewardNotice, TodaySetupHint } from "@/components/setup/SetupCard"
 import { useSetupRewards } from "@/lib/setup/useSetupRewards";
 import { ExerciseCard } from "@/components/exercise/ExerciseCard";
 import { useAnimals } from "@/lib/animals/useAnimals";
+import { StreakChip, StreakNotice } from "@/components/streak/StreakChip";
+import { useStreak } from "@/lib/streak/useStreak";
 import { BlockCheckin } from "./BlockCheckin";
 import { Sheet } from "./BlockSheet";
 import { ModeCard } from "./ModeCard";
@@ -71,6 +73,7 @@ export function TodayScreen() {
   const onboarding = useOnboardingState();
   const setup = useSetupRewards();
   const animals = useAnimals();
+  const streak = useStreak();
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [ritualOpen, setRitualOpen] = useState(false);
   const [ritualDismissed, setRitualDismissed] = useState(false);
@@ -141,18 +144,21 @@ export function TodayScreen() {
         title={t("title")}
         subtitle={formatDayLong(tl.date, locale, today.timezone)}
         action={
-          <button
-            type="button"
-            aria-label={t("menu.open")}
-            onClick={() => setMenuOpen(true)}
-            className="tap flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted"
-          >
-            <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden="true">
-              <circle cx="5.5" cy="12" r="2" fill="currentColor" />
-              <circle cx="12" cy="12" r="2" fill="currentColor" />
-              <circle cx="18.5" cy="12" r="2" fill="currentColor" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            {streak.view && <StreakChip view={streak.view} />}
+            <button
+              type="button"
+              aria-label={t("menu.open")}
+              onClick={() => setMenuOpen(true)}
+              className="tap flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted"
+            >
+              <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden="true">
+                <circle cx="5.5" cy="12" r="2" fill="currentColor" />
+                <circle cx="12" cy="12" r="2" fill="currentColor" />
+                <circle cx="18.5" cy="12" r="2" fill="currentColor" />
+              </svg>
+            </button>
+          </div>
         }
       />
 
@@ -274,6 +280,7 @@ export function TodayScreen() {
         />
       )}
 
+      {streak.view && <StreakNotice view={streak.view} />}
       {setup.state && <SetupRewardNotice granted={setup.state.granted} />}
       {!onboarding.show && <TodaySetupHint state={setup.state} />}
 

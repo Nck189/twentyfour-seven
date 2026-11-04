@@ -707,5 +707,30 @@
     "meet": "Meet your {name}",
     "skip": "Skip",
     "done": "Done"
+  },
+  "streak": {
+    "title": "Streak",
+    "chip": "Streak: {n, plural, one {# day} other {# days}}",
+    "days": "{n, plural, one {# day} other {# days}} in a row",
+    "best": "Best: {n}",
+    "scarecrows": "{n, plural, =0 {No scarecrows} one {# scarecrow} other {# scarecrows}}",
+    "scarecrowHint": "A scarecrow saves your streak on a missed day. You earn one every 7 days (up to 2).",
+    "calendar": "Last 5 weeks",
+    "kind": {
+      "perfect": "Perfect day",
+      "minimum": "Kept the streak",
+      "frozen": "Saved by a scarecrow",
+      "paused": "Vacation / Sick",
+      "missed": "Missed",
+      "none": "Before you started",
+      "notYet": "Not over yet"
+    },
+    "ruleMinimum": "Keep it: press “I'm up” in time and do your Night ritual.",
+    "rulePerfect": "Perfect day: also a Day score of 80% or more (+1 ticket).",
+    "rulePause": "Vacation and Sick days pause it.",
+    "grantTitle": "+{n, plural, one {# ticket} other {# tickets}}",
+    "grantPerfect": "Perfect day",
+    "grantStreak": "{n} days in a row",
+    "ok": "OK"
   }
 }
