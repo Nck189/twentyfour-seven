@@ -237,3 +237,70 @@ revoke all on function public._day_oee(uuid, date) from public, anon, authentica
 grant execute on function public._day_oee(uuid, date) to service_role;
 revoke all on function public.settle_days() from public, anon;
 grant execute on function public.settle_days() to authenticated;
+
+-- ---------- seasons (SPEC §8.8): festival decor only in its month ----------
+create or replace function public._decor_price(p_item text)
+returns integer
+language sql
+immutable
+set search_path = ''
+as $$
+  select case p_item when 'fence' then 40 when 'path' then 30 when 'flowers' then 50 when 'pond' then 300
+    when 'fireworks' then 60 when 'red_lantern' then 80 when 'water_bowl' then 70 when 'jasmine' then 60
+    when 'krathong' then 90 when 'star_tree' then 120 end;
+$$;
+
+-- The month (1–12) a festival decor item is sold in; null = always (content/seasons.ts).
+create or replace function public._festival_month(p_item text)
+returns integer
+language sql
+immutable
+set search_path = ''
+as $$
+  select case p_item when 'fireworks' then 1 when 'red_lantern' then 2 when 'water_bowl' then 4
+    when 'jasmine' then 8 when 'krathong' then 11 when 'star_tree' then 12 end;
+$$;
+
+create or replace function public.buy_decor(p_item text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  uid uuid := auth.uid();
+  price integer := public._decor_price(p_item);
+  month integer := public._festival_month(p_item);
+  tz text;
+  left_coins integer;
+  n integer;
+  item public.decor;
+begin
+  if uid is null then
+    raise exception 'not authenticated' using errcode = '42501';
+  end if;
+  if price is null then
+    raise exception 'unknown item' using errcode = '22023';
+  end if;
+  if month is not null then
+    select timezone into tz from public.profiles where user_id = uid;
+    if extract(month from (now() at time zone coalesce(tz, 'Asia/Bangkok')))::integer <> month then
+      raise exception 'not in season' using errcode = 'P0001';
+    end if;
+  end if;
+  update public.game_state set coins = coins - price
+  where user_id = uid and coins >= price
+  returning coins into left_coins;
+  if not found then
+    raise exception 'not enough coins' using errcode = 'P0001';
+  end if;
+  select count(*) into n from public.decor where user_id = uid and item_id = p_item;
+  insert into public.decor (user_id, item_id, x, y) values (uid, p_item, n, 0) returning * into item;
+  insert into public.events (user_id, type, payload)
+  values (uid, 'decor_bought', jsonb_build_object('item', p_item, 'price', price));
+  return jsonb_build_object('id', item.id, 'item', p_item, 'coins', left_coins);
+end $$;
+revoke all on function public._festival_month(text) from public, anon, authenticated;
+revoke all on function public._decor_price(text) from public, anon, authenticated;
+revoke all on function public.buy_decor(text) from public, anon;
+grant execute on function public.buy_decor(text) to authenticated;

@@ -243,7 +243,8 @@
     "coins": "{n} เหรียญ",
     "buyItem": "ซื้อ{item} {price} เหรียญ",
     "yourSeeds": "เมล็ดของเรา",
-    "seedOwned": "{crop} มี {n} เมล็ด"
+    "seedOwned": "{crop} มี {n} เมล็ด",
+    "onlyThisMonth": "เดือนนี้เท่านั้น"
   },
   "crops": {
     "radish": "แรดิช",
@@ -271,7 +272,13 @@
     "fence": "รั้ว",
     "path": "ทางเดิน",
     "flowers": "แปลงดอกไม้",
-    "pond": "บ่อน้ำ"
+    "pond": "บ่อน้ำ",
+    "fireworks": "พลุ",
+    "red_lantern": "โคมแดง",
+    "water_bowl": "ขันสงกรานต์",
+    "jasmine": "พวงมาลัยมะลิ",
+    "krathong": "กระทง",
+    "star_tree": "ต้นไม้ดาว"
   },
   "gacha": {
     "title": "ตู้กาชาเมล็ด",
@@ -732,5 +739,33 @@
     "grantPerfect": "วันเพอร์เฟกต์",
     "grantStreak": "ติดต่อกัน {n} วัน",
     "ok": "โอเค"
+  },
+  "seasons": {
+    "new_year": "ปีใหม่",
+    "lunar_new_year": "ตรุษจีน",
+    "blossom": "เดือนดอกไม้บาน",
+    "songkran": "สงกรานต์",
+    "first_rain": "ฝนแรก",
+    "monsoon": "หน้าฝน",
+    "green_rice": "ทุ่งนาเขียว",
+    "mothers_day": "วันแม่",
+    "harvest_moon": "จันทร์เก็บเกี่ยว",
+    "cool_breeze": "ลมหนาวมาเยือน",
+    "loy_krathong": "ลอยกระทง",
+    "winter_lights": "ไฟฤดูหนาว"
+  },
+  "season": {
+    "banner": "เดือนนี้: {name}",
+    "festivalItem": "{item} มีขายในร้านถึงสิ้นเดือนนี้",
+    "festivalTitle": "เทศกาลเก็บเกี่ยว · {month}",
+    "festivalOpen": "ดูเดือน{month}ที่ผ่านมา",
+    "festivalHint": "เทศกาลเก็บเกี่ยวประจำเดือน: ย้อนดูเดือนที่ผ่านมา",
+    "statPerfect": "วันเพอร์เฟกต์",
+    "statKept": "วันที่รักษาสตรีค",
+    "statBest": "สตรีคสูงสุด",
+    "statHarvests": "เก็บเกี่ยว",
+    "statHatched": "สัตว์ที่ฟัก",
+    "nextSeason": "ต่อไป: {name}",
+    "close": "ปิด"
   }
 }

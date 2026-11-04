@@ -243,7 +243,8 @@
     "coins": "{n} coins",
     "buyItem": "Buy {item} for {price} coins",
     "yourSeeds": "Your seeds",
-    "seedOwned": "{crop}, {n} owned"
+    "seedOwned": "{crop}, {n} owned",
+    "onlyThisMonth": "This month"
   },
   "crops": {
     "radish": "Radish",
@@ -271,7 +272,13 @@
     "fence": "Fence",
     "path": "Path",
     "flowers": "Flowers",
-    "pond": "Pond"
+    "pond": "Pond",
+    "fireworks": "Fireworks",
+    "red_lantern": "Red lantern",
+    "water_bowl": "Songkran bowl",
+    "jasmine": "Jasmine garland",
+    "krathong": "Krathong",
+    "star_tree": "Star tree"
   },
   "gacha": {
     "title": "Capsule machine",
@@ -732,5 +739,33 @@
     "grantPerfect": "Perfect day",
     "grantStreak": "{n} days in a row",
     "ok": "OK"
+  },
+  "seasons": {
+    "new_year": "New Year",
+    "lunar_new_year": "Lunar New Year",
+    "blossom": "Blossom month",
+    "songkran": "Songkran",
+    "first_rain": "First rain",
+    "monsoon": "Monsoon",
+    "green_rice": "Green rice fields",
+    "mothers_day": "Mother's Day",
+    "harvest_moon": "Harvest moon",
+    "cool_breeze": "Cool breeze",
+    "loy_krathong": "Loy Krathong",
+    "winter_lights": "Winter lights"
+  },
+  "season": {
+    "banner": "This month: {name}",
+    "festivalItem": "{item} is in the shop until the month ends.",
+    "festivalTitle": "Harvest festival · {month}",
+    "festivalOpen": "See how {month} went",
+    "festivalHint": "The month's harvest festival: a look back at the month.",
+    "statPerfect": "Perfect days",
+    "statKept": "Streak days",
+    "statBest": "Best streak",
+    "statHarvests": "Harvests",
+    "statHatched": "Animals hatched",
+    "nextSeason": "Next: {name}",
+    "close": "Close"
   }
 }

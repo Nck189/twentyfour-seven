@@ -16,6 +16,8 @@ import { useFarm, type FarmData } from "@/lib/farm/useFarm";
 import { useGacha } from "@/lib/farm/useGacha";
 import { useAnimals } from "@/lib/animals/useAnimals";
 import { AnimalPen } from "./AnimalPen";
+import { SeasonBanner } from "./SeasonBanner";
+import { seasonOf } from "@/content/seasons";
 import { CROP_IDS } from "@/content/crops";
 import { Capsule, CapsuleMachine } from "@/components/art/farm/Capsule";
 import { CapsuleSheet } from "./CapsuleSheet";
@@ -149,6 +151,7 @@ export function FarmView({
   return (
     <>
       {header}
+      {!compact && <SeasonBanner today={data.today} />}
       <section
         aria-label={t("title")}
         className="relative mx-4 overflow-hidden rounded-[var(--radius-lg)] lg:mx-6"
@@ -275,7 +278,7 @@ export function FarmView({
 
       {animals && <AnimalPen animals={animals} />}
 
-      {!compact && <DecorShop coins={data.coins} onBuy={buyDecor} />}
+      {!compact && <DecorShop coins={data.coins} onBuy={buyDecor} season={seasonOf(data.today)} />}
 
       {!compact && (
         <section aria-label={t("fields")} className="mx-4 mt-4 mb-6 lg:mx-6">
