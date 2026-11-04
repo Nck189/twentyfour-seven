@@ -18,7 +18,13 @@ const goodLog = (d: string): GameLog => ({
   miss_reason: null,
 });
 
-type Opt = { wake?: boolean; night?: boolean; mode?: DayFacts["mode"]; perfect?: boolean; lateNight?: boolean };
+type Opt = {
+  wake?: boolean;
+  night?: boolean;
+  mode?: DayFacts["mode"];
+  perfect?: boolean;
+  lateNight?: boolean;
+};
 function day(i: number, o: Opt = {}): DayFacts {
   const date = addDays(START, i);
   const logs: Partial<Record<BlockKey, GameLog>> = {};

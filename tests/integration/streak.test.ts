@@ -44,16 +44,14 @@ describe("settle_days", () => {
       const p = pattern[i]!;
       const d = addDays(start, i);
       if (p.wake)
-        await a
-          .from("wake_events")
-          .insert({
-            user_id: u.id,
-            date: d,
-            target_wake: at(d, 600),
-            pressed_at: at(d, 602),
-            in_window: true,
-            backfilled: false,
-          });
+        await a.from("wake_events").insert({
+          user_id: u.id,
+          date: d,
+          target_wake: at(d, 600),
+          pressed_at: at(d, 602),
+          in_window: true,
+          backfilled: false,
+        });
       if (p.night)
         await a.from("ticket_grants").insert({ user_id: u.id, reason: "night", ref_date: d, amount: 1 });
       if (p.mode) await a.from("day_plans").insert({ user_id: u.id, date: d, mode: p.mode });
@@ -149,13 +147,11 @@ describe("settle_days", () => {
     ).not.toBeNull();
     expect(
       (
-        await u.client
-          .from("day_plans")
-          .insert({
-            user_id: u.id,
-            date: past,
-            late_night: { return_at: zonedInstant(past, 60, TZ).toISOString() },
-          })
+        await u.client.from("day_plans").insert({
+          user_id: u.id,
+          date: past,
+          late_night: { return_at: zonedInstant(past, 60, TZ).toISOString() },
+        })
       ).error,
     ).not.toBeNull();
     expect(
