@@ -339,7 +339,8 @@
       "granted": "+3 tickets. Nice week review!",
       "saved": "Saved.",
       "doneAlready": "This week's review is done. See you next Sunday.",
-      "error": "Couldn't save. Try again."
+      "error": "Couldn't save. Try again.",
+      "todayLine": "Weekly review is open · +3 tickets"
     },
     "oee": {
       "title": "Day OEE",
