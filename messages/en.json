@@ -364,20 +364,20 @@
       "steady": "Your wake time is steady.",
       "later": "Waking about {n} min later each day.",
       "earlier": "Waking about {n} min earlier each day.",
-      "help": "Spread over the last 7 days. Smaller is steadier."
+      "help": "Spread over the last 7 days. Bedtime is when you did the Night ritual. Smaller is steadier."
     },
     "heat": {
       "title": "Blocks by weekday",
       "none": "No data",
       "cell": "{pct} done on time or with the checklist ({n} days)",
       "day": {
-        "1": "M",
-        "2": "T",
-        "3": "W",
-        "4": "T",
-        "5": "F",
-        "6": "S",
-        "7": "S"
+        "1": "Mo",
+        "2": "Tu",
+        "3": "We",
+        "4": "Th",
+        "5": "Fr",
+        "6": "Sa",
+        "7": "Su"
       }
     },
     "pareto": {

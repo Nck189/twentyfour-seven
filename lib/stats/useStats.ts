@@ -63,9 +63,12 @@ export function useStats() {
             .from("events")
             .select("payload, at")
             .eq("type", "night_ritual_completed")
-            .gte("at", `${addDays(from, -1)}T00:00:00Z`),
+            .gte("at", `${addDays(from, -1)}T00:00:00Z`)
+            .order("at"),
         ]);
-        const err = logs.error ?? plans.error ?? wakes.error ?? nights.error ?? rituals.error;
+        // A failed profile read would silently bring back the pre-sign-up days (R-M10-R7).
+        const err =
+          logs.error ?? plans.error ?? wakes.error ?? nights.error ?? rituals.error ?? profile.error;
         if (err) throw err;
         const tz = ctx.timezone;
         const planRows = plans.data as { date: string; mode: DayMode; late_night: unknown }[];

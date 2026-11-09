@@ -128,6 +128,10 @@ export function TodayScreen() {
     !today.nightDoneAtLoad &&
     !ritualDismissed &&
     !wasOffered(tl.date);
+  // First-time tips only on a calm screen: not during first-run setup, nor under the Night ritual
+  // or another sheet (a tap in there would close them, G7 R-M10-R1).
+  const tipsQuiet =
+    onboarding.ready && !onboarding.show && !ritualOpen && !autoOffer && !openKey && !menuOpen;
   // Once offered it stays until Done/Close, even when Down ends mid-flow (R-M4-4).
   if (autoOffer && !ritualOpen) setRitualOpen(true);
   // One thing at a time: what's on screen depends on the part of the day.
@@ -168,6 +172,8 @@ export function TodayScreen() {
         }
       />
 
+      {/* Under the header, next to the streak chip it explains. */}
+      <Tip id="streak" when={!!streak.view && tipsQuiet} />
       {onboarding.show && <WelcomeCard onLater={() => void onboarding.later()} />}
 
       {tl.mode !== "normal" && (
@@ -222,7 +228,7 @@ export function TodayScreen() {
           )}
         </section>
       )}
-      <Tip id="night" when={isNight && !today.nightDone && onboarding.ready && !onboarding.show} />
+      <Tip id="night" when={isNight && !today.nightDone && tipsQuiet} />
 
       {showWake && (
         <WakeCard
@@ -233,7 +239,7 @@ export function TodayScreen() {
           onPress={today.actions.pressWake}
         />
       )}
-      <Tip id="wake" when={!!showWake && onboarding.ready && !onboarding.show} />
+      <Tip id="wake" when={!!showWake && tipsQuiet} />
 
       {showCurrent && (
         <section
@@ -253,7 +259,7 @@ export function TodayScreen() {
           />
         </section>
       )}
-      <Tip id="first10" when={!!showCurrent && onboarding.ready && !onboarding.show} />
+      <Tip id="first10" when={!!showCurrent && tipsQuiet} />
 
       {next && (
         <p className="mx-4 mb-3 text-muted lg:mx-6">
@@ -264,8 +270,7 @@ export function TodayScreen() {
       {napRunning && !menuOpen && <NapCard timezone={today.timezone} />}
 
       <ExerciseCard animals={animals} />
-      <Tip id="exercise" when={!!animals.state && onboarding.ready && !onboarding.show} />
-      <Tip id="streak" when={!!streak.view && onboarding.ready && !onboarding.show} />
+      <Tip id="exercise" when={!!animals.state && tipsQuiet} />
 
       {!onboarding.show && <TodayReviewLine />}
       {unlocks && !onboarding.show && <TodayUnlockLine state={unlocks} />}

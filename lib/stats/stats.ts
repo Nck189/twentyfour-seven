@@ -95,17 +95,18 @@ function sd(xs: readonly number[]): number | null {
   return Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / (xs.length - 1));
 }
 
-function slope(xs: readonly number[]): number | null {
-  if (xs.length < 2) return null;
-  const n = xs.length;
-  const mx = (n - 1) / 2;
-  const my = xs.reduce((a, b) => a + b, 0) / n;
+/** Least-squares slope of y over x (x = day offset, so missing days don't squeeze the line). */
+function slope(pts: readonly { x: number; y: number }[]): number | null {
+  if (pts.length < 2) return null;
+  const n = pts.length;
+  const mx = pts.reduce((a, p) => a + p.x, 0) / n;
+  const my = pts.reduce((a, p) => a + p.y, 0) / n;
   let num = 0;
   let den = 0;
-  xs.forEach((y, x) => {
-    num += (x - mx) * (y - my);
-    den += (x - mx) ** 2;
-  });
+  for (const p of pts) {
+    num += (p.x - mx) * (p.y - my);
+    den += (p.x - mx) ** 2;
+  }
   return den === 0 ? 0 : num / den;
 }
 
@@ -114,7 +115,8 @@ export function sleepRegularity(days: readonly SleepDay[], window = 7): Regulari
   const last = days.slice(-window);
   const beds = last.flatMap((d) => (d.bed === null ? [] : [d.bed]));
   const wakes = last.flatMap((d) => (d.wake === null ? [] : [d.wake]));
-  return { bedSd: sd(beds), wakeSd: sd(wakes), wakeDrift: slope(wakes) };
+  const pts = last.flatMap((d, x) => (d.wake === null ? [] : [{ x, y: d.wake }]));
+  return { bedSd: sd(beds), wakeSd: sd(wakes), wakeDrift: slope(pts) };
 }
 
 // ---------- heatmap, Pareto, home vs out ----------
@@ -200,12 +202,19 @@ export type WeekSummary = {
   worstBlock: BlockKey | null;
 };
 
-export function weekSummary(days: readonly DayFacts[]): WeekSummary {
+/**
+ * `blocks`: which blocks to judge — pass the ones used across the whole Stats window, so a block
+ * skipped all week still shows up as "needs love" (G7 R-M10-R4).
+ */
+export function weekSummary(
+  days: readonly DayFacts[],
+  blocks: readonly BlockKey[] = usedBlocks(days),
+): WeekSummary {
   const oees = days.flatMap((d) => {
     const o = dayOee(d);
     return o ? [o.oee] : [];
   });
-  const rates = usedBlocks(days).flatMap((b) => {
+  const rates = blocks.flatMap((b) => {
     let success = 0;
     let judged = 0;
     for (const d of days) {

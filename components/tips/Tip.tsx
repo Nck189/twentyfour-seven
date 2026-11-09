@@ -6,7 +6,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { AppMark } from "@/components/art/AppMark";
 import { ExerciseArt } from "@/components/art/Exercise";
 import { CapsuleMachine } from "@/components/art/farm/Capsule";
-import { StreakSun } from "@/components/art/Streak";
+import { ScarecrowArt, StreakSun } from "@/components/art/Streak";
 import { TicketArt } from "@/components/art/Ticket";
 import type { TipId } from "@/content/tips";
 import { usePrefs } from "@/lib/store/prefs";
@@ -17,7 +17,7 @@ const ART: Record<TipId, ReactNode> = {
   first10: <StreakSun className="h-10 w-10" />,
   night: <TicketArt className="h-8 w-12" kind="night" />,
   exercise: <ExerciseArt type="run" className="h-10 w-10" />,
-  streak: <StreakSun className="h-10 w-10" />,
+  streak: <ScarecrowArt className="h-10 w-10" />,
   plan: <AppMark className="h-10 w-10" />,
   plots: <AppMark className="h-10 w-10" />,
   capsule: <CapsuleMachine className="h-10 w-10" />,
@@ -33,14 +33,15 @@ export function Tip({ id, when = true, className = "" }: { id: TipId; when?: boo
   const reduce = useReducedMotion();
   const skipAnim = usePrefs((s) => s.skipAnimations) || Boolean(reduce);
   const box = useRef<HTMLElement>(null);
-  // A tap anywhere outside the bubble closes it too (it has been seen).
+  // A tap anywhere outside the bubble closes it too (it has been seen). "click", not
+  // "pointerdown": a scroll starts with a pointerdown on touch screens (G7 R-M10-R1).
   useEffect(() => {
     if (!show) return;
-    const onDown = (e: PointerEvent) => {
+    const onDown = (e: MouseEvent) => {
       if (box.current && !box.current.contains(e.target as Node)) dismiss();
     };
-    document.addEventListener("pointerdown", onDown, true);
-    return () => document.removeEventListener("pointerdown", onDown, true);
+    document.addEventListener("click", onDown, true);
+    return () => document.removeEventListener("click", onDown, true);
   }, [show, dismiss]);
   if (!show) return null;
   return (

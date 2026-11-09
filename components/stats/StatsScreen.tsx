@@ -38,6 +38,11 @@ const hhmm = (m: number) => {
   const x = ((Math.round(m) % 1440) + 1440) % 1440;
   return `${String(Math.floor(x / 60)).padStart(2, "0")}:${String(x % 60).padStart(2, "0")}`;
 };
+/** Axis ticks: H:mm without a leading zero, so they fit at 390 px (G7 R-M10-R5). */
+const hmm = (m: number) => {
+  const x = ((Math.round(m) % 1440) + 1440) % 1440;
+  return `${Math.floor(x / 60)}:${String(x % 60).padStart(2, "0")}`;
+};
 const pct = (x: number | null) => (x === null ? "–" : `${Math.round(x * 100)}%`);
 const shortDate = (d: string) => d.slice(8, 10);
 
@@ -77,7 +82,13 @@ function WeeklyReview({
   const busy = useRef(false);
   const week = data.review?.week_start;
   const summary = useMemo(
-    () => (week ? weekSummary(data.days.filter((d) => d.date >= week && d.date <= addDays(week, 6))) : null),
+    () =>
+      week
+        ? weekSummary(
+            data.days.filter((d) => d.date >= week && d.date <= addDays(week, 6)),
+            usedBlocks(data.days),
+          )
+        : null,
     [data.days, week],
   );
   if (!data.review || !week || !summary) return null;
@@ -87,7 +98,9 @@ function WeeklyReview({
         <p className="text-sm text-muted">{t("review.doneAlready")}</p>
       </Card>
     );
-  const ready = keep.trim() && problem.trim() && tryNext.trim();
+  // Blank includes zero-width spaces, which String.trim() keeps (R-M10-R6).
+  const blank = (x: string) => x.replace(/[\s\u200b\ufeff]/g, "") === "";
+  const ready = !blank(keep) && !blank(problem) && !blank(tryNext);
   const save = async () => {
     if (busy.current || !ready) return;
     busy.current = true;
@@ -204,7 +217,7 @@ function WakeChart({ data }: { data: StatsData }) {
                     (min: number) => Math.min(min, chart.lcl) - 10,
                     (max: number) => Math.max(max, chart.ucl) + 10,
                   ]}
-                  tickFormatter={hhmm}
+                  tickFormatter={hmm}
                   tick={AXIS}
                   width={50}
                 />

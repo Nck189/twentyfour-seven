@@ -35,7 +35,8 @@ as $$
   select case when wk is not null and created_on <= wk + 3 then wk end
   from (
     select case extract(isodow from d)::integer when 7 then d - 6 when 1 then d - 7 end as wk,
-           (select (p.created_at at time zone coalesce(p.timezone, 'Asia/Bangkok'))::date
+           -- UTC, not the (client-editable) profile timezone (G7 R-M10-R3).
+           (select (p.created_at at time zone 'UTC')::date
               from public.profiles p where p.user_id = uid) as created_on
     from (select public._wake_day(uid) as d) t
   ) x;
@@ -52,10 +53,10 @@ as $$
 declare
   uid uuid := auth.uid();
   wk date;
-  -- Trim all whitespace (spaces, tabs, newlines), not just spaces.
-  k text := btrim(coalesce(p_keep, ''), E' \t\r\n');
-  p text := btrim(coalesce(p_problem, ''), E' \t\r\n');
-  t text := btrim(coalesce(p_try, ''), E' \t\r\n');
+  -- Trim every kind of blank, incl. no-break, ideographic and zero-width spaces (R-M10-R6).
+  k text := regexp_replace(coalesce(p_keep, ''), '^[\s\u00a0\u3000\u200b\ufeff]+|[\s\u00a0\u3000\u200b\ufeff]+$', '', 'g');
+  p text := regexp_replace(coalesce(p_problem, ''), '^[\s\u00a0\u3000\u200b\ufeff]+|[\s\u00a0\u3000\u200b\ufeff]+$', '', 'g');
+  t text := regexp_replace(coalesce(p_try, ''), '^[\s\u00a0\u3000\u200b\ufeff]+|[\s\u00a0\u3000\u200b\ufeff]+$', '', 'g');
   granted boolean;
 begin
   if uid is null then
@@ -134,3 +135,14 @@ alter table public.profiles add column tips_off boolean not null default false;
 -- (More → "Show tips again" brings them back). Profiles have no triggers on these columns.
 update public.profiles
    set tips_seen = array['wake', 'first10', 'night', 'exercise', 'streak', 'plan', 'plots', 'capsule'];
+
+-- Only the tip ids the app knows (content/tips.ts), at most once each (R-M10-10).
+alter table public.profiles add constraint profiles_tips_seen_known
+  check (tips_seen <@ array['wake', 'first10', 'night', 'exercise', 'streak', 'plan', 'plots', 'capsule']
+         and cardinality(tips_seen) <= 8);
+
+-- Clients update only the profile fields the app edits (G7 R-M10-R3: created_at decides which
+-- weeks get a review and where Stats start).
+revoke update on public.profiles from authenticated;
+grant update (display_name, timezone, locale, sound_on, onboarding, tips_seen, tips_off)
+  on public.profiles to authenticated;

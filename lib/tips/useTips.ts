@@ -3,6 +3,7 @@
 import { useCallback, useEffect } from "react";
 import { create } from "zustand";
 import { isTipId, type TipId } from "@/content/tips";
+import { logEvent } from "@/lib/db/events";
 import { getSupabase } from "@/lib/supabase/client";
 import { activeTip } from "./tips";
 
@@ -77,14 +78,17 @@ export const useTipsStore = create<TipsState>()((set, get) => ({
     const seen = new Set(get().seen).add(id);
     set({ seen, dismissedThisVisit: true });
     void save({ tips_seen: [...seen] });
+    void logEvent("tip_dismissed", { tip: id });
   },
   skipAll: () => {
     set({ off: true });
     void save({ tips_off: true });
+    void logEvent("tips_skipped");
   },
   showAgain: async () => {
     set({ seen: new Set(), off: false, dismissedThisVisit: false });
     await save({ tips_seen: [], tips_off: false });
+    void logEvent("tips_reset");
   },
   newVisit: () => set({ dismissedThisVisit: false }),
 }));
