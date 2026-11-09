@@ -4,6 +4,55 @@
 -- First, close the "excuse it afterwards" holes (G7 R-M6-4, R-M6-R1) the streak would otherwise pay for.
 
 -- ---------- guards ----------
+-- The wake-day a pressed "I'm up" started stays started: a later template or plan edit can't
+-- move today back to yesterday (G7 R-M9-R2; the freeze skips pressed days).
+create or replace function public._wake_day(uid uuid)
+returns date
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  tz text;
+  d date;
+  w timestamptz;
+begin
+  select timezone into tz from public.profiles where user_id = uid;
+  d := (now() at time zone coalesce(tz, 'Asia/Bangkok'))::date;
+  w := coalesce(
+    (select target_wake from public.wake_events where user_id = uid and date = d),
+    (select target_wake from public.wake_snapshots where user_id = uid and date = d),
+    public._target_wake(uid, d));
+  if w is not null and now() < w then
+    return d - 1;
+  end if;
+  return d;
+end $$;
+
+-- A day plan or a check-in can't be moved to another day, user or block (G7 R-M9-R1: moving a
+-- future Sick day or today's logs onto yesterday skipped every past-day rule). Upserts that set
+-- the same keys are fine.
+create or replace function public.day_keys_guard()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if current_user = 'service_role' or current_setting('role', true) = 'service_role' then
+    return new;
+  end if;
+  if new.user_id is distinct from old.user_id or new.date is distinct from old.date
+     or (tg_table_name = 'block_logs' and (to_jsonb(new) ->> 'block') is distinct from (to_jsonb(old) ->> 'block')) then
+    raise exception 'a day can''t be moved; delete it and add it again' using errcode = '22023';
+  end if;
+  return new;
+end $$;
+create trigger day_keys_guard before update on public.day_plans
+  for each row execute function public.day_keys_guard();
+create trigger day_keys_guard before update on public.block_logs
+  for each row execute function public.day_keys_guard();
+
 -- "Past" is judged by the wake-day, so the wake-day must never move backwards (G7 R-M9-3): a
 -- timezone change that would make a finished day "today" again is refused until the next wake.
 create or replace function public.profiles_timezone_guard()
@@ -130,7 +179,11 @@ end $$;
 
 -- When "Out late" was last set (server time; whatever a client sends is ignored, like
 -- wake_planned_at). Only a late night saved before that night is over counts (G7 R-M9-1).
-alter table public.day_plans add column late_night_set_at timestamptz;
+-- Late nights saved before this migration were judged by the old rule: they keep counting
+-- (the default fills existing rows without running any trigger; new rows are stamped; a stamp
+-- on a row with no late night means nothing). G7 R-M9-R4.
+alter table public.day_plans add column late_night_set_at timestamptz default '-infinity';
+alter table public.day_plans alter column late_night_set_at drop default;
 
 create or replace function public._stamp_late_night()
 returns trigger
@@ -261,6 +314,7 @@ as $$
 declare
   today date;
   ret timestamptz;
+  tz text;
 begin
   if current_user = 'service_role' or current_setting('role', true) = 'service_role' then
     return new;
@@ -279,6 +333,12 @@ begin
     end;
     if ret is null then
       raise exception 'a late night needs a return time' using errcode = '22023';
+    end if;
+    -- Home between noon the day before and noon of that day (how Plan sets it), G7 R-M9-R3.
+    tz := coalesce((select timezone from public.profiles where user_id = new.user_id), 'Asia/Bangkok');
+    if ret < ((new.date - 1) + time '12:00') at time zone tz
+       or ret >= (new.date + time '12:00') at time zone tz then
+      raise exception 'the return time must be on that night' using errcode = '22023';
     end if;
     if ret < now() - interval '1 hour' or now() > public._night_over_at(new.user_id, new.date) then
       raise exception 'that night is already over' using errcode = '22023';
@@ -476,6 +536,7 @@ create policy "own rows: insert" on public.events for insert to authenticated
 revoke all on function public.block_logs_planned_guard() from public, anon, authenticated;
 revoke all on function public.day_plans_past_guard() from public, anon, authenticated;
 revoke all on function public.block_logs_guard() from public, anon, authenticated;
+revoke all on function public.day_keys_guard() from public, anon, authenticated;
 revoke all on function public.profiles_timezone_guard() from public, anon, authenticated;
 revoke all on function public.profiles_timezone_after() from public, anon, authenticated;
 revoke all on function public._stamp_late_night() from public, anon, authenticated;

@@ -87,3 +87,12 @@ Format: date · decision · why · how to change it
     - Festival counts in the profile timezone (S4).
     - Capped backlog completions counting toward the ladder (S4).
     - The client farm preview treats any Out late as excused (the server decides the harvest).
+- 2026-11-09 · G7 M9 re-review fixes (docs/qa/G7-M9-rereview.md):
+  - **A day plan or a check-in can't be moved to another day** (R-M9-R1): changing `date`, `user_id` or `block` is refused. To move one, delete it and add it again, which goes through every rule for the new day. Upserts that keep the same keys are unaffected.
+  - **Once "I'm up" is pressed, that wake-day stays started** (R-M9-R2): `_wake_day` reads the pressed target first, so a later template or plan edit can't make today yesterday again.
+  - **Out late needs a return time on that night**, between noon the day before and noon of that day, the way Plan sets it (R-M9-R3). How many late nights a week stays open for Minnie (with R-M9-2).
+  - **Late nights saved before this migration keep counting** (R-M9-R4). They were judged by the old rule, so they're grandfathered with a `-infinity` stamp, set without running any trigger.
+  - Accepted as designed: ticking items on yesterday's live log after the next wake still counts for OEE (R-M9-R5, S4).
+  - Deferred:
+    - R-M9-R6 (S4): at sign-up, the template-seeding order freezes today's wake target at 10:00. This predates M9; fix it with the next sign-up change.
+    - R-M9-13: after a gap of more than 60 days, the unsettled days show as "Before you started" (S4).

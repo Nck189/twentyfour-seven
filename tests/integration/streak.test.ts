@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { BLOCK_KEYS, type BlockKey } from "@/content/blocks";
 import type { DayFacts, GameLog } from "@/lib/game";
 import { settleStreak } from "@/lib/game/streak";
-import { addDays, zonedInstant } from "@/lib/time";
+import { addDays, localDate, zonedInstant } from "@/lib/time";
 import { admin, newUser } from "./helpers";
 
 const TZ = "Asia/Bangkok";
@@ -247,6 +247,91 @@ describe("settle_days", () => {
     expect((await u.client.from("block_logs").insert(rows)).error).toBeNull();
     const { data } = await u.client.from("block_logs").select("backfilled").eq("date", y);
     expect(data!.map((r) => r.backfilled)).toEqual(BLOCK_KEYS.map(() => true));
+  });
+});
+
+describe("past days stay closed (G7 re-review)", () => {
+  it("a day plan or a check-in can't be moved onto another day (R-M9-R1)", async () => {
+    const u = await newUser("move-day");
+    const today: string = (await u.client.rpc("settle_days")).data.today;
+    const later = addDays(today, 10);
+    expect(
+      (await u.client.rpc("patch_day_plan", { p_date: later, p_set: { mode: "sick" } })).error,
+    ).toBeNull();
+    expect(
+      (
+        await u.client
+          .from("day_plans")
+          .update({ date: addDays(today, -1) })
+          .eq("date", later)
+      ).error,
+    ).not.toBeNull();
+    const now = new Date().toISOString();
+    expect(
+      (
+        await u.client
+          .from("block_logs")
+          .insert({ user_id: u.id, date: today, block: "focus", started_at: now, first10_at: now })
+      ).error,
+    ).toBeNull();
+    expect(
+      (
+        await u.client
+          .from("block_logs")
+          .update({ date: addDays(today, -1) })
+          .eq("date", today)
+      ).error,
+    ).not.toBeNull();
+    // An upsert that keeps the same keys still works.
+    expect(
+      (
+        await u.client
+          .from("block_logs")
+          .upsert(
+            { user_id: u.id, date: today, block: "focus", items_planned: 2 },
+            { onConflict: "user_id,date,block" },
+          )
+      ).error,
+    ).toBeNull();
+  });
+
+  it("after I'm up, a later wake time doesn't make today yesterday again (R-M9-R2)", async () => {
+    const u = await newUser("wake-push");
+    const today = localDate(new Date(), TZ);
+    const target = new Date(Date.now() - 3 * 3_600_000).toISOString();
+    expect(
+      (
+        await admin().from("wake_events").insert({
+          user_id: u.id,
+          date: today,
+          target_wake: target,
+          pressed_at: target,
+          in_window: true,
+          backfilled: false,
+        })
+      ).error,
+    ).toBeNull();
+    await u.client.from("templates").update({ target_wake: "23:30" }).eq("user_id", u.id);
+    expect((await u.client.rpc("settle_days")).data.today).toBe(today);
+    expect(
+      (await u.client.rpc("patch_day_plan", { p_date: addDays(today, -1), p_set: { mode: "sick" } })).error,
+    ).not.toBeNull();
+  });
+
+  it("Out late needs a return time on that night (R-M9-R3)", async () => {
+    const u = await newUser("late-ret");
+    const today: string = (await u.client.rpc("settle_days")).data.today;
+    const d = addDays(today, 3);
+    const bad = await u.client.rpc("patch_day_plan", {
+      p_date: d,
+      p_set: { late_night: { return_at: "2099-01-01T00:00:00Z" } },
+    });
+    expect(bad.error).not.toBeNull();
+    const ok = await u.client.rpc("patch_day_plan", {
+      p_date: d,
+      p_set: { late_night: { return_at: zonedInstant(d, 2 * 60, TZ).toISOString() } },
+    });
+    expect(ok.error).toBeNull();
   });
 });
 
