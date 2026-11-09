@@ -108,3 +108,20 @@ Format: date · decision · why · how to change it
   - **Weekly review.** It opens on the week's Sunday (by wake-day) and stays open through the Monday after, as a grace day for people who do it the next morning. It pays +3 once per week, in the same ledger as the other tickets, and all three of Keep / Problem / Try are required. It can be edited while open, with no extra pay. Today shows a quiet line while it's open.
   - **Stats.** Covers the last 28 finished days. Wake chart = I-MR with σ from MR̄/1.128 (±3σ), split weekday/weekend as SPEC asks. Bedtime = when Sleep was started. A block that was never checked in counts as missed in the heatmap.
   - **First-time tips.** Existing accounts start with every tip marked seen, since they already know the app; "Show tips again" in More brings them back. E2E tests keep tips off unless a test is about them.
+- 2026-11-10 · G7 M10 fixes:
+  - **Stats start at the account's first wake-day** (R-M10-1), with the same rule as the streak settle.
+  - **Bedtime = the in-time Night ritual.** Only blocks checked in at least once are judged (R-M10-7).
+  - **The weekly review only opens for a week the account existed from Thursday on** (R-M10-6).
+  - **Tips:**
+    - wait until onboarding has loaded;
+    - close on a tap outside;
+    - write the review event only once per week.
+  - **Deferred to M14 Polish:**
+    - R-M9-10: the unlock reward animation and the streak-egg hatch reveal.
+    - G3: retention dashboard.
+    - G4: weekly share card.
+    - These belong with the polish pass and the v1 playtest's findings.
+  - **Flagged to Minnie, pre-existing:**
+    - Sleep has no check-in on Today; only the full-day list offers one.
+    - Day OEE counts all 7 blocks, so a day without a Sleep check-in tops out near 73%. That makes the 80% Perfect day nearly unreachable unless Sleep is started from the day list.
+    - Proposal: start Sleep from the Night ritual's last step, or leave Sleep out of Day OEE. Server and TS change together.
