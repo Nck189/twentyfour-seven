@@ -19,7 +19,7 @@ const CELL: Record<DayKind, string> = {
 };
 
 /** 5 weeks, Monday first, ending this week: how each settled day went (GitHub-style, SPEC §7). */
-function StreakCalendar({ view }: { view: StreakView }) {
+export function StreakCalendar({ view }: { view: StreakView }) {
   const t = useTranslations("streak");
   const locale = useLocale();
   const fmt = new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-GB", {

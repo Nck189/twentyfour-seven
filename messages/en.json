@@ -316,7 +316,81 @@
   "stats": {
     "title": "Stats",
     "placeholder": "Day OEE, control charts and more.",
-    "comingSoon": "Stats are coming soon."
+    "comingSoon": "Stats are coming soon.",
+    "subtitle": "The last 4 weeks, from your check-ins.",
+    "error": "Couldn't load your stats.",
+    "notEnough": "Not enough days yet. Keep checking in and this fills up.",
+    "streak": "Streak calendar",
+    "review": {
+      "title": "Weekly review",
+      "intro": "Sunday night: a quick look back, then one Keep, one Problem, one Try.",
+      "oee": "Day OEE",
+      "minimum": "Minimum days",
+      "perfect": "Perfect days",
+      "best": "Best: {block}",
+      "worst": "Needs love: {block}",
+      "keep": "Keep",
+      "keepHint": "What went well and should stay?",
+      "problem": "Problem",
+      "problemHint": "What got in the way?",
+      "try": "Try",
+      "tryHint": "One small thing to try next week",
+      "save": "Save · +3 tickets",
+      "granted": "+3 tickets. Nice week review!",
+      "saved": "Saved.",
+      "doneAlready": "This week's review is done. See you next Sunday.",
+      "error": "Couldn't save. Try again."
+    },
+    "oee": {
+      "title": "Day OEE",
+      "avg": "Average {pct} over the last 2 weeks",
+      "aria": "Day OEE over the last 2 weeks: average {pct} across {n} days",
+      "help": "Availability × Performance × Quality. The dashed line is 80%, a Perfect day."
+    },
+    "wake": {
+      "title": "Wake time",
+      "weekday": "Weekdays",
+      "weekend": "Weekend",
+      "mean": "Usually {time} · ±{sd} min",
+      "out": "{n, plural, one {# unusual morning} other {# unusual mornings}}",
+      "aria": "Wake-time control chart: usually {time}, {n} mornings outside the limits"
+    },
+    "sleep": {
+      "title": "Sleep regularity",
+      "bed": "Bedtime spread",
+      "wake": "Wake spread",
+      "min": "±{n} min",
+      "steady": "Your wake time is steady.",
+      "later": "Waking about {n} min later each day.",
+      "earlier": "Waking about {n} min earlier each day.",
+      "help": "Spread over the last 7 days. Smaller is steadier."
+    },
+    "heat": {
+      "title": "Blocks by weekday",
+      "none": "No data",
+      "cell": "{pct} done on time or with the checklist ({n} days)",
+      "day": {
+        "1": "M",
+        "2": "T",
+        "3": "W",
+        "4": "T",
+        "5": "F",
+        "6": "S",
+        "7": "S"
+      }
+    },
+    "pareto": {
+      "title": "Why blocks got missed",
+      "top": "Top reason: {reason} ({pct})",
+      "aria": "Miss reasons, most common first. Top: {reason} at {pct}",
+      "none": "No missed blocks with a reason. Nice."
+    },
+    "place": {
+      "title": "Home vs out",
+      "home": "At home",
+      "out": "Out",
+      "rate": "{pct} done · {n} blocks"
+    }
   },
   "more": {
     "title": "More",
