@@ -188,6 +188,13 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 > - streak calendar
 >
 > Weekly review on Sunday night: summary + KPT + 3 tickets. (The +3 grant moved here from M7; reason `weekly_review` already exists in `ticket_grants`.) Use flat pastel charts consistent with the art tokens.
+>
+> **First-time tips (Minnie, 2026-11-09).** A small bubble next to a feature the first time it shows up, never a long tutorial up front:
+> - Each bubble has one small picture, 1–2 short lines, **"Got it"** and **"Skip all tips"**. A tap outside also closes it.
+> - One tip at a time, each shown once. Tips follow the feature reveals, so they never pile up.
+> - Remembered per account (not per device). More has a "Show tips again" option.
+> - Reduced motion means no bounce. Targets are ≥ 44 px. EN/TH, no emoji.
+> - About 8 tips: "I'm up", current block + first 10, Night ritual, Plan, farm plots, capsule machine (where tickets come from), streak + scarecrows, exercise + eggs.
 
 **Done when:** the numbers match a hand-checked sample week. **v1 complete — use it daily for a few days and fix papercuts.**
 Then run the playtest pilot in `docs/PLAYTEST_PLAN.md`: 4 simulated personas × 7 in-app days.
