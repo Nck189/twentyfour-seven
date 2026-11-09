@@ -190,6 +190,7 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 > Weekly review on Sunday night: summary + KPT + 3 tickets. (The +3 grant moved here from M7; reason `weekly_review` already exists in `ticket_grants`.) Use flat pastel charts consistent with the art tokens.
 
 **Done when:** the numbers match a hand-checked sample week. **v1 complete — use it daily for a few days and fix papercuts.**
+Then run the playtest pilot in `docs/PLAYTEST_PLAN.md`: 4 simulated personas × 7 in-app days.
 
 ---
 
@@ -239,6 +240,9 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 ---
 
 > Growth (docs/GROWTH.md): G1/G8 onboarding presets by audience, G15 privacy promise.
+
+## After M14 — Playtest (Minnie, 2026-11-09)
+Run `docs/PLAYTEST_PLAN.md` in full: 8 simulated personas × 21 in-app days on the real app (local only). It ends in a ranked change list "to make it easy, sticky and hard to quit". Present it to Minnie; build nothing from it without her OK.
 
 ## Status
 - [x] M0 — ✅ 2026-11-02 · `docs/qa/M0-report.md` · live on prod
