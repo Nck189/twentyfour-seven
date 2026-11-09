@@ -122,3 +122,7 @@ grant execute on function public.weekly_review_status() to authenticated;
 -- app updates itself (like `onboarding`); nothing depends on them.
 alter table public.profiles add column tips_seen text[] not null default '{}';
 alter table public.profiles add column tips_off boolean not null default false;
+-- Accounts that exist before this migration already know the app: their tips count as seen
+-- (More → "Show tips again" brings them back). Profiles have no triggers on these columns.
+update public.profiles
+   set tips_seen = array['wake', 'first10', 'night', 'exercise', 'streak', 'plan', 'plots', 'capsule'];
