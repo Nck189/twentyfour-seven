@@ -61,7 +61,13 @@ describe("complete_night_ritual (CJ-07 ticket)", () => {
     const morning = await newUser("night-morning");
     const lastNight = await nextWakeIn(morning, -2 * H); // woke 2 h ago
     const r1 = await morning.client.rpc("complete_night_ritual", { p_date: lastNight });
-    expect(r1.data).toMatchObject({ ticket_granted: false, in_time: false });
+    // Run between 00:00 and 02:00 the wake was "yesterday", so last night is 2 days back and the
+    // date itself is refused; either way no ticket.
+    if ([today(), addDays(today(), -1)].includes(lastNight))
+      expect(r1.data).toMatchObject({ ticket_granted: false, in_time: false });
+    else expect(r1.error).not.toBeNull();
+    const { data: m } = await morning.client.from("game_state").select("tickets").single();
+    expect(m!.tickets).toBe(0);
 
     const noon = await newUser("night-noon");
     const tonight = await nextWakeIn(noon, 20 * H); // bed is still far away
