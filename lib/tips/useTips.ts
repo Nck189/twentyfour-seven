@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { create } from "zustand";
 import { isTipId, type TipId } from "@/content/tips";
 import { getSupabase } from "@/lib/supabase/client";
@@ -102,5 +102,6 @@ export function useTip(id: TipId, when = true) {
     return () => unmount(id);
   }, [id, when, mount, unmount]);
   const show = loaded && when && activeTip(mounted, seen, off, dismissedThisVisit) === id;
-  return { show, dismiss: () => dismiss(id), skipAll };
+  const dismissThis = useCallback(() => dismiss(id), [dismiss, id]);
+  return { show, dismiss: dismissThis, skipAll };
 }

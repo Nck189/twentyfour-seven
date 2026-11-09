@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import type { DayFacts, DayMode } from "@/lib/game";
 import { buildDayFacts, type LogRow } from "@/lib/game/facts";
-import type { ImrPoint, SleepDay } from "@/lib/stats/stats";
+import { statsFrom, type ImrPoint, type SleepDay } from "@/lib/stats/stats";
 import { getSupabase } from "@/lib/supabase/client";
-import { addDays, localParts } from "@/lib/time";
+import { addDays, localDate, localParts } from "@/lib/time";
 import { currentDayDate } from "@/lib/today/day";
 import { loadDayContext } from "@/lib/today/loadContext";
 
@@ -19,7 +19,7 @@ export type StatsData = {
   days: DayFacts[];
   /** Live "I'm up" presses (minutes after local midnight). */
   wakes: ImrPoint[];
-  /** Bed = when Sleep was started (minutes after local noon), wake = the press. */
+  /** Bed = when the Night ritual was done in time (minutes after local noon), wake = the press. */
   sleep: SleepDay[];
   /** Null before the M10 migration is on the server. */
   review: ReviewStatus | null;
@@ -45,7 +45,7 @@ export function useStats() {
         const today = currentDayDate(ctx, new Date());
         const from = addDays(today, -STATS_DAYS);
         const last = addDays(today, -1);
-        const [logs, plans, wakes, nights, review] = await Promise.all([
+        const [logs, plans, wakes, nights, review, profile, rituals] = await Promise.all([
           client.from("block_logs").select("*").gte("date", from).lte("date", last),
           // Up to today: today's plan may hold last night's Out late (it excuses yesterday's Free).
           client.from("day_plans").select("date, mode, late_night").gte("date", from).lte("date", today),
@@ -57,8 +57,15 @@ export function useStats() {
             .order("date"),
           client.from("ticket_grants").select("ref_date").eq("reason", "night").gte("ref_date", from),
           client.rpc("weekly_review_status"),
+          client.from("profiles").select("created_at").maybeSingle(),
+          // Bedtime = when the Night ritual was done (Sleep itself has no check-in on Today).
+          client
+            .from("events")
+            .select("payload, at")
+            .eq("type", "night_ritual_completed")
+            .gte("at", `${addDays(from, -1)}T00:00:00Z`),
         ]);
-        const err = logs.error ?? plans.error ?? wakes.error ?? nights.error;
+        const err = logs.error ?? plans.error ?? wakes.error ?? nights.error ?? rituals.error;
         if (err) throw err;
         const tz = ctx.timezone;
         const planRows = plans.data as { date: string; mode: DayMode; late_night: unknown }[];
@@ -74,18 +81,27 @@ export function useStats() {
           nights: (nights.data as { ref_date: string }[]).map((n) => n.ref_date),
           exercise: [],
         }).filter((d) => d.date < today);
+        // Never before the account existed (G7 R-M10-1): those days would read as all missed.
+        const created = (profile.data as { created_at?: string } | null)?.created_at;
+        const createdOn = created ? localDate(new Date(created), tz) : null;
+        const start = statsFrom(
+          today,
+          createdOn,
+          !!createdOn && (wakes.data as { date: string }[]).some((w) => w.date === createdOn),
+          STATS_DAYS,
+        );
+        const shown = days.filter((d) => d.date >= start);
         const liveWakes = (wakes.data as { date: string; pressed_at: string; backfilled: boolean }[]).filter(
           (w) => !w.backfilled,
         );
         const wakeBy = new Map(liveWakes.map((w) => [w.date, minutes(w.pressed_at, tz)]));
-        const bedBy = new Map(
-          (logs.data as LogRow[]).flatMap((l) =>
-            l.block === "sleep" && l.started_at && !l.backfilled
-              ? [[l.date, (minutes(l.started_at, tz) - 720 + 1440) % 1440] as const]
-              : [],
-          ),
-        );
-        const sleep: SleepDay[] = days.map((d) => ({
+        const bedBy = new Map<string, number>();
+        for (const r of rituals.data as { payload: { date?: string; in_time?: boolean }; at: string }[]) {
+          // The first in-time ritual of each night (the one that earned the Night ticket).
+          const d = r.payload?.date;
+          if (d && r.payload.in_time && !bedBy.has(d)) bedBy.set(d, (minutes(r.at, tz) - 720 + 1440) % 1440);
+        }
+        const sleep: SleepDay[] = shown.map((d) => ({
           date: d.date,
           // Bed on day d is the night before d + 1's wake.
           bed: bedBy.get(d.date) ?? null,
@@ -94,8 +110,10 @@ export function useStats() {
         if (cancelled) return;
         setData({
           today,
-          days,
-          wakes: liveWakes.map((w) => ({ date: w.date, value: wakeBy.get(w.date)! })),
+          days: shown,
+          wakes: liveWakes
+            .filter((w) => w.date >= start)
+            .map((w) => ({ date: w.date, value: wakeBy.get(w.date)! })),
           sleep,
           review: review.error ? null : (review.data as ReviewStatus),
         });

@@ -23,6 +23,8 @@ grant select on public.weekly_reviews to authenticated;
 
 -- The week a review is for right now, or null when no review is open: on the week's Sunday
 -- (wake-day) and the Monday after it.
+-- Only weeks the account was around for at least from Thursday (G7 R-M10-6: signing up on a
+-- Sunday doesn't review — or pay for — a week that never happened).
 create or replace function public._review_week(uid uuid)
 returns date
 language sql
@@ -30,11 +32,13 @@ stable
 security definer
 set search_path = ''
 as $$
-  select case extract(isodow from d)::integer
-    when 7 then d - 6
-    when 1 then d - 7
-  end
-  from (select public._wake_day(uid) as d) t;
+  select case when wk is not null and created_on <= wk + 3 then wk end
+  from (
+    select case extract(isodow from d)::integer when 7 then d - 6 when 1 then d - 7 end as wk,
+           (select (p.created_at at time zone coalesce(p.timezone, 'Asia/Bangkok'))::date
+              from public.profiles p where p.user_id = uid) as created_on
+    from (select public._wake_day(uid) as d) t
+  ) x;
 $$;
 
 -- Saves this week's Keep / Problem / Try (editable while the review is open) and pays +3 tickets
@@ -48,9 +52,10 @@ as $$
 declare
   uid uuid := auth.uid();
   wk date;
-  k text := btrim(coalesce(p_keep, ''));
-  p text := btrim(coalesce(p_problem, ''));
-  t text := btrim(coalesce(p_try, ''));
+  -- Trim all whitespace (spaces, tabs, newlines), not just spaces.
+  k text := btrim(coalesce(p_keep, ''), E' \t\r\n');
+  p text := btrim(coalesce(p_problem, ''), E' \t\r\n');
+  t text := btrim(coalesce(p_try, ''), E' \t\r\n');
   granted boolean;
 begin
   if uid is null then
@@ -72,8 +77,11 @@ begin
   on conflict (user_id, week_start) do update
     set keep = excluded.keep, problem = excluded.problem, try = excluded.try, updated_at = now();
   granted := public._grant_once(uid, 'weekly_review', wk, 3);
-  insert into public.events (user_id, type, payload)
-  values (uid, 'weekly_review_done', jsonb_build_object('week_start', wk, 'tickets', granted));
+  -- One event per week's review (the first save), not one per edit.
+  if granted then
+    insert into public.events (user_id, type, payload)
+    values (uid, 'weekly_review_done', jsonb_build_object('week_start', wk, 'tickets', 3));
+  end if;
   return jsonb_build_object('week_start', wk, 'granted', granted);
 end $$;
 

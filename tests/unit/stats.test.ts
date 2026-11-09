@@ -8,6 +8,7 @@ import {
   pareto,
   sleepRegularity,
   splitWeekend,
+  statsFrom,
   weekSummary,
 } from "@/lib/stats/stats";
 
@@ -134,7 +135,50 @@ describe("heatmap, Pareto, home vs out, week summary", () => {
     expect(w.minimumDays).toBe(3);
     expect(w.avgOee).not.toBeNull();
     expect(w.bestBlock).toBe("focus");
-    // Ties go to the earlier block of the day (Down Time was never checked in: 0 of 2).
-    expect(w.worstBlock).toBe("down");
+    // Only blocks checked in count (R-M10-7): Work missed both days.
+    expect(w.worstBlock).toBe("work");
+  });
+});
+
+describe("stats window (R-M10-1: no days before the account existed)", () => {
+  it("starts at the sign-up day if it had a wake, else the day after; never more than 28 back", () => {
+    expect(statsFrom("2026-11-10", "2026-11-05", true)).toBe("2026-11-05");
+    expect(statsFrom("2026-11-10", "2026-11-05", false)).toBe("2026-11-06");
+    expect(statsFrom("2026-11-10", "2026-01-01", false)).toBe("2026-10-13");
+    expect(statsFrom("2026-11-10", null, false)).toBe("2026-10-13");
+  });
+  it("a perfect 5-day-old account reads as perfect, not diluted by empty days", () => {
+    const perfect = (d: string) =>
+      day(
+        d,
+        Object.fromEntries(
+          (["down", "sleep", "wake", "focus", "work", "gradation", "free"] as const).map((b) => [b, log(d)]),
+        ),
+      );
+    const days = ["2026-11-05", "2026-11-06", "2026-11-07", "2026-11-08", "2026-11-09"].map(perfect);
+    const w = weekSummary(days.filter((d) => d.date >= statsFrom("2026-11-10", "2026-11-05", true)));
+    expect(w.avgOee).toBeGreaterThan(0.8);
+  });
+  it("best and worst are different blocks, and only when rates differ (R-M10-2)", () => {
+    const d = (date: string) =>
+      day(
+        date,
+        Object.fromEntries(
+          (["down", "wake", "focus", "work", "gradation", "free"] as const).map((b) => [b, log(date)]),
+        ),
+      );
+    const w = weekSummary([d("2026-11-09"), d("2026-11-10")]);
+    expect(w.bestBlock).not.toBeNull();
+    expect(w.worstBlock).toBeNull();
+  });
+});
+
+describe("usedBlocks (R-M10-7)", () => {
+  it("leaves out blocks never checked in during the window", () => {
+    const d = day("2026-11-09", { focus: log("2026-11-09") });
+    const h = heatmap([d]);
+    expect(h.sleep[1]).toEqual({ success: 0, judged: 0 });
+    expect(h.focus[1]).toEqual({ success: 1, judged: 1 });
+    expect(weekSummary([d]).worstBlock).toBeNull();
   });
 });

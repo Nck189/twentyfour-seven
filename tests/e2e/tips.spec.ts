@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import { rest, userIdFor } from "../helpers/db";
+import { gotoToday } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
 
 /** First-time tips (BUILD_PLAN M10): one bubble at a time, each once per account, skippable. */
@@ -35,7 +36,8 @@ test("CJ-M10-2 a tip shows once, one at a time; Skip all turns them off; More br
   await expect(tip).toHaveCount(0);
 
   // Another screen shows its own tip; "Skip all tips" turns every tip off.
-  await page.goto("/today");
+  // (At Down Time the Night ritual opens over Today by itself: close it first.)
+  await gotoToday(page);
   await expect(tip).toHaveCount(1);
   await tip.getByRole("button", { name: "Skip all tips" }).click();
   await expect(tip).toHaveCount(0);

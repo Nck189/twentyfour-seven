@@ -23,6 +23,11 @@ async function setup(page: Page) {
 /** 10 finished days: a wake each morning (one late), Focus on time, Work missed for "phone". */
 async function seedDays(id: string) {
   const today = wakeDay();
+  // The account is older than its data (Stats and the review never look before sign-up).
+  await rest(`profiles?user_id=eq.${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ created_at: zonedInstant(addDays(today, -12), 6 * 60, TZ).toISOString() }),
+  });
   const days = Array.from({ length: 10 }, (_, i) => addDays(today, -10 + i));
   await rest("wake_events", {
     method: "POST",

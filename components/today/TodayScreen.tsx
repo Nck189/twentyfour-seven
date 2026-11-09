@@ -222,7 +222,7 @@ export function TodayScreen() {
           )}
         </section>
       )}
-      <Tip id="night" when={isNight && !today.nightDone && !onboarding.show} />
+      <Tip id="night" when={isNight && !today.nightDone && onboarding.ready && !onboarding.show} />
 
       {showWake && (
         <WakeCard
@@ -233,7 +233,7 @@ export function TodayScreen() {
           onPress={today.actions.pressWake}
         />
       )}
-      <Tip id="wake" when={!!showWake && !onboarding.show} />
+      <Tip id="wake" when={!!showWake && onboarding.ready && !onboarding.show} />
 
       {showCurrent && (
         <section
@@ -253,7 +253,7 @@ export function TodayScreen() {
           />
         </section>
       )}
-      <Tip id="first10" when={!!showCurrent && !onboarding.show} />
+      <Tip id="first10" when={!!showCurrent && onboarding.ready && !onboarding.show} />
 
       {next && (
         <p className="mx-4 mb-3 text-muted lg:mx-6">
@@ -264,8 +264,8 @@ export function TodayScreen() {
       {napRunning && !menuOpen && <NapCard timezone={today.timezone} />}
 
       <ExerciseCard animals={animals} />
-      <Tip id="exercise" when={!!animals.state && !onboarding.show} />
-      <Tip id="streak" when={!!streak.view && !onboarding.show} />
+      <Tip id="exercise" when={!!animals.state && onboarding.ready && !onboarding.show} />
+      <Tip id="streak" when={!!streak.view && onboarding.ready && !onboarding.show} />
 
       {!onboarding.show && <TodayReviewLine />}
       {unlocks && !onboarding.show && <TodayUnlockLine state={unlocks} />}

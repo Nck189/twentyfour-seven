@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { AppMark } from "@/components/art/AppMark";
 import { ExerciseArt } from "@/components/art/Exercise";
 import { CapsuleMachine } from "@/components/art/farm/Capsule";
@@ -32,9 +32,20 @@ export function Tip({ id, when = true, className = "" }: { id: TipId; when?: boo
   const { show, dismiss, skipAll } = useTip(id, when);
   const reduce = useReducedMotion();
   const skipAnim = usePrefs((s) => s.skipAnimations) || Boolean(reduce);
+  const box = useRef<HTMLElement>(null);
+  // A tap anywhere outside the bubble closes it too (it has been seen).
+  useEffect(() => {
+    if (!show) return;
+    const onDown = (e: PointerEvent) => {
+      if (box.current && !box.current.contains(e.target as Node)) dismiss();
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [show, dismiss]);
   if (!show) return null;
   return (
     <motion.aside
+      ref={box}
       aria-label={t("label")}
       initial={skipAnim ? false : { opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}

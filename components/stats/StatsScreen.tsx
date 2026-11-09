@@ -18,7 +18,6 @@ import { TicketArt } from "@/components/art/Ticket";
 import { StreakCalendar } from "@/components/streak/StreakChip";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
-import { BLOCK_KEYS } from "@/content/blocks";
 import { dayOee } from "@/lib/game/outcome";
 import {
   heatmap,
@@ -27,6 +26,7 @@ import {
   pareto,
   sleepRegularity,
   splitWeekend,
+  usedBlocks,
   weekSummary,
 } from "@/lib/stats/stats";
 import { useStats, type StatsData } from "@/lib/stats/useStats";
@@ -315,8 +315,9 @@ function Heat({ data }: { data: StatsData }) {
   const t = useTranslations("stats");
   const blocks = useTranslations("blocks");
   const h = heatmap(data.days);
+  const rows = usedBlocks(data.days);
   const days = [1, 2, 3, 4, 5, 6, 7] as const;
-  const any = BLOCK_KEYS.some((b) => days.some((w) => h[b][w]!.judged > 0));
+  const any = rows.some((b) => days.some((w) => h[b][w]!.judged > 0));
   return (
     <Card title={t("heat.title")}>
       {any ? (
@@ -332,7 +333,7 @@ function Heat({ data }: { data: StatsData }) {
             </tr>
           </thead>
           <tbody>
-            {BLOCK_KEYS.map((b) => (
+            {rows.map((b) => (
               <tr key={b}>
                 <th scope="row" className="truncate text-left font-bold">
                   {blocks(`name.${b}`)}

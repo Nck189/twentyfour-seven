@@ -5,7 +5,32 @@
  */
 import { BLOCK_KEYS, type BlockKey } from "@/content/blocks";
 import { blockResult, dayOee, isMinimumDay, isPerfectDay, type DayFacts } from "@/lib/game/outcome";
-import { isoWeekday } from "@/lib/time";
+import { addDays, isoWeekday } from "@/lib/time";
+
+/**
+ * Blocks Stats judge: those checked in at least once in the window. A block never used (e.g.
+ * Sleep, which only the full-day list lets you check in) would otherwise read as missed every
+ * day and always be the "needs love" block (G7 R-M10-7).
+ */
+export function usedBlocks(days: readonly DayFacts[]): BlockKey[] {
+  return BLOCK_KEYS.filter((b) => days.some((d) => d.logs[b]));
+}
+
+/**
+ * First wake-day Stats look at (G7 R-M10-1): never before the account existed. Like the streak's
+ * settle, the sign-up day counts only if it had a wake; at most `days` back from today.
+ */
+export function statsFrom(
+  today: string,
+  createdOn: string | null,
+  wakeOnCreatedDay: boolean,
+  days = 28,
+): string {
+  const earliest = addDays(today, -days);
+  if (!createdOn) return earliest;
+  const first = wakeOnCreatedDay ? createdOn : addDays(createdOn, 1);
+  return first > earliest ? first : earliest;
+}
 
 // ---------- I-MR control chart (wake times) ----------
 
@@ -99,6 +124,7 @@ export type Cell = { success: number; judged: number };
 export type Heatmap = Record<BlockKey, Record<number, Cell>>;
 
 export function heatmap(days: readonly DayFacts[]): Heatmap {
+  const used = usedBlocks(days);
   const out = Object.fromEntries(
     BLOCK_KEYS.map((b) => [
       b,
@@ -107,7 +133,7 @@ export function heatmap(days: readonly DayFacts[]): Heatmap {
   ) as Heatmap;
   for (const d of days) {
     const w = isoWeekday(d.date);
-    for (const b of BLOCK_KEYS) {
+    for (const b of used) {
       const r = blockResult(d, b);
       if (r !== "success" && r !== "partial" && r !== "miss") continue;
       out[b][w]!.judged++;
@@ -179,7 +205,7 @@ export function weekSummary(days: readonly DayFacts[]): WeekSummary {
     const o = dayOee(d);
     return o ? [o.oee] : [];
   });
-  const rates = BLOCK_KEYS.flatMap((b) => {
+  const rates = usedBlocks(days).flatMap((b) => {
     let success = 0;
     let judged = 0;
     for (const d of days) {
@@ -199,6 +225,7 @@ export function weekSummary(days: readonly DayFacts[]): WeekSummary {
     minimumDays: days.filter(isMinimumDay).length,
     perfectDays: days.filter(isPerfectDay).length,
     bestBlock: best[0]?.b ?? null,
-    worstBlock: worst.length > 1 ? worst[0]!.b : null,
+    // Only when it really is worse than the best (all equal → no "needs love", R-M10-2).
+    worstBlock: worst.length > 1 && worst[0]!.rate < best[0]!.rate ? worst[0]!.b : null,
   };
 }
