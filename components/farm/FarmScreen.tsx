@@ -23,6 +23,7 @@ import { seasonOf } from "@/content/seasons";
 import { CROP_IDS } from "@/content/crops";
 import { Capsule, CapsuleMachine } from "@/components/art/farm/Capsule";
 import { CapsuleSheet } from "./CapsuleSheet";
+import { Tip } from "@/components/tips/Tip";
 import { SeedDexSheet } from "./SeedDexSheet";
 import { sfx } from "@/lib/sound/sfx";
 import { HarvestPop } from "./HarvestPop";
@@ -224,6 +225,8 @@ export function FarmView({
         </div>
       </section>
 
+      {/* Full Farm screen only (not the side panel or the preview). */}
+      <Tip id="plots" when={!!gacha} className="mt-3" />
       <section aria-label={t("weather")} className="mx-4 mt-3 lg:mx-6">
         <h2 className="mb-1 text-sm font-bold text-muted">{t("weather")}</h2>
         {farm.weather.length === 0 ? (
@@ -271,6 +274,11 @@ export function FarmView({
           </button>
         </section>
       )}
+      <Tip
+        id="capsule"
+        when={!!gacha?.state && (gacha.state.tickets > 0 || Object.keys(gacha.state.dex).length > 0)}
+        className="mt-3"
+      />
       {sheet === "capsules" && gacha?.state && (
         <CapsuleSheet
           state={gacha.state}

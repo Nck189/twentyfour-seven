@@ -28,6 +28,7 @@ import { Sheet } from "@/components/today/BlockSheet";
 import { useBlockText } from "@/components/today/useBlockText";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
+import { Tip } from "@/components/tips/Tip";
 import { formatDayLong, formatDayShort, formatWeekdayLong, formatWeekdayShort } from "@/lib/format";
 import type { BlockKey } from "@/content/blocks";
 import { dayCapacity } from "@/lib/backlog";
@@ -197,6 +198,7 @@ export function PlanScreen() {
           </button>
         }
       />
+      <Tip id="plan" />
       <SaveStatus state={plan.saving} />
       <WeekStrip days={stripDays} selected={day} onSelect={setSelected} label={t("week")} />
       {nextAppt && (

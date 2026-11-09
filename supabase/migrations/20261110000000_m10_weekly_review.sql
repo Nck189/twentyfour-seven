@@ -116,3 +116,9 @@ revoke all on function public.submit_weekly_review(text, text, text) from public
 grant execute on function public.submit_weekly_review(text, text, text) to authenticated;
 revoke all on function public.weekly_review_status() from public, anon;
 grant execute on function public.weekly_review_status() to authenticated;
+
+-- ---------- first-time tips (Minnie, 2026-11-09) ----------
+-- Which tips this account has seen, and whether they're all skipped. Plain profile fields the
+-- app updates itself (like `onboarding`); nothing depends on them.
+alter table public.profiles add column tips_seen text[] not null default '{}';
+alter table public.profiles add column tips_off boolean not null default false;

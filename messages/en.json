@@ -877,5 +877,24 @@
       "best_streak": "{n, plural, one {# more streak day} other {# more streak days}} to the next unlock",
       "blocks_closed": "{n, plural, one {# more block} other {# more blocks}} to the next unlock"
     }
+  },
+  "tips": {
+    "label": "Tip",
+    "gotIt": "Got it",
+    "skipAll": "Skip all tips",
+    "title": "Tips",
+    "moreHint": "Small hints that show the first time you meet a feature.",
+    "showAgain": "Show tips again",
+    "shownAgain": "Tips are back on.",
+    "text": {
+      "wake": "Tap \"I'm up\" the moment you leave the bed. Inside your window it earns a Sunrise ticket.",
+      "first10": "This is the block you're in. Start it, then do its first 10 minutes: the smallest step in.",
+      "night": "Before bed, the Night ritual closes today and plans tomorrow. It earns a Night ticket.",
+      "exercise": "Log any workout of 10 minutes or more. It feeds your animals, and every 3rd one hatches an egg.",
+      "streak": "Your streak: an \"I'm up\" in your window plus the Night ritual keeps it going. Scarecrows save a missed day.",
+      "plan": "Plan any day here. Changes you make for one day never touch your usual kind of day.",
+      "plots": "Each plot is one block of your day. Do the block and its crop grows; skip it and weeds come.",
+      "capsule": "Tickets come from waking on time and the Night ritual. Spend them here for new seeds."
+    }
   }
 }

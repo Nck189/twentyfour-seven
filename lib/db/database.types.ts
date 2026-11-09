@@ -449,6 +449,8 @@ export type Database = {
           timezone: string;
           updated_at: string;
           user_id: string;
+          tips_off: boolean;
+          tips_seen: string[];
         };
         ComputedFields: never;
         Insert: {
@@ -460,6 +462,8 @@ export type Database = {
           timezone?: string;
           updated_at?: string;
           user_id: string;
+          tips_off?: boolean;
+          tips_seen?: string[];
         };
         Update: {
           created_at?: string;
@@ -470,6 +474,8 @@ export type Database = {
           timezone?: string;
           updated_at?: string;
           user_id?: string;
+          tips_off?: boolean;
+          tips_seen?: string[];
         };
         Relationships: [];
       };
