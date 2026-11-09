@@ -247,6 +247,10 @@ Then run the playtest pilot in `docs/PLAYTEST_PLAN.md`: 4 simulated personas × 
 ---
 
 > Growth (docs/GROWTH.md): G1/G8 onboarding presets by audience, G15 privacy promise.
+> Carried over from M8 to M10, then to here (2026-11-10):
+> - R-M9-10: the unlock reward animation plus a hatch reveal for the streak egg.
+> - G3: a retention dashboard for Minnie.
+> - G4: a weekly share card.
 
 ## After M14 — Playtest (Minnie, 2026-11-09)
 Run `docs/PLAYTEST_PLAN.md` in full: 8 simulated personas × 21 in-app days on the real app (local only). It ends in a ranked change list "to make it easy, sticky and hard to quit". Present it to Minnie; build nothing from it without her OK.
@@ -262,3 +266,4 @@ Run `docs/PLAYTEST_PLAN.md` in full: 8 simulated personas × 21 in-app days on t
 - [x] M7 — ✅ merged (PR #7) · `docs/qa/M7-report.md` · left: G3 Mac baselines, G6 after db push · deferred: Perfect day / streak tickets → M9, Weekly review +3 → M10
 - [x] M8 — ✅ merged (PR #8) + migration on prod · `docs/qa/M8-report.md` · left: G3 Mac baselines · deferred: R-M8-8 (S3), G3/G4 growth items → M10
 - [x] M9 — ✅ merged (PR #9, G7 re-review 2 PASS) · `docs/qa/M9-report.md` · left: G3 Mac baselines, G6 after `db push` · follow-up: streak milestones once per account + every 30 (R-M9-6, Minnie OK) · deferred: R-M9-10 (unlock reveal + streak-egg hatch → M10), Farm/Plan "today" pin, S4s in the report
+- [ ] M10 — built; G1, G4 and G5 ✅; G7 re-review fixes pushed · PR #10 · `docs/qa/M10-report.md` · left: G7 re-review 2, G2 CI (blocked: Actions minutes), G3 Mac baselines, G6 after merge + `db push` · deferred to M14: R-M9-10, G3, G4 · open question: Sleep check-in / Perfect day
