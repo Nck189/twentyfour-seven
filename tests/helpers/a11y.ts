@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 /** G4: axe with 0 serious/critical violations. */
 export async function expectNoSeriousA11y(page: Page) {
@@ -46,4 +46,20 @@ export async function expectNoHorizontalScroll(page: Page) {
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
   expect(overflow).toBeLessThanOrEqual(0);
+}
+
+/**
+ * Waits until `target` is fully faded in (its own and its ancestors' opacity multiply to 1), so
+ * axe doesn't measure contrast mid-animation (a reveal fading in reads as low contrast).
+ */
+export async function expectFadedIn(target: Locator) {
+  await expect
+    .poll(() =>
+      target.evaluate((el) => {
+        let o = 1;
+        for (let n: Element | null = el; n; n = n.parentElement) o *= Number(getComputedStyle(n).opacity);
+        return o;
+      }),
+    )
+    .toBe(1);
 }

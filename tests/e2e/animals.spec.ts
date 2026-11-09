@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
+import { expectFadedIn, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import { rest, setAllTemplates, userIdFor } from "../helpers/db";
 import { IS_PROD_RUN } from "../helpers/env";
@@ -47,6 +47,13 @@ test("CJ-13 three workouts: the ring fills, the 3rd hatches an egg (with its rev
   const hatch = page.getByRole("dialog", { name: "It hatched!" });
   // The live region announces it (one element; the big visible line repeats it).
   await expect(hatch.getByRole("status")).toContainText(/^Meet your /);
+  // Check contrast once the reveal has faded in (mid-fade text reads as low contrast).
+  await expectFadedIn(
+    hatch
+      .getByText(/^Meet your /)
+      .filter({ visible: true })
+      .first(),
+  );
   await expectNoSeriousA11y(page);
   await hatch.getByRole("button", { name: "Done" }).click();
   await expect(hatch).toHaveCount(0);
