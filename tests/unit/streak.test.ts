@@ -85,10 +85,10 @@ describe("settleStreak over a simulated month (BUILD_PLAN M9 'done when')", () =
       "missed",
     ]);
     expect(r.state).toEqual({ streak: 0, best: 15, freezes: 0 });
+    // 7 pays once per account (the second run's 7 pays nothing); 14 is a new best, so it pays.
     expect(r.grants).toEqual([
-      { reason: "streak_7", date: addDays(START, 6), amount: 5 },
-      { reason: "streak_7", date: addDays(START, 18), amount: 5 },
-      { reason: "streak_14", date: addDays(START, 25), amount: 5 },
+      { reason: "streak_7", date: addDays(START, 6), amount: 5, days: 7 },
+      { reason: "streak_14", date: addDays(START, 25), amount: 5, days: 14 },
       { reason: "perfect_day", date: addDays(START, 26), amount: 1 },
     ]);
   });
@@ -98,10 +98,22 @@ describe("settleStreak over a simulated month (BUILD_PLAN M9 'done when')", () =
     const r = settleStreak(days);
     expect(r.state).toEqual({ streak: 30, best: 30, freezes: 2 });
     expect(r.grants.map((g) => g.reason)).toEqual(["streak_7", "streak_14", "streak_30"]);
+    expect(r.grants.map((g) => g.days)).toEqual([7, 14, 30]);
     // Continuing from a saved state gives the same result as one pass.
     const a = settleStreak(days.slice(0, 10));
     const b = settleStreak(days.slice(10), a.state);
     expect(b.state).toEqual(r.state);
     expect([...a.grants, ...b.grants]).toEqual(r.grants);
+  });
+
+  it("after 30, keeping the streak pays every 30 days; restarting never pays 7/14/30 again (R-M9-6)", () => {
+    const long = settleStreak(Array.from({ length: 90 }, (_, i) => day(i)));
+    expect(long.grants.map((g) => g.days)).toEqual([7, 14, 30, 60, 90]);
+    // 8 good days, then 2 missed (scarecrow, then reset), again and again: only the first 7 pays.
+    const days: DayFacts[] = [];
+    for (let k = 0; k < 6; k++)
+      for (let i = 0; i < 10; i++) days.push(day(k * 10 + i, i >= 8 ? { wake: false } : {}));
+    const restart = settleStreak(days);
+    expect(restart.grants.filter((g) => g.reason !== "perfect_day").map((g) => g.days)).toEqual([7]);
   });
 });

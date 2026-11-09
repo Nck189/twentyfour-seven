@@ -108,7 +108,9 @@ export function StreakNotice({ view }: { view: StreakView }) {
   if (seen || view.granted.length === 0) return null;
   const total = view.granted.reduce((n, g) => n + g.amount, 0);
   const lines = view.granted.map((g) =>
-    g.reason === "perfect_day" ? t("grantPerfect") : t("grantStreak", { n: Number(g.reason.slice(7)) }),
+    g.reason === "perfect_day"
+      ? t("grantPerfect")
+      : t("grantStreak", { n: g.days ?? Number(g.reason.slice(7)) }),
   );
   return (
     <section

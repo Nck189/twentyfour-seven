@@ -17,7 +17,16 @@ export type StreakGrant = {
   reason: "perfect_day" | "streak_7" | "streak_14" | "streak_30";
   date: string;
   amount: number;
+  /** Streak length a streak grant was paid for (60, 90, … are paid as `streak_30`). */
+  days?: number;
 };
+
+/** The streak ticket for reaching `streak` days, given the best before today (R-M9-6). */
+export function streakMilestone(streak: number, bestBefore: number): StreakGrant["reason"] | null {
+  if (R.milestones[streak] && streak > bestBefore) return `streak_${streak}` as StreakGrant["reason"];
+  if (streak > 30 && streak % R.everyDays === 0) return "streak_30";
+  return null;
+}
 export type SettledDay = { date: string; kind: DayKind; oee: number | null };
 
 export const NO_STREAK: StreakState = { streak: 0, best: 0, freezes: 0 };
@@ -53,11 +62,11 @@ export function settleStreak(
     const kind = dayKind(d, freezes);
     if (kind === "perfect" || kind === "minimum") {
       streak += 1;
+      const reason = streakMilestone(streak, best);
       best = Math.max(best, streak);
       if (streak % R.freezeEvery === 0) freezes = Math.min(R.maxFreezes, freezes + 1);
-      const milestone = R.milestones[streak];
-      if (milestone)
-        grants.push({ reason: `streak_${streak}` as StreakGrant["reason"], date: d.date, amount: milestone });
+      if (reason)
+        grants.push({ reason, date: d.date, amount: R.milestones[streak] ?? R.everyTickets, days: streak });
       if (kind === "perfect")
         grants.push({ reason: "perfect_day", date: d.date, amount: R.perfectDayTickets });
     } else if (kind === "frozen") {

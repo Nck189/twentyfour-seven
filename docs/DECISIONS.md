@@ -99,3 +99,6 @@ Format: date · decision · why · how to change it
 - 2026-11-09 · G7 M9 re-review 2 (PASS, docs/qa/G7-M9-rereview-2.md):
   - **Today now uses the pressed (or frozen) wake time to decide which day it is**, like the server (R-M9-R2-1). Farm and Plan still use the live plan for their "today", which is a display-only difference; deferred.
   - **The `-infinity` stamp on pre-M9 day plans without a late night means nothing** (R-M9-R2-3, S4). Leaving it avoids an update that would fire the wake-freeze triggers for every user during the migration. It shows as `-infinity` in "Export all data".
+- 2026-11-09 · Minnie: "เอาที่คิดว่าดีเลย" on the two open M9 questions.
+  - **Out late pauses the streak**, as built (R-M9-2). There's no weekly cap: a pause never adds to the streak, so pre-set late nights only hold it still.
+  - **Streak milestones** (R-M9-6): 7, 14 and 30 pay +5 the first time the best streak reaches them, once per account. After 30, a running streak pays +5 every 30 days (60, 90, …). Breaking a streak and restarting it never pays more than keeping it. This is migration `20261109000000_streak_milestones`, which mirrors `streakMilestone` in lib/game/streak.ts.

@@ -7,6 +7,8 @@ import { addDays } from "@/lib/time";
 
 export type StreakGrant = {
   reason: "perfect_day" | "streak_7" | "streak_14" | "streak_30";
+  /** Streak length a streak ticket was paid for (60, 90, … come as `streak_30`). */
+  days?: number;
   date: string;
   amount: number;
 };
