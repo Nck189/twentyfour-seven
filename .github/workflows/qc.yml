@@ -1,7 +1,10 @@
 name: QC
 
+# PRs run once (pull_request); pushes run only on main. A push to a PR branch used to start two
+# identical runs (push + pull_request), which doubled the Actions minutes.
 on:
   push:
+    branches: [main]
   pull_request:
 
 concurrency:
