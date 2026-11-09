@@ -249,7 +249,7 @@ function OeeBars({ data }: { data: StatsData }) {
           <p className="mb-1 text-sm">{t("oee.avg", { pct: pct(avg) })}</p>
           <div className="h-36" role="img" aria-label={t("oee.aria", { pct: pct(avg), n: known.length })}>
             <ResponsiveContainer>
-              <BarChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+              <BarChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
                 <CartesianGrid stroke="var(--ui-border)" vertical={false} />
                 <XAxis dataKey="date" tickFormatter={shortDate} tick={AXIS} />
                 <YAxis domain={[0, 1]} tickFormatter={(v: number) => `${v * 100}`} tick={AXIS} width={36} />
