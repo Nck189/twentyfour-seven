@@ -102,3 +102,4 @@ Format: date · decision · why · how to change it
 - 2026-11-09 · Minnie: "เอาที่คิดว่าดีเลย" on the two open M9 questions.
   - **Out late pauses the streak**, as built (R-M9-2). There's no weekly cap: a pause never adds to the streak, so pre-set late nights only hold it still.
   - **Streak milestones** (R-M9-6): 7, 14 and 30 pay +5 the first time the best streak reaches them, once per account. After 30, a running streak pays +5 every 30 days (60, 90, …). Breaking a streak and restarting it never pays more than keeping it. This is migration `20261109000000_streak_milestones`, which mirrors `streakMilestone` in lib/game/streak.ts.
+- 2026-11-09 · Minnie OK'd the playtest plan (`docs/PLAYTEST_PLAN.md`): a pilot after v1 (4 personas × 7 in-app days) and the full run after v2 (8 × 21). Every persona starts from zero: login, then the whole first-run setup, through the UI. Findings are proposals; nothing gets built from them without her OK.

@@ -19,6 +19,17 @@ Nothing here runs against production. Findings are proposals: Minnie decides, an
 > - Drive the UI with Playwright at the persona's device (iPhone / iPad / Mac, WebKit), in their language (EN/TH) and theme.
 > - Players must use the UI: what they see, tap and read. They may not call RPCs or write to tables directly. Only the harness may touch the database, for day travel and seeding.
 >
+> **Start from zero (Minnie, 2026-11-09: "ทำตั้งแต่ set up เลย").**
+> - Every persona starts as a brand-new person on the login screen.
+> - Sign in with the 6-digit code. Read it from the local mail catcher (Mailpit), the way a person would read their email.
+> - Go through the whole first-run setup: language, kinds of day and sleep times, your week, first 10s, .ics import if the persona has a calendar.
+> - Then the "Set up 24/7" card, and whatever the app asks for next. Nothing is pre-seeded except what the persona would really bring, such as their class timetable.
+> - Day 1 of the diary is the setup day. Note:
+>   - time to the first useful screen;
+>   - every question that felt unclear or too long;
+>   - where they would have given up;
+>   - whether they understood what the farm is for before day 2.
+>
 > **Day travel.** The server uses `now()`, so simulate time by moving the user's history instead of the clock:
 > 1. Play day N at realistic local times, setting `page.clock` to each moment. A typical day: wake press, a few check-ins, the night ritual.
 > 2. Run a local-only harness function, `qa_shift_user(uid, interval '1 day')`. It moves every date and timestamptz of that user one day back: plans, logs, wakes, snapshots, grants, events, exercise, plants, animals.
@@ -86,6 +97,6 @@ Nothing here runs against production. Findings are proposals: Minnie decides, an
 
 ## Setup checklist (before round 1)
 
-- Add `tests/helpers/qa-shift-user.sql` (local only) plus a small harness, `tests/playtest/run.ts`. The harness creates the 8 users, seeds each persona's starting state (fresh sign-up), and loops day → shift → day.
+- Add `tests/helpers/qa-shift-user.sql` (local only) plus a small harness, `tests/playtest/run.ts`. The harness does nothing on a persona's behalf: each one signs up and sets up through the UI. It only gives each persona a unique email and its real-life inputs (timetable, habits), then loops day → shift → day.
 - Make sure local Supabase has every migration (`npx supabase migration up --local`).
 - Budget: 8 personas × 21 days is long. If usage limits bite, run 4 personas first (Minnie, office worker, lapser, min-maxer), then the other 4.
