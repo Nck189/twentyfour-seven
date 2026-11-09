@@ -243,7 +243,8 @@
     "coins": "{n} เหรียญ",
     "buyItem": "ซื้อ{item} {price} เหรียญ",
     "yourSeeds": "เมล็ดของเรา",
-    "seedOwned": "{crop} มี {n} เมล็ด"
+    "seedOwned": "{crop} มี {n} เมล็ด",
+    "onlyThisMonth": "เดือนนี้เท่านั้น"
   },
   "crops": {
     "radish": "แรดิช",
@@ -271,7 +272,15 @@
     "fence": "รั้ว",
     "path": "ทางเดิน",
     "flowers": "แปลงดอกไม้",
-    "pond": "บ่อน้ำ"
+    "pond": "บ่อน้ำ",
+    "fireworks": "พลุ",
+    "red_lantern": "โคมแดง",
+    "water_bowl": "ขันสงกรานต์",
+    "jasmine": "พวงมาลัยมะลิ",
+    "krathong": "กระทง",
+    "star_tree": "ต้นไม้ดาว",
+    "garden_lantern": "โคมสวน",
+    "mailbox": "ตู้จดหมาย"
   },
   "gacha": {
     "title": "ตู้กาชาเมล็ด",
@@ -621,7 +630,8 @@
     },
     "rewardTitle": "รางวัลการตั้งค่า",
     "ok": "โอเค",
-    "rewardFeed": "อาหารสัตว์ {n} ถุง"
+    "rewardFeed": "อาหารสัตว์ {n} ถุง",
+    "rewardEgg": "ไข่สัตว์ 1 ฟอง"
   },
   "exercise": {
     "title": "ออกกำลังกาย",
@@ -707,5 +717,90 @@
     "meet": "มาทักทาย{name}กัน",
     "skip": "ข้าม",
     "done": "เสร็จ"
+  },
+  "streak": {
+    "title": "สตรีค",
+    "chip": "สตรีค {n} วัน",
+    "days": "ติดต่อกัน {n} วัน",
+    "best": "สูงสุด {n} วัน",
+    "scarecrows": "หุ่นไล่กา {n} ตัว",
+    "scarecrowHint": "หุ่นไล่กาช่วยรักษาสตรีคในวันที่พลาด ได้ทุก 7 วัน (เก็บได้สูงสุด 2)",
+    "calendar": "5 สัปดาห์ที่ผ่านมา",
+    "kind": {
+      "perfect": "วันเพอร์เฟกต์",
+      "minimum": "รักษาสตรีคได้",
+      "frozen": "หุ่นไล่กาช่วยไว้",
+      "paused": "ลาพัก / ป่วย",
+      "missed": "พลาด",
+      "none": "ก่อนเริ่มใช้",
+      "notYet": "ยังไม่จบวัน"
+    },
+    "ruleMinimum": "รักษาสตรีค: กด “ตื่นแล้ว” ทันเวลา และทำ Night ritual",
+    "rulePerfect": "วันเพอร์เฟกต์: คะแนนวันได้ 80% ขึ้นไปด้วย (+1 ตั๋ว)",
+    "rulePause": "วันลาพักและวันป่วยจะหยุดนับไว้ก่อน",
+    "grantTitle": "+{n} ตั๋ว",
+    "grantPerfect": "วันเพอร์เฟกต์",
+    "grantStreak": "ติดต่อกัน {n} วัน",
+    "ok": "โอเค"
+  },
+  "seasons": {
+    "new_year": "ปีใหม่",
+    "lunar_new_year": "ตรุษจีน",
+    "blossom": "เดือนดอกไม้บาน",
+    "songkran": "สงกรานต์",
+    "first_rain": "ฝนแรก",
+    "monsoon": "หน้าฝน",
+    "green_rice": "ทุ่งนาเขียว",
+    "mothers_day": "วันแม่",
+    "harvest_moon": "จันทร์เก็บเกี่ยว",
+    "cool_breeze": "ลมหนาวมาเยือน",
+    "loy_krathong": "ลอยกระทง",
+    "winter_lights": "ไฟฤดูหนาว"
+  },
+  "season": {
+    "banner": "เดือนนี้: {name}",
+    "festivalItem": "{item} มีขายในร้านถึงสิ้นเดือนนี้",
+    "festivalTitle": "เทศกาลเก็บเกี่ยว · {month}",
+    "festivalOpen": "ย้อนดูเดือน{month}",
+    "festivalHint": "เทศกาลเก็บเกี่ยวประจำเดือน: ย้อนดูทั้งเดือน",
+    "statPerfect": "วันเพอร์เฟกต์",
+    "statKept": "วันที่รักษาสตรีค",
+    "statBest": "สตรีคสูงสุด",
+    "statHarvests": "เก็บเกี่ยว",
+    "statHatched": "สัตว์ที่ฟัก",
+    "nextSeason": "ต่อไป: {name}",
+    "close": "ปิด"
+  },
+  "unlocks": {
+    "title": "สมุดสะสม",
+    "count": "ปลดล็อกแล้ว {have} จาก {total}",
+    "unlocked": "ปลดล็อกแล้ว",
+    "left": "{have} จาก {need} · อีก {n}",
+    "unlockedTitle": "ปลดล็อกแล้ว!",
+    "ok": "โอเค",
+    "tier": {
+      "small": "ก้าวแรก",
+      "medium": "รายสัปดาห์",
+      "big": "เป้าใหญ่"
+    },
+    "goal": {
+      "first_night": "Night ritual ครั้งแรก",
+      "first_backlog": "ทำงานแรกเสร็จ",
+      "all_first10_day": "ทำ 10 นาทีแรกครบทุกบล็อกในวันเดียว",
+      "first10_20": "10 นาทีแรก 20 ครั้ง",
+      "must_10": "งาน Must เสร็จ 10 งาน",
+      "streak_7": "สตรีค 7 วัน",
+      "streak_30": "สตรีค 30 วัน",
+      "blocks_100": "จบบล็อก 100 ครั้ง"
+    },
+    "next": {
+      "nights": "อีก {n} Night ritual จะปลดล็อกชิ้นต่อไป",
+      "backlog_done": "อีก {n} งานจะปลดล็อกชิ้นต่อไป",
+      "all_first10_days": "ทำ 10 นาทีแรกครบทุกบล็อกในวันเดียวเพื่อปลดล็อก",
+      "first10s": "อีก {n} ครั้ง 10 นาทีแรกจะปลดล็อกชิ้นต่อไป",
+      "must_done": "อีก {n} งาน Must จะปลดล็อกชิ้นต่อไป",
+      "best_streak": "อีก {n} วันสตรีคจะปลดล็อกชิ้นต่อไป",
+      "blocks_closed": "อีก {n} บล็อกจะปลดล็อกชิ้นต่อไป"
+    }
   }
 }

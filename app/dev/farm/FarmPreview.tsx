@@ -69,6 +69,7 @@ const SAMPLE_GACHA = {
       ),
     ) as GachaState["dex"],
     seeds: { pumpkin: 1, star_fruit: 1, tomato: 2 } as Partial<Record<CropId, number>>,
+    harvested: true,
   },
   pull: async (n: 1 | 10): Promise<PullResult[]> =>
     n === 1
@@ -159,6 +160,18 @@ export function FarmPreview() {
         buyDecor={async () => true}
         gacha={SAMPLE_GACHA}
         animals={animals as never}
+        unlocks={{
+          counts: {
+            nights: 4,
+            backlog_done: 1,
+            first10s: 13,
+            best_streak: 9,
+            blocks_closed: 41,
+            must_done: 3,
+          },
+          done: ["first_night", "first_backlog", "streak_7"],
+          granted: [],
+        }}
         reload={() => {}}
       />
     </div>

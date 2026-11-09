@@ -34,11 +34,20 @@ describe("farm SQL mirrors the static content", () => {
 
 describe("decor prices mirror content/decor.ts", () => {
   it("every item, same price", async () => {
-    const { DECOR_IDS, DECOR_PRICE } = await import("@/content/decor");
-    const body = sql.match(/_decor_price[\s\S]*?end;/)![0];
+    const { SHOP_DECOR, DECOR_PRICE } = await import("@/content/decor");
+    // The latest migration that (re)defines the price list is the live one.
+    const { readdirSync } = await import("node:fs");
+    const dir = "supabase/migrations";
+    const latest = readdirSync(dir)
+      .filter((f) => f.endsWith(".sql"))
+      .sort()
+      .map((f) => readFileSync(`${dir}/${f}`, "utf8"))
+      .filter((t) => t.includes("function public._decor_price"))
+      .at(-1)!;
+    const body = latest.match(/function public._decor_price[\s\S]*?end;/)![0];
     const fromSql = Object.fromEntries(
       [...body.matchAll(/when '([a-z_]+)' then (\d+)/g)].map((m) => [m[1], Number(m[2])]),
     );
-    expect(fromSql).toEqual(Object.fromEntries(DECOR_IDS.map((id) => [id, DECOR_PRICE[id]])));
+    expect(fromSql).toEqual(Object.fromEntries(SHOP_DECOR.map((id) => [id, DECOR_PRICE[id]])));
   });
 });

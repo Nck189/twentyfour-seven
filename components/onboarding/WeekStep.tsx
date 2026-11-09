@@ -7,6 +7,7 @@ import {
   CapIcon,
   ChevronIcon,
   CloseIcon,
+  CheckIcon,
   MoonIcon,
   PlusIcon,
   SunriseIcon,
@@ -426,22 +427,36 @@ export function WeekStep({
       <div role="group" aria-label={t("sameSleep")} className="flex flex-col gap-1.5">
         <span className="text-sm font-bold text-muted">{t("sameSleep")}</span>
         <div className="grid grid-cols-2 gap-1.5">
-          {SLEEP_PRESETS.map(([b, w]) => (
-            <button
-              key={b}
-              type="button"
-              onClick={() => onAllSleep(w, sleepMinutes(b, w)!)}
-              className="tap flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-surface text-sm font-bold tabular-nums"
-            >
-              <MoonIcon className="h-4 w-4 text-primary" />
-              {b}
-              <span aria-hidden="true" className="text-muted">
-                –
-              </span>
-              <SunriseIcon className="h-4 w-4 text-warn" />
-              {w}
-            </button>
-          ))}
+          {SLEEP_PRESETS.map(([b, w]) => {
+            // Picked = every kind of day sleeps exactly this now (Minnie: make the choice visible).
+            const picked =
+              kinds.length > 0 &&
+              kinds.every(
+                (k) =>
+                  k.target_wake.slice(0, 5) === w &&
+                  (k.blocks?.sleep?.duration_min ?? BASE_SLEEP) === sleepMinutes(b, w),
+              );
+            return (
+              <button
+                key={b}
+                type="button"
+                aria-pressed={picked}
+                onClick={() => onAllSleep(w, sleepMinutes(b, w)!)}
+                className={`tap flex min-h-11 items-center justify-center gap-1.5 rounded-xl text-sm font-bold tabular-nums ${
+                  picked ? "bg-primary-soft text-primary ring-2 ring-primary ring-inset" : "bg-surface"
+                }`}
+              >
+                <MoonIcon className="h-4 w-4 text-primary" />
+                {b}
+                <span aria-hidden="true" className="text-muted">
+                  –
+                </span>
+                <SunriseIcon className="h-4 w-4 text-warn" />
+                {w}
+                {picked && <CheckIcon className="h-4 w-4" />}
+              </button>
+            );
+          })}
         </div>
       </div>
 

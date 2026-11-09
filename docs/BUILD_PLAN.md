@@ -249,4 +249,5 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 - [ ] M5 — G1, G2, G4, G5, G7 ✅ · `docs/qa/M5-report.md` · left: G3 (Mac), G6 re-run · deferred S3: R-M5-6..11
 - [ ] M6 — G1, G2, G4, G5, G7 ✅ (re-review PASS) · merged (PR #6) + migration on prod · `docs/qa/M6-report.md` · left: G3 Mac baselines · deferred S3: K-M6-1, R-M6-4..10, R-M6-R1
 - [x] M7 — ✅ merged (PR #7) · `docs/qa/M7-report.md` · left: G3 Mac baselines, G6 after db push · deferred: Perfect day / streak tickets → M9, Weekly review +3 → M10
-- [ ] M8 — G1, G4, G5, G7 ✅ (re-review 2 PASS) · PR #8 · `docs/qa/M8-report.md` · left: G2 CI, G3 Mac baselines, G6 after merge + db push · deferred: R-M8-8 (S3), G3/G4 growth items → M10
+- [x] M8 — ✅ merged (PR #8) + migration on prod · `docs/qa/M8-report.md` · left: G3 Mac baselines · deferred: R-M8-8 (S3), G3/G4 growth items → M10
+- [ ] M9 — G1, G4, G5, G7 ✅ (re-review 2 PASS) · PR #9 · `docs/qa/M9-report.md` · left: G2 CI green on the final head, G3 Mac baselines, G6 after merge + db push · deferred: R-M9-6 (milestones after 30, Minnie), R-M9-10 (unlock reveal + streak-egg hatch → M10), R-M9-R2-1 farm/plan "today" pin, R-M9-13 / R-M9-R5 / R-M9-R6 / R-M9-R2-3 (S4), Out-late weekly cap (Minnie)

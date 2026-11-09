@@ -7,7 +7,7 @@ import { Coin } from "@/components/art/Coin";
 import { TicketArt } from "@/components/art/Ticket";
 import { CropArt } from "@/components/art/farm/CropArt";
 import { DECOR_ART } from "@/components/farm/DecorShop";
-import { FeedArt } from "@/components/art/farm/Animals";
+import { EggArt, FeedArt } from "@/components/art/farm/Animals";
 import { ChevronIcon } from "@/components/ui/Icons";
 import { SETUP_HREF, SETUP_REWARD, SETUP_STEPS, type Reward, type SetupStep } from "@/content/unlocks";
 import type { SetupRewards } from "@/lib/setup/useSetupRewards";
@@ -19,6 +19,7 @@ export function RewardArt({ reward, className = "h-10 w-10" }: { reward: Reward;
   if ("seed" in reward)
     return <CropArt cropId={reward.seed.crop} stage={3} status="ready" className={className} />;
   if ("feed" in reward) return <FeedArt className={className} />;
+  if ("egg" in reward) return <EggArt progress={2} className={className} />;
   const Art = DECOR_ART[reward.decor];
   return <Art className={className} />;
 }
@@ -36,7 +37,9 @@ function useRewardLabel() {
           ? t("rewardSeeds", { n: r.seed.n, crop: crops(r.seed.crop) })
           : "feed" in r
             ? t("rewardFeed", { n: r.feed })
-            : t("rewardDecor", { item: decor(r.decor) });
+            : "egg" in r
+              ? t("rewardEgg")
+              : t("rewardDecor", { item: decor(r.decor) });
 }
 
 /** A small ring: steps done out of all steps. */

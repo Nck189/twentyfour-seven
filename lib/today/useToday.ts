@@ -225,7 +225,15 @@ export function useToday(now: Date) {
   }, [client, userId]);
 
   // --- Derived ----------------------------------------------------------------------------
-  const dayDate = useMemo(() => (loaded ? currentDayDate(loaded.ctx, now) : null), [loaded, now]);
+  // The pressed wake target first, then the server's frozen one (same order as `_wake_day`).
+  const pinned = useMemo(
+    () => ({ ...frozen, ...Object.fromEntries(Object.values(wakes).map((w) => [w.date, w.target_wake])) }),
+    [wakes, frozen],
+  );
+  const dayDate = useMemo(
+    () => (loaded ? currentDayDate(loaded.ctx, now, pinned) : null),
+    [loaded, now, pinned],
+  );
   const timeline = useMemo(
     () => (loaded && dayDate ? timelineFor(loaded.ctx, dayDate) : null),
     [loaded, dayDate],

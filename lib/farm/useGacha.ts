@@ -15,6 +15,8 @@ export type GachaState = {
   dex: Partial<Record<CropId, DexEntry>>;
   /** Plantable seeds you own (not counting the free starters). */
   seeds: Partial<Record<CropId, number>>;
+  /** Anything ever harvested (reveals the farm expansion, SPEC §8.8b). */
+  harvested: boolean;
 };
 
 /** Tickets, pity, Seed-dex and owned seeds; pulls and star-ups go through server RPCs. */
@@ -26,10 +28,11 @@ export function useGacha() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [gs, dex, inv] = await Promise.all([
+      const [gs, dex, inv, crops] = await Promise.all([
         client.from("game_state").select("tickets, pity, essence").maybeSingle(),
         client.from("seed_dex").select("crop_id, count, star"),
         client.from("inventory").select("item_id, qty").like("item_id", "seed:%"),
+        client.from("inventory").select("item_id").like("item_id", "crop:%").limit(1),
       ]);
       if (cancelled || gs.error || dex.error || inv.error) return;
       const seeds: GachaState["seeds"] = {};
@@ -46,6 +49,7 @@ export function useGacha() {
         shards: (gs.data?.essence as GachaState["shards"] | undefined) ?? {},
         dex: dexMap,
         seeds,
+        harvested: (crops.data ?? []).length > 0,
       });
     })();
     return () => {

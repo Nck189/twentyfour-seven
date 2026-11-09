@@ -243,7 +243,8 @@
     "coins": "{n} coins",
     "buyItem": "Buy {item} for {price} coins",
     "yourSeeds": "Your seeds",
-    "seedOwned": "{crop}, {n} owned"
+    "seedOwned": "{crop}, {n} owned",
+    "onlyThisMonth": "This month"
   },
   "crops": {
     "radish": "Radish",
@@ -271,7 +272,15 @@
     "fence": "Fence",
     "path": "Path",
     "flowers": "Flowers",
-    "pond": "Pond"
+    "pond": "Pond",
+    "fireworks": "Fireworks",
+    "red_lantern": "Red lantern",
+    "water_bowl": "Songkran bowl",
+    "jasmine": "Jasmine garland",
+    "krathong": "Krathong",
+    "star_tree": "Star tree",
+    "garden_lantern": "Garden lantern",
+    "mailbox": "Mailbox"
   },
   "gacha": {
     "title": "Capsule machine",
@@ -621,7 +630,8 @@
     },
     "rewardTitle": "Setup reward",
     "ok": "OK",
-    "rewardFeed": "{n} bags of animal feed"
+    "rewardFeed": "{n} bags of animal feed",
+    "rewardEgg": "An animal egg"
   },
   "exercise": {
     "title": "Exercise",
@@ -707,5 +717,90 @@
     "meet": "Meet your {name}",
     "skip": "Skip",
     "done": "Done"
+  },
+  "streak": {
+    "title": "Streak",
+    "chip": "Streak: {n, plural, one {# day} other {# days}}",
+    "days": "{n, plural, one {# day} other {# days}} in a row",
+    "best": "Best: {n}",
+    "scarecrows": "{n, plural, =0 {No scarecrows} one {# scarecrow} other {# scarecrows}}",
+    "scarecrowHint": "A scarecrow saves your streak on a missed day. You earn one every 7 days (up to 2).",
+    "calendar": "Last 5 weeks",
+    "kind": {
+      "perfect": "Perfect day",
+      "minimum": "Kept the streak",
+      "frozen": "Saved by a scarecrow",
+      "paused": "Vacation / Sick",
+      "missed": "Missed",
+      "none": "Before you started",
+      "notYet": "Not over yet"
+    },
+    "ruleMinimum": "Keep it: press “I'm up” in time and do your Night ritual.",
+    "rulePerfect": "Perfect day: also a Day score of 80% or more (+1 ticket).",
+    "rulePause": "Vacation and Sick days pause it.",
+    "grantTitle": "+{n, plural, one {# ticket} other {# tickets}}",
+    "grantPerfect": "Perfect day",
+    "grantStreak": "{n} days in a row",
+    "ok": "OK"
+  },
+  "seasons": {
+    "new_year": "New Year",
+    "lunar_new_year": "Lunar New Year",
+    "blossom": "Blossom month",
+    "songkran": "Songkran",
+    "first_rain": "First rain",
+    "monsoon": "Monsoon",
+    "green_rice": "Green rice fields",
+    "mothers_day": "Mother's Day",
+    "harvest_moon": "Harvest moon",
+    "cool_breeze": "Cool breeze",
+    "loy_krathong": "Loy Krathong",
+    "winter_lights": "Winter lights"
+  },
+  "season": {
+    "banner": "This month: {name}",
+    "festivalItem": "{item} is in the shop until the month ends.",
+    "festivalTitle": "Harvest festival · {month}",
+    "festivalOpen": "Look back on {month}",
+    "festivalHint": "The month's harvest festival: a look back at the whole month.",
+    "statPerfect": "Perfect days",
+    "statKept": "Streak days",
+    "statBest": "Best streak",
+    "statHarvests": "Harvests",
+    "statHatched": "Animals hatched",
+    "nextSeason": "Next: {name}",
+    "close": "Close"
+  },
+  "unlocks": {
+    "title": "Collection",
+    "count": "{have} of {total} unlocked",
+    "unlocked": "Unlocked",
+    "left": "{have} of {need} · {n} more",
+    "unlockedTitle": "Unlocked!",
+    "ok": "OK",
+    "tier": {
+      "small": "First steps",
+      "medium": "Weekly",
+      "big": "Big goals"
+    },
+    "goal": {
+      "first_night": "First Night ritual",
+      "first_backlog": "First task done",
+      "all_first10_day": "Every first 10 in one day",
+      "first10_20": "20 first-10s",
+      "must_10": "10 Must tasks done",
+      "streak_7": "A 7-day streak",
+      "streak_30": "A 30-day streak",
+      "blocks_100": "100 blocks finished"
+    },
+    "next": {
+      "nights": "{n, plural, one {# more Night ritual} other {# more Night rituals}} to the next unlock",
+      "backlog_done": "{n, plural, one {# more task} other {# more tasks}} to the next unlock",
+      "all_first10_days": "Do every first 10 in one day to unlock",
+      "first10s": "{n, plural, one {# more first 10} other {# more first-10s}} to the next unlock",
+      "must_done": "{n, plural, one {# more Must task} other {# more Must tasks}} to the next unlock",
+      "best_streak": "{n, plural, one {# more streak day} other {# more streak days}} to the next unlock",
+      "blocks_closed": "{n, plural, one {# more block} other {# more blocks}} to the next unlock"
+    }
   }
 }

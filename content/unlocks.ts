@@ -12,7 +12,9 @@ export type Reward =
   | { coins: number }
   | { seed: { crop: CropId; n: number } }
   | { decor: DecorId }
-  | { feed: number };
+  | { feed: number }
+  /** An animal egg: hatches at once (server roll, like a workout egg). */
+  | { egg: 1 };
 
 export const SETUP_STEPS = [
   "sleep_times",
@@ -48,3 +50,49 @@ export const SETUP_HREF: Record<SetupStep, string> = {
 
 export const isSetupStep = (v: unknown): v is SetupStep =>
   typeof v === "string" && (SETUP_STEPS as readonly string[]).includes(v);
+
+/**
+ * Unlock ladder (SPEC §8.8b): small firsts, weekly counts, monthly farm-changers. Each pays once
+ * into the same `unlock_grants` ledger, granted by `claim_unlocks` when the count in the data
+ * reaches `need` (progress = `lib/game/unlocks.ts`). Mirrored in SQL with a test.
+ */
+export const UNLOCK_IDS = [
+  "first_night",
+  "first_backlog",
+  "all_first10_day",
+  "first10_20",
+  "must_10",
+  "streak_7",
+  "streak_30",
+  "blocks_100",
+] as const;
+export type UnlockId = (typeof UNLOCK_IDS)[number];
+export type UnlockTier = "small" | "medium" | "big";
+/** What each unlock counts (all server facts or guarded logs). */
+export type UnlockMetric =
+  "nights" | "backlog_done" | "all_first10_days" | "first10s" | "must_done" | "best_streak" | "blocks_closed";
+
+export const UNLOCKS: Record<
+  UnlockId,
+  { tier: UnlockTier; metric: UnlockMetric; need: number; reward: Reward }
+> = {
+  first_night: { tier: "small", metric: "nights", need: 1, reward: { decor: "garden_lantern" } },
+  first_backlog: { tier: "small", metric: "backlog_done", need: 1, reward: { decor: "mailbox" } },
+  all_first10_day: {
+    tier: "small",
+    metric: "all_first10_days",
+    need: 1,
+    reward: { seed: { crop: "sunflower", n: 1 } },
+  },
+  first10_20: { tier: "medium", metric: "first10s", need: 20, reward: { tickets: 2 } },
+  must_10: { tier: "medium", metric: "must_done", need: 10, reward: { coins: 50 } },
+  streak_7: { tier: "medium", metric: "best_streak", need: 7, reward: { egg: 1 } },
+  streak_30: { tier: "big", metric: "best_streak", need: 30, reward: { decor: "pond" } },
+  blocks_100: { tier: "big", metric: "blocks_closed", need: 100, reward: { coins: 150 } },
+};
+
+export const isUnlockId = (v: unknown): v is UnlockId =>
+  typeof v === "string" && (UNLOCK_IDS as readonly string[]).includes(v);
+
+/** Feature reveals (SPEC §8.8b): a new user's screens stay calm until these are earned. */
+export const REVEALS = { statsAfterDays: 3 } as const;

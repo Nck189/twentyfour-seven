@@ -1,20 +1,25 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState, type ComponentType } from "react";
+import { useState } from "react";
+import { DECOR_ART } from "@/components/art/farm/DecorArt";
 import { Coin } from "@/components/art/Coin";
-import { Fence, Flowers, PathTile, Pond } from "@/components/art/farm/Plot";
-import { DECOR_IDS, DECOR_PRICE, type DecorId } from "@/content/decor";
+import { BASIC_DECOR, DECOR_PRICE, type DecorId, type ShopDecorId } from "@/content/decor";
+import type { Season } from "@/content/seasons";
 
-export const DECOR_ART: Record<DecorId, ComponentType<{ className?: string }>> = {
-  fence: Fence,
-  path: PathTile,
-  flowers: Flowers,
-  pond: Pond,
-};
+export { DECOR_ART };
 
 /** Decor shop basics (SPEC §8.9): pictures + price; the server takes the coins. */
-export function DecorShop({ coins, onBuy }: { coins: number; onBuy: (item: DecorId) => Promise<boolean> }) {
+export function DecorShop({
+  coins,
+  onBuy,
+  season,
+}: {
+  coins: number;
+  onBuy: (item: DecorId) => Promise<boolean>;
+  /** This month's season: its festival item is in the shop only now (SPEC §8.8). */
+  season?: Season;
+}) {
   const t = useTranslations("farm");
   const names = useTranslations("decor");
   const [busy, setBusy] = useState<DecorId | null>(null);
@@ -30,7 +35,7 @@ export function DecorShop({ coins, onBuy }: { coins: number; onBuy: (item: Decor
         </p>
       </div>
       <ul className="grid grid-cols-4 gap-2">
-        {DECOR_IDS.map((id) => {
+        {[...(season?.festival ? [season.festival] : []), ...BASIC_DECOR].map((id: ShopDecorId) => {
           const Art = DECOR_ART[id];
           const price = DECOR_PRICE[id];
           const short = coins < price;
@@ -51,6 +56,11 @@ export function DecorShop({ coins, onBuy }: { coins: number; onBuy: (item: Decor
               >
                 <Art className="h-12 w-12" />
                 <span className="text-xs font-bold">{names(id)}</span>
+                {id === season?.festival && (
+                  <span className="rounded-full bg-primary-soft px-1.5 text-[11px] font-bold text-primary">
+                    {t("onlyThisMonth")}
+                  </span>
+                )}
                 <span className="flex items-center gap-0.5 text-xs" aria-hidden="true">
                   <Coin className="h-3.5 w-3.5" />
                   {price}

@@ -15,6 +15,19 @@ export const DEAD_AT_MISSES = 5;
 /** Perfect day (SPEC §8.7): minimum day + Day OEE at least this. */
 export const PERFECT_DAY_OEE = 0.8;
 
+/**
+ * Streak (SPEC §8.7, §8.5 ticket income). A scarecrow (freeze) is earned every `freezeEvery`
+ * days of streak, held up to `maxFreezes`, and used up by itself on a missed day. Mirrored in
+ * `settle_days` (M9 migration) with a test.
+ */
+export const STREAK_RULES = {
+  freezeEvery: 7,
+  maxFreezes: 2,
+  perfectDayTickets: 1,
+  /** Streak length → tickets, granted each time a streak reaches it. */
+  milestones: { 7: 5, 14: 5, 30: 5 } as Record<number, number>,
+} as const;
+
 /** Mutations (SPEC §8.3): weather from yesterday's behavior; they stack multiplicatively. */
 export const MUTATION_IDS = ["sunrise_glow", "dew", "moonlit", "breeze", "spark", "rainbow"] as const;
 export type MutationId = (typeof MUTATION_IDS)[number];

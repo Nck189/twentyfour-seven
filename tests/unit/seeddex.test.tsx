@@ -14,6 +14,7 @@ const state: GachaState = {
   shards: { tomato: 15 },
   dex: { tomato: { crop: "tomato", count: 3, star: 1 } },
   seeds: {},
+  harvested: false,
 };
 
 it("a double-tap on Star up stars up once (R-M7-4)", () => {

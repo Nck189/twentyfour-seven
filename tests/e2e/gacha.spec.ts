@@ -7,13 +7,15 @@ import { IS_PROD_RUN } from "../helpers/env";
 /** M7 seed capsule machine (QA_QC CJ-12): server-side tickets, pity, 0 → disabled, no double spend. */
 test.skip(IS_PROD_RUN, "creates dedicated users");
 
-async function setup(page: Page, tickets: number) {
+async function setup(page: Page, tickets: number, pulledBefore = false) {
   const email = uniqueEmail("gacha");
   await setPrefs(page, { locale: "en", theme: "light" });
   await signIn(page, email);
   const id = await userIdFor(email);
   await setAllTemplates(id, "10:00");
   await rest(`game_state?user_id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ tickets }) });
+  if (pulledBefore)
+    await rest("seed_dex", { method: "POST", body: JSON.stringify({ user_id: id, crop_id: "radish" }) });
   await page.goto("/farm");
   await page.getByRole("button", { name: /^Capsule machine/ }).click();
   return { id, sheet: page.getByRole("dialog", { name: "Capsule machine" }) };
@@ -37,7 +39,8 @@ async function skipReveal(page: Page) {
 const pulls = async (id: string) => (await rest(`gacha_pulls?user_id=eq.${id}&select=id`)) as unknown[];
 
 test("CJ-12a 0 tickets: both pulls are disabled and the sheet says how to earn", async ({ page }) => {
-  const { sheet } = await setup(page, 0);
+  // The machine shows once you've had a ticket (SPEC §8.8b reveal): someone who pulled before.
+  const { sheet } = await setup(page, 0, true);
   await expect(sheet.getByText("0 tickets", { exact: true })).toBeVisible();
   await expect(sheet.getByRole("button", { name: "Pull ×1", exact: true })).toBeDisabled();
   await expect(sheet.getByRole("button", { name: "Pull ×10", exact: true })).toBeDisabled();
