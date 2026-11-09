@@ -196,7 +196,7 @@ function WakeChart({ data }: { data: StatsData }) {
           </p>
           <div className="h-44" role="img" aria-label={t("wake.aria", { time: hhmm(chart.mean), n: out })}>
             <ResponsiveContainer>
-              <LineChart data={chart.points} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
+              <LineChart data={chart.points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                 <CartesianGrid stroke="var(--ui-border)" vertical={false} />
                 <XAxis dataKey="date" tickFormatter={shortDate} tick={AXIS} />
                 <YAxis
@@ -206,7 +206,7 @@ function WakeChart({ data }: { data: StatsData }) {
                   ]}
                   tickFormatter={hhmm}
                   tick={AXIS}
-                  width={44}
+                  width={50}
                 />
                 <ReferenceLine y={chart.mean} stroke="var(--ui-primary)" strokeDasharray="4 4" />
                 <ReferenceLine y={chart.ucl} stroke="var(--ui-warn)" strokeDasharray="2 4" />
