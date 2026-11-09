@@ -252,7 +252,12 @@ function OeeBars({ data }: { data: StatsData }) {
               <BarChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
                 <CartesianGrid stroke="var(--ui-border)" vertical={false} />
                 <XAxis dataKey="date" tickFormatter={shortDate} tick={AXIS} />
-                <YAxis domain={[0, 1]} tickFormatter={(v: number) => `${v * 100}`} tick={AXIS} width={36} />
+                <YAxis
+                  domain={[0, 1]}
+                  tickFormatter={(v: number) => `${Math.round(v * 100)}`}
+                  tick={AXIS}
+                  width={40}
+                />
                 <ReferenceLine y={0.8} stroke="var(--ui-primary)" strokeDasharray="4 4" />
                 <Bar dataKey="oee" fill="var(--ui-primary)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
               </BarChart>
