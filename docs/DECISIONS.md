@@ -96,3 +96,6 @@ Format: date · decision · why · how to change it
   - Deferred:
     - R-M9-R6 (S4): at sign-up, the template-seeding order freezes today's wake target at 10:00. This predates M9; fix it with the next sign-up change.
     - R-M9-13: after a gap of more than 60 days, the unsettled days show as "Before you started" (S4).
+- 2026-11-09 · G7 M9 re-review 2 (PASS, docs/qa/G7-M9-rereview-2.md):
+  - **Today now uses the pressed (or frozen) wake time to decide which day it is**, like the server (R-M9-R2-1). Farm and Plan still use the live plan for their "today", which is a display-only difference; deferred.
+  - **The `-infinity` stamp on pre-M9 day plans without a late night means nothing** (R-M9-R2-3, S4). Leaving it avoids an update that would fire the wake-freeze triggers for every user during the migration. It shows as `-infinity` in "Export all data".

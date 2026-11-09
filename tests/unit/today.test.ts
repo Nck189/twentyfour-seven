@@ -42,6 +42,14 @@ describe("which day is today (wake → next wake)", () => {
     expect(currentDayDate(ctx(), at("2026-11-04", "07:45"))).toBe("2026-11-04");
   });
 
+  it("a pressed or frozen wake keeps the day started, like the server (R-M9-R2-1)", () => {
+    // Pressed at 09:05 for a 09:00 target, then the kind of day moved to 10:00: still today at 09:30.
+    const pinned = { "2026-11-03": at("2026-11-03", "09:00").toISOString() };
+    expect(currentDayDate(ctx(), at("2026-11-03", "09:30"), pinned)).toBe("2026-11-03");
+    expect(currentDayDate(ctx(), at("2026-11-03", "08:30"), pinned)).toBe("2026-11-02");
+    expect(currentDayDate(ctx(), at("2026-11-03", "09:30"))).toBe("2026-11-02");
+  });
+
   it("uses the profile timezone, not the machine's", () => {
     const ny = ctx({ timezone: "America/New_York" });
     const t = new Date("2026-11-03T14:30:00Z"); // 09:30 NY → before 10:00 wake

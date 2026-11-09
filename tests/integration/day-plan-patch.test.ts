@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { localDate } from "@/lib/time";
+import { localDate, zonedInstant } from "@/lib/time";
 import { newUser } from "./helpers";
 
 /** G7 re-review R-M3-4: two devices/screens don't overwrite each other's day-plan edits. */
@@ -36,10 +36,12 @@ describe("patch_day_plan merges instead of overwriting", () => {
   it("clearing a field works (null), and someone else's template can't be picked", async () => {
     const u = await newUser("patch-null");
     const other = await newUser("patch-other");
-    await u.client.rpc("patch_day_plan", {
+    // Home at 02:00 on that night (a return time has to fall on it, R-M9-R3).
+    const set = await u.client.rpc("patch_day_plan", {
       p_date: date,
-      p_set: { late_night: { return_at: new Date().toISOString() } },
+      p_set: { late_night: { return_at: zonedInstant(date, 2 * 60, "Asia/Bangkok").toISOString() } },
     });
+    expect(set.error).toBeNull();
     await u.client.rpc("patch_day_plan", { p_date: date, p_set: { late_night: null } });
     const { data } = await u.client.from("day_plans").select("late_night").eq("date", date).single();
     expect(data!.late_night).toBeNull();

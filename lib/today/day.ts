@@ -150,11 +150,14 @@ export function plannedWake(ctx: DayContext, date: string): { wake: string; base
 
 /**
  * The wake-day containing `now`: a day runs wake → next wake (CLAUDE.md "Time").
- * Before today's wake it's still yesterday's day.
+ * Before today's wake it's still yesterday's day. `pinned` (date → wake target as pressed, else
+ * as frozen by the server) wins over the live plan, as on the server (`_wake_day`, R-M9-R2-1).
  */
-export function currentDayDate(ctx: DayContext, now: Date): string {
+export function currentDayDate(ctx: DayContext, now: Date, pinned?: Record<string, string>): string {
   const d0 = localDate(now, ctx.timezone);
-  return now.getTime() < planFor(ctx, d0).wake.getTime() ? addDays(d0, -1) : d0;
+  const pin = pinned?.[d0];
+  const wake = pin ? new Date(pin) : planFor(ctx, d0).wake;
+  return now.getTime() < wake.getTime() ? addDays(d0, -1) : d0;
 }
 
 export type TimelineBlock = PlannedBlock & {

@@ -192,8 +192,13 @@ describe("settle_days", () => {
         })
       ).error,
     ).toBeNull();
-    // The morning after: no return time, a return time of "now", or a forged stamp — all refused.
-    for (const late_night of [{}, { return_at: new Date().toISOString() }])
+    // The morning after: no return time, a return time of "now" or of last night (inside the
+    // night's window, so it's the "night is over" rule that refuses it), or a forged stamp.
+    for (const late_night of [
+      {},
+      { return_at: new Date().toISOString() },
+      { return_at: zonedInstant(today, 2 * 60, TZ).toISOString() },
+    ])
       expect(
         (await u.client.rpc("patch_day_plan", { p_date: today, p_set: { late_night } })).error,
       ).not.toBeNull();
