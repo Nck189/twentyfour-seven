@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { expectFadedIn, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import { rest, setAllTemplates, userIdFor } from "../helpers/db";
+import { gotoToday } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
 
 /** M8 exercise + animals (QA_QC CJ-13): a workout feeds the animals; the 3rd hatches an egg. */
@@ -41,7 +42,7 @@ test("CJ-13 three workouts: the ring fills, the 3rd hatches an egg (with its rev
   });
   await rest(`game_state?user_id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ egg_progress: 2 }) });
 
-  await page.goto("/today");
+  await gotoToday(page);
   await expect(page.getByRole("region", { name: "Exercise" })).toBeVisible();
   const sheet = await logWorkout(page);
   const hatch = page.getByRole("dialog", { name: "It hatched!" });
@@ -102,7 +103,7 @@ test("CJ-13b a hungry animal sleeps (never dies); a workout feeds it; petting co
   await expectNoSeriousA11y(page);
   await sheet.getByRole("button", { name: "Close" }).click();
 
-  await page.goto("/today");
+  await gotoToday(page);
   const log = await logWorkout(page, 20);
   // Wait for the server's answer before leaving the page (R-M8-3).
   await expect(log.getByRole("status")).toContainText("fed for 2 more days");
@@ -125,7 +126,7 @@ test("CJ-13c a 3rd workout on the same day is logged but doesn't feed again (2 a
       { user_id: id, at: earlier, type: "walk", minutes: 30, counted: true },
     ]),
   });
-  await page.goto("/today");
+  await gotoToday(page);
   const sheet = await logWorkout(page, 20);
   await expect(sheet.getByRole("status")).toContainText("already counted twice");
   const logs = (await rest(`exercise_logs?user_id=eq.${id}&select=counted&order=at`)) as {
