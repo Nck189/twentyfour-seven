@@ -320,6 +320,7 @@ export function TodayScreen() {
           markMissed={today.actions.markMissed}
           closeDone={(b) => today.actions.close(b, new Date())}
           complete={today.actions.completeNightRitual}
+          goToBed={today.actions.goToBed}
           onClose={() => {
             markOffered(tl.date);
             setRitualOpen(false);

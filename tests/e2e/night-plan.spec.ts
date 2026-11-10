@@ -64,7 +64,7 @@ test("CJ-07 night ritual end to end: open blocks closed with reasons, tomorrow p
   await sheet.getByRole("button", { name: "Next" }).click();
 
   // Goodnight.
-  await sheet.getByRole("checkbox", { name: "Alarm set + phone away" }).click();
+  await sheet.getByRole("checkbox", { name: "Alarm set + phone out of reach" }).click();
   await sheet.getByRole("button", { name: "Goodnight" }).click();
   await expect(sheet.getByText("+1 Night ticket. Sleep well.")).toBeVisible();
   expect(Date.now() - t0).toBeLessThan(120_000);
@@ -73,6 +73,13 @@ test("CJ-07 night ritual end to end: open blocks closed with reasons, tomorrow p
   const logs = await blockLogs(id);
   expect(logs.filter((l) => l.miss_reason)).toHaveLength(5);
   expect(logs.find((l) => l.block === "work")!.miss_reason).toBe("interruption");
+  // Goodnight = going to bed: Sleep starts live with its first-10 (alarm + phone away).
+  await expect
+    .poll(async () => {
+      const sl = (await blockLogs(id)).find((l) => l.block === "sleep");
+      return sl ? { started: !!sl.started_at, first10: !!sl.first10_at, backfilled: sl.backfilled } : null;
+    })
+    .toEqual({ started: true, first10: true, backfilled: false });
   const plans = await dayPlans(id);
   const tomorrow = plans.find((p) => p.bedtime_override);
   expect(tomorrow).toBeTruthy();
@@ -249,7 +256,7 @@ test("R-M4-5: Goodnight waits until tomorrow's plan is saved (offline edit isn't
   await page.route("**/rest/v1/day_plans**", offline);
   await sheet.getByRole("button", { name: "15 min later" }).click();
   await sheet.getByRole("button", { name: "Next" }).click();
-  await sheet.getByRole("checkbox", { name: "Alarm set + phone away" }).click();
+  await sheet.getByRole("checkbox", { name: "Alarm set + phone out of reach" }).click();
   await sheet.getByRole("button", { name: "Goodnight" }).click();
   await expect(sheet.getByRole("alert")).toContainText("Tomorrow's plan isn't saved yet");
   expect((await gameState(id)).tickets).toBe(0);

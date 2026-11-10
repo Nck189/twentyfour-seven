@@ -491,6 +491,21 @@ export function useToday(now: Date) {
         setNightDone((prev) => [...prev, dayDate]);
         return data as { ticket_granted: boolean; in_time?: boolean };
       },
+      /**
+       * Goodnight = going to bed (Minnie 2026-11-10): starts Sleep now and ticks its first-10
+       * (alarm + phone away) unless Sleep has none or it's already done. Never moves a start.
+       */
+      goToBed: (b: TimelineBlock, at: Date, first10: boolean) => {
+        const cur = logFor(b);
+        if (cur.miss_reason) return Promise.resolve();
+        if (cur.started_at && (cur.first10_at || !first10)) return Promise.resolve();
+        return upsertLog(
+          b,
+          first10 && !cur.first10_at ? { first10_at: at.toISOString() } : {},
+          "block_started",
+          at,
+        );
+      },
       setLocation: (b: TimelineBlock, location: "home" | "out", at: Date) =>
         upsertLog(b, { location }, "location_set", at),
       pressWake: async () => {

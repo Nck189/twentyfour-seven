@@ -15,6 +15,7 @@ Date: 2026-11-10 · Branch `m10-local` → `claude/practical-cannon-a70ubq`, PR 
   - Shows the week summary, then asks for Keep / Problem / Try.
   - Pays +3 tickets once per week (server-side ledger).
   - Today shows a quiet line while it's open.
+- **Goodnight starts Sleep** (Minnie OK, 2026-11-10): it ticks Sleep's first-10 too, so a Perfect day is reachable again (it used to top out near 73%).
 - **First-time tips (Minnie):**
   - 8 one-time bubbles, one at a time.
   - "Got it" or "Skip all tips"; a tap outside also closes them.
@@ -48,7 +49,6 @@ Date: 2026-11-10 · Branch `m10-local` → `claude/practical-cannon-a70ubq`, PR 
 ## Known issues (S3/S4 only)
 | ID | Sev | Description | Plan |
 |---|---|---|---|
-| Sleep / Perfect day | S3 (since M3) | Sleep has no check-in on Today, but Day OEE counts all 7 blocks, so a day tops out near 73% and a Perfect day is nearly unreachable | Minnie decides: the Night ritual starts Sleep (proposed), or Sleep leaves Day OEE |
 | R-M9-10 | S3 | No reward animation for unlocks, and no hatch reveal for the streak egg | M14 (listed in its prompt) |
 | G3 / G4 | — | Retention dashboard and weekly share card | M14 (listed) |
 | R-M10-R2-2 | S3 | A tap outside also marks a tip seen when the tip is scrolled off-screen | only count it when the bubble is at least half visible; check in the playtest pilot |
@@ -59,6 +59,4 @@ Date: 2026-11-10 · Branch `m10-local` → `claude/practical-cannon-a70ubq`, PR 
 | others | S4 | see `G7-M10*.md` | polish |
 
 ## Questions for Minnie
-- Stats screenshots OK?
-- Sleep: start it from the Night ritual's last step?
-- GitHub Actions minutes: wait for the reset, set a small budget, or make the repo public?
+- Answered 2026-11-10: Stats redesign OK; Goodnight starts Sleep; the repo goes public for a while so CI can run.
