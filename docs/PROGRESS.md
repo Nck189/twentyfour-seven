@@ -1,14 +1,15 @@
 # PROGRESS — 24/7
 
-## Now (2026-11-10)
-- ✅ M9 merged (PR #9). Minnie ran `npx supabase db push --remote` for M9 (one migration).
-- 🔨 **PR #10**, branch `claude/practical-cannon-a70ubq`: the streak-milestone follow-up plus all of **M10** (Stats, weekly review, first-time tips) plus test robustness fixes. G7 re-review fixes are pushed, and re-review 2 is next.
-- 🖼️ **PR #11**: Mac visual baselines for M6–M9 (Minnie recorded them).
-- ⛔ **CI is blocked.** GitHub Actions minutes look used up: jobs fail in about 3 s with no runner. Minnie has to check billing or usage, then pick one: wait for the reset, set a small budget, or make the repo public. Nothing merges until CI is green.
-- ❓ **Open question for Minnie (since M3):** Sleep has no check-in on Today, but Day OEE counts all 7 blocks. A day without a Sleep check-in therefore tops out around 73%, below the 80% a Perfect day needs. Proposal: the Night ritual's last step "Going to bed" starts Sleep. The alternative is to leave Sleep out of Day OEE, which changes TS and SQL together.
-- Next after the merge:
-  - the v1 playtest pilot (docs/PLAYTEST_PLAN.md: 4 personas × 7 days, from setup);
-  - M11.
+## Now (2026-11-10, evening)
+- ✅ **v1 is done.** M10 (PR #10) and the Mac visual baselines (PR #11) are merged.
+  - CI is green on all 6 devices. The repo is public for now (Minnie), so Actions minutes are free.
+  - The Sleep question is settled (Minnie OK). Goodnight starts Sleep when bedtime is within 10 min; otherwise Today shows a "Going to bed" card. Day score is no longer capped near 73%.
+  - The Stats redesign is OK'd by Minnie: plain words, no "OEE", 3 tabs.
+- ⏳ **Minnie, on the Mac:** `git checkout main && git pull && npx supabase db push --remote`. It applies 3 migrations: streak milestones, M10 weekly review + tips, and the 48 h check-in window. After that comes G6 prod smoke.
+- ⏳ **Minnie, optional:** set the repo back to private once she no longer needs free CI minutes.
+- Next:
+  1. the v1 playtest pilot (docs/PLAYTEST_PLAN.md: 4 personas × 7 days, starting from setup). It needs a local Supabase, so it runs on the Mac or in CI, not in a plain cloud container.
+  2. M11.
 
 ## ➡️ HANDOFF — read this first (any session: cloud or Minnie's Mac terminal)
 Minnie is asleep (from 2026-11-03 ~02:00 Bangkok). The build moved between a cloud session and her Mac; whichever session runs now continues from here.
