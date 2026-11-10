@@ -58,7 +58,8 @@ test("CJ-M6-2 a crop that grew yesterday is ripe: harvest it, the produce is kep
   await page.getByRole("button", { name: "Focus: Radish, ready to harvest" }).click();
   await page.getByRole("dialog", { name: "Focus" }).getByRole("button", { name: "Harvest" }).click();
   await expect(page.getByRole("button", { name: "Focus: empty" })).toBeVisible();
-  expect(await rest(`inventory?user_id=eq.${id}&select=item_id,qty`)).toEqual([
+  // Produce only: setting sleep times (setAllTemplates) also pays its setup reward in seeds.
+  expect(await rest(`inventory?user_id=eq.${id}&item_id=like.crop:*&select=item_id,qty`)).toEqual([
     { item_id: "crop:radish", qty: 1 },
   ]);
 });
