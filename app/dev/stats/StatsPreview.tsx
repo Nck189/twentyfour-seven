@@ -64,7 +64,9 @@ function sample(review: string | null): StatsData {
 }
 
 export function StatsPreview() {
-  const review = useSearchParams().get("review") ?? "open";
+  const params = useSearchParams();
+  const review = params.get("review") ?? "open";
+  const tab = params.get("tab");
   const data = sample(review);
   const streak = {
     streak: 6,
@@ -85,6 +87,7 @@ export function StatsPreview() {
       <StatsBody
         data={data}
         streak={streak}
+        initialTab={tab === "sleep" || tab === "days" ? tab : "overview"}
         submit={async () => ({ week_start: addDays(START, 21), granted: true })}
       />
     </main>

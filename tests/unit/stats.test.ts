@@ -6,8 +6,10 @@ import {
   homeVsOut,
   imrChart,
   pareto,
+  periodCompare,
   sleepRegularity,
   splitWeekend,
+  steadiness,
   statsFrom,
   usedBlocks,
   weekSummary,
@@ -204,5 +206,35 @@ describe("re-review regressions (R-M10-R4, drift with gaps)", () => {
       { date: "c", bed: null, wake: 430 },
     ]);
     expect(r.wakeDrift).toBeCloseTo(5, 6);
+  });
+});
+
+describe("overview (plain numbers)", () => {
+  const perfect = (d: string) =>
+    day(
+      d,
+      Object.fromEntries(
+        (["down", "sleep", "wake", "focus", "work", "gradation", "free"] as const).map((b) => [b, log(d)]),
+      ),
+    );
+  const empty = (d: string) => day(d, {}, { wakeInWindow: false, nightRitualDone: false });
+
+  it("compares the last 7 finished days with the 7 before", () => {
+    const dates = Array.from({ length: 14 }, (_, i) => `2026-11-${String(i + 1).padStart(2, "0")}`);
+    const days = dates.map((d, i) => (i >= 7 ? perfect(d) : empty(d)));
+    const c = periodCompare(days, "2026-11-15");
+    expect(c.now).toBeGreaterThan(0.8);
+    expect(c.before).not.toBeNull();
+    expect(c.delta).toBeCloseTo(c.now! - c.before!, 9);
+    // Today itself is never counted, and no earlier week means no comparison.
+    expect(periodCompare(days.slice(7), "2026-11-15").delta).toBeNull();
+    expect(periodCompare([], "2026-11-15")).toEqual({ now: null, before: null, delta: null });
+  });
+
+  it("puts a spread into words", () => {
+    expect(steadiness(10)).toBe("very");
+    expect(steadiness(15)).toBe("very");
+    expect(steadiness(25)).toBe("fair");
+    expect(steadiness(45)).toBe("loose");
   });
 });

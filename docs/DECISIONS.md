@@ -132,3 +132,7 @@ Format: date · decision · why · how to change it
     - They show only on a calm screen: not during setup, and not under the Night ritual, a block sheet or the menu.
     - A *click* outside closes one; a scroll doesn't.
     - Dismissals log `tip_dismissed`, `tips_skipped` and `tips_reset` events, for the playtest's skip rate.
+- 2026-11-10 · Minnie: Stats felt busy and full of jargon ("like IG insights, no OEE"). Redesign:
+  - **Three tabs** instead of one long page: Overview (Day score for the last 7 days with the change vs the 7 days before, a 7-bar strip, "usually up at" and streak tiles, three highlight rows), Sleep (wake-up chart, how steady), Days (streak calendar, which days go well, why blocks got missed, home vs out).
+  - **Plain words everywhere.** "Day OEE" is now "Day score / คะแนนวัน", the name the streak rules already used. The math is unchanged (still A × P × Q, I-MR, Pareto); only the presentation is.
+  - **Wake chart** shows the ±3σ limits as a soft "normal range" band on whole-hour ticks, with later mornings lower. **Pareto** is plain bars with counts, no cumulative line. **Regularity** shows a word (very steady / fairly steady / all over: ±15 / ±30 / more) above the ±min.

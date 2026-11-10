@@ -68,18 +68,29 @@ test("CJ-M10-1 Stats shows the charts from the data; the weekly review pays +3 o
   await seedDays(id);
   await page.goto("/stats");
   await expect(page.getByRole("heading", { name: "Stats", level: 1 })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Wake time" }).getByRole("img")).toHaveAttribute(
+  // Overview: the day score in plain words (no "OEE"), the wake and streak tiles.
+  await expect(page.getByRole("region", { name: "Day score" })).toContainText("Last 7 days");
+  await expect(page.getByText("Usually up at")).toBeVisible();
+  await expect(page.locator("main")).not.toContainText("OEE");
+  await expectNoSeriousA11y(page);
+  await expectTouchTargets(page);
+
+  const tabs = page.getByRole("radiogroup", { name: "Stats view" });
+  await tabs.getByRole("radio", { name: "Sleep" }).click();
+  await expect(page.getByRole("region", { name: "Wake-up time" }).getByRole("img")).toHaveAttribute(
     "aria-label",
-    /Wake-time control chart: usually \d\d:\d\d/,
+    /Wake-up times: usually \d\d:\d\d/,
   );
-  await expect(page.getByRole("region", { name: "Why blocks got missed" })).toContainText(
-    "Top reason: Phone",
-  );
-  await expect(page.getByRole("region", { name: "Blocks by weekday" }).getByRole("table")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Day score" })).toHaveCount(0);
+
+  await tabs.getByRole("radio", { name: "Days" }).click();
+  await expect(page.getByRole("region", { name: "Why blocks got missed" })).toContainText("Mostly: Phone");
+  await expect(page.getByRole("region", { name: "Which days go well" }).getByRole("table")).toBeVisible();
   await expect(page.getByRole("region", { name: "Home vs out" })).toContainText("At home");
   await expectNoSeriousA11y(page);
   await expectTouchTargets(page);
 
+  await tabs.getByRole("radio", { name: "Overview" }).click();
   const review = page.getByRole("region", { name: "Weekly review" });
   // The review is open on the week's Sunday and the Monday after (by wake-day) only.
   if (await review.isVisible()) {

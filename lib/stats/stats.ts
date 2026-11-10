@@ -238,3 +238,37 @@ export function weekSummary(
     worstBlock: worst.length > 1 && worst[0]!.rate < best[0]!.rate ? worst[0]!.b : null,
   };
 }
+
+// ---------- overview (Minnie 2026-11-10: plain numbers, like IG insights) ----------
+
+export type PeriodCompare = {
+  /** Mean Day score over the last `n` finished days, and the `n` before them (null = no data). */
+  now: number | null;
+  before: number | null;
+  /** now − before (0–1 scale), null unless both exist. */
+  delta: number | null;
+};
+
+const meanScore = (days: readonly DayFacts[]): number | null => {
+  const xs = days.flatMap((d) => {
+    const o = dayOee(d);
+    return o ? [o.oee] : [];
+  });
+  return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
+};
+
+/** The last `n` finished days (before `today`) against the `n` before them. */
+export function periodCompare(days: readonly DayFacts[], today: string, n = 7): PeriodCompare {
+  const cut = addDays(today, -n);
+  const prevCut = addDays(today, -2 * n);
+  const now = meanScore(days.filter((d) => d.date >= cut && d.date < today));
+  const before = meanScore(days.filter((d) => d.date >= prevCut && d.date < cut));
+  return { now, before, delta: now !== null && before !== null ? now - before : null };
+}
+
+export type Steadiness = "very" | "fair" | "loose";
+
+/** A spread in minutes as a word anyone gets: within ±15 min, ±30 min, or more. */
+export function steadiness(sdMinutes: number): Steadiness {
+  return sdMinutes <= 15 ? "very" : sdMinutes <= 30 ? "fair" : "loose";
+}
