@@ -10,4 +10,10 @@ describe("tips migration mirrors content/tips.ts", () => {
     expect(m).not.toBeNull();
     expect(m![1]!.split(",").map((x) => x.trim().replace(/'/g, ""))).toEqual([...TIP_IDS]);
   });
+  it("the profiles_tips_seen_known constraint allows exactly the TIP_IDS", () => {
+    const sql = readFileSync("supabase/migrations/20261110000000_m10_weekly_review.sql", "utf8");
+    const m = sql.match(/check \(tips_seen <@ array\[([^\]]*)\]/);
+    expect(m).not.toBeNull();
+    expect(m![1]!.split(",").map((x) => x.trim().replace(/'/g, ""))).toEqual([...TIP_IDS]);
+  });
 });

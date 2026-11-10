@@ -136,7 +136,8 @@ alter table public.profiles add column tips_off boolean not null default false;
 update public.profiles
    set tips_seen = array['wake', 'first10', 'night', 'exercise', 'streak', 'plan', 'plots', 'capsule'];
 
--- Only the tip ids the app knows (content/tips.ts), at most once each (R-M10-10).
+-- Only the tip ids the app knows (content/tips.ts), at most 8 entries (R-M10-10). The app writes
+-- a de-duplicated set; a duplicate here would be harmless.
 alter table public.profiles add constraint profiles_tips_seen_known
   check (tips_seen <@ array['wake', 'first10', 'night', 'exercise', 'streak', 'plan', 'plots', 'capsule']
          and cardinality(tips_seen) <= 8);

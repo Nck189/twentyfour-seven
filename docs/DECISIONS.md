@@ -125,3 +125,10 @@ Format: date · decision · why · how to change it
     - Sleep has no check-in on Today; only the full-day list offers one.
     - Day OEE counts all 7 blocks, so a day without a Sleep check-in tops out near 73%. That makes the 80% Perfect day nearly unreachable unless Sleep is started from the day list.
     - Proposal: start Sleep from the Night ritual's last step, or leave Sleep out of Day OEE. Server and TS change together.
+- 2026-11-10 · G7 M10 re-review fixes, as rules:
+  - **Sign-up day is the UTC date of `created_at`.** It decides which weeks get a review. The profile timezone is client-editable; UTC isn't. Side effect: the Thursday cut-off moves by the user's UTC offset, up to a day.
+  - **Clients may UPDATE only** display_name, timezone, locale, sound_on, onboarding, tips_seen and tips_off on `profiles`.
+  - **First-time tips:**
+    - They show only on a calm screen: not during setup, and not under the Night ritual, a block sheet or the menu.
+    - A *click* outside closes one; a scroll doesn't.
+    - Dismissals log `tip_dismissed`, `tips_skipped` and `tips_reset` events, for the playtest's skip rate.

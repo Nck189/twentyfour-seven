@@ -9,6 +9,7 @@ import {
   sleepRegularity,
   splitWeekend,
   statsFrom,
+  usedBlocks,
   weekSummary,
 } from "@/lib/stats/stats";
 
@@ -180,5 +181,28 @@ describe("usedBlocks (R-M10-7)", () => {
     expect(h.sleep[1]).toEqual({ success: 0, judged: 0 });
     expect(h.focus[1]).toEqual({ success: 1, judged: 1 });
     expect(weekSummary([d]).worstBlock).toBeNull();
+  });
+});
+
+describe("re-review regressions (R-M10-R4, drift with gaps)", () => {
+  it("a block skipped all week still shows as needs love when it was used in the window", () => {
+    const used = (d: string) =>
+      day(d, Object.fromEntries((["focus", "work"] as const).map((b) => [b, log(d)])));
+    const window = [used("2026-11-02"), used("2026-11-03")];
+    const week = [
+      day("2026-11-09", { focus: log("2026-11-09") }),
+      day("2026-11-10", { focus: log("2026-11-10") }),
+    ];
+    expect(weekSummary(week).worstBlock).toBeNull(); // judged on the week alone, Work drops out
+    expect(weekSummary(week, usedBlocks([...window, ...week])).worstBlock).toBe("work");
+  });
+  it("drift is per day even with missing days", () => {
+    // 07:00 then 07:10 two days later: +5 min/day, not +10.
+    const r = sleepRegularity([
+      { date: "a", bed: null, wake: 420 },
+      { date: "b", bed: null, wake: null },
+      { date: "c", bed: null, wake: 430 },
+    ]);
+    expect(r.wakeDrift).toBeCloseTo(5, 6);
   });
 });

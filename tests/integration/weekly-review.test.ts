@@ -66,3 +66,29 @@ describe("weekly review for a brand-new account (R-M10-6)", () => {
     expect(status.week_start).toBeNull();
   });
 });
+
+describe("profile columns a client can change (R-M10-R3)", () => {
+  it("can't move its sign-up date (it decides review weeks and where Stats start)", async () => {
+    const u = await newUser("weekly-created");
+    const before = (await admin().from("profiles").select("created_at").eq("user_id", u.id).single()).data!;
+    const res = await u.client
+      .from("profiles")
+      .update({ created_at: "2026-01-01T00:00:00Z" } as never)
+      .eq("user_id", u.id);
+    expect(res.error).not.toBeNull();
+    const after = (await admin().from("profiles").select("created_at").eq("user_id", u.id).single()).data!;
+    expect(after.created_at).toBe(before.created_at);
+    // The fields the app edits still work.
+    expect(
+      (await u.client.from("profiles").update({ tips_off: true, locale: "th" }).eq("user_id", u.id)).error,
+    ).toBeNull();
+  });
+
+  it("a timezone switch doesn't open a review for a brand-new account", async () => {
+    const u = await newUser("weekly-tz");
+    for (const timezone of ["Etc/GMT+12", "Pacific/Kiritimati"]) {
+      await u.client.from("profiles").update({ timezone }).eq("user_id", u.id);
+      expect((await u.client.rpc("weekly_review_status")).data).toMatchObject({ week_start: null });
+    }
+  });
+});
