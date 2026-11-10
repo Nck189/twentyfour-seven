@@ -225,12 +225,18 @@ test("R-M4-3: a block that was started closes as done (no miss reason); 'same fo
     .getByRole("button", { name: "Sleepy" })
     .click();
   await expect(sheet.getByText("Every block is closed. Nice.")).toBeVisible();
+  // Wait for the writes themselves (the seeded Focus row already had no miss reason).
   await expect
-    .poll(async () => (await blockLogs(id)).find((l) => l.block === "focus"))
-    .toMatchObject({ miss_reason: null });
-  const logs = await blockLogs(id);
-  expect(logs.find((l) => l.block === "focus")?.closed_at).toBeTruthy();
-  expect(logs.filter((l) => l.miss_reason === "sleepy")).toHaveLength(4);
+    .poll(async () => {
+      const logs = await blockLogs(id);
+      const focus = logs.find((l) => l.block === "focus");
+      return {
+        focusClosed: !!focus?.closed_at,
+        focusReason: focus?.miss_reason ?? null,
+        sleepy: logs.filter((l) => l.miss_reason === "sleepy").length,
+      };
+    })
+    .toEqual({ focusClosed: true, focusReason: null, sleepy: 4 });
 });
 
 test("R-M4-5: Goodnight waits until tomorrow's plan is saved (offline edit isn't lost)", async ({
