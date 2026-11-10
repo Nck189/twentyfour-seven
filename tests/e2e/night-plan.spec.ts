@@ -283,7 +283,8 @@ test("Going to bed: after the ritual, near bedtime, Today starts Sleep live with
   });
   await page.goto("/today");
   const card = page.getByRole("region", { name: "Going to bed" });
-  await expect(card).toBeVisible();
+  // Today loads several tables first; slow WebKit runners took > 5 s.
+  await expect(card).toBeVisible({ timeout: 15_000 });
   await expectNoSeriousA11y(page);
   await expectTouchTargets(page);
   await card.getByRole("button", { name: "Start" }).click();

@@ -81,7 +81,7 @@ test("CJ-M10-1 Stats shows the charts from the data; the weekly review pays +3 o
   await expect(page.getByRole("heading", { name: "Stats", level: 1 })).toBeVisible();
   // Overview: the day score in plain words (no "OEE"), the wake and streak tiles.
   await expect(page.getByRole("region", { name: "Day score" })).toContainText("Last 7 days");
-  await expect(page.getByText("Usually up at")).toBeVisible();
+  await expect(page.getByText(/up at$/)).toBeVisible(); // "Weekdays: up at" (or "Usually up at")
   await expect(page.locator("main")).not.toContainText("OEE");
   await expectNoSeriousA11y(page);
   await expectTouchTargets(page);
