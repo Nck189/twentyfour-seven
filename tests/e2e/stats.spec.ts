@@ -54,8 +54,19 @@ async function seedDays(id: string) {
           started_at: zonedInstant(d, 663, TZ).toISOString(),
           first10_at: zonedInstant(d, 670, TZ).toISOString(),
           location: "home",
+          miss_reason: null,
         },
-        { user_id: id, date: d, block: "work", miss_reason: "phone", location: "out" },
+        // A bulk insert needs the same keys in every row (PostgREST PGRST102).
+        {
+          user_id: id,
+          date: d,
+          block: "work",
+          planned_start: null,
+          started_at: null,
+          first10_at: null,
+          location: "out",
+          miss_reason: "phone",
+        },
       ]),
     ),
   });

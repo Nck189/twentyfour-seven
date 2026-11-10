@@ -255,6 +255,31 @@ describe("settle_days", () => {
   });
 });
 
+describe("a wake-day's own planned starts (Goodnight starts Sleep)", () => {
+  it("tonight's Sleep up to 48 h after the wake-day's midnight is live; later isn't", async () => {
+    // A day runs wake → next wake: someone up at 19:00 plans Sleep for ~12:00 two days on (+36 h),
+    // and the night ritual's Goodnight starts it live. Past 48 h it can't be that day's.
+    const u = await newUser("sleep-window");
+    const today: string = (await u.client.rpc("settle_days")).data.today;
+    const midnight = zonedInstant(today, 0, TZ).getTime();
+    const now = new Date().toISOString();
+    const row = (block: BlockKey, hours: number) => ({
+      user_id: u.id,
+      date: today,
+      block,
+      planned_start: new Date(midnight + hours * 3_600_000).toISOString(),
+      started_at: now,
+      first10_at: now,
+    });
+    expect((await u.client.from("block_logs").insert([row("sleep", 40), row("down", 50)])).error).toBeNull();
+    const { data } = await u.client.from("block_logs").select("block, backfilled").eq("date", today);
+    expect(Object.fromEntries(data!.map((r) => [r.block, r.backfilled]))).toEqual({
+      sleep: false,
+      down: true,
+    });
+  });
+});
+
 describe("past days stay closed (G7 re-review)", () => {
   it("a day plan or a check-in can't be moved onto another day (R-M9-R1)", async () => {
     const u = await newUser("move-day");
