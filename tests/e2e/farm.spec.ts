@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import { rest, setAllTemplates, setWakeMinutesAgo, userIdFor } from "../helpers/db";
-import { wakeDay } from "../helpers/day";
+import { wakeDay, leaveAfterSignIn } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
 import { addDays, zonedInstant } from "@/lib/time";
 
@@ -13,6 +13,7 @@ async function setup(page: Page) {
   const email = uniqueEmail("farm");
   await setPrefs(page, { locale: "en", theme: "light" });
   await signIn(page, email);
+  await leaveAfterSignIn(page);
   const id = await userIdFor(email);
   await setAllTemplates(id, "10:00");
   return id;
