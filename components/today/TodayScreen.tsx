@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { formatDayLong, formatTime } from "@/lib/format";
+import { showBedCard } from "@/lib/today/bedtime";
 import { useNow } from "@/lib/hooks/useNow";
 import { currentBlock, type TimelineBlock } from "@/lib/today/day";
 import { useToday } from "@/lib/today/useToday";
@@ -138,7 +139,19 @@ export function TodayScreen() {
   const next = cur ? tl.blocks[tl.blocks.indexOf(cur) + 1] : undefined;
   const wake = today.wakeCard;
   const showWake = wake && (wake.canPress || cur?.key === "wake" || cur?.key === "sleep");
-  const showCurrent = cur && cur.key !== "sleep" && !(cur.key === "down" && !today.nightDone);
+  // After the ritual, near bedtime: "Going to bed" starts Sleep (G7 R-M10-R3-1).
+  const sleepBlock = tl.blocks.find((b) => b.key === "sleep");
+  const bedCard =
+    !!sleepBlock &&
+    showBedCard(
+      today.logFor(sleepBlock),
+      sleepBlock.start,
+      now,
+      today.nightDone,
+      cur?.key,
+      text.first10("sleep", sleepBlock.first10) !== null,
+    );
+  const showCurrent = cur && !bedCard && cur.key !== "sleep" && !(cur.key === "down" && !today.nightDone);
   const napRunning = isNapRunning();
   const warnings = allWarnings ? tl.warnings : tl.warnings.slice(0, 1);
   const warningText = (w: (typeof tl.warnings)[number]) =>
@@ -259,6 +272,27 @@ export function TodayScreen() {
           />
         </section>
       )}
+      {bedCard && sleepBlock && (
+        <section
+          aria-label={t("bed.title")}
+          className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6"
+        >
+          <p className="text-xs font-bold tracking-wide text-primary uppercase">
+            {formatTime(sleepBlock.start, today.timezone)}
+          </p>
+          <h2 className="mb-1 text-xl font-extrabold">{t("bed.title")}</h2>
+          <p className="mb-3 text-sm text-muted">{t("bed.hint")}</p>
+          <BlockCheckin
+            key={`${sleepBlock.logDate}:sleep`}
+            block={sleepBlock}
+            log={today.logFor(sleepBlock)}
+            now={now}
+            timezone={today.timezone}
+            actions={today.actions}
+            ownFirst10={today.blockSettings.find((b) => b.key === "sleep")?.first10_options}
+          />
+        </section>
+      )}
       <Tip id="first10" when={!!showCurrent && tipsQuiet} />
 
       {next && (
@@ -321,6 +355,7 @@ export function TodayScreen() {
           closeDone={(b) => today.actions.close(b, new Date())}
           complete={today.actions.completeNightRitual}
           goToBed={today.actions.goToBed}
+          timezone={today.timezone}
           onClose={() => {
             markOffered(tl.date);
             setRitualOpen(false);

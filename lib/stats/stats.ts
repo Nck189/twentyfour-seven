@@ -17,6 +17,21 @@ export function usedBlocks(days: readonly DayFacts[]): BlockKey[] {
 }
 
 /**
+ * The first day each block was checked in (days in date order). A block is judged only from
+ * then on: Sleep, started by Goodnight since 2026-11-10, would otherwise read as missed on every
+ * earlier day and be "needs love" for weeks (G7 R-M10-R3-2).
+ */
+export type UsedSince = Partial<Record<BlockKey, string>>;
+export function usedSince(days: readonly DayFacts[]): UsedSince {
+  const out: UsedSince = {};
+  for (const b of BLOCK_KEYS) {
+    const first = days.find((d) => d.logs[b]);
+    if (first) out[b] = first.date;
+  }
+  return out;
+}
+
+/**
  * First wake-day Stats look at (G7 R-M10-1): never before the account existed. Like the streak's
  * settle, the sign-up day counts only if it had a wake; at most `days` back from today.
  */
@@ -126,7 +141,8 @@ export type Cell = { success: number; judged: number };
 export type Heatmap = Record<BlockKey, Record<number, Cell>>;
 
 export function heatmap(days: readonly DayFacts[]): Heatmap {
-  const used = usedBlocks(days);
+  const since = usedSince(days);
+  const used = BLOCK_KEYS.filter((b) => since[b]);
   const out = Object.fromEntries(
     BLOCK_KEYS.map((b) => [
       b,
@@ -136,6 +152,7 @@ export function heatmap(days: readonly DayFacts[]): Heatmap {
   for (const d of days) {
     const w = isoWeekday(d.date);
     for (const b of used) {
+      if (d.date < since[b]!) continue;
       const r = blockResult(d, b);
       if (r !== "success" && r !== "partial" && r !== "miss") continue;
       out[b][w]!.judged++;
@@ -203,13 +220,12 @@ export type WeekSummary = {
 };
 
 /**
- * `blocks`: which blocks to judge — pass the ones used across the whole Stats window, so a block
- * skipped all week still shows up as "needs love" (G7 R-M10-R4).
+ * `since`: which blocks to judge and from when — pass usedSince over the whole Stats window, so a
+ * block skipped all week still shows up as "needs love" (G7 R-M10-R4), but not for days before
+ * it was ever used (R-M10-R3-2).
  */
-export function weekSummary(
-  days: readonly DayFacts[],
-  blocks: readonly BlockKey[] = usedBlocks(days),
-): WeekSummary {
+export function weekSummary(days: readonly DayFacts[], since: UsedSince = usedSince(days)): WeekSummary {
+  const blocks = BLOCK_KEYS.filter((b) => since[b]);
   const oees = days.flatMap((d) => {
     const o = dayOee(d);
     return o ? [o.oee] : [];
@@ -218,6 +234,7 @@ export function weekSummary(
     let success = 0;
     let judged = 0;
     for (const d of days) {
+      if (d.date < since[b]!) continue;
       const r = blockResult(d, b);
       if (r !== "success" && r !== "partial" && r !== "miss") continue;
       judged++;
@@ -245,24 +262,30 @@ export type PeriodCompare = {
   /** Mean Day score over the last `n` finished days, and the `n` before them (null = no data). */
   now: number | null;
   before: number | null;
-  /** now − before (0–1 scale), null unless both exist. */
+  /** now − before (0–1 scale, i.e. points of score, not a relative %), null unless both exist. */
   delta: number | null;
 };
 
-const meanScore = (days: readonly DayFacts[]): number | null => {
+const meanScore = (days: readonly DayFacts[], min = 1): number | null => {
   const xs = days.flatMap((d) => {
     const o = dayOee(d);
     return o ? [o.oee] : [];
   });
-  return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
+  return xs.length >= min ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
 };
+
+/** Days with a score the "before" side needs, so the change doesn't rest on one day (R-M10-R3-10). */
+export const COMPARE_MIN_DAYS = 3;
 
 /** The last `n` finished days (before `today`) against the `n` before them. */
 export function periodCompare(days: readonly DayFacts[], today: string, n = 7): PeriodCompare {
   const cut = addDays(today, -n);
   const prevCut = addDays(today, -2 * n);
   const now = meanScore(days.filter((d) => d.date >= cut && d.date < today));
-  const before = meanScore(days.filter((d) => d.date >= prevCut && d.date < cut));
+  const before = meanScore(
+    days.filter((d) => d.date >= prevCut && d.date < cut),
+    COMPARE_MIN_DAYS,
+  );
   return { now, before, delta: now !== null && before !== null ? now - before : null };
 }
 

@@ -129,6 +129,10 @@
     "menu": {
       "open": "More for today",
       "title": "More for today"
+    },
+    "bed": {
+      "title": "Going to bed",
+      "hint": "Tap Start when you lie down. On time = within 10 min of your bedtime."
     }
   },
   "plan": {
@@ -352,14 +356,14 @@
       "help": "Green band = your normal range. Big dots = unusual mornings."
     },
     "sleep": {
-      "title": "How steady is your sleep?",
+      "title": "Last 7 days: how steady?",
       "bed": "Bedtime",
       "wake": "Wake-up",
       "min": "±{n} min",
       "steady": "Your wake time is steady.",
       "later": "Waking about {n} min later each day.",
       "earlier": "Waking about {n} min earlier each day.",
-      "help": "Last 7 days. Bedtime = when you finished the Night ritual.",
+      "help": "Spread of the last 7 days, weekends included. Bedtime = when you finished the Night ritual.",
       "level": {
         "very": "Very steady",
         "fair": "Fairly steady",
@@ -380,11 +384,11 @@
         "7": "Su"
       },
       "less": "Less",
-      "more": "More on time"
+      "more": "More done"
     },
     "pareto": {
       "title": "Why blocks got missed",
-      "top": "Mostly: {reason} ({pct})",
+      "top": "Top reason: {reason} ({pct})",
       "aria": "Miss reasons, most common first. Top: {reason} at {pct}",
       "none": "No missed blocks with a reason. Nice.",
       "times": "{n, plural, one {# time} other {# times}}"
@@ -405,15 +409,16 @@
     "score": {
       "title": "Day score",
       "period": "Last 7 days",
-      "delta": "{n}% vs the 7 days before",
+      "delta": "{n} pts vs the 7 days before",
       "aria": "Day score for each of the last 7 days: average {pct}",
-      "help": "How much of each day went to plan. 80% or more is a Perfect day (dark bar)."
+      "help": "How much of each day went to plan. Dashed line = 80%: with an on-time wake-up and the Night ritual, that is a Perfect day. Grey = no score (no data, Vacation or Sick)."
     },
     "tile": {
       "wake": "Usually up at",
       "streak": "Streak",
       "days": "{n, plural, one {# day} other {# days}}",
-      "best": "Best: {n}"
+      "best": "Best: {n}",
+      "wakeWeekdays": "Weekdays: up at"
     },
     "highlights": {
       "title": "Last 7 days",
@@ -647,7 +652,8 @@
     "seedsPlant": "Plant {crop} in {n} empty plots",
     "seedsPlanted": "Planted in {n} plots. They grow each day their block goes well.",
     "seedsAllGrowing": "All 7 plots are growing.",
-    "seedsError": "Some plots couldn't be planted. Try again from the Farm tab."
+    "seedsError": "Some plots couldn't be planted. Try again from the Farm tab.",
+    "bedLater": "Sleep starts at {time}. When you lie down, tap Going to bed on Today."
   },
   "onboarding": {
     "cardTitle": "Make 24/7 yours in 2 minutes",

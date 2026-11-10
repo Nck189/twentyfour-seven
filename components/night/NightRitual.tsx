@@ -22,7 +22,9 @@ import {
 import { sfx } from "@/lib/sound/sfx";
 import { useBacklog } from "@/lib/backlog/useBacklog";
 import { usePlan } from "@/lib/plan/usePlan";
+import { formatTime } from "@/lib/format";
 import { addDays } from "@/lib/time";
+import { goodnightSleep } from "@/lib/today/bedtime";
 import type { Timeline, TimelineBlock } from "@/lib/today/day";
 import type { BlockLog } from "@/lib/today/useToday";
 
@@ -46,6 +48,7 @@ type Props = {
   complete: () => Promise<{ ticket_granted: boolean; in_time?: boolean }>;
   /** Starts tonight's Sleep (and its first-10) at Goodnight. */
   goToBed: (b: TimelineBlock, at: Date, first10: boolean) => Promise<void>;
+  timezone: string;
   onClose: () => void;
 };
 
@@ -53,7 +56,16 @@ type Props = {
  * SPEC §4.1 Night ritual: 10-min free phone → close today (miss reasons) → plan tomorrow (+ seeds) →
  * alarm + phone away → Goodnight (Night ticket, server-side).
  */
-export function NightRitual({ timeline, logFor, markMissed, closeDone, complete, goToBed, onClose }: Props) {
+export function NightRitual({
+  timeline,
+  logFor,
+  markMissed,
+  closeDone,
+  complete,
+  goToBed,
+  timezone,
+  onClose,
+}: Props) {
   const t = useTranslations("night");
   const tc = useTranslations("common");
   const text = useBlockText();
@@ -67,6 +79,7 @@ export function NightRitual({ timeline, logFor, markMissed, closeDone, complete,
   const [alarmSet, setAlarmSet] = useState(false);
   const [result, setResult] = useState<"ticket" | "already" | "late" | "error" | "unsaved" | null>(null);
   const [busy, setBusy] = useState(false);
+  const [bedLater, setBedLater] = useState(false);
   const tomorrow = addDays(timeline.date, 1);
   const total = 4;
   // Tonight's Sleep: Goodnight starts it, and the checkbox is its first-10 (SPEC §2 default:
@@ -295,8 +308,12 @@ export function NightRitual({ timeline, logFor, markMissed, closeDone, complete,
                 return;
               }
               const r = await complete();
-              // Going to bed: Sleep starts now (queued and retried like any check-in).
-              if (sleep) void goToBed(sleep, new Date(), sleepFirst10 !== null);
+              // Going to bed: Sleep starts now if that can count (from 10 min before bedtime);
+              // earlier, Today offers "Going to bed" near bedtime instead (G7 R-M10-R3-1).
+              const at = new Date();
+              const bed = sleep && goodnightSleep(logFor(sleep), sleep.start, at, sleepFirst10 !== null);
+              if (sleep && bed) void goToBed(sleep, at, bed.first10);
+              setBedLater(!!sleep && !bed && !logFor(sleep).started_at && !logFor(sleep).miss_reason);
               setResult(r.ticket_granted ? "ticket" : r.in_time === false ? "late" : "already");
               sfx.sunrise();
             } catch {
@@ -316,6 +333,9 @@ export function NightRitual({ timeline, logFor, markMissed, closeDone, complete,
         >
           {t(result)}
         </p>
+      )}
+      {bedLater && sleep && (result === "ticket" || result === "already" || result === "late") && (
+        <p className="text-sm text-muted">{t("bedLater", { time: formatTime(sleep.start, timezone) })}</p>
       )}
     </div>,
   ];

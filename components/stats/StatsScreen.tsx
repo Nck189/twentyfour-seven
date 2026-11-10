@@ -19,6 +19,7 @@ import {
   splitWeekend,
   steadiness,
   usedBlocks,
+  usedSince,
   weekSummary,
 } from "@/lib/stats/stats";
 import { useStats, type StatsData } from "@/lib/stats/useStats";
@@ -94,7 +95,7 @@ function WeeklyReview({
       week
         ? weekSummary(
             data.days.filter((d) => d.date >= week && d.date <= addDays(week, 6)),
-            usedBlocks(data.days),
+            usedSince(data.days),
           )
         : null,
     [data.days, week],
@@ -439,10 +440,11 @@ function Overview({ data, streak }: { data: StatsData; streak: StreakView | null
   const cmp = periodCompare(data.days, data.today);
   const cut = addDays(data.today, -7);
   const week = data.days.filter((d) => d.date >= cut);
-  const summary = weekSummary(week, usedBlocks(data.days));
+  const summary = weekSummary(week, usedSince(data.days));
   const top = pareto(week)[0];
   const split = splitWeekend(data.wakes);
-  const wake = imrChart(split.weekday) ?? imrChart(data.wakes);
+  const weekdayWake = imrChart(split.weekday);
+  const wake = weekdayWake ?? imrChart(data.wakes);
   const bars = Array.from({ length: 7 }, (_, i) => {
     const date = addDays(data.today, i - 7);
     const d = data.days.find((x) => x.date === date);
@@ -480,14 +482,25 @@ function Overview({ data, streak }: { data: StatsData; streak: StreakView | null
             <div
               role="img"
               aria-label={t("score.aria", { pct: pct(cmp.now) })}
-              className="mt-3 grid h-24 grid-cols-7 items-end gap-2"
+              className="relative mt-3 grid h-24 grid-cols-7 items-end gap-2"
             >
+              {/* The 80% line (a Perfect-day score); bars stay one colour (R-M10-R3-4). */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 border-t-2 border-dashed border-line"
+                style={{ bottom: "80%" }}
+              />
               {bars.map((b) => (
                 <div key={b.date} className="flex h-full flex-col justify-end">
-                  <div
-                    className={`w-full rounded-md ${b.score !== null && b.score >= 0.8 ? "bg-primary" : "bg-primary-soft"}`}
-                    style={{ height: `${Math.max(6, Math.round((b.score ?? 0) * 100))}%` }}
-                  />
+                  {b.score === null ? (
+                    // No score (no data, Vacation or Sick): a grey stub, not a 0% bar.
+                    <div className="h-1.5 w-full rounded-md bg-line" />
+                  ) : (
+                    <div
+                      className="w-full rounded-md bg-primary"
+                      style={{ height: `${Math.max(4, Math.round(b.score * 100))}%` }}
+                    />
+                  )}
                 </div>
               ))}
             </div>
@@ -502,7 +515,7 @@ function Overview({ data, streak }: { data: StatsData; streak: StreakView | null
       </section>
       <dl className="mx-4 mb-3 grid grid-cols-2 gap-3 lg:mx-6">
         <div className="rounded-[var(--radius-lg)] bg-surface p-4">
-          <dt className="text-sm text-muted">{t("tile.wake")}</dt>
+          <dt className="text-sm text-muted">{t(weekdayWake ? "tile.wakeWeekdays" : "tile.wake")}</dt>
           <dd className="text-3xl font-extrabold">{wake ? hhmm(wake.mean) : "–"}</dd>
           {wake && <dd className="text-xs text-muted">{t("sleep.min", { n: Math.round(wake.sigma) })}</dd>}
         </div>

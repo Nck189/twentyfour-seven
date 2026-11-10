@@ -257,8 +257,9 @@ describe("settle_days", () => {
 
 describe("a wake-day's own planned starts (Goodnight starts Sleep)", () => {
   it("tonight's Sleep up to 48 h after the wake-day's midnight is live; later isn't", async () => {
-    // A day runs wake → next wake: someone up at 19:00 plans Sleep for ~12:00 two days on (+36 h),
-    // and the night ritual's Goodnight starts it live. Past 48 h it can't be that day's.
+    // A day runs wake → next wake: someone up at 19:00 sleeps about 17 h later, at ~12:00 the
+    // next day (midnight + 36 h), or later still. Up to +48 h it's live; past that it can't be
+    // that wake-day's.
     const u = await newUser("sleep-window");
     const today: string = (await u.client.rpc("settle_days")).data.today;
     const midnight = zonedInstant(today, 0, TZ).getTime();

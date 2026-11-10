@@ -12,6 +12,7 @@ import {
   steadiness,
   statsFrom,
   usedBlocks,
+  usedSince,
   weekSummary,
 } from "@/lib/stats/stats";
 
@@ -196,7 +197,7 @@ describe("re-review regressions (R-M10-R4, drift with gaps)", () => {
       day("2026-11-10", { focus: log("2026-11-10") }),
     ];
     expect(weekSummary(week).worstBlock).toBeNull(); // judged on the week alone, Work drops out
-    expect(weekSummary(week, usedBlocks([...window, ...week])).worstBlock).toBe("work");
+    expect(weekSummary(week, usedSince([...window, ...week])).worstBlock).toBe("work");
   });
   it("drift is per day even with missing days", () => {
     // 07:00 then 07:10 two days later: +5 min/day, not +10.
@@ -226,8 +227,12 @@ describe("overview (plain numbers)", () => {
     expect(c.now).toBeGreaterThan(0.8);
     expect(c.before).not.toBeNull();
     expect(c.delta).toBeCloseTo(c.now! - c.before!, 9);
-    // Today itself is never counted, and no earlier week means no comparison.
+    // Today itself is never counted (a perfect "today" changes nothing)…
+    expect(periodCompare([...days, perfect("2026-11-15")], "2026-11-15")).toEqual(c);
+    // …no earlier week, or one resting on fewer than 3 days, means no comparison.
     expect(periodCompare(days.slice(7), "2026-11-15").delta).toBeNull();
+    expect(periodCompare(days.slice(5), "2026-11-15").delta).toBeNull();
+    expect(periodCompare(days.slice(4), "2026-11-15").delta).not.toBeNull();
     expect(periodCompare([], "2026-11-15")).toEqual({ now: null, before: null, delta: null });
   });
 
@@ -236,5 +241,30 @@ describe("overview (plain numbers)", () => {
     expect(steadiness(15)).toBe("very");
     expect(steadiness(25)).toBe("fair");
     expect(steadiness(45)).toBe("loose");
+  });
+});
+
+describe("a block is judged from its first check-in on (G7 R-M10-R3-2)", () => {
+  it("Sleep logged only since Goodnight started it isn't 'needs love' for the days before", () => {
+    const fw = (d: string, withSleep: boolean) =>
+      day(d, {
+        focus: log(d),
+        work: log(d, { started_at: at(d, "09:30") }), // late, no checklist → partial
+        ...(withSleep ? { sleep: log(d) } : {}),
+      });
+    const days = [
+      fw("2026-11-02", false),
+      fw("2026-11-03", false),
+      fw("2026-11-04", false),
+      fw("2026-11-05", true),
+      fw("2026-11-06", true),
+    ];
+    const since = usedSince(days);
+    expect(since.sleep).toBe("2026-11-05");
+    expect(since.focus).toBe("2026-11-02");
+    expect(weekSummary(days, since).worstBlock).toBe("work");
+    // Wednesday (before Sleep's first check-in) isn't counted for Sleep.
+    expect(heatmap(days).sleep[3]).toEqual({ success: 0, judged: 0 });
+    expect(heatmap(days).sleep[4]).toEqual({ success: 1, judged: 1 });
   });
 });

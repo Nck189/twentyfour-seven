@@ -93,9 +93,13 @@ test("CJ-M10-1 Stats shows the charts from the data; the weekly review pays +3 o
     /Wake-up times: usually \d\d:\d\d/,
   );
   await expect(page.getByRole("region", { name: "Day score" })).toHaveCount(0);
+  await expectNoSeriousA11y(page);
+  await expectTouchTargets(page);
 
   await tabs.getByRole("radio", { name: "Days" }).click();
-  await expect(page.getByRole("region", { name: "Why blocks got missed" })).toContainText("Mostly: Phone");
+  await expect(page.getByRole("region", { name: "Why blocks got missed" })).toContainText(
+    "Top reason: Phone",
+  );
   await expect(page.getByRole("region", { name: "Which days go well" }).getByRole("table")).toBeVisible();
   await expect(page.getByRole("region", { name: "Home vs out" })).toContainText("At home");
   await expectNoSeriousA11y(page);
