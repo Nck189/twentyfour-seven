@@ -1,8 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Locator, type Page } from "@playwright/test";
 
-/** G4: axe with 0 serious/critical violations. */
-export async function expectNoSeriousA11y(page: Page) {
+async function seriousViolations(page: Page): Promise<string[]> {
   const results = await new AxeBuilder({
     // axe types target a newer Playwright; 1.61 is pinned for macOS 14 WebKit (see DECISIONS).
     page: page as unknown as ConstructorParameters<typeof AxeBuilder>[0]["page"],
@@ -10,7 +9,18 @@ export async function expectNoSeriousA11y(page: Page) {
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
     .analyze();
   const bad = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
-  expect(bad.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
+  return bad.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`);
+}
+
+/**
+ * G4: axe with 0 serious/critical violations once the screen has settled. Retried for a few
+ * seconds: a pop-up still scaling or fading in (or its backdrop) reads as low contrast mid-way;
+ * a real violation never clears and still fails.
+ */
+export async function expectNoSeriousA11y(page: Page) {
+  await expect
+    .poll(() => seriousViolations(page), { timeout: 8_000, intervals: [300, 600, 1_000] })
+    .toEqual([]);
 }
 
 /** G4: every visible interactive control is at least 44×44 CSS px. */
