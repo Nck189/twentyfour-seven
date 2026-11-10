@@ -90,13 +90,20 @@ test("CJ-05 check-in: first-10 → 3 items → close in ≤ 5 taps and ≤ 5 s",
   expect(taps).toBeLessThanOrEqual(5);
   expect(elapsed).toBeLessThan(5000);
 
+  // Wait for every write, the close included (the items can land before it).
   await expect
-    .poll(async () => (await blockLogs(id)).find((l) => l.block === "work"))
-    .toMatchObject({ backfilled: false, items_done: ["work-0", "work-1", "work-2"], items_planned: 3 });
-  const log = (await blockLogs(id)).find((l) => l.block === "work")!;
-  expect(log.first10_at).toBeTruthy();
-  expect(log.started_at).toBeTruthy();
-  expect(log.closed_at).toBeTruthy();
+    .poll(async () => {
+      const l = (await blockLogs(id)).find((x) => x.block === "work");
+      return l && { ...l, closed: !!l.closed_at, first10: !!l.first10_at, started: !!l.started_at };
+    })
+    .toMatchObject({
+      backfilled: false,
+      items_done: ["work-0", "work-1", "work-2"],
+      items_planned: 3,
+      closed: true,
+      first10: true,
+      started: true,
+    });
   await showDay(page);
   await expect(page.locator('[aria-current="step"]')).toContainText("Done");
   // Optional mood/energy after closing (not part of the 5-tap budget).
