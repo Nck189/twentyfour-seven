@@ -11,7 +11,7 @@ Scope: weekly exercise ring + quick log (Today), plan a workout in a block with 
 | G3 Visual QC | ⏳ | self-review at 390 px light/dark (pen, animal sheet, sleepy, log sheet, hatch) + art sheet; fixes below; screenshots sent to Minnie. Mac baselines (`npm run e2e:update`) — the Farm screen now includes the pen |
 | G4 UX QC | ✅ (local) | log = 3 taps (Log → type picture → Log it; 30 min preselected) · pet = 2 taps · touch targets ≥ 44 px · hatch ≤ 1.3 s, Skip, off with reduced motion / skip animations · labels on every animal tile (`Cow: fed`) · sound per species, muted by the sound setting |
 | G5 Data & security | ✅ (local) | workouts insert only through `log_exercise`; animals, inventory, game_state, server events not client-writable; caps over rolling 24 h (no timezone trick); `profiles.timezone` real zone names only; idempotent per key; row locks against races |
-| G6 Production smoke | ⏳ | after merge + `npx supabase db push --remote` (1 migration). Before it, the exercise card and pen stay hidden; nothing crashes |
+| G6 Production smoke | ✅ | `npm run qc:prod` on prod, 2026-11-10 (Minnie, after `db push` of every v1 migration): 22/22 passed on iphone + chrome-desktop, Lighthouse assertions passed. Tests that need their own user skip on prod, by design. Covers smoke (login → today → check-in → farm), every screen with no raw keys or horizontal scroll (EN/TH, light/dark), CJ-17 export, PWA manifest + service worker |
 | G7 Independent review | ✅ | review 1 (`G7-M8.md`) FAIL: S1 R-M8-1 (timezone reset the caps), S2 R-M8-2 (CJ-13 locator) → fixed test-first → re-review 1 (`G7-M8-rereview.md`) FAIL: S2 R-M8-R1 (M5 backlog coin cap, same root cause) → fixed → **re-review 2 PASS** (`G7-M8-rereview-2.md`, 7966fb1) |
 
 ## Rubric (self-review)

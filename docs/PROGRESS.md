@@ -5,7 +5,7 @@
   - CI is green on all 6 devices. The repo is public for now (Minnie), so Actions minutes are free.
   - The Sleep question is settled (Minnie OK). Goodnight starts Sleep when bedtime is within 10 min; otherwise Today shows a "Going to bed" card. Day score is no longer capped near 73%.
   - The Stats redesign is OK'd by Minnie: plain words, no "OEE", 3 tabs.
-- ⏳ **Minnie, on the Mac:** `git checkout main && git pull && npx supabase db push --remote`. It applies 3 migrations: streak milestones, M10 weekly review + tips, and the 48 h check-in window. After that comes G6 prod smoke.
+- ✅ **Prod is up to date.** Minnie ran `db push` (3 migrations) and then `npm run qc:prod` on 2026-11-10: G6 passed, 22/22 plus Lighthouse. M8–M10 have every QC gate except the Mac visual baselines (G3) for Today, Plan and Stats.
 - ⏳ **Minnie, optional:** set the repo back to private once she no longer needs free CI minutes.
 - Next:
   1. the v1 playtest pilot (docs/PLAYTEST_PLAN.md: 4 personas × 7 days, starting from setup). It needs a local Supabase, so it runs on the Mac or in CI, not in a plain cloud container.
