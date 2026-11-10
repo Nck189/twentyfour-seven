@@ -28,26 +28,28 @@ export function ProfileSync() {
       const prefs = usePrefs.getState();
       const onboarding = (profile.onboarding ?? {}) as Record<string, unknown>;
       if (!onboarding.locale_set) {
-        await client
+        const first = prefs.locale;
+        const { error } = await client
           .from("profiles")
-          .update({ locale: prefs.locale, onboarding: { ...onboarding, locale_set: true } })
+          .update({ locale: first, onboarding: { ...onboarding, locale_set: true } })
           .eq("user_id", data.user.id)
           // Atomic: a late write must never overwrite a language the user already picked.
           .is("onboarding->locale_set", null);
-        prefs.markLocaleSynced();
+        // A pick made while this was in flight stays unsaved (its own save is on the way).
+        if (!error) usePrefs.getState().markLocaleSynced(first);
         return;
       }
-      // An unsaved change made on this device wins (clock-free); otherwise the account's language applies.
-      if (prefs.localeDirty) {
-        const { error } = await client
-          .from("profiles")
-          .update({ locale: prefs.locale })
-          .eq("user_id", data.user.id);
-        if (!error) prefs.markLocaleSynced();
+      // An unsaved change made on this device wins (clock-free); otherwise the account's language
+      // applies. Read the store now, not the snapshot from before the fetch.
+      const now = usePrefs.getState();
+      if (now.localeDirty) {
+        const pick = now.locale;
+        const { error } = await client.from("profiles").update({ locale: pick }).eq("user_id", data.user.id);
+        if (!error) usePrefs.getState().markLocaleSynced(pick);
       } else if (isLocale(profile.locale)) {
-        prefs.applyLocale(profile.locale);
+        now.applyLocale(profile.locale);
       }
-      if (typeof profile.sound_on === "boolean") prefs.setSoundOn(profile.sound_on);
+      if (typeof profile.sound_on === "boolean") now.setSoundOn(profile.sound_on);
     })();
     return () => {
       cancelled = true;
