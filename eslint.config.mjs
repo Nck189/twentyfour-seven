@@ -7,7 +7,8 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
-    // jsx-a11y plugin is registered by eslint-config-next; enable its strict rule set.
+    // jsx-a11y plugin is registered by eslint-config-next (for these files); enable its strict rule set.
+    files: ["**/*.{js,jsx,mjs,ts,tsx}"],
     rules: {
       ...jsxA11y.flatConfigs.strict.rules,
       "no-console": "error",
@@ -18,6 +19,11 @@ const eslintConfig = defineConfig([
   {
     files: ["scripts/**", "tests/**"],
     rules: { "no-console": "off" },
+  },
+  {
+    // The playtest kit is plain Node (CommonJS) so players' scripts can require() it.
+    files: ["tests/playtest/**/*.cjs"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
   },
   globalIgnores([
     ".next/**",
