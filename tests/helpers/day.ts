@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { addDays, localDate, localParts } from "@/lib/time";
 
 /**
@@ -9,4 +10,20 @@ export function wakeDay(wakeMin = 10 * 60, tz = "Asia/Bangkok"): string {
   const p = localParts(now, tz);
   const cal = localDate(now, tz);
   return p.hour * 60 + p.minute < wakeMin ? addDays(cal, -1) : cal;
+}
+
+/**
+ * During Down Time the Night ritual opens by itself over Today (by design, SPEC §4.4). Tests that
+ * use Today for something else close it first, so they pass at any hour CI happens to run.
+ */
+export async function dismissNightOffer(page: Page) {
+  const ritual = page.getByRole("dialog", { name: "Night ritual" });
+  await ritual.waitFor({ state: "visible", timeout: 2_000 }).catch(() => {});
+  if (await ritual.isVisible()) await ritual.getByRole("button", { name: "Close", exact: true }).click();
+}
+
+/** Opens Today and gets the Night ritual's own offer out of the way (see dismissNightOffer). */
+export async function gotoToday(page: Page) {
+  await page.goto("/today");
+  await dismissNightOffer(page);
 }

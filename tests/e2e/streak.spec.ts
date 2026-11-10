@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import { gameState, rest, setAllTemplates, userIdFor } from "../helpers/db";
+import { dismissNightOffer, gotoToday } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
 import { seasonOf } from "@/content/seasons";
 import { addDays, localDate, zonedInstant } from "@/lib/time";
@@ -60,7 +61,7 @@ test("CJ-M9-1 seven good days: streak 7, +5 tickets, a scarecrow, and the 7-day 
   test.slow();
   const id = await setup(page);
   await goodDays(id, 7);
-  await page.goto("/today");
+  await gotoToday(page);
   // The 7 days end yesterday (by wake-day, whatever the clock): streak 7 and one scarecrow held.
   const chip = page.getByRole("button", { name: "Streak: 7 days" });
   await expect(chip).toBeVisible({ timeout: 15_000 });
@@ -80,6 +81,7 @@ test("CJ-M9-1 seven good days: streak 7, +5 tickets, a scarecrow, and the 7-day 
   expect(animals).toHaveLength(1);
   // Settling again pays nothing more.
   await page.reload();
+  await dismissNightOffer(page);
   await expect(page.getByRole("button", { name: "Streak: 7 days" })).toBeVisible({ timeout: 15_000 });
   expect((await gameState(id)).tickets).toBe(g.tickets);
 });
