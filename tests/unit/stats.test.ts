@@ -180,6 +180,7 @@ describe("stats window (R-M10-1: no days before the account existed)", () => {
 describe("usedBlocks (R-M10-7)", () => {
   it("leaves out blocks never checked in during the window", () => {
     const d = day("2026-11-09", { focus: log("2026-11-09") });
+    expect(usedBlocks([d])).toEqual(["focus"]);
     const h = heatmap([d]);
     expect(h.sleep[1]).toEqual({ success: 0, judged: 0 });
     expect(h.focus[1]).toEqual({ success: 1, judged: 1 });
