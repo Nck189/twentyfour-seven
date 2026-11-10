@@ -163,7 +163,7 @@ export function ExerciseCard({ animals }: { animals: ReturnType<typeof useAnimal
           {t("ring", { done, goal: s.weeklyGoal })}
         </p>
       </div>
-      <Button variant="secondary" onClick={() => setOpen(true)}>
+      <Button variant="secondary" className="shrink-0" onClick={() => setOpen(true)}>
         {t("log")}
       </Button>
       {open && (

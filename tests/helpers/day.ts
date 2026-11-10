@@ -27,3 +27,13 @@ export async function gotoToday(page: Page) {
   await page.goto("/today");
   await dismissNightOffer(page);
 }
+
+/**
+ * signIn lands on Today, which settles the streak and claims setup rewards on load. A test that
+ * then seeds days or templates must let that first load finish and leave, or the load can run
+ * after the seed and use it up there (the streak's "7 days in a row", a sleep-times reward).
+ */
+export async function leaveAfterSignIn(page: Page) {
+  await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
+  await page.goto("about:blank");
+}

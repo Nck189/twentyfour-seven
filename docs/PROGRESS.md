@@ -1,8 +1,14 @@
 # PROGRESS — 24/7
 
-## Now (2026-11-03 evening)
-- ✅ M7 merged (PR #7). **Minnie: run `npx supabase db push --remote` on the Mac** if not done yet (M7 migrations), and again after M8 merges.
-- 🔨 M8 (exercise + animals) on branch `claude/practical-cannon-a70ubq` → PR; G7 review next. Plan: (1) content + pure rules ✅ (2) server RPCs ✅ (3) art ✅ (4) UI + E2E ✅ → G7 → report.
+## Now (2026-11-10)
+- ✅ M9 merged (PR #9). Minnie ran `npx supabase db push --remote` for M9 (one migration).
+- 🔨 **PR #10**, branch `claude/practical-cannon-a70ubq`: the streak-milestone follow-up plus all of **M10** (Stats, weekly review, first-time tips) plus test robustness fixes. G7 re-review fixes are pushed, and re-review 2 is next.
+- 🖼️ **PR #11**: Mac visual baselines for M6–M9 (Minnie recorded them).
+- ⛔ **CI is blocked.** GitHub Actions minutes look used up: jobs fail in about 3 s with no runner. Minnie has to check billing or usage, then pick one: wait for the reset, set a small budget, or make the repo public. Nothing merges until CI is green.
+- ❓ **Open question for Minnie (since M3):** Sleep has no check-in on Today, but Day OEE counts all 7 blocks. A day without a Sleep check-in therefore tops out around 73%, below the 80% a Perfect day needs. Proposal: the Night ritual's last step "Going to bed" starts Sleep. The alternative is to leave Sleep out of Day OEE, which changes TS and SQL together.
+- Next after the merge:
+  - the v1 playtest pilot (docs/PLAYTEST_PLAN.md: 4 personas × 7 days, from setup);
+  - M11.
 
 ## ➡️ HANDOFF — read this first (any session: cloud or Minnie's Mac terminal)
 Minnie is asleep (from 2026-11-03 ~02:00 Bangkok). The build moved between a cloud session and her Mac; whichever session runs now continues from here.

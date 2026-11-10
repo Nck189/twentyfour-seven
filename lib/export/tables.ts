@@ -21,6 +21,7 @@ export const EXPORT_TABLES = [
   "unlock_grants",
   "wake_snapshots",
   "day_results",
+  "weekly_reviews",
 ] as const;
 export type ExportTable = (typeof EXPORT_TABLES)[number];
 
@@ -54,4 +55,5 @@ export const EXPORT_ORDER: Record<ExportTable, string[]> = {
   unlock_grants: ["unlock_id"],
   wake_snapshots: ["date"],
   day_results: ["date"],
+  weekly_reviews: ["week_start"],
 };

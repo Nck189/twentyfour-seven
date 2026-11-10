@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTipsStore } from "@/lib/tips/useTips";
 import { useTranslations } from "next-intl";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { AppMark } from "@/components/art/AppMark";
 import { useStatsRevealed } from "@/lib/unlocks/useUnlocks";
 import { NAV_ITEMS } from "./nav";
@@ -18,6 +19,9 @@ export function AppShell({ children, side }: { children: ReactNode; side: ReactN
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   // Feature reveal (SPEC §8.8b): Stats appears once there are a few days to show.
   const statsShown = useStatsRevealed();
+  // First-time tips: at most one per screen visit, so a new screen may show the next one.
+  const newVisit = useTipsStore((s) => s.newVisit);
+  useEffect(() => newVisit(), [pathname, newVisit]);
   const items = NAV_ITEMS.filter((i) => i.key !== "stats" || statsShown || isActive(i.href));
 
   return (

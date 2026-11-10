@@ -18,4 +18,12 @@ describe("streak SQL mirrors the content", () => {
   it("Day OEE uses the same on-time tolerance", () => {
     expect(sql).toContain(`<= ${ON_TIME_MIN * 60} then`);
   });
+  it("milestones pay once per account, then every 30 days (latest settle_days, R-M9-6)", () => {
+    const latest = readFileSync("supabase/migrations/20261109000000_streak_milestones.sql", "utf8");
+    const ms = Object.keys(R.milestones).join(", ");
+    expect(latest).toContain(`v_streak in (${ms}) and v_streak > v_best`);
+    expect(latest).toContain(`v_streak > 30 and v_streak % ${R.everyDays} = 0`);
+    expect(latest).toContain(`_grant_once(uid, v_reason, d, ${R.everyTickets})`);
+    expect(latest.indexOf("v_reason := case")).toBeLessThan(latest.indexOf("v_best := greatest"));
+  });
 });

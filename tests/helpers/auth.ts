@@ -13,7 +13,7 @@ export function uniqueEmail(tag = "e2e") {
 export async function signIn(
   page: Page,
   email = IS_PROD_RUN ? PROD_SMOKE_EMAIL : uniqueEmail(),
-  { onboarded = true }: { onboarded?: boolean } = {},
+  { onboarded = true, tips = false }: { onboarded?: boolean; tips?: boolean } = {},
 ) {
   const res = await fetch(`${SB_URL}/auth/v1/admin/generate_link`, {
     method: "POST",
@@ -45,6 +45,18 @@ export async function signIn(
         body: JSON.stringify({ onboarding: { ...prof?.onboarding, done: true } }),
       });
     }
+  }
+  // First-time tips are off unless a test is about them (they'd add bubbles to every screen).
+  if (!tips && !IS_PROD_RUN && body.id) {
+    await fetch(`${SB_URL}/rest/v1/profiles?user_id=eq.${body.id}`, {
+      method: "PATCH",
+      headers: {
+        apikey: SB_SERVICE_KEY,
+        Authorization: `Bearer ${SB_SERVICE_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ tips_off: true }),
+    });
   }
   if (IS_PROD_RUN) {
     // The shared smoke account must start each test in English (the app applies the account's language).

@@ -1,5 +1,5 @@
-import { Placeholder } from "@/components/ui/Placeholder";
+import { StatsScreen } from "@/components/stats/StatsScreen";
 
 export default function Page() {
-  return <Placeholder section="stats" />;
+  return <StatsScreen />;
 }

@@ -24,8 +24,14 @@ export const STREAK_RULES = {
   freezeEvery: 7,
   maxFreezes: 2,
   perfectDayTickets: 1,
-  /** Streak length → tickets, granted each time a streak reaches it. */
+  /**
+   * Streak length → tickets, paid the first time the best streak reaches it (once per account,
+   * so restarting never pays them again; G7 R-M9-6).
+   */
   milestones: { 7: 5, 14: 5, 30: 5 } as Record<number, number>,
+  /** After 30: every `everyDays` days of a running streak (60, 90, …) pays `everyTickets`. */
+  everyDays: 30,
+  everyTickets: 5,
 } as const;
 
 /** Mutations (SPEC §8.3): weather from yesterday's behavior; they stack multiplicatively. */

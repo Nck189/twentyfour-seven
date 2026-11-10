@@ -129,6 +129,10 @@
     "menu": {
       "open": "More for today",
       "title": "More for today"
+    },
+    "bed": {
+      "title": "Going to bed",
+      "hint": "Tap Start when you lie down. On time = within 10 min of your bedtime."
     }
   },
   "plan": {
@@ -315,8 +319,113 @@
   },
   "stats": {
     "title": "Stats",
-    "placeholder": "Day OEE, control charts and more.",
-    "comingSoon": "Stats are coming soon."
+    "placeholder": "Your day score, wake-up times and more.",
+    "comingSoon": "Stats are coming soon.",
+    "subtitle": "From your check-ins.",
+    "error": "Couldn't load your stats.",
+    "notEnough": "Not enough days yet. Keep checking in and this fills up.",
+    "streak": "Streak calendar",
+    "review": {
+      "title": "Weekly review",
+      "intro": "Sunday night: a quick look back, then one Keep, one Problem, one Try.",
+      "minimum": "Minimum days",
+      "perfect": "Perfect days",
+      "best": "Best: {block}",
+      "worst": "Needs love: {block}",
+      "keep": "Keep",
+      "keepHint": "What went well and should stay?",
+      "problem": "Problem",
+      "problemHint": "What got in the way?",
+      "try": "Try",
+      "tryHint": "One small thing to try next week",
+      "save": "Save · +3 tickets",
+      "granted": "+3 tickets. Nice week review!",
+      "saved": "Saved.",
+      "doneAlready": "This week's review is done. See you next Sunday.",
+      "error": "Couldn't save. Try again.",
+      "todayLine": "Weekly review is open · +3 tickets",
+      "score": "Day score"
+    },
+    "wake": {
+      "title": "Wake-up time",
+      "weekday": "Weekdays",
+      "weekend": "Weekend",
+      "mean": "Usually {time}, give or take {sd} min",
+      "out": "{n, plural, one {# unusual morning} other {# unusual mornings}}",
+      "aria": "Wake-up times: usually {time}, {n} unusual mornings",
+      "help": "Green band = your normal range. Big dots = unusual mornings."
+    },
+    "sleep": {
+      "title": "Last 7 days: how steady?",
+      "bed": "Bedtime",
+      "wake": "Wake-up",
+      "min": "±{n} min",
+      "steady": "Your wake time is steady.",
+      "later": "Waking about {n} min later each day.",
+      "earlier": "Waking about {n} min earlier each day.",
+      "help": "Spread of the last 7 days, weekends included. Bedtime = when you finished the Night ritual.",
+      "level": {
+        "very": "Very steady",
+        "fair": "Fairly steady",
+        "loose": "All over"
+      }
+    },
+    "heat": {
+      "title": "Which days go well",
+      "none": "No data",
+      "cell": "{pct} done on time or with the checklist ({n} days)",
+      "day": {
+        "1": "Mo",
+        "2": "Tu",
+        "3": "We",
+        "4": "Th",
+        "5": "Fr",
+        "6": "Sa",
+        "7": "Su"
+      },
+      "less": "Less",
+      "more": "More done"
+    },
+    "pareto": {
+      "title": "Why blocks got missed",
+      "top": "Top reason: {reason} ({pct})",
+      "aria": "Miss reasons, most common first. Top: {reason} at {pct}",
+      "none": "No missed blocks with a reason. Nice.",
+      "times": "{n, plural, one {# time} other {# times}}"
+    },
+    "place": {
+      "title": "Home vs out",
+      "home": "At home",
+      "out": "Out",
+      "blocks": "{n, plural, one {# block} other {# blocks}}",
+      "help": "Blocks done, out of the ones you checked in."
+    },
+    "tabs": {
+      "label": "Stats view",
+      "overview": "Overview",
+      "sleep": "Sleep",
+      "days": "Days"
+    },
+    "score": {
+      "title": "Day score",
+      "period": "Last 7 days",
+      "delta": "{n} pts vs the 7 days before",
+      "aria": "Day score for each of the last 7 days: average {pct}",
+      "help": "How much of each day went to plan. Dashed line = 80%: with an on-time wake-up and the Night ritual, that is a Perfect day. Grey = no score (no data, Vacation or Sick)."
+    },
+    "tile": {
+      "wake": "Usually up at",
+      "streak": "Streak",
+      "days": "{n, plural, one {# day} other {# days}}",
+      "best": "Best: {n}",
+      "wakeWeekdays": "Weekdays: up at"
+    },
+    "highlights": {
+      "title": "Last 7 days",
+      "best": "Going well",
+      "worst": "Needs love",
+      "reason": "Missed most because"
+    }
   },
   "more": {
     "title": "More",
@@ -543,7 +652,8 @@
     "seedsPlant": "Plant {crop} in {n} empty plots",
     "seedsPlanted": "Planted in {n} plots. They grow each day their block goes well.",
     "seedsAllGrowing": "All 7 plots are growing.",
-    "seedsError": "Some plots couldn't be planted. Try again from the Farm tab."
+    "seedsError": "Some plots couldn't be planted. Try again from the Farm tab.",
+    "bedLater": "Sleep starts at {time}. When you lie down, tap Going to bed on Today."
   },
   "onboarding": {
     "cardTitle": "Make 24/7 yours in 2 minutes",
@@ -801,6 +911,25 @@
       "must_done": "{n, plural, one {# more Must task} other {# more Must tasks}} to the next unlock",
       "best_streak": "{n, plural, one {# more streak day} other {# more streak days}} to the next unlock",
       "blocks_closed": "{n, plural, one {# more block} other {# more blocks}} to the next unlock"
+    }
+  },
+  "tips": {
+    "label": "Tip",
+    "gotIt": "Got it",
+    "skipAll": "Skip all tips",
+    "title": "Tips",
+    "moreHint": "Small hints that show the first time you meet a feature.",
+    "showAgain": "Show tips again",
+    "shownAgain": "Tips are back on.",
+    "text": {
+      "wake": "Tap \"I'm up\" the moment you leave the bed. Inside your window it earns a Sunrise ticket.",
+      "first10": "This is the block you're in. Start it, then do its first 10 minutes: the smallest step in.",
+      "night": "Before bed, the Night ritual closes today and plans tomorrow. It earns a Night ticket.",
+      "exercise": "Log any workout of 10 minutes or more. It feeds your animals, and every 3rd one hatches an egg.",
+      "streak": "Your streak: an \"I'm up\" in your window plus the Night ritual keeps it going. Scarecrows save a missed day.",
+      "plan": "Plan any day here. Changes you make for one day never touch your usual kind of day.",
+      "plots": "Each plot is one block of your day. Do the block and its crop grows; skip it and weeds come.",
+      "capsule": "Tickets come from waking on time and the Night ritual. Spend them here for new seeds."
     }
   }
 }

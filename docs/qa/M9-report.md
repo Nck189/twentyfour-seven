@@ -57,9 +57,9 @@ Date: 2026-11-09 · Branch: `m9-local` → `claude/practical-cannon-a70ubq`, PR 
 ## Known issues (S3/S4 only)
 | ID | Sev | Description | Plan |
 |---|---|---|---|
-| R-M9-6 | S3 | Nothing pays after day 30, so restarting a streak can earn more milestone tickets than keeping it | Minnie: pay every 30 days, or once per account |
+| R-M9-6 | S3 | Nothing paid after day 30, so restarting a streak could earn more milestone tickets than keeping it | **Fixed after merge** (Minnie OK): 7/14/30 once per account, then every 30 days (`20261109000000_streak_milestones`) |
 | R-M9-10 | S3 | Unlocks show a static notice (SPEC asks for the reward animation); the streak egg hatches with no reveal | M10, with the weekly review chest |
-| Out-late cap | S3 | Out late can be pre-set on many future nights. Since R-M9-2 it only pauses the streak | Minnie: cap it (e.g. 1 per 7 days)? |
+| Out-late cap | S3 | Out late can be pre-set on many future nights. Since R-M9-2 it only pauses the streak | Accepted (Minnie: "เอาที่คิดว่าดีเลย"): a pause never adds to the streak |
 | R-M9-R2-1 rest | S4 | Farm and Plan still pick "today" from the live plan (display only) | pass the pinned wake to them |
 | R-M9-13, R-M9-R5, R-M9-R6, R-M9-R2-3 | S4 | >60-day gap label; items ticked after the next wake still count for OEE; sign-up freezes a 10:00 target; `-infinity` stamp shows in export | listed in DECISIONS |
 

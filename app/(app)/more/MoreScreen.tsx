@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import Link from "next/link";
 import { ExportCard } from "@/components/settings/ExportCard";
+import { TipsCard } from "@/components/settings/TipsCard";
 import { ExerciseSettings } from "@/components/settings/ExerciseSettings";
 import { ChevronIcon, MoonIcon, SunriseIcon } from "@/components/ui/Icons";
 import { Button } from "@/components/ui/Button";
@@ -129,6 +130,7 @@ export function MoreScreen() {
           ]}
         />
       </Card>
+      <TipsCard />
       <Card title={t("install")} id="install">
         <p className="text-muted">{installed ? t("installDone") : t("installSteps")}</p>
       </Card>

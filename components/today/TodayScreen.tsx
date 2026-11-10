@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { formatDayLong, formatTime } from "@/lib/format";
+import { showBedCard } from "@/lib/today/bedtime";
 import { useNow } from "@/lib/hooks/useNow";
 import { currentBlock, type TimelineBlock } from "@/lib/today/day";
 import { useToday } from "@/lib/today/useToday";
@@ -19,6 +20,8 @@ import { StreakChip, StreakNotice } from "@/components/streak/StreakChip";
 import { useStreak } from "@/lib/streak/useStreak";
 import { TodayUnlockLine, UnlockNotice } from "@/components/farm/CollectionBook";
 import { useUnlocks } from "@/lib/unlocks/useUnlocks";
+import { TodayReviewLine } from "@/components/stats/ReviewLine";
+import { Tip } from "@/components/tips/Tip";
 import { BlockCheckin } from "./BlockCheckin";
 import { Sheet } from "./BlockSheet";
 import { ModeCard } from "./ModeCard";
@@ -126,13 +129,29 @@ export function TodayScreen() {
     !today.nightDoneAtLoad &&
     !ritualDismissed &&
     !wasOffered(tl.date);
+  // First-time tips only on a calm screen: not during first-run setup, nor under the Night ritual
+  // or another sheet (a tap in there would close them, G7 R-M10-R1).
+  const tipsQuiet =
+    onboarding.ready && !onboarding.show && !ritualOpen && !autoOffer && !openKey && !menuOpen;
   // Once offered it stays until Done/Close, even when Down ends mid-flow (R-M4-4).
   if (autoOffer && !ritualOpen) setRitualOpen(true);
   // One thing at a time: what's on screen depends on the part of the day.
   const next = cur ? tl.blocks[tl.blocks.indexOf(cur) + 1] : undefined;
   const wake = today.wakeCard;
   const showWake = wake && (wake.canPress || cur?.key === "wake" || cur?.key === "sleep");
-  const showCurrent = cur && cur.key !== "sleep" && !(cur.key === "down" && !today.nightDone);
+  // After the ritual, near bedtime: "Going to bed" starts Sleep (G7 R-M10-R3-1).
+  const sleepBlock = tl.blocks.find((b) => b.key === "sleep");
+  const bedCard =
+    !!sleepBlock &&
+    showBedCard(
+      today.logFor(sleepBlock),
+      sleepBlock.start,
+      now,
+      today.nightDone,
+      cur?.key,
+      text.first10("sleep", sleepBlock.first10) !== null,
+    );
+  const showCurrent = cur && !bedCard && cur.key !== "sleep" && !(cur.key === "down" && !today.nightDone);
   const napRunning = isNapRunning();
   const warnings = allWarnings ? tl.warnings : tl.warnings.slice(0, 1);
   const warningText = (w: (typeof tl.warnings)[number]) =>
@@ -166,6 +185,8 @@ export function TodayScreen() {
         }
       />
 
+      {/* Under the header, next to the streak chip it explains. */}
+      <Tip id="streak" when={!!streak.view && tipsQuiet} />
       {onboarding.show && <WelcomeCard onLater={() => void onboarding.later()} />}
 
       {tl.mode !== "normal" && (
@@ -220,6 +241,7 @@ export function TodayScreen() {
           )}
         </section>
       )}
+      <Tip id="night" when={isNight && !today.nightDone && tipsQuiet} />
 
       {showWake && (
         <WakeCard
@@ -230,6 +252,7 @@ export function TodayScreen() {
           onPress={today.actions.pressWake}
         />
       )}
+      <Tip id="wake" when={!!showWake && tipsQuiet} />
 
       {showCurrent && (
         <section
@@ -249,6 +272,28 @@ export function TodayScreen() {
           />
         </section>
       )}
+      {bedCard && sleepBlock && (
+        <section
+          aria-label={t("bed.title")}
+          className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6"
+        >
+          <p className="text-xs font-bold tracking-wide text-primary uppercase">
+            {formatTime(sleepBlock.start, today.timezone)}
+          </p>
+          <h2 className="mb-1 text-xl font-extrabold">{t("bed.title")}</h2>
+          <p className="mb-3 text-sm text-muted">{t("bed.hint")}</p>
+          <BlockCheckin
+            key={`${sleepBlock.logDate}:sleep`}
+            block={sleepBlock}
+            log={today.logFor(sleepBlock)}
+            now={now}
+            timezone={today.timezone}
+            actions={today.actions}
+            ownFirst10={today.blockSettings.find((b) => b.key === "sleep")?.first10_options}
+          />
+        </section>
+      )}
+      <Tip id="first10" when={!!showCurrent && tipsQuiet} />
 
       {next && (
         <p className="mx-4 mb-3 text-muted lg:mx-6">
@@ -259,7 +304,9 @@ export function TodayScreen() {
       {napRunning && !menuOpen && <NapCard timezone={today.timezone} />}
 
       <ExerciseCard animals={animals} />
+      <Tip id="exercise" when={!!animals.state && tipsQuiet} />
 
+      {!onboarding.show && <TodayReviewLine />}
       {unlocks && !onboarding.show && <TodayUnlockLine state={unlocks} />}
 
       <div className="mx-4 mb-2 lg:mx-6">
@@ -307,6 +354,8 @@ export function TodayScreen() {
           markMissed={today.actions.markMissed}
           closeDone={(b) => today.actions.close(b, new Date())}
           complete={today.actions.completeNightRitual}
+          goToBed={today.actions.goToBed}
+          timezone={today.timezone}
           onClose={() => {
             markOffered(tl.date);
             setRitualOpen(false);

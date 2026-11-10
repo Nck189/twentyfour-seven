@@ -188,8 +188,16 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 > - streak calendar
 >
 > Weekly review on Sunday night: summary + KPT + 3 tickets. (The +3 grant moved here from M7; reason `weekly_review` already exists in `ticket_grants`.) Use flat pastel charts consistent with the art tokens.
+>
+> **First-time tips (Minnie, 2026-11-09).** A small bubble next to a feature the first time it shows up, never a long tutorial up front:
+> - Each bubble has one small picture, 1–2 short lines, **"Got it"** and **"Skip all tips"**. A tap outside also closes it.
+> - One tip at a time, each shown once. Tips follow the feature reveals, so they never pile up.
+> - Remembered per account (not per device). More has a "Show tips again" option.
+> - Reduced motion means no bounce. Targets are ≥ 44 px. EN/TH, no emoji.
+> - About 8 tips: "I'm up", current block + first 10, Night ritual, Plan, farm plots, capsule machine (where tickets come from), streak + scarecrows, exercise + eggs.
 
 **Done when:** the numbers match a hand-checked sample week. **v1 complete — use it daily for a few days and fix papercuts.**
+Then run the playtest pilot in `docs/PLAYTEST_PLAN.md`: 4 simulated personas × 7 in-app days.
 
 ---
 
@@ -239,6 +247,13 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 ---
 
 > Growth (docs/GROWTH.md): G1/G8 onboarding presets by audience, G15 privacy promise.
+> Carried over from M8 to M10, then to here (2026-11-10):
+> - R-M9-10: the unlock reward animation plus a hatch reveal for the streak egg.
+> - G3: a retention dashboard for Minnie.
+> - G4: a weekly share card.
+
+## After M14 — Playtest (Minnie, 2026-11-09)
+Run `docs/PLAYTEST_PLAN.md` in full: 8 simulated personas × 21 in-app days on the real app (local only). It ends in a ranked change list "to make it easy, sticky and hard to quit". Present it to Minnie; build nothing from it without her OK.
 
 ## Status
 - [x] M0 — ✅ 2026-11-02 · `docs/qa/M0-report.md` · live on prod
@@ -250,4 +265,5 @@ Optional for Minnie: connect the Supabase connector in Claude chat, so chat can 
 - [ ] M6 — G1, G2, G4, G5, G7 ✅ (re-review PASS) · merged (PR #6) + migration on prod · `docs/qa/M6-report.md` · left: G3 Mac baselines · deferred S3: K-M6-1, R-M6-4..10, R-M6-R1
 - [x] M7 — ✅ merged (PR #7) · `docs/qa/M7-report.md` · left: G3 Mac baselines, G6 after db push · deferred: Perfect day / streak tickets → M9, Weekly review +3 → M10
 - [x] M8 — ✅ merged (PR #8) + migration on prod · `docs/qa/M8-report.md` · left: G3 Mac baselines · deferred: R-M8-8 (S3), G3/G4 growth items → M10
-- [ ] M9 — G1, G4, G5, G7 ✅ (re-review 2 PASS) · PR #9 · `docs/qa/M9-report.md` · left: G2 CI green on the final head, G3 Mac baselines, G6 after merge + db push · deferred: R-M9-6 (milestones after 30, Minnie), R-M9-10 (unlock reveal + streak-egg hatch → M10), R-M9-R2-1 farm/plan "today" pin, R-M9-13 / R-M9-R5 / R-M9-R6 / R-M9-R2-3 (S4), Out-late weekly cap (Minnie)
+- [x] M9 — ✅ merged (PR #9, G7 re-review 2 PASS) · `docs/qa/M9-report.md` · left: G3 Mac baselines, G6 after `db push` · follow-up: streak milestones once per account + every 30 (R-M9-6, Minnie OK) · deferred: R-M9-10 (unlock reveal + streak-egg hatch → M10), Farm/Plan "today" pin, S4s in the report
+- [ ] M10 — G1, G4, G5, G7 ✅ (re-review 2 PASS) · PR #10 · `docs/qa/M10-report.md` · left: G2 CI (blocked: Actions minutes), G3 Mac baselines, G6 after merge + `db push` · deferred to M14: R-M9-10, G3, G4 · open question: Sleep check-in / Perfect day

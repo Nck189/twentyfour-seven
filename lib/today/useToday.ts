@@ -491,6 +491,15 @@ export function useToday(now: Date) {
         setNightDone((prev) => [...prev, dayDate]);
         return data as { ticket_granted: boolean; in_time?: boolean };
       },
+      /**
+       * Goodnight = going to bed (lib/today/bedtime goodnightSleep decides whether, G7 R-M10-R3-1):
+       * starts Sleep now if it isn't, and ticks its first-10 when asked.
+       */
+      goToBed: (b: TimelineBlock, at: Date, first10: boolean) => {
+        const cur = logFor(b);
+        const patch = first10 && !cur.first10_at ? { first10_at: at.toISOString() } : {};
+        return upsertLog(b, patch, cur.started_at ? "first10_done" : "block_started", at);
+      },
       setLocation: (b: TimelineBlock, location: "home" | "out", at: Date) =>
         upsertLog(b, { location }, "location_set", at),
       pressWake: async () => {

@@ -99,3 +99,45 @@ Format: date · decision · why · how to change it
 - 2026-11-09 · G7 M9 re-review 2 (PASS, docs/qa/G7-M9-rereview-2.md):
   - **Today now uses the pressed (or frozen) wake time to decide which day it is**, like the server (R-M9-R2-1). Farm and Plan still use the live plan for their "today", which is a display-only difference; deferred.
   - **The `-infinity` stamp on pre-M9 day plans without a late night means nothing** (R-M9-R2-3, S4). Leaving it avoids an update that would fire the wake-freeze triggers for every user during the migration. It shows as `-infinity` in "Export all data".
+- 2026-11-09 · Minnie: "เอาที่คิดว่าดีเลย" on the two open M9 questions.
+  - **Out late pauses the streak**, as built (R-M9-2). There's no weekly cap: a pause never adds to the streak, so pre-set late nights only hold it still.
+  - **Streak milestones** (R-M9-6): 7, 14 and 30 pay +5 the first time the best streak reaches them, once per account. After 30, a running streak pays +5 every 30 days (60, 90, …). Breaking a streak and restarting it never pays more than keeping it. This is migration `20261109000000_streak_milestones`, which mirrors `streakMilestone` in lib/game/streak.ts.
+- 2026-11-09 · Minnie OK'd the playtest plan (`docs/PLAYTEST_PLAN.md`): a pilot after v1 (4 personas × 7 in-app days) and the full run after v2 (8 × 21). Every persona starts from zero: login, then the whole first-run setup, through the UI. Findings are proposals; nothing gets built from them without her OK.
+- 2026-11-09 · Minnie: first-time tips ("pop-ups that teach each feature, skippable"). They're built as one-time bubbles beside each feature the first time it appears (just in time), not a front-loaded tutorial. One at a time, "Got it" or "Skip all tips", remembered per account, with "Show tips again" in More. Built in M10 so the v1 playtest pilot can judge them.
+- 2026-11-10 · M10 build notes:
+  - **Weekly review.** It opens on the week's Sunday (by wake-day) and stays open through the Monday after, as a grace day for people who do it the next morning. It pays +3 once per week, in the same ledger as the other tickets, and all three of Keep / Problem / Try are required. It can be edited while open, with no extra pay. Today shows a quiet line while it's open.
+  - **Stats.** Covers the last 28 finished days. Wake chart = I-MR with σ from MR̄/1.128 (±3σ), split weekday/weekend as SPEC asks. Bedtime = when Sleep was started. A block that was never checked in counts as missed in the heatmap.
+  - **First-time tips.** Existing accounts start with every tip marked seen, since they already know the app; "Show tips again" in More brings them back. E2E tests keep tips off unless a test is about them.
+- 2026-11-10 · G7 M10 fixes:
+  - **Stats start at the account's first wake-day** (R-M10-1), with the same rule as the streak settle.
+  - **Bedtime = the in-time Night ritual.** Only blocks checked in at least once are judged (R-M10-7).
+  - **The weekly review only opens for a week the account existed from Thursday on** (R-M10-6).
+  - **Tips:**
+    - wait until onboarding has loaded;
+    - close on a tap outside;
+    - write the review event only once per week.
+  - **Deferred to M14 Polish:**
+    - R-M9-10: the unlock reward animation and the streak-egg hatch reveal.
+    - G3: retention dashboard.
+    - G4: weekly share card.
+    - These belong with the polish pass and the v1 playtest's findings.
+  - **Flagged to Minnie, pre-existing:**
+    - Sleep has no check-in on Today; only the full-day list offers one.
+    - Day OEE counts all 7 blocks, so a day without a Sleep check-in tops out near 73%. That makes the 80% Perfect day nearly unreachable unless Sleep is started from the day list.
+    - Proposal: start Sleep from the Night ritual's last step, or leave Sleep out of Day OEE. Server and TS change together.
+- 2026-11-10 · G7 M10 re-review fixes, as rules:
+  - **Sign-up day is the UTC date of `created_at`.** It decides which weeks get a review. The profile timezone is client-editable; UTC isn't. Side effect: the Thursday cut-off moves by the user's UTC offset, up to a day.
+  - **Clients may UPDATE only** display_name, timezone, locale, sound_on, onboarding, tips_seen and tips_off on `profiles`.
+  - **First-time tips:**
+    - They show only on a calm screen: not during setup, and not under the Night ritual, a block sheet or the menu.
+    - A *click* outside closes one; a scroll doesn't.
+    - Dismissals log `tip_dismissed`, `tips_skipped` and `tips_reset` events, for the playtest's skip rate.
+- 2026-11-10 · Minnie: Stats felt busy and full of jargon ("like IG insights, no OEE"). Redesign:
+  - **Three tabs** instead of one long page: Overview (Day score for the last 7 days with the change vs the 7 days before, a 7-bar strip, "usually up at" and streak tiles, three highlight rows), Sleep (wake-up chart, how steady), Days (streak calendar, which days go well, why blocks got missed, home vs out).
+  - **Plain words everywhere.** "Day OEE" is now "Day score / คะแนนวัน", the name the streak rules already used. The math is unchanged (still A × P × Q, I-MR, Pareto); only the presentation is.
+  - **Wake chart** shows the ±3σ limits as a soft "normal range" band on whole-hour ticks, with later mornings lower. **Pareto** is plain bars with counts, no cumulative line. **Regularity** shows a word (very steady / fairly steady / all over: ±15 / ±30 / more) above the ±min.
+- 2026-11-10 · Minnie OK'd the Sleep fix ("เอาที่คิดว่าดีเลย"): **Goodnight = going to bed.** Finishing the Night ritual starts tonight's Sleep block live and ticks its first-10, and the Goodnight checkbox now shows Sleep's own first-10 text (default "Alarm set + phone out of reach"). If Sleep's first-10 is turned off, only the start is logged. An existing start, a miss reason or a first-10 is never overwritten.
+  - Why: Sleep had no check-in on Today, so Day score topped out near 73% and a Perfect day (80%) was nearly unreachable.
+  - On-time stays ±10 min, as for every block, and the server still stamps the time. Goodnight near bedtime makes Sleep a full success. An early Goodnight (say at the start of Down Time) logs Sleep as done but not on time, which still lets a day reach about 86%. Early is deliberately not counted as on time: Goodnight at 21:30 followed by phone until 01:00 shouldn't count as good sleep.
+  - Client-side, through the same queued check-in path as every other block, so no migration is needed.
+- 2026-11-10 · The check-in guard's "planned start belongs to this wake-day" window is now midnight −6 h … +48 h (was +36 h). A wake-day runs wake → next wake, so a 23:59 wake puts that day's blocks up to 48 h after its midnight. CI caught the old bound when Goodnight's Sleep start read as a backfill in a test whose wake was late in the evening. Integration test first, then the migration `20261110010000_block_logs_day_window`.

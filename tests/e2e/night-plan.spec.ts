@@ -64,7 +64,7 @@ test("CJ-07 night ritual end to end: open blocks closed with reasons, tomorrow p
   await sheet.getByRole("button", { name: "Next" }).click();
 
   // Goodnight.
-  await sheet.getByRole("checkbox", { name: "Alarm set + phone away" }).click();
+  await sheet.getByRole("checkbox", { name: "Alarm set + phone out of reach" }).click();
   await sheet.getByRole("button", { name: "Goodnight" }).click();
   await expect(sheet.getByText("+1 Night ticket. Sleep well.")).toBeVisible();
   expect(Date.now() - t0).toBeLessThan(120_000);
@@ -73,6 +73,9 @@ test("CJ-07 night ritual end to end: open blocks closed with reasons, tomorrow p
   const logs = await blockLogs(id);
   expect(logs.filter((l) => l.miss_reason)).toHaveLength(5);
   expect(logs.find((l) => l.block === "work")!.miss_reason).toBe("interruption");
+  // Goodnight in Down Time is well before bedtime: Sleep is left for "Going to bed" (R-M10-R3-1).
+  await expect(sheet.getByText(/^Sleep starts at \d/)).toBeVisible();
+  expect((await blockLogs(id)).find((l) => l.block === "sleep")?.started_at ?? null).toBeNull();
   const plans = await dayPlans(id);
   const tomorrow = plans.find((p) => p.bedtime_override);
   expect(tomorrow).toBeTruthy();
@@ -255,7 +258,7 @@ test("R-M4-5: Goodnight waits until tomorrow's plan is saved (offline edit isn't
   await page.route("**/rest/v1/day_plans**", offline);
   await sheet.getByRole("button", { name: "15 min later" }).click();
   await sheet.getByRole("button", { name: "Next" }).click();
-  await sheet.getByRole("checkbox", { name: "Alarm set + phone away" }).click();
+  await sheet.getByRole("checkbox", { name: "Alarm set + phone out of reach" }).click();
   await sheet.getByRole("button", { name: "Goodnight" }).click();
   await expect(sheet.getByRole("alert")).toContainText("Tomorrow's plan isn't saved yet");
   expect((await gameState(id)).tickets).toBe(0);
@@ -265,4 +268,31 @@ test("R-M4-5: Goodnight waits until tomorrow's plan is saved (offline edit isn't
   await sheet.getByRole("button", { name: "Goodnight" }).click();
   await expect(sheet.getByText("+1 Night ticket. Sleep well.")).toBeVisible();
   await expect.poll(async () => (await dayPlans(id)).some((r) => r.bedtime_override)).toBe(true);
+});
+
+test("Going to bed: after the ritual, near bedtime, Today starts Sleep live with its first-10", async ({
+  page,
+}) => {
+  const id = await newUserOn(page);
+  // 15 min before tonight's Sleep (default day: Down starts 900 min after the wake, Sleep at 990).
+  await setWakeMinutesAgo(id, 975);
+  const day = localDate(new Date(Date.now() - 975 * 60_000), "Asia/Bangkok");
+  await rest("ticket_grants", {
+    method: "POST",
+    body: JSON.stringify({ user_id: id, reason: "night", ref_date: day, amount: 1 }),
+  });
+  await page.goto("/today");
+  const card = page.getByRole("region", { name: "Going to bed" });
+  // Today loads several tables first; slow WebKit runners took > 5 s.
+  await expect(card).toBeVisible({ timeout: 15_000 });
+  await expectNoSeriousA11y(page);
+  await expectTouchTargets(page);
+  await card.getByRole("button", { name: "Start" }).click();
+  await card.getByRole("checkbox", { name: "Alarm set + phone out of reach" }).click();
+  await expect
+    .poll(async () => {
+      const sl = (await blockLogs(id)).find((l) => l.block === "sleep");
+      return sl ? { started: !!sl.started_at, first10: !!sl.first10_at, backfilled: sl.backfilled } : null;
+    })
+    .toEqual({ started: true, first10: true, backfilled: false });
 });
