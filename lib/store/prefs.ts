@@ -17,7 +17,11 @@ type PrefsState = {
   setLocale: (locale: Locale) => void;
   /** Sync from the server profile (not a user change). */
   applyLocale: (locale: Locale) => void;
-  markLocaleSynced: () => void;
+  /**
+   * The profile now holds `saved`. Only clears the unsaved mark when that's still the language
+   * on this device: a save of an older pick must not swallow a newer one (CJ-14 race).
+   */
+  markLocaleSynced: (saved: Locale) => void;
   setTheme: (theme: ThemePref) => void;
   setSoundOn: (on: boolean) => void;
   setSkipAnimations: (skip: boolean) => void;
@@ -34,7 +38,7 @@ export const usePrefs = create<PrefsState>()(
       localeDirty: false,
       setLocale: (locale) => set({ locale, localeDirty: true }),
       applyLocale: (locale) => set({ locale, localeDirty: false }),
-      markLocaleSynced: () => set({ localeDirty: false }),
+      markLocaleSynced: (saved) => set((s) => (s.locale === saved ? { localeDirty: false } : {})),
       setTheme: (theme) => set({ theme }),
       setSoundOn: (soundOn) => set({ soundOn }),
       setSkipAnimations: (skipAnimations) => set({ skipAnimations }),

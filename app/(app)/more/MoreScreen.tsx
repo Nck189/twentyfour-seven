@@ -58,7 +58,7 @@ export function MoreScreen() {
         .from("profiles")
         .update({ locale: next, onboarding })
         .eq("user_id", data.user.id);
-      if (!error && usePrefs.getState().locale === next) usePrefs.getState().markLocaleSynced();
+      if (!error) usePrefs.getState().markLocaleSynced(next);
       await logEvent("locale_changed", { locale: next });
       setup.reload();
     }
