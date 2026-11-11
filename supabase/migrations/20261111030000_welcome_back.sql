@@ -1,5 +1,5 @@
 -- Playtest R1 R3 (Minnie OK 2026-11-11): coming back is welcomed, not scolded.
--- After 2+ away days in a row (nothing logged; see _away_day), Today shows a welcome card: one
+-- After 3+ away days in a row (a skipped weekend isn't a lapse) (nothing logged; see _away_day), Today shows a welcome card: one
 -- tap claims a gift (+1 ticket, at most once a week). Then a 3-day "back on track" goal: 3 minimum
 -- days (in-window "I'm up" + Night ritual) within 5 days of the welcome pay +2 tickets, once.
 -- The client only asks; these functions decide.
@@ -87,7 +87,7 @@ begin
   return jsonb_build_object(
     'today', today,
     'away_days', coalesce(run, 0),
-    'lapsed', coalesce(run, 0) >= 2 and w is null,
+    'lapsed', coalesce(run, 0) >= 3 and w is null,
     'goal', case when w is null then null else jsonb_build_object(
       'start', w,
       'ends', w + 4,
@@ -113,7 +113,7 @@ begin
   end if;
   today := public._wake_day(uid);
   run := public._away_run(uid, today);
-  if coalesce(run, 0) < 2 or public._welcome_ref(uid, today) is not null then
+  if coalesce(run, 0) < 3 or public._welcome_ref(uid, today) is not null then
     return jsonb_build_object('granted', false);
   end if;
   return jsonb_build_object('granted', public._grant_once(uid, 'welcome_back', today, 1), 'away_days', run);

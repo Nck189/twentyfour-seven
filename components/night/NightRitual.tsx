@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useState, type JSX } from "react";
+import { useEffect, useRef, useState, type JSX, type ReactNode } from "react";
 import { PlantAll } from "@/components/farm/PlantAll";
 import { DayEditor } from "@/components/plan/DayEditor";
 import { SaveStatus } from "@/components/plan/SaveStatus";
@@ -372,7 +372,9 @@ export function NightRitual({
           />
         ))}
       </div>
-      {steps[step]}
+      {/* Within a step the sheet never shrinks: a bottom sheet that shrinks under a finger turns a
+          quick second tap (e.g. on "Today went as usual") into a tap on the backdrop (G7 S3). */}
+      <StepBox key={step}>{steps[step]}</StepBox>
       <div className="mt-4 flex justify-between gap-2">
         <Button variant="ghost" disabled={step === 0} onClick={() => setStep((s) => s - 1)}>
           {t("back")}
@@ -389,5 +391,22 @@ export function NightRitual({
         )}
       </div>
     </Sheet>
+  );
+}
+
+function StepBox({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [minH, setMinH] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setMinH((m) => Math.max(m, el.offsetHeight)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <div ref={ref} style={{ minHeight: minH || undefined }}>
+      {children}
+    </div>
   );
 }

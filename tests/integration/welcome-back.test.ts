@@ -3,7 +3,7 @@ import { addDays, zonedInstant } from "@/lib/time";
 import { admin, newUser } from "./helpers";
 
 /**
- * Playtest R1 R3 (Minnie OK 2026-11-11): coming back after ≥ 2 away days is welcomed with a gift
+ * Playtest R1 R3 (Minnie OK 2026-11-11): coming back after ≥ 3 away days (a skipped weekend isn't a lapse) is welcomed with a gift
  * (+1 ticket, once), and 3 minimum days within 5 days of it pay +2 more ("back on track").
  * Both are server-side: the client only asks.
  */
@@ -67,6 +67,9 @@ describe("welcome back (server)", () => {
     await a.logOn(addDays(a.today, -1));
     expect((await a.u.client.rpc("welcome_back_status")).data).toMatchObject({ lapsed: false });
     expect((await a.u.client.rpc("claim_welcome_back")).data).toMatchObject({ granted: false });
+    const c = await setup("wb-weekend"); // two days away, like a skipped weekend
+    await c.logOn(addDays(c.today, -3));
+    expect((await c.u.client.rpc("welcome_back_status")).data).toMatchObject({ lapsed: false, away_days: 2 });
     const b = await setup("wb-new");
     expect((await b.u.client.rpc("welcome_back_status")).data).toMatchObject({ lapsed: false });
   });
