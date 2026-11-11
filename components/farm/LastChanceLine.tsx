@@ -16,7 +16,8 @@ export function LastChanceLine() {
   const t = useTranslations("farm");
   const crops = useTranslations("crops");
   const text = useBlockText();
-  const { data } = useFarm();
+  // Read once, a little after Today's own data (no live updates: it's a reminder line).
+  const { data } = useFarm({ live: false, delayMs: 2000 });
   if (!data) return null;
   const atRisk = BLOCK_KEYS.flatMap((b) => {
     const p = data.farm.plots[b];

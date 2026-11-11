@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import { gameState, rest, setAllTemplates, userIdFor } from "../helpers/db";
-import { wakeDay } from "../helpers/day";
+import { dismissNightOffer, gotoToday, wakeDay } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
 import { addDays, zonedInstant } from "@/lib/time";
 
@@ -36,7 +36,7 @@ test("R3: back after 4 days away: Welcome back → Start today pays +1 ticket on
   });
   const before = (await gameState(id)).tickets;
 
-  await page.goto("/today");
+  await gotoToday(page);
   const card = page.getByRole("region", { name: "Welcome back" });
   await expect(card).toBeVisible();
   await expectNoSeriousA11y(page);
@@ -46,6 +46,7 @@ test("R3: back after 4 days away: Welcome back → Start today pays +1 ticket on
   await expect(page.getByRole("region", { name: "Back on track" })).toContainText("0 of 3 easy days");
   expect((await gameState(id)).tickets).toBe(before + 1);
   await page.reload();
+  await dismissNightOffer(page);
   await expect(page.getByRole("region", { name: "Welcome back" })).toHaveCount(0);
   await expect(page.getByRole("region", { name: "Back on track" })).toBeVisible();
 });

@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import { rest, setAllTemplates, setWakeMinutesAgo, userIdFor } from "../helpers/db";
-import { wakeDay, leaveAfterSignIn } from "../helpers/day";
+import { gotoToday, wakeDay, leaveAfterSignIn } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
 import { addDays, zonedInstant } from "@/lib/time";
 
@@ -121,7 +121,7 @@ test("R2: a plot one miss from dying says so, on Today and in its sheet (playtes
       }),
     });
   }
-  await page.goto("/today");
+  await gotoToday(page);
   const line = page.getByRole("link", { name: /Sunflower in Focus: one more miss/ });
   await expect(line).toBeVisible();
   await line.click();
