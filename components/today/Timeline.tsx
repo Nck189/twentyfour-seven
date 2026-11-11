@@ -8,9 +8,11 @@ import { useBlockText } from "./useBlockText";
 
 export type BlockStatus = "upcoming" | "notStarted" | "inProgress" | "done" | "missed" | "setAside";
 
-export function blockStatus(b: TimelineBlock, log: BlockLog, now: Date): BlockStatus {
+export function blockStatus(b: TimelineBlock, log: BlockLog, now: Date, credited = false): BlockStatus {
   // Closed with a miss reason (Night ritual) = didn't happen, even though it's closed.
   if (log.miss_reason) return "missed";
+  // Credited by what was done ("I'm up" in the window, the Night ritual): playtest R1 R1.
+  if (credited) return "done";
   // Set aside for today (no time for it, or planned): neither due nor missed (playtest R1 P1).
   if (log.planned_deviation && !log.started_at && !log.closed_at) return "setAside";
   if (log.closed_at) return "done";
@@ -36,6 +38,7 @@ export function Timeline({
   now,
   timezone,
   currentKey,
+  credited = [],
   onOpen,
 }: {
   timeline: TimelineData;
@@ -43,6 +46,8 @@ export function Timeline({
   now: Date;
   timezone: string;
   currentKey?: string;
+  /** Blocks credited by a lived action today (they read as done). */
+  credited?: string[];
   onOpen: (b: TimelineBlock) => void;
 }) {
   const t = useTranslations("today");
@@ -53,7 +58,7 @@ export function Timeline({
     <ol className="mx-4 mb-3 flex flex-col gap-2 lg:mx-6" aria-label={t("title")}>
       {timeline.blocks.map((b) => {
         const log = logFor(b);
-        const status = blockStatus(b, log, now);
+        const status = blockStatus(b, log, now, credited.includes(b.key));
         const isCurrent = b.key === currentKey;
         const progress = isCurrent
           ? (now.getTime() - b.start.getTime()) / Math.max(1, b.end.getTime() - b.start.getTime())

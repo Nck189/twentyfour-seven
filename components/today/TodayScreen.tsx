@@ -329,6 +329,12 @@ export function TodayScreen() {
           now={now}
           timezone={today.timezone}
           currentKey={cur?.key}
+          credited={[
+            ...(wake?.event?.in_window && !wake.event.backfilled && wake.event.date === tl.date
+              ? ["wake"]
+              : []),
+            ...(today.nightDone ? ["down"] : []),
+          ]}
           onOpen={(b) => setOpenKey(b.key)}
         />
       )}

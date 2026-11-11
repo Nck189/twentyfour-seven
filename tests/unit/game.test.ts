@@ -324,7 +324,10 @@ describe("a seeded week produces the right farm (M6 done-when)", () => {
     return ds.map((d, i) => {
       const p = perfect(d, { exercised: i % 2 === 0 });
       if (i === 1) p.logs.free = undefined; // Tue: free missed (lettuce was ready Mon: safe)
-      if (i >= 2 && i <= 5) p.logs.down = undefined; // Wed–Sat: down skipped (Thu is excused)
+      // Wed–Sat: down skipped (Thu is excused). Tagged with a reason in the ritual: the ritual
+      // itself would otherwise credit Down Time (playtest R1 R1).
+      if (i >= 2 && i <= 5)
+        p.logs.down = late(d, { started_at: null, first10_at: null, miss_reason: "phone" });
       if (i === 3) p.mode = "sick"; // Thu sick: excused, streak paused
       return p;
     });
@@ -435,5 +438,24 @@ describe("a planned late night is a planned deviation (SPEC §3, §8.4; G7 R-M6-
       exercise: [],
     });
     expect(f.map((d) => d.excused ?? [])).toEqual([[], ["free"], []]);
+  });
+});
+
+describe("lived actions are credited (playtest R1 R1, Minnie OK 2026-11-11)", () => {
+  const d = "2026-11-10";
+  it("an in-window 'I'm up' is Wake's success; the Night ritual in time is Down's", () => {
+    const f = day(d, {}, { wakeInWindow: true, nightRitualDone: true });
+    expect(blockResult(f, "wake")).toBe("success");
+    expect(blockResult(f, "down")).toBe("success");
+    // Without them, untouched blocks are missed as before.
+    const none = day(d, {});
+    expect(blockResult(none, "wake")).toBe("miss");
+    expect(blockResult(none, "down")).toBe("miss");
+    // A Sick/Vacation day stays excused.
+    expect(blockResult(day(d, {}, { mode: "sick", wakeInWindow: true }), "wake")).toBe("excused");
+  });
+  it("Day score counts them as on-time starts", () => {
+    const o = dayOee(day(d, {}, { wakeInWindow: true, nightRitualDone: true }))!;
+    expect(o.availability).toBeCloseTo(2 / 7);
   });
 });

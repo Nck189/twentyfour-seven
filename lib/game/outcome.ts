@@ -73,11 +73,21 @@ function succeeded(log: GameLog): boolean {
   return startedOnTime(log) || (rate !== null && rate >= SUCCESS_CHECKLIST_RATE);
 }
 
+/**
+ * Lived actions that count as a block's on-time start (playtest R1, Minnie 2026-11-11): an
+ * in-window "I'm up" is Wake's, the Night ritual done in time is Down Time's. (Sleep is started
+ * by Goodnight / "Going to bed" itself.) Mirrored in SQL (`_plot_ripe`, `_day_oee`).
+ */
+export function credited(day: DayFacts, block: BlockKey): boolean {
+  return (block === "wake" && day.wakeInWindow) || (block === "down" && day.nightRitualDone);
+}
+
 export function blockResult(day: DayFacts, block: BlockKey): BlockResult {
   const log = day.logs[block];
   if (day.mode !== "normal") return "excused";
   if (log?.planned_deviation) return "excused";
   if (log?.miss_reason) return day.excused?.includes(block) ? "excused" : "miss";
+  if (credited(day, block)) return "success";
   if (log?.backfilled) return "backfilled";
   if (log && succeeded(log)) return "success";
   if (day.open?.includes(block)) return "open";
@@ -113,8 +123,9 @@ export function dayOee(day: DayFacts): {
   let itemsPlanned = 0;
   for (const b of planned) {
     const log = day.logs[b];
+    if (credited(day, b) && !log?.miss_reason) onTime++;
+    else if (log && startedOnTime(log)) onTime++;
     if (!log) continue;
-    if (startedOnTime(log)) onTime++;
     if (first10Done(log) && !day.noFirst10?.includes(b)) first10++;
     if (log.items_planned > 0) {
       itemsPlanned += log.items_planned;

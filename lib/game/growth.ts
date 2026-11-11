@@ -84,10 +84,11 @@ export function simulatePlot(p: Planting, days: readonly DayFacts[]): PlotView {
       missStreak = 0;
       if (!weeds) {
         growthDays++;
-        const log = day.logs[p.slot]!;
+        // A credited block (an in-window "I'm up", the Night ritual) may have no log of its own.
+        const log = day.logs[p.slot];
         record.days++;
-        if (first10Done(log)) record.first10Days++;
-        const rate = checklistRate(log);
+        if (log && first10Done(log)) record.first10Days++;
+        const rate = log ? checklistRate(log) : null;
         if (rate !== null) record.checklistRates.push(rate);
         for (const m of todayWeather) mutations.add(m);
         if (growthDays >= crop.growDays) {
