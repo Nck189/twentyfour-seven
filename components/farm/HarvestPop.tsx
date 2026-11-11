@@ -21,10 +21,13 @@ const BITS = [0, 45, 90, 135, 180, 225, 270, 315];
 export function HarvestPop({
   cropId,
   quality,
+  value,
   onDone,
 }: {
   cropId: CropId;
   quality: Quality;
+  /** What it sells for at the market (economy v2), when known. */
+  value?: number;
   onDone: () => void;
 }) {
   const reduce = useReducedMotion();
@@ -101,6 +104,16 @@ export function HarvestPop({
         >
           {t("harvested", { crop })}
         </motion.p>
+        {value !== undefined && (
+          <motion.p
+            className="text-sm font-bold text-muted"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.25 }}
+          >
+            {t("harvestValue", { n: value })}
+          </motion.p>
+        )}
       </motion.button>
     </AnimatePresence>
   );

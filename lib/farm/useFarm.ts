@@ -179,10 +179,13 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
   );
 
   const harvest = useCallback(
-    async (slot: BlockKey) => {
-      const { error } = await client.rpc("harvest_plot", { p_slot: slot });
-      if (!error) setReload((r) => r + 1);
-      return !error;
+    /** The produce item the server stored (its quality and weather), or null on failure. */
+    async (slot: BlockKey): Promise<string | null> => {
+      const { data, error } = await client.rpc("harvest_plot", { p_slot: slot });
+      if (error) return null;
+      setReload((r) => r + 1);
+      const r = data as { item?: string; crop: string };
+      return r.item ?? `crop:${r.crop}`; // before the economy migration: no item in the reply
     },
     [client],
   );

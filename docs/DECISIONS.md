@@ -167,3 +167,9 @@ Format: date · decision · why · how to change it
   - A rule-based "director" (pure `lib/game/director.ts`) decides which story beat fires: at most one a day, only at calm moments (opening the Farm, or after Goodnight), never at wake or Down Time. The server records which beats were seen, plus any reward.
   - Scripts live in `content/story.ts` (EN/TH). Cutscenes are 3–5 flat SVG panels, 10–20 s, and can always be skipped.
   - The cat also voices the welcome-back card and the M11 pushes.
+- 2026-11-12 · Economy v2 details (Minnie OK'd the plan on 2026-11-11), my calls:
+  - **Quality is judged by the server at harvest.** It replays the planting with the same rules as `simulatePlot`, and a parity test runs 40 random weeks. Produce is stored with its quality and weather, so prices can't be faked from the client. Older produce sells as normal quality.
+  - **The seed shop sells uncommon (30) and rare (80) seeds,** 3 a day. Every common is already a free starter. Epic and above stay capsule-only, so capsules stay special.
+  - **Weather counts at most ×4 at the market.** Stacked mutations can reach ×90, which would break the economy.
+  - **Upgrades are cosmetic or economic only:** the stall raises sell prices, the barn adds daily orders, and the house grows the farmhouse art. None of them touch habit rules.
+  - **The reward jar hint shows once per browser,** remembered in localStorage. It's a convenience, not data.

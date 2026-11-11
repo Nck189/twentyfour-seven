@@ -157,7 +157,7 @@ export function FarmPreview() {
         }}
         status="ready"
         plant={async () => true}
-        harvest={async () => true}
+        harvest={async () => "crop:radish:normal:100"}
         buyDecor={async () => true}
         gacha={SAMPLE_GACHA}
         animals={animals as never}

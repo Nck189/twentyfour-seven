@@ -256,7 +256,8 @@
     "onlyThisMonth": "This month",
     "lastChance": "One more missed {block} and it dies. Do {block} today, or mark it done in the Night ritual, to save it.",
     "lastChanceToday": "{crop} in {block}: one more miss and it dies",
-    "house": "Farmhouse, level {n}"
+    "house": "Farmhouse, level {n}",
+    "harvestValue": "Sells for {n} coins at the market"
   },
   "crops": {
     "radish": "Radish",
