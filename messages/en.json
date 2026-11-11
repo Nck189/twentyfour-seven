@@ -600,7 +600,8 @@
     "more": "More: project, deadline, steps",
     "titleLabel": "Task",
     "earlier": "From earlier days",
-    "loadError": "Couldn't load your tasks."
+    "loadError": "Couldn't load your tasks.",
+    "markDone": "Mark task finished"
   },
   "errors": {
     "notFoundTitle": "Page not found",

@@ -140,11 +140,11 @@ test("finishing a task grants coins once (server-side)", async ({ page }) => {
   await page.goto("/plan");
   await page.getByRole("button", { name: "Edit Pay rent" }).click();
   const sheet = page.getByRole("dialog", { name: "Pay rent" });
-  await sheet.getByRole("button", { name: "Done", exact: true }).click();
+  await sheet.getByRole("button", { name: "Mark task finished" }).click();
   await expect(sheet.getByText("+20 coins")).toBeVisible();
   expect((await gameState(id)).coins).toBe(20);
   await sheet.getByRole("button", { name: "Not done yet" }).click();
-  await sheet.getByRole("button", { name: "Done", exact: true }).click();
+  await sheet.getByRole("button", { name: "Mark task finished" }).click();
   await expect(sheet.getByText("Done again — coins only count once")).toBeVisible();
   expect((await gameState(id)).coins).toBe(20);
 });

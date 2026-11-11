@@ -7,7 +7,7 @@ import { DEFAULT_TAGS } from "@/content/defaults";
 import { CheckRow } from "@/components/today/Checkbox";
 import { useBlockText } from "@/components/today/useBlockText";
 import { Button } from "@/components/ui/Button";
-import { ChevronIcon, FlagIcon, StepsIcon, TagIcon } from "@/components/ui/Icons";
+import { CheckIcon, ChevronIcon, FlagIcon, StepsIcon, TagIcon } from "@/components/ui/Icons";
 import { Segmented } from "@/components/ui/Segmented";
 import { DEFAULT_BLOCK, type BacklogItem, type Priority } from "@/lib/backlog";
 import type { ItemPatch } from "@/lib/backlog/useBacklog";
@@ -239,14 +239,18 @@ export function ItemSheet({
             {t("reopen")}
           </Button>
         ) : (
+          // Says what it does: finishing the task, not closing the sheet (playtest R1 P3: a green
+          // "เสร็จแล้ว" read as "done editing" and completed tasks by accident).
           <Button
+            variant="secondary"
             onClick={async () => {
               sfx.pop();
               const coins = await onComplete();
               if (coins !== null) setReward(coins > 0 ? t("coins", { coins }) : t("noCoins"));
             }}
           >
-            {t("done")}
+            <CheckIcon className="h-5 w-5" />
+            {t("markDone")}
           </Button>
         )}
         <Button variant="ghost" onClick={onRemove}>
