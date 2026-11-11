@@ -50,6 +50,8 @@ type Props = {
   goToBed: (b: TimelineBlock, at: Date, first10: boolean) => Promise<void>;
   timezone: string;
   onClose: () => void;
+  /** Blocks a lived action already counts as done (an in-window "I'm up" is Wake's; R1). */
+  credited?: readonly string[];
 };
 
 /**
@@ -65,6 +67,7 @@ export function NightRitual({
   goToBed,
   timezone,
   onClose,
+  credited = [],
 }: Props) {
   const t = useTranslations("night");
   const tc = useTranslations("common");
@@ -101,7 +104,10 @@ export function NightRitual({
   }, [phoneEnds]);
 
   // Blocks of today (Wake…Free) that never closed.
-  const open = timeline.blocks.filter((b) => b.key !== "down" && b.key !== "sleep" && !logFor(b).closed_at);
+  // A credited block happened (G7 R1-fixes F4): not "not done", and no shared miss reason for it.
+  const open = timeline.blocks.filter(
+    (b) => b.key !== "down" && b.key !== "sleep" && !logFor(b).closed_at && !credited.includes(b.key),
+  );
   // Started but never finished = it happened: one tap closes it as done (R-M4-3).
   const started = (b: TimelineBlock) => {
     const l = logFor(b);

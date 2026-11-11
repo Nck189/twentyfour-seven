@@ -154,6 +154,11 @@ export function TodayScreen() {
       cur?.key,
       text.first10("sleep", sleepBlock.first10) !== null,
     );
+  // Blocks a lived action counts as done (R1): the timeline labels them, the ritual skips them.
+  const creditedKeys = [
+    ...(wake?.event?.in_window && !wake.event.backfilled && wake.event.date === tl.date ? ["wake"] : []),
+    ...(today.nightDone ? ["down"] : []),
+  ];
   const showCurrent = cur && !bedCard && cur.key !== "sleep" && !(cur.key === "down" && !today.nightDone);
   const napRunning = isNapRunning();
   const warnings = allWarnings ? tl.warnings : tl.warnings.slice(0, 1);
@@ -335,12 +340,7 @@ export function TodayScreen() {
           now={now}
           timezone={today.timezone}
           currentKey={cur?.key}
-          credited={[
-            ...(wake?.event?.in_window && !wake.event.backfilled && wake.event.date === tl.date
-              ? ["wake"]
-              : []),
-            ...(today.nightDone ? ["down"] : []),
-          ]}
+          credited={creditedKeys}
           onOpen={(b) => setOpenKey(b.key)}
         />
       )}
@@ -368,6 +368,7 @@ export function TodayScreen() {
           complete={today.actions.completeNightRitual}
           goToBed={today.actions.goToBed}
           timezone={today.timezone}
+          credited={creditedKeys}
           onClose={() => {
             markOffered(tl.date);
             setRitualOpen(false);
