@@ -9,6 +9,7 @@ import { addDays, DEFAULT_TZ } from "@/lib/time";
 
 import {
   currentDayDate,
+  emptyBlocks,
   isPastBlock,
   pickWakeCard,
   timelineFor,
@@ -35,6 +36,8 @@ export type BlockLog = {
   location: "home" | "out" | null;
   backfilled: boolean;
   miss_reason: string | null;
+  /** Set aside for the day (no time for it, or planned): never judged as missed. */
+  planned_deviation?: boolean;
   updated_at?: string;
 };
 
@@ -500,6 +503,37 @@ export function useToday(now: Date) {
         const patch = first10 && !cur.first10_at ? { first10_at: at.toISOString() } : {};
         return upsertLog(b, patch, cur.started_at ? "first10_done" : "block_started", at);
       },
+      /** A block with no time today is set aside as planned, not missed (playtest R1 P1). */
+      setAside: (b: TimelineBlock) => {
+        if (!loaded) return Promise.resolve();
+        const key = `${b.logDate}:${b.key}`;
+        const cur = logsRef.current[key] ?? emptyLog(b.logDate, b.key);
+        const next: BlockLog = {
+          ...cur,
+          planned_start: cur.planned_start ?? b.start.toISOString(),
+          planned_deviation: true,
+        };
+        return mutate(
+          key,
+          next,
+          () =>
+            client
+              .from("block_logs")
+              .upsert(
+                {
+                  user_id: loaded.userId,
+                  date: b.logDate,
+                  block: b.key,
+                  planned_start: next.planned_start,
+                  planned_deviation: true,
+                },
+                { onConflict: "user_id,date,block" },
+              )
+              .select()
+              .single(),
+          ["block_set_aside", { date: b.logDate, block: b.key, reason: "no_time" }],
+        );
+      },
       setLocation: (b: TimelineBlock, location: "home" | "out", at: Date) =>
         upsertLog(b, { location }, "location_set", at),
       pressWake: async () => {
@@ -539,6 +573,18 @@ export function useToday(now: Date) {
     }),
     [client, dayDate, loaded, logFor, mutate, upsertLog],
   );
+
+  // Blocks squeezed to 0 min today are set aside once (they can't be done, so they aren't missed).
+  const setAsideSent = useRef(new Set<string>());
+  useEffect(() => {
+    if (!timeline) return;
+    for (const b of emptyBlocks(timeline)) {
+      const key = `${b.logDate}:${b.key}`;
+      if (logsRef.current[key] || setAsideSent.current.has(key)) continue;
+      setAsideSent.current.add(key);
+      void actions.setAside(b);
+    }
+  }, [timeline, actions]);
 
   return {
     status,

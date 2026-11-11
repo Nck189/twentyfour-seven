@@ -141,3 +141,21 @@ Format: date · decision · why · how to change it
   - On-time stays ±10 min, as for every block, and the server still stamps the time. Goodnight near bedtime makes Sleep a full success. An early Goodnight (say at the start of Down Time) logs Sleep as done but not on time, which still lets a day reach about 86%. Early is deliberately not counted as on time: Goodnight at 21:30 followed by phone until 01:00 shouldn't count as good sleep.
   - Client-side, through the same queued check-in path as every other block, so no migration is needed.
 - 2026-11-10 · The check-in guard's "planned start belongs to this wake-day" window is now midnight −6 h … +48 h (was +36 h). A wake-day runs wake → next wake, so a 23:59 wake puts that day's blocks up to 48 h after its midnight. CI caught the old bound when Goodnight's Sleep start read as a backfill in a test whose wake was late in the evening. Integration test first, then the migration `20261110010000_block_logs_day_window`.
+- 2026-11-11 · Minnie OK'd the playtest R1 plan ("โอเคตามนั้นเลย"). Order of work:
+  1. **Bugs P1–P9** (docs/playtest/R1/REPORT.md §8A).
+  2. **Rule changes R1, R2, R3, R4, R5, R7:**
+     - R1: the ritual is Down's start, "I'm up" is Wake's, "Going to bed" is Sleep's, and a first-10 within the block counts as a start;
+     - R2: a day with no app open is "away", and a plot warns before it dies;
+     - R3: welcome back;
+     - R4: a market for produce;
+     - R5: tasks on Today;
+     - R7: "วันนี้ทำตามปกติ" in the ritual.
+  3. **Later:** R6 (block-time edits) and R8 (odds table, animals in the scene).
+- 2026-11-11 · Minnie: coins need uses beyond decor and plot expansion, or there's no long-term reason to play. Plan, built with R4 (the market):
+  1. **A real-life reward jar:** the user sets their own rewards with a coin price and redeems them. A token economy; it makes coins worth something outside the game.
+  2. **A seed shop:** buy the crop you want, with no gacha; rarer costs more.
+  3. **Ticket exchange:** 150 coins = 1 ticket, at most 2 a week.
+  4. **Tool, barn and house upgrades in tiers,** each with a visible next goal.
+  - Animal treats and outfits, app themes and seasonal collections come in M14. Machines and upgrades come in M13 (Factory).
+  - New coin sources: market sales, daily delivery orders, and Perfect-day / streak bonuses.
+- 2026-11-11 · Minnie: most people won't bother setting up real-life rewards, so the reward jar isn't prominent. Placement is my call: a small "รางวัลของฉัน" tab inside the Farm coin shop, plus one quiet line the first time coins reach about 300. Nothing asks the user to set it up, and coins have other uses either way.

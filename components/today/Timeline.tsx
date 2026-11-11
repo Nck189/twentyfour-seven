@@ -6,11 +6,13 @@ import type { Timeline as TimelineData, TimelineBlock } from "@/lib/today/day";
 import type { BlockLog } from "@/lib/today/useToday";
 import { useBlockText } from "./useBlockText";
 
-export type BlockStatus = "upcoming" | "notStarted" | "inProgress" | "done" | "missed";
+export type BlockStatus = "upcoming" | "notStarted" | "inProgress" | "done" | "missed" | "setAside";
 
 export function blockStatus(b: TimelineBlock, log: BlockLog, now: Date): BlockStatus {
   // Closed with a miss reason (Night ritual) = didn't happen, even though it's closed.
   if (log.miss_reason) return "missed";
+  // Set aside for today (no time for it, or planned): neither due nor missed (playtest R1 P1).
+  if (log.planned_deviation && !log.started_at && !log.closed_at) return "setAside";
   if (log.closed_at) return "done";
   if (log.started_at || log.first10_at || log.items_done.length) return "inProgress";
   if (now.getTime() >= b.end.getTime()) return "missed";
@@ -24,6 +26,7 @@ const STATUS_STYLE: Record<BlockStatus, string> = {
   inProgress: "bg-primary-soft text-primary",
   done: "bg-primary text-on-primary",
   missed: "bg-accent-soft text-accent",
+  setAside: "bg-surface-2 text-muted",
 };
 
 /** Vertical timeline of the 7 blocks (wake → next wake) with a "now" line in the current block. */

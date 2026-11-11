@@ -222,6 +222,15 @@ export function timelineFor(ctx: DayContext, date: string): Timeline {
   };
 }
 
+/**
+ * Blocks that got no time today (the engine squeezed them to 0 min, e.g. Focus between a late
+ * wake and a fixed work start). They can't be done, so they're set aside as planned deviations
+ * instead of judged as missed (playtest R1 P1).
+ */
+export function emptyBlocks(t: Timeline): TimelineBlock[] {
+  return t.blocks.filter((b) => b.end.getTime() <= b.start.getTime());
+}
+
 export function currentBlock(t: Timeline, now: Date): TimelineBlock | undefined {
   return t.blocks.find((b) => b.start.getTime() <= now.getTime() && now.getTime() < b.end.getTime());
 }

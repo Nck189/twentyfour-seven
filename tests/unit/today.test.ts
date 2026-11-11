@@ -5,6 +5,7 @@ import { parseHHMM } from "@/lib/engine";
 import {
   currentBlock,
   currentDayDate,
+  emptyBlocks,
   inWakeWindow,
   isOnTime,
   isPastBlock,
@@ -376,5 +377,41 @@ describe("an early appointment pulls the wake (R3-1: the server honours it withi
     expect(hm(new Date(p.wake))).toBe("06:00");
     expect(hm(new Date(p.base))).toBe("10:00");
     expect(hm(pickWakeCard(c, at("2026-11-02", "05:30"), "2026-11-02", {})!.target)).toBe("06:00");
+  });
+});
+
+describe("a block with no time left today (playtest R1 P1)", () => {
+  it("is listed as empty, so it can be set aside instead of judged as missed", () => {
+    const blocks = DEFAULT_BLOCKS.map((b) => (b.key === "focus" ? { ...b, duration_min: 0 } : b));
+    const t = timelineFor(ctx({ blocks }), "2026-11-02");
+    expect(emptyBlocks(t).map((b) => b.key)).toEqual(["focus"]);
+    expect(emptyBlocks(timelineFor(ctx(), "2026-11-02"))).toEqual([]);
+  });
+});
+
+describe("timeline status of a set-aside block", () => {
+  it("is 'setAside', not 'missed', once its time has passed", async () => {
+    const { blockStatus } = await import("@/components/today/Timeline");
+    const t = timelineFor(ctx(), "2026-11-02");
+    const b = t.blocks[1]!;
+    const log = {
+      date: "2026-11-02",
+      block: b.key,
+      planned_start: null,
+      started_at: null,
+      first10_at: null,
+      closed_at: null,
+      items_done: [],
+      items_planned: 0,
+      mood: null,
+      energy: null,
+      location: null,
+      backfilled: false,
+      miss_reason: null,
+      planned_deviation: true,
+    };
+    const later = new Date(b.end.getTime() + 60_000);
+    expect(blockStatus(b, log, later)).toBe("setAside");
+    expect(blockStatus(b, { ...log, planned_deviation: false }, later)).toBe("missed");
   });
 });
