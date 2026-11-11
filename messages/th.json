@@ -255,7 +255,8 @@
     "seedOwned": "{crop} มี {n} เมล็ด",
     "onlyThisMonth": "เดือนนี้เท่านั้น",
     "lastChance": "พลาด{block}อีกวันเดียว ต้นนี้จะตาย ทำ{block}วันนี้ หรือกดว่าทำแล้วในรูทีนก่อนนอน เพื่อช่วยมันไว้",
-    "lastChanceToday": "{crop}ที่แปลง{block} พลาดอีกวันเดียวจะตาย"
+    "lastChanceToday": "{crop}ที่แปลง{block} พลาดอีกวันเดียวจะตาย",
+    "house": "บ้านไร่ เลเวล {n}"
   },
   "crops": {
     "radish": "แรดิช",
@@ -951,5 +952,64 @@
     "goalBody": "วันง่ายๆ {done} จาก {need} วัน (ตื่นตรงเวลา + รูทีนก่อนนอน) ภายใน 5 วัน",
     "goalClaim": "รับ +2 ตั๋ว",
     "goalGift": "+2 ตั๋ว กลับเข้าที่แล้ว"
+  },
+  "shop": {
+    "title": "ร้านค้า",
+    "coins": "{n} เหรียญ",
+    "loading": "กำลังโหลด…",
+    "loadError": "โหลดร้านไม่สำเร็จ",
+    "retry": "ลองใหม่",
+    "actionError": "ทำไม่สำเร็จ เช็กเน็ตแล้วลองใหม่อีกครั้งนะ",
+    "tab": {
+      "market": "ตลาด",
+      "shop": "ร้าน",
+      "upgrades": "อัปเกรด",
+      "rewardsShort": "รางวัล"
+    },
+    "ordersTitle": "ออเดอร์วันนี้",
+    "order": "{crop} × {n}",
+    "orderHave": "มีอยู่ {n}",
+    "deliver": "ส่ง · {coins}",
+    "delivered": "ส่งแล้ว",
+    "sellTitle": "ขายผลผลิต",
+    "shelfEmpty": "ยังไม่มีของขาย เก็บเกี่ยวผักหรือเก็บของจากสัตว์ก่อนนะ",
+    "sell": "ขาย 1",
+    "sellOne": "ขาย{item} 1 ชิ้น ได้ {coins} เหรียญ",
+    "sellAll": "ทั้งหมด",
+    "sellAllLabel": "ขาย{item}ทั้งหมด ได้ {coins} เหรียญ",
+    "seedsTitle": "เมล็ดประจำวัน",
+    "seedsHint": "เปลี่ยนทุกวัน เมล็ดหายากกว่านี้ได้จากแคปซูล",
+    "buySeed": "ซื้อเมล็ด{crop} {coins} เหรียญ",
+    "exchangeTitle": "{coins} เหรียญ → 1 ตั๋ว",
+    "exchangeLeft": "เหลือ {n} จาก {max} ครั้งในสัปดาห์นี้",
+    "exchange": "แลก",
+    "level": "เลเวล {n}",
+    "maxed": "อัปเกรดเต็มแล้ว",
+    "upgradeTo": "เลเวล {n} · {coins}",
+    "upgrade": {
+      "stall": {
+        "name": "แผงตลาด",
+        "effect": "ขายได้เพิ่ม 10% ต่อเลเวล"
+      },
+      "barn": {
+        "name": "โรงนา",
+        "effect": "ออเดอร์ต่อวันเพิ่ม 1 ต่อเลเวล"
+      },
+      "house": {
+        "name": "บ้านไร่",
+        "effect": "บ้านไร่โตขึ้นทุกเลเวล"
+      }
+    },
+    "rewardsHint": "ให้รางวัลตัวเอง: ตั้งรางวัลในชีวิตจริงแล้วเก็บเหรียญไว้แลก ไม่ตั้งก็ได้",
+    "redeem": "แลก",
+    "redeemLabel": "แลก{title} {coins} เหรียญ",
+    "remove": "ลบ",
+    "removeLabel": "ลบ{title}",
+    "rewardTitle": "รางวัล",
+    "rewardPlaceholder": "เช่น ชานมไข่มุก",
+    "rewardCost": "เหรียญ",
+    "addReward": "เพิ่มรางวัล",
+    "jarHint": "เก็บเหรียญไว้แลกรางวัลของตัวเองได้นะ ดูที่ ร้านค้า → รางวัล",
+    "jarHintClose": "โอเค"
   }
 }

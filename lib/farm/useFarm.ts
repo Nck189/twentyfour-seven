@@ -36,6 +36,8 @@ export type FarmData = {
   decor: DecorId[];
   sky: SkyPhase;
   today: string;
+  /** Farmhouse upgrade level (economy v2); 0 = no house yet. */
+  house: number;
 };
 
 /**
@@ -77,7 +79,7 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
       );
       const oldest = plantings.reduce((m, p) => (p.plantedOn < m ? p.plantedOn : m), today);
       const from = [addDays(oldest, -1), addDays(today, -FARM_HISTORY_DAYS)].sort().at(-1)!;
-      const [logs, plans, wakes, nights, ex, game, decorRows] = await Promise.all([
+      const [logs, plans, wakes, nights, ex, game, decorRows, houseRow] = await Promise.all([
         client.from("block_logs").select("*").gte("date", from),
         client.from("day_plans").select("date, mode, late_night").gte("date", from),
         client.from("wake_events").select("date, in_window, backfilled").gte("date", from),
@@ -88,6 +90,8 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
           .gte("at", `${addDays(from, -1)}T00:00:00Z`),
         client.from("game_state").select("coins").maybeSingle(),
         client.from("decor").select("item_id").order("created_at"),
+        // Optional: before the economy migration there's no table; the farm shows without a house.
+        client.from("upgrades").select("level").eq("track", "house").maybeSingle(),
       ]);
       const err =
         logs.error ?? plans.error ?? wakes.error ?? nights.error ?? ex.error ?? game.error ?? decorRows.error;
@@ -118,6 +122,7 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
           coins: (game.data?.coins as number | undefined) ?? 0,
           decor: ((decorRows.data ?? []) as { item_id: string }[]).map((d) => d.item_id).filter(isDecorId),
           today,
+          house: (houseRow.data?.level as number | undefined) ?? 0,
         },
       };
     };

@@ -27,7 +27,10 @@ import { Tip } from "@/components/tips/Tip";
 import { SeedDexSheet } from "./SeedDexSheet";
 import { sfx } from "@/lib/sound/sfx";
 import { HarvestPop } from "./HarvestPop";
-import { DECOR_ART, DecorShop } from "./DecorShop";
+import { DECOR_ART } from "./DecorShop";
+import { Shop } from "./Shop";
+import { Farmhouse } from "@/components/art/farm/Farmhouse";
+import { RewardJarHint } from "./RewardJarHint";
 import { PlotSheet } from "./PlotSheet";
 
 const LOCKED_FIELDS = 3;
@@ -166,6 +169,16 @@ export function FarmView({
         data-sky={sky}
       >
         <FarmSky phase={sky} className="absolute inset-x-0 top-0 h-28 w-full" />
+        {data.house > 0 && (
+          // Its ground line (y 40 of 48) sits on the field's top edge (pt-16 = 64px).
+          <div
+            role="img"
+            aria-label={t("house", { n: data.house })}
+            className="absolute top-[11px] right-24 z-10"
+          >
+            <Farmhouse level={data.house} className="h-16 w-16" />
+          </div>
+        )}
         <div className="relative pt-16">
           {farm.giants.map((g) => (
             <div
@@ -297,7 +310,8 @@ export function FarmView({
 
       {animals && <AnimalPen animals={animals} />}
 
-      {!compact && <DecorShop coins={data.coins} onBuy={buyDecor} season={seasonOf(data.today)} />}
+      {!compact && <RewardJarHint coins={data.coins} />}
+      {!compact && <Shop onBuyDecor={buyDecor} season={seasonOf(data.today)} onChanged={reload} />}
 
       {/* Feature reveal: the farm expansion shows after the first harvest. */}
       {!compact && (gacha?.state?.harvested ?? true) && (
