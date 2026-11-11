@@ -261,6 +261,12 @@ export function isOnTime(plannedStart: Date, startedAt: Date): boolean {
   return Math.abs(startedAt.getTime() - plannedStart.getTime()) <= ON_TIME_MIN * 60_000;
 }
 
+/** How a start compares with the plan, for its label: an early start isn't "late" (R1 P6). */
+export function startTiming(plannedStart: Date, startedAt: Date): "early" | "onTime" | "late" {
+  if (isOnTime(plannedStart, startedAt)) return "onTime";
+  return startedAt.getTime() < plannedStart.getTime() ? "early" : "late";
+}
+
 /** A block whose end has passed is logged as a backfill (no tickets or mutations). */
 export function isPastBlock(block: Pick<TimelineBlock, "end">, now: Date): boolean {
   return now.getTime() > block.end.getTime();

@@ -10,6 +10,7 @@ import {
   inWakeWindow,
   isOnTime,
   isPastBlock,
+  startTiming,
   pickWakeCard,
   hasKindOfDay,
   planFor,
@@ -435,5 +436,15 @@ describe("kinds of day offered in a picker (playtest R1 P5)", () => {
     expect(isOfferedKind(kind("b", false, [6, 7]))).toBe(true);
     expect(isOfferedKind(kind("c", false, []))).toBe(false);
     expect(isOfferedKind(kind("c", false, []), "c")).toBe(true);
+  });
+});
+
+describe("start timing labels (playtest R1 P6)", () => {
+  it("an early start is 'early', not 'late'", () => {
+    const planned = at("2026-11-02", "23:00");
+    expect(startTiming(planned, at("2026-11-02", "22:35"))).toBe("early");
+    expect(startTiming(planned, at("2026-11-02", "22:55"))).toBe("onTime");
+    expect(startTiming(planned, at("2026-11-02", "23:10"))).toBe("onTime");
+    expect(startTiming(planned, at("2026-11-02", "23:11"))).toBe("late");
   });
 });

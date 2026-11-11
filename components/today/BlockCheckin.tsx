@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Segmented } from "@/components/ui/Segmented";
 import { formatTime } from "@/lib/format";
 import { sfx } from "@/lib/sound/sfx";
-import { isOnTime, isPastBlock, type TimelineBlock } from "@/lib/today/day";
+import { startTiming, isPastBlock, type TimelineBlock } from "@/lib/today/day";
 import type { BlockLog } from "@/lib/today/useToday";
 import { CheckRow } from "./Checkbox";
 import { SwapIcon } from "@/components/ui/Icons";
@@ -102,8 +102,14 @@ export function BlockCheckin({
               // A backfill never claims "on time" (no rewards, no inflated stats).
               <span className="text-muted">{t("backfilledStart")}</span>
             ) : (
-              <span className={isOnTime(block.start, started) ? "text-primary" : "text-warn"}>
-                {isOnTime(block.start, started) ? t("onTime") : t("late")}
+              <span
+                className={
+                  { onTime: "text-primary", early: "text-muted", late: "text-warn" }[
+                    startTiming(block.start, started)
+                  ]
+                }
+              >
+                {t(startTiming(block.start, started))}
               </span>
             )}
           </span>
