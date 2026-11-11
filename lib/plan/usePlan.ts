@@ -117,7 +117,7 @@ export function usePlan() {
   useEffect(() => {
     if (!userId) return;
     const channel = client
-      .channel(`plan-${userId}`)
+      .channel(`plan-${userId}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "day_plans", filter: `user_id=eq.${userId}` },

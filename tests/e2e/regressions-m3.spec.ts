@@ -125,7 +125,8 @@ async function setHidden(page: Page, hidden: boolean) {
   }, hidden);
 }
 const isLogsRefetch = (url: string, method: string) =>
-  method === "GET" && url.includes("/rest/v1/block_logs");
+  // Today's own query (date window ≤ today); the farm line on Today reads block_logs too.
+  method === "GET" && url.includes("/rest/v1/block_logs") && url.includes("date=lte.");
 
 test("CJ-15 flake: a quick app switch doesn't refetch, and a tap right after it is saved", async ({
   page,

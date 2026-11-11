@@ -187,7 +187,7 @@ export function useToday(now: Date) {
   useEffect(() => {
     if (!userId) return;
     const channel = client
-      .channel(`today-${userId}`)
+      .channel(`today-${userId}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "block_logs", filter: `user_id=eq.${userId}` },

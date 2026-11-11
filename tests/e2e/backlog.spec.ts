@@ -130,7 +130,11 @@ test("CJ-11 drag a task onto a day (mouse)", async ({ page, isMobile }) => {
   await expect
     .poll(async () => (await backlogItems(id))[0])
     .toMatchObject({ scheduled_date: tomorrow(), block: "work", status: "scheduled" });
-  await target.click();
+  // dnd-kit swallows a click that lands right after a drop: retry until the day is selected.
+  await expect(async () => {
+    await target.click();
+    await expect(target).toHaveAttribute("aria-pressed", "true", { timeout: 1000 });
+  }).toPass();
   await expect(page.getByRole("region", { name: "Tomorrow" }).getByText("1h of 9h free")).toBeVisible();
 });
 

@@ -149,7 +149,7 @@ export function useFarm() {
   useEffect(() => {
     if (!userId) return;
     const channel = client
-      .channel(`farm-${userId}`)
+      .channel(`farm-${userId}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "plots", filter: `user_id=eq.${userId}` },

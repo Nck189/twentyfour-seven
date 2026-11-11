@@ -133,3 +133,8 @@ function isNextDay(a: string, b: string): boolean {
   const db = Date.parse(`${b}T00:00:00Z`);
   return db - da === 86_400_000;
 }
+
+/** A growing plot one more miss away from dying: the farm says so before it happens (R1 R2). */
+export function oneMissFromDeath(v: Pick<PlotView, "status" | "missStreak">): boolean {
+  return v.status === "growing" && v.missStreak === DEAD_AT_MISSES - 1;
+}

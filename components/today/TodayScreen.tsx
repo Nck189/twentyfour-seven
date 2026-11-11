@@ -19,6 +19,7 @@ import { useAnimals } from "@/lib/animals/useAnimals";
 import { StreakChip, StreakNotice } from "@/components/streak/StreakChip";
 import { useStreak } from "@/lib/streak/useStreak";
 import { TodayUnlockLine, UnlockNotice } from "@/components/farm/CollectionBook";
+import { LastChanceLine } from "@/components/farm/LastChanceLine";
 import { useUnlocks } from "@/lib/unlocks/useUnlocks";
 import { TodayReviewLine } from "@/components/stats/ReviewLine";
 import { Tip } from "@/components/tips/Tip";
@@ -309,6 +310,7 @@ export function TodayScreen() {
       <Tip id="exercise" when={!!animals.state && tipsQuiet} />
 
       {!onboarding.show && <TodayReviewLine />}
+      <LastChanceLine />
       {unlocks && !onboarding.show && <TodayUnlockLine state={unlocks} />}
 
       <div className="mx-4 mb-2 lg:mx-6">

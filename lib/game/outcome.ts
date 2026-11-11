@@ -39,6 +39,11 @@ export type DayFacts = {
   excused?: BlockKey[];
   /** Blocks set to have no first-10 that day: left out of the first-10 rate. */
   noFirst10?: BlockKey[];
+  /**
+   * A finished day with nothing logged at all (no wake, block, ritual or workout): the person was
+   * away, so the farm pauses like Vacation (playtest R1 R2, Minnie OK 2026-11-11).
+   */
+  away?: boolean;
 };
 
 /**
@@ -84,7 +89,7 @@ export function credited(day: DayFacts, block: BlockKey): boolean {
 
 export function blockResult(day: DayFacts, block: BlockKey): BlockResult {
   const log = day.logs[block];
-  if (day.mode !== "normal") return "excused";
+  if (day.mode !== "normal" || day.away) return "excused";
   if (log?.planned_deviation) return "excused";
   if (log?.miss_reason) return day.excused?.includes(block) ? "excused" : "miss";
   if (credited(day, block)) return "success";
@@ -114,7 +119,7 @@ export function dayOee(day: DayFacts): {
   quality: number;
   oee: number;
 } | null {
-  if (day.mode !== "normal") return null;
+  if (day.mode !== "normal" || day.away) return null;
   const planned = BLOCK_KEYS.filter((b) => !day.logs[b]?.planned_deviation);
   if (planned.length === 0) return null;
   let onTime = 0;

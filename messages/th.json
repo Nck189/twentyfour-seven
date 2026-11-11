@@ -252,7 +252,9 @@
     "buyItem": "ซื้อ{item} {price} เหรียญ",
     "yourSeeds": "เมล็ดของเรา",
     "seedOwned": "{crop} มี {n} เมล็ด",
-    "onlyThisMonth": "เดือนนี้เท่านั้น"
+    "onlyThisMonth": "เดือนนี้เท่านั้น",
+    "lastChance": "พลาด{block}อีกวันเดียว ต้นนี้จะตาย ทำ{block}วันนี้ หรือกดว่าทำแล้วในรูทีนก่อนนอน เพื่อช่วยมันไว้",
+    "lastChanceToday": "{crop}ที่แปลง{block} พลาดอีกวันเดียวจะตาย"
   },
   "crops": {
     "radish": "แรดิช",

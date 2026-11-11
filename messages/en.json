@@ -252,7 +252,9 @@
     "buyItem": "Buy {item} for {price} coins",
     "yourSeeds": "Your seeds",
     "seedOwned": "{crop}, {n} owned",
-    "onlyThisMonth": "This month"
+    "onlyThisMonth": "This month",
+    "lastChance": "One more missed {block} and it dies. Do {block} today, or mark it done in the Night ritual, to save it.",
+    "lastChanceToday": "{crop} in {block}: one more miss and it dies"
   },
   "crops": {
     "radish": "Radish",
