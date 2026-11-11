@@ -219,6 +219,39 @@ test("R7: 'Today went as usual' closes every open block as done (backfilled, no 
   await expectTouchTargets(page);
 });
 
+test("G7 F1: 'Today went as usual' keeps a block started live and on time live (its growth stays)", async ({
+  page,
+}) => {
+  const id = await newUserOn(page);
+  await setWakeMinutesAgo(id, DOWN_TIME_MINUTES_AFTER_WAKE);
+  const wokeAt = Date.now() - DOWN_TIME_MINUTES_AFTER_WAKE * 60_000;
+  const day = localDate(new Date(wokeAt), "Asia/Bangkok");
+  // Focus (wake + 1 h) was started live, 2 min after its planned start.
+  await rest("block_logs", {
+    method: "POST",
+    body: JSON.stringify({
+      user_id: id,
+      date: day,
+      block: "focus",
+      planned_start: new Date(wokeAt + 60 * 60_000).toISOString(),
+      started_at: new Date(wokeAt + 62 * 60_000).toISOString(),
+      backfilled: false,
+    }),
+  });
+  await page.goto("/today");
+  const sheet = page.getByRole("dialog", { name: "Night ritual" });
+  await expect(sheet).toBeVisible();
+  await sheet.getByRole("button", { name: "Next" }).click();
+  await sheet.getByRole("button", { name: /Today went as usual/ }).click();
+  await expect(sheet.getByText("Every block is closed. Nice.")).toBeVisible();
+  await expect
+    .poll(async () => {
+      const f = (await blockLogs(id)).find((l) => l.block === "focus");
+      return { closed: !!f?.closed_at, backfilled: f?.backfilled };
+    })
+    .toEqual({ closed: true, backfilled: false });
+});
+
 test("R-M4-3: a block that was started closes as done (no miss reason); 'same for all' skips it", async ({
   page,
 }) => {

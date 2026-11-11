@@ -359,7 +359,9 @@ export function useToday(now: Date) {
         items_planned: Math.max(current.items_planned, b.checklist.length),
         started_at: startedAt,
         ...patch,
-        backfilled: current.backfilled || past,
+        // "Backfilled" is about the start: closing or rating a live-started block late keeps it
+        // live (G7 R1-fixes F1). Only a block first started now, after it ended, is a backfill.
+        backfilled: current.backfilled || (past && !current.started_at),
       };
       // Field-level: send only identity + what this action changes, so another device's edits survive.
       const row: Record<string, unknown> = {
@@ -371,7 +373,7 @@ export function useToday(now: Date) {
         ...patch,
       };
       if (!current.started_at) row.started_at = startedAt;
-      if (past) row.backfilled = true;
+      if (past && !current.started_at) row.backfilled = true;
       return mutate(
         key,
         next,
@@ -408,7 +410,7 @@ export function useToday(now: Date) {
           started_at: cur.started_at ?? (past ? b.start.toISOString() : at.toISOString()),
           items_planned: Math.max(cur.items_planned, b.checklist.length),
           items_done: done ? [...cur.items_done, itemId] : cur.items_done.filter((x) => x !== itemId),
-          backfilled: cur.backfilled || past,
+          backfilled: cur.backfilled || (past && !cur.started_at),
         };
         const save = async () => {
           if (past && !cur.started_at) {
