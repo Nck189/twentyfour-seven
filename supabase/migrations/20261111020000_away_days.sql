@@ -53,7 +53,9 @@ begin
     end if;
     -- Lived actions count as the block's on-time start (playtest R1, Minnie 2026-11-11; TS
     -- `credited`): an in-window "I'm up" for Wake, the Night ticket (ritual in time) for Down.
+    -- (Not a block set aside for the day: lib/game excuses a planned deviation before crediting.)
     if r <> 'success' and coalesce(md, 'normal') = 'normal' and not coalesce(lg.miss_reason is not null, false)
+       and not coalesce(lg.planned_deviation, false)
        and public._credited(uid, d, p.slot) then
       r := 'success';
     end if;

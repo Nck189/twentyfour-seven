@@ -45,6 +45,15 @@ describe("lived actions grow their block's plot (server)", () => {
     expect((await u.client.rpc("harvest_plot", { p_slot: "down" })).error).toBeNull();
   });
 
+  it("a block set aside for the day (planned deviation) isn't grown by a credit, as in lib/game", async () => {
+    const { u, y } = await setup("credit-aside");
+    await admin().from("ticket_grants").insert({ user_id: u.id, reason: "night", ref_date: y, amount: 1 });
+    await admin()
+      .from("block_logs")
+      .insert({ user_id: u.id, date: y, block: "down", planned_deviation: true });
+    expect((await u.client.rpc("harvest_plot", { p_slot: "down" })).error?.code).toBe("22023");
+  });
+
   it("without them the plots don't grow (nothing else changed)", async () => {
     const { u } = await setup("credit-no");
     expect((await u.client.rpc("harvest_plot", { p_slot: "wake" })).error?.code).toBe("22023");
