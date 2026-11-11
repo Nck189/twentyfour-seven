@@ -270,11 +270,13 @@ function KindSummary({
   name,
   letters,
   onOpen,
+  busy = false,
 }: {
   tpl: TemplateRow;
   name: string;
   letters: string[];
   onOpen: () => void;
+  busy?: boolean;
 }) {
   const t = useTranslations("onboarding");
   const tf = useTranslations("fixedEvents");
@@ -286,7 +288,8 @@ function KindSummary({
       <button
         type="button"
         onClick={onOpen}
-        className="tap flex w-full items-center gap-2 rounded-[var(--radius-lg)] bg-surface p-3 text-left"
+        disabled={busy}
+        className="tap flex w-full items-center gap-2 rounded-[var(--radius-lg)] bg-surface p-3 text-left disabled:opacity-60"
       >
         <span className="flex min-w-0 flex-1 flex-col gap-1.5">
           <span className="flex items-center justify-between gap-2">
@@ -354,9 +357,12 @@ export function WeekStep({
   onAddKind,
   onImportIcs,
   onEditingChange,
+  busy = false,
 }: {
   templates: TemplateRow[];
   version: number;
+  /** A change to every kind is still saving: opening one now would lose edits when it lands. */
+  busy?: boolean;
   nameOf: (t: TemplateRow) => string;
   onSleep: (id: string, wake: string, sleepMin: number) => void;
   onAllSleep: (wake: string, sleepMin: number) => void;
@@ -460,7 +466,7 @@ export function WeekStep({
         </div>
       </div>
 
-      <ul aria-label={t("kinds")} className="flex flex-col gap-2">
+      <ul aria-label={t("kinds")} aria-busy={busy} className="flex flex-col gap-2">
         {kinds.map((k) => (
           <KindSummary
             key={k.id}
@@ -468,6 +474,7 @@ export function WeekStep({
             name={nameOf(k)}
             letters={letters}
             onOpen={() => setEditing(k.id)}
+            busy={busy}
           />
         ))}
       </ul>

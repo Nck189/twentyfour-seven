@@ -37,9 +37,11 @@ export function Onboarding() {
   // P5: restarting re-ran the starter and piled up duplicate kinds of day).
   const setStep = (next: Step) => {
     setStepState(next);
-    const q = new URLSearchParams(params.toString());
+    const q = new URLSearchParams(window.location.search);
     q.set("step", next);
-    router.replace(`?${q.toString()}`, { scroll: false });
+    // history.replaceState, not router.replace: a router navigation re-renders the page through
+    // Suspense, which could drop the open kind editor and its unsaved edits (CI, WebKit).
+    window.history.replaceState(window.history.state, "", `?${q.toString()}`);
   };
   const setup = useSetup();
   const [kindOpen, setKindOpen] = useState(false);
@@ -128,6 +130,7 @@ export function Onboarding() {
             <WeekStep
               templates={setup.templates}
               version={setup.version}
+              busy={setup.busy}
               nameOf={nameOf}
               onSleep={setup.setSleep}
               onAllSleep={(w, m) => void setup.setAllSleep(w, m)}
