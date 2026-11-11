@@ -6,6 +6,7 @@ import {
   currentBlock,
   currentDayDate,
   emptyBlocks,
+  isOfferedKind,
   inWakeWindow,
   isOnTime,
   isPastBlock,
@@ -424,5 +425,15 @@ describe("timeline status of a set-aside block", () => {
     const later = new Date(b.end.getTime() + 60_000);
     expect(blockStatus(b, log, later)).toBe("setAside");
     expect(blockStatus(b, { ...log, planned_deviation: false }, later)).toBe("missed");
+  });
+});
+
+describe("kinds of day offered in a picker (playtest R1 P5)", () => {
+  it("hides presets a starter switched off, keeps the user's own and the chosen one", () => {
+    const kind = (id: string, auto: boolean, weekdays: number[]) => ({ id, auto_apply: auto, weekdays });
+    expect(isOfferedKind(kind("a", true, []))).toBe(true);
+    expect(isOfferedKind(kind("b", false, [6, 7]))).toBe(true);
+    expect(isOfferedKind(kind("c", false, []))).toBe(false);
+    expect(isOfferedKind(kind("c", false, []), "c")).toBe(true);
   });
 });

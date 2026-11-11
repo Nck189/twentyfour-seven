@@ -230,6 +230,18 @@ export function timelineFor(ctx: DayContext, date: string): Timeline {
 }
 
 /**
+ * Kinds of day to offer in a picker: the user's own (auto-applied or tied to weekdays) and the
+ * one already chosen. Presets a starter switched off (no weekdays, not auto-applied) stay
+ * hidden (playtest R1 P5: office saw 8 kinds she never made).
+ */
+export function isOfferedKind(
+  t: { id: string; auto_apply: boolean; weekdays: number[] },
+  selectedId?: string,
+): boolean {
+  return t.auto_apply || t.weekdays.length > 0 || t.id === selectedId;
+}
+
+/**
  * Blocks that got no time today (the engine squeezed them to 0 min, e.g. Focus between a late
  * wake and a fixed work start). They can't be done, so they're set aside as planned deviations
  * instead of judged as missed (playtest R1 P1).

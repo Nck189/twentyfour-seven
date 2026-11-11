@@ -13,7 +13,7 @@ import { parseHHMM, targetBedtime } from "@/lib/engine";
 import { formatDayLong, formatTime } from "@/lib/format";
 import type { DayPatch } from "@/lib/plan/usePlan";
 import { addDays, zonedInstant } from "@/lib/time";
-import { planFor, templateFor, type DayContext } from "@/lib/today/day";
+import { isOfferedKind, planFor, templateFor, type DayContext } from "@/lib/today/day";
 
 const STEP_MIN = 15;
 
@@ -135,23 +135,25 @@ export function DayEditor({
           {t("template")}
         </h3>
         <div role="radiogroup" aria-labelledby={`${ids}-tpl`} className="grid grid-cols-2 gap-2">
-          {ctx.templates.map((x) => (
-            <button
-              key={x.id}
-              type="button"
-              role="radio"
-              aria-checked={tpl?.id === x.id}
-              onClick={() => onChange(date, { template_id: x.id })}
-              className={`tap min-h-11 rounded-xl px-3 py-2 text-left text-sm font-bold ${
-                tpl?.id === x.id
-                  ? "bg-primary-soft text-primary ring-2 ring-primary ring-inset"
-                  : "bg-surface-2 text-ink"
-              }`}
-            >
-              {x.name ?? tt(x.key as Parameters<typeof tt>[0])}
-              <span className="block text-xs font-normal text-muted">{x.target_wake.slice(0, 5)}</span>
-            </button>
-          ))}
+          {ctx.templates
+            .filter((x) => isOfferedKind(x, tpl?.id))
+            .map((x) => (
+              <button
+                key={x.id}
+                type="button"
+                role="radio"
+                aria-checked={tpl?.id === x.id}
+                onClick={() => onChange(date, { template_id: x.id })}
+                className={`tap min-h-11 rounded-xl px-3 py-2 text-left text-sm font-bold ${
+                  tpl?.id === x.id
+                    ? "bg-primary-soft text-primary ring-2 ring-primary ring-inset"
+                    : "bg-surface-2 text-ink"
+                }`}
+              >
+                {x.name ?? tt(x.key as Parameters<typeof tt>[0])}
+                <span className="block text-xs font-normal text-muted">{x.target_wake.slice(0, 5)}</span>
+              </button>
+            ))}
         </div>
         {tpl?.options.attend_toggle && (
           <div className="mt-3">

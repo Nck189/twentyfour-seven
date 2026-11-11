@@ -32,7 +32,15 @@ export function Onboarding() {
   const fromMore = params.get("from") === "more";
   // "sleep" is the older name of the week step (links from earlier builds).
   const asked = (params.get("step") === "sleep" ? "week" : params.get("step")) as Step | null;
-  const [step, setStep] = useState<Step>(asked && STEPS.includes(asked) ? asked : "starter");
+  const [step, setStepState] = useState<Step>(asked && STEPS.includes(asked) ? asked : "starter");
+  // The step lives in the URL too, so a reload resumes it instead of starting over (playtest R1
+  // P5: restarting re-ran the starter and piled up duplicate kinds of day).
+  const setStep = (next: Step) => {
+    setStepState(next);
+    const q = new URLSearchParams(params.toString());
+    q.set("step", next);
+    router.replace(`?${q.toString()}`, { scroll: false });
+  };
   const setup = useSetup();
   const [kindOpen, setKindOpen] = useState(false);
 
