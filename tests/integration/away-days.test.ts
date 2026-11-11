@@ -59,4 +59,20 @@ describe("away days pause the farm (server)", () => {
     await wakeOn(y);
     expect((await u.client.rpc("harvest_plot", { p_slot: "wake" })).error?.code).toBe("22023");
   });
+
+  it("G7 F5: a user can't delete their own logs to fake away days (the welcome-back gift, erased misses)", async () => {
+    const { u, y } = await setup("away-tamper");
+    const d = addDays(y, -1);
+    await admin()
+      .from("block_logs")
+      .insert({
+        user_id: u.id,
+        date: d,
+        block: "focus",
+        planned_start: zonedInstant(d, 9 * 60, TZ).toISOString(),
+      });
+    await u.client.from("block_logs").delete().eq("user_id", u.id);
+    const left = await admin().from("block_logs").select("id").eq("user_id", u.id);
+    expect(left.data).toHaveLength(1);
+  });
 });
