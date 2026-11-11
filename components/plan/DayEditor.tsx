@@ -4,6 +4,7 @@ import type { SubSlot } from "@/lib/engine/types";
 import { useLocale, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import { BLOCK_KEYS, type BlockKey, type ChecklistItem } from "@/content/blocks";
+import { editableFirst10 } from "@/lib/onboarding";
 import { useBlockText } from "@/components/today/useBlockText";
 import { Button } from "@/components/ui/Button";
 import { CloseIcon, StepsIcon } from "@/components/ui/Icons";
@@ -298,7 +299,7 @@ export function DayEditor({
                     </label>
                     <input
                       id={`${ids}-${key}-f10`}
-                      value={meta.first10 ?? ""}
+                      value={editableFirst10(meta.first10, (raw) => text.first10(key, raw))}
                       placeholder={text.first10(key, null) ?? t("first10Placeholder")}
                       onChange={(e) => onChange(date, { block: { key, first10: e.target.value || null } })}
                       className="min-h-11 rounded-xl border border-line bg-surface px-3"

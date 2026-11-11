@@ -58,3 +58,14 @@ describe("first-10 choices per block", () => {
     expect(NONE).toBe("");
   });
 });
+
+describe("first-10 in a text box (playtest R1 P4)", () => {
+  it("shows a built-in suggestion as its words, never the stored token", async () => {
+    const { editableFirst10 } = await import("@/lib/onboarding");
+    const words = (raw: string | null) => (raw === "@s:work:1" ? "Do the smallest Must for 10 min" : null);
+    expect(editableFirst10("@s:work:1", words)).toBe("Do the smallest Must for 10 min");
+    expect(editableFirst10("Read 2 pages", words)).toBe("Read 2 pages");
+    expect(editableFirst10(null, words)).toBe("");
+    expect(editableFirst10("", words)).toBe("");
+  });
+});

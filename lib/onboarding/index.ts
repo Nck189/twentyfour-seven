@@ -24,6 +24,15 @@ export function parseSuggestion(v: string): { key: BlockKey; n: number } | null 
 }
 
 /**
+ * What a first-10 text box shows for a stored value: a built-in suggestion as its words (the
+ * token is storage, not text; playtest R1 P4), the user's own text as is, nothing for none.
+ */
+export function editableFirst10(raw: string | null, words: (raw: string) => string | null): string {
+  if (!raw) return "";
+  return isSuggestion(raw) ? (words(raw) ?? "") : raw;
+}
+
+/**
  * Every first-10 a block offers: the built-in default (null) where there is one, the
  * suggestions, then the user's own texts (deduped). Blocks without a built-in default get 3.
  */
