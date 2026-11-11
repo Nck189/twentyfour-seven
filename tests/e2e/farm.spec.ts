@@ -60,7 +60,7 @@ test("CJ-M6-2 a crop that grew yesterday is ripe: harvest it, the produce is kep
   await expect(page.getByRole("button", { name: "Focus: empty" })).toBeVisible();
   // Produce only: setting sleep times (setAllTemplates) also pays its setup reward in seeds.
   expect(await rest(`inventory?user_id=eq.${id}&item_id=like.crop:*&select=item_id,qty`)).toEqual([
-    { item_id: "crop:radish", qty: 1 },
+    { item_id: "crop:radish:normal:100", qty: 1 },
   ]);
 });
 
