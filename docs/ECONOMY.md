@@ -27,7 +27,7 @@ Every number below lives in `content/economy.ts`. The server mirrors it in SQL, 
 | Sink | Price | Rule |
 |---|---|---|
 | Decor (existing) | 30–300 | — |
-| **Seed shop** | common 15, uncommon 30 | 3 offers a day, picked from (user, date). Rare and above come from capsules only, so capsules stay special. |
+| **Seed shop** | uncommon 30, rare 80 | 3 offers a day (2 uncommon + 1 rare), picked from a hash of (user, wake-day). Commons are free starters. Epic and above come from capsules only, so capsules stay special. |
 | **Ticket exchange** | 150 coins = 1 ticket | at most 2 a week (Monday-based, user's timezone) |
 | **Upgrades** | see below | one level at a time |
 | **My rewards** (reward jar) | the user sets the cost (10–10,000) | only coins are spent; the real-life reward is up to the user |
