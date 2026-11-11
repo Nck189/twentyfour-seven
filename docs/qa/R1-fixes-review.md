@@ -100,3 +100,47 @@ There is 1 open S1 and 4 open S2s:
    - Stop clients deleting `block_logs`, or derive away days from append-only data.
    - Fix the "nothing was lost" / "this week" copy, or pause the streak on away days.
    - Have Minnie decide whether weekly 2-day gaps should earn a welcome back every week.
+
+## Re-review (85adfe6)
+
+- **Reviewer:** same G7 reviewer.
+- **Date:** 2026-11-11.
+- **What ran:** checkout `85adfe6`, local DB with migrations through `20261111060000`, fresh accounts, iPhone 390×844 emulation.
+- **Server restart:** when I started, the server on :3200 (PID started 19:03) was still serving the build from before the 19:22 rebuild. Its chunks returned 500 and the pages rendered blank. I restarted it with `next start -p 3200` from this checkout, and every check below ran on the rebuilt app.
+- **Scripts:** the same scripts in the scratchpad `g7/` folder: `tC2.cjs`, `tR1f.cjs`, `tP2b.cjs`, `tF5.cjs`.
+
+### Verdict: **PASS**. No open S1/S2.
+
+| ID | Status | Evidence (same repro as the first review) |
+|---|---|---|
+| F1 (S1) | **Fixed** | Focus was started live 2 min after its planned start, then "วันนี้ทำตามปกติ" was tapped. Focus stays `backfilled=false` with `_block_result` = **success**, and its timeline label is "เสร็จแล้ว". Free (started live but late) stays live as `partial`. Only the never-started Work and Gradation are backfilled. Tickets: only Sunrise and Night. The guard now keeps a live start live on a late close, and a block first started after it ended is still a backfill. |
+| F2 (S2) | **Fixed** | First-10 ticked 4 h 58 min into Work: the label reads "เริ่ม 14:28 · เริ่มด้วย 10 นาทีแรก" and `_block_result` = **success**. This matches TS `startCounts`. |
+| F3 (S2) | **Fixed** | "ตื่นแล้ว" pressed 60 min before target: right away Today shows "+1 ตั๋วเช้า", the card "ตื่น 14:28 ตรงเวลา! +1 ตั๋วเช้า" and "ถัดไป: ตื่น · 15:28", still there after 4 s. An on-time press behaves as before. |
+| F4 (S2) | **Fixed** | With an in-window "I'm up", ritual step 2 lists Focus, Work, Gradation and Free, not Wake. "เหตุผลเดียวกันทุกบล็อก → ง่วง" set `miss_reason` only on Work and Gradation (the not-started ones). Wake got no row and stays credited ("เสร็จแล้ว" on the timeline). |
+| F5 (S2) | **Fixed** | `DELETE /rest/v1/block_logs` as the user returns **403** (`42501`), and all 3 rows remain. Status stays `lapsed:false`; `claim_welcome_back` → `granted:false`. Moving a log's date by PATCH is refused (`22023`). No app code deletes `block_logs`, so the change doesn't break anything. |
+
+**S3s fixed:**
+- **F6:** a double-tap on "Today went as usual" no longer closes the sheet (the dialog stays open).
+- **F8:** the copy is now true: "ระหว่างที่ไม่อยู่ ต้นไม้ไม่เหี่ยวไม่ตายเลย", and the goal says "ภายใน 5 วัน" / "in the next 5 days".
+- **F9:** 2 away days (a weekend) → `lapsed:false`, `granted:false`. 3 away days → `lapsed:true`, `granted:true`.
+
+**Still open (S3/S4, from the first review):**
+- **F7:** a double-tap on "เพิ่มแบบวัน" makes duplicate kinds, and re-entering setup from Today starts at step 1.
+- **F10:** tapping the welcome claim while offline shows no message.
+- **F11:** a double-tap on a task row re-opens it while the coin line stays.
+- **F12:** partly fixed. Wake now reads "เสร็จแล้ว", but after the ritual Down's current card still offers "เริ่ม".
+- **F13:** the last-chance line is below the fold on iPhone.
+- **F14:** the welcome card and the wake card are both big primary buttons.
+- **F15:** P1's set-aside row makes an untouched day non-away.
+- **F16–F18:** the S4s.
+
+**New:**
+- **S4:** an early "I'm up" (60 min before target, inside the 3-hour honour window) is labelled "ตรงเวลา!". That matches how the ticket is judged, but reads oddly.
+- **S4:** the `day_keys_guard` message still says "delete it and add it again", though clients can no longer delete. It's server-side only and not shown in the UI.
+
+No new S1/S2 found in the nearby paths I checked again:
+- the ritual with "same reason for all";
+- double-taps;
+- welcome claim races and thresholds;
+- the current-block first-10 label;
+- the early-wake card.

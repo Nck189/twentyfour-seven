@@ -11,7 +11,7 @@
 | G3 Visual | ⚠️ The Thai baselines (Mac) need re-recording once: the Thai wording changed (P9). |
 | G5 Secrets | ✅ CI |
 | G6 Prod | After merge: Minnie runs `db push` (6 migrations), then `npm run qc:prod`. |
-| G7 Independent review | FAIL, then fixed (see below). Re-review pending. |
+| G7 Independent review | ✅ The first review failed (1 S1, 4 S2), and all five were fixed. The re-review at 85adfe6 passed with no new S1/S2. |
 
 ## G7 findings and fixes (`docs/qa/R1-fixes-review.md`)
 | ID | Sev | Finding | Fix |
@@ -28,6 +28,11 @@ S3s fixed:
 - The ritual sheet no longer shrinks under a finger, so a double-tap can't close it.
 
 ## Known issues (S3/S4, deferred)
+- A double-tap on a planned task can reopen it, while the coin line stays.
+- After the ritual, Down's card still offers "Start".
+- The welcome card and the wake card are both big primary buttons.
+- An early "I'm up" inside the 3-hour window is labelled "on time" (S4).
+- A server error message still mentions deleting a log, which users can no longer do. Users never see it (S4).
 - P5: a double-tap on "Add a kind of day" adds two kinds, and opening setup from Today starts at step 1.
 - P7: a few labels for credited blocks still differ between the timeline and the card.
 - P1's set-aside writes a log on load, so a user whose day has a 0-min block is never "away" on days they open the app.
