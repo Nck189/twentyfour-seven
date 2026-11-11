@@ -139,9 +139,12 @@ export function TodayScreen() {
   // Once offered it stays until Done/Close, even when Down ends mid-flow (R-M4-4).
   if (autoOffer && !ritualOpen) setRitualOpen(true);
   // One thing at a time: what's on screen depends on the part of the day.
-  const next = cur ? tl.blocks[tl.blocks.indexOf(cur) + 1] : undefined;
+  // Up before the day's first block (an early "I'm up" starts the day, P2): nothing is current
+  // yet, so the next thing is the first block still ahead (G7 R1-fixes F3).
+  const next = cur ? tl.blocks[tl.blocks.indexOf(cur) + 1] : tl.blocks.find((b) => b.start > now);
   const wake = today.wakeCard;
-  const showWake = wake && (wake.canPress || cur?.key === "wake" || cur?.key === "sleep");
+  const showWake =
+    wake && (wake.canPress || cur?.key === "wake" || cur?.key === "sleep" || (!cur && !!wake.event));
   // After the ritual, near bedtime: "Going to bed" starts Sleep (G7 R-M10-R3-1).
   const sleepBlock = tl.blocks.find((b) => b.key === "sleep");
   const bedCard =
