@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Segmented } from "@/components/ui/Segmented";
 import { formatTime } from "@/lib/format";
 import { sfx } from "@/lib/sound/sfx";
+import { startCounts } from "@/lib/game/outcome";
 import { startTiming, isPastBlock, type TimelineBlock } from "@/lib/today/day";
 import type { BlockLog } from "@/lib/today/useToday";
 import { CheckRow } from "./Checkbox";
@@ -85,6 +86,17 @@ export function BlockCheckin({
   const first10Text = text.first10(block.key, block.first10);
   const started = log.started_at ? new Date(log.started_at) : null;
   const closed = Boolean(log.closed_at);
+  // A late start whose first-10 was done live in the block still counts (R1): say so, not "late".
+  const timing = started
+    ? startTiming(block.start, started) === "late" &&
+      startCounts({
+        ...log,
+        planned_start: block.start.toISOString(),
+        planned_deviation: !!log.planned_deviation,
+      })
+      ? "first10Start"
+      : startTiming(block.start, started)
+    : "onTime";
 
   return (
     <div className="flex flex-col gap-3">
@@ -104,12 +116,15 @@ export function BlockCheckin({
             ) : (
               <span
                 className={
-                  { onTime: "text-primary", early: "text-muted", late: "text-warn" }[
-                    startTiming(block.start, started)
-                  ]
+                  {
+                    onTime: "text-primary",
+                    early: "text-muted",
+                    late: "text-warn",
+                    first10Start: "text-primary",
+                  }[timing]
                 }
               >
-                {t(startTiming(block.start, started))}
+                {t(timing)}
               </span>
             )}
           </span>

@@ -103,7 +103,7 @@ describe("heatmap, Pareto, home vs out, week summary", () => {
     day(mon, {
       focus: log(mon),
       work: log(mon, { started_at: null, first10_at: null, miss_reason: "phone" }),
-      free: log(mon, { location: "out", started_at: at(mon, "10:00") }), // late, no checklist → partial
+      free: log(mon, { location: "out", started_at: at(mon, "10:00"), first10_at: null }), // late, no checklist → partial
     }),
     day(tue, {
       focus: log(tue, { location: "out" }),
@@ -250,7 +250,7 @@ describe("a block is judged from its first check-in on (G7 R-M10-R3-2)", () => {
     const fw = (d: string, withSleep: boolean) =>
       day(d, {
         focus: log(d),
-        work: log(d, { started_at: at(d, "09:30") }), // late, no checklist → partial
+        work: log(d, { started_at: at(d, "09:30"), first10_at: null }), // late, no first-10 or checklist → partial
         ...(withSleep ? { sleep: log(d) } : {}),
       });
     const days = [

@@ -501,3 +501,18 @@ describe("away days pause the farm (playtest R1 R2, Minnie OK 2026-11-11)", () =
     expect(oneMissFromDeath(simulatePlot(p, misses(5)))).toBe(false); // already dead
   });
 });
+
+describe("a first-10 done during the block counts as its start (playtest R1 R1, G7 F2)", () => {
+  const d = "2026-11-10";
+  it("late start but the first-10 was done live inside the block: success, and on time in Day score", () => {
+    const log = good(d, { started_at: T(d, "13:30"), first10_at: T(d, "13:30") }); // planned 09:00
+    expect(blockResult(day(d, { work: log }), "work")).toBe("success");
+    expect(dayOee(day(d, { work: log }))!.availability).toBeCloseTo(1 / 7, 6);
+  });
+  it("a backfilled first-10, or one before the block, doesn't count", () => {
+    expect(
+      blockResult(day(d, { work: late(d, { first10_at: T(d, "13:30"), backfilled: true }) }), "work"),
+    ).toBe("backfilled");
+    expect(blockResult(day(d, { work: late(d, { first10_at: T(d, "08:30") }) }), "work")).toBe("partial");
+  });
+});

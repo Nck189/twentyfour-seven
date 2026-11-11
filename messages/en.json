@@ -97,7 +97,8 @@
       "none": "No first-10",
       "early": "Started early",
       "tasks": "Planned tasks",
-      "taskCoins": "+{n} coins"
+      "taskCoins": "+{n} coins",
+      "first10Start": "Started with the first 10"
     },
     "nap": {
       "title": "Power nap",

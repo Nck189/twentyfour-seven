@@ -84,4 +84,27 @@ describe("lived actions grow their block's plot (server)", () => {
     expect(error).toBeNull();
     expect(data).toBeCloseTo((2 / 7) * (2 / 7), 5);
   });
+
+  it("G7 F2: a first-10 done live inside the block counts as its start (ripens, on time in Day score)", async () => {
+    const { u, y } = await setup("credit-first10");
+    await admin()
+      .from("plots")
+      .update({ crop_id: "radish", planted_on: addDays(y, -1), state: "growing" })
+      .eq("user_id", u.id)
+      .eq("slot", "work");
+    const planned = zonedInstant(y, 9 * 60, TZ);
+    const late = new Date(planned.getTime() + 4.5 * 3600_000).toISOString();
+    await admin().from("block_logs").insert({
+      user_id: u.id,
+      date: y,
+      block: "work",
+      planned_start: planned.toISOString(),
+      started_at: late,
+      first10_at: late,
+    });
+    expect((await u.client.rpc("harvest_plot", { p_slot: "work" })).error).toBeNull();
+    const { data } = await admin().rpc("_day_oee", { uid: u.id, d: y });
+    // Availability 1/7 (only Work), performance 1, quality 1/7 (its first-10).
+    expect(data).toBeCloseTo((1 / 7) * (1 / 7), 5);
+  });
 });

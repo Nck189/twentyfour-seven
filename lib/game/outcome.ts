@@ -73,9 +73,20 @@ export function first10Done(log: GameLog | undefined): boolean {
   return !!log && !log.backfilled && !!log.first10_at;
 }
 
+/**
+ * The block's start counts (playtest R1, Minnie OK 2026-11-11): started on time, or its first-10
+ * was done live once the block had begun — doing the first 10 minutes *is* starting it, even if
+ * "Start" wasn't tapped at the planned time. Mirrored in SQL (`_start_counts`).
+ */
+export function startCounts(log: GameLog): boolean {
+  if (startedOnTime(log)) return true;
+  if (log.backfilled || !log.first10_at || !log.planned_start) return false;
+  return Date.parse(log.first10_at) >= Date.parse(log.planned_start) - ON_TIME_MIN * 60_000;
+}
+
 function succeeded(log: GameLog): boolean {
   const rate = checklistRate(log);
-  return startedOnTime(log) || (rate !== null && rate >= SUCCESS_CHECKLIST_RATE);
+  return startCounts(log) || (rate !== null && rate >= SUCCESS_CHECKLIST_RATE);
 }
 
 /**
@@ -129,7 +140,7 @@ export function dayOee(day: DayFacts): {
   for (const b of planned) {
     const log = day.logs[b];
     if (credited(day, b) && !log?.miss_reason) onTime++;
-    else if (log && startedOnTime(log)) onTime++;
+    else if (log && startCounts(log)) onTime++;
     if (!log) continue;
     if (first10Done(log) && !day.noFirst10?.includes(b)) first10++;
     if (log.items_planned > 0) {
