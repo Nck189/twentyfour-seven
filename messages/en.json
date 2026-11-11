@@ -95,7 +95,9 @@
       "backfilledStart": "Backfilled",
       "changeFirst10": "Change today's first 10 minutes",
       "none": "No first-10",
-      "early": "Started early"
+      "early": "Started early",
+      "tasks": "Planned tasks",
+      "taskCoins": "+{n} coins"
     },
     "nap": {
       "title": "Power nap",

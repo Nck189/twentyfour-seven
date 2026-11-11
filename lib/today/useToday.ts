@@ -589,6 +589,7 @@ export function useToday(now: Date) {
 
   return {
     status,
+    userId: loaded?.userId ?? null,
     /** The user's block settings (own first-10 choices live here). */
     blockSettings: loaded?.ctx.blocks ?? [],
     timeline,

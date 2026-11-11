@@ -23,6 +23,7 @@ import { useUnlocks } from "@/lib/unlocks/useUnlocks";
 import { TodayReviewLine } from "@/components/stats/ReviewLine";
 import { Tip } from "@/components/tips/Tip";
 import { BlockCheckin } from "./BlockCheckin";
+import { BlockTasks } from "./BlockTasks";
 import { Sheet } from "./BlockSheet";
 import { ModeCard } from "./ModeCard";
 import { NapCard, isNapRunning } from "./NapCard";
@@ -270,6 +271,7 @@ export function TodayScreen() {
             actions={today.actions}
             ownFirst10={today.blockSettings.find((b) => b.key === cur.key)?.first10_options}
           />
+          <BlockTasks userId={today.userId} date={cur.logDate} block={cur.key} />
         </section>
       )}
       {bedCard && sleepBlock && (
