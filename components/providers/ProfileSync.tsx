@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { logEvent } from "@/lib/db/events";
 import { isLocale } from "@/lib/i18n/config";
 import { usePrefs } from "@/lib/store/prefs";
 import { getSupabase } from "@/lib/supabase/client";
@@ -29,6 +30,9 @@ export function ProfileSync() {
       const onboarding = (profile.onboarding ?? {}) as Record<string, unknown>;
       if (!onboarding.locale_set) {
         const first = prefs.locale;
+        // A language picked on the login screen counts as the "choose your language" setup
+        // step (playtest R1 P8): log it once the account exists.
+        if (prefs.localeDirty) void logEvent("locale_changed", { locale: first, from: "login" });
         const { error } = await client
           .from("profiles")
           .update({ locale: first, onboarding: { ...onboarding, locale_set: true } })

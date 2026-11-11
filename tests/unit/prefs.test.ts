@@ -15,3 +15,13 @@ describe("language sync (CJ-14 race)", () => {
     expect(usePrefs.getState()).toMatchObject({ locale: "th", localeDirty: false });
   });
 });
+
+describe("first-visit language (playtest R1 P8)", () => {
+  it("follows the device: Thai devices start in Thai, everything else in English", async () => {
+    const { detectLocale } = await import("@/lib/store/prefs");
+    expect(detectLocale(["th-TH", "en-US"])).toBe("th");
+    expect(detectLocale(["th"])).toBe("th");
+    expect(detectLocale(["en-GB", "th-TH"])).toBe("en");
+    expect(detectLocale([])).toBe("en");
+  });
+});
