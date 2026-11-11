@@ -442,7 +442,7 @@
     "account": "Account",
     "signedInAs": "Signed in as {email}",
     "signOut": "Sign out",
-    "install": "Install on iPhone",
+    "install": "Install as an app",
     "installSteps": "In Safari, tap Share, then “Add to Home Screen”.",
     "setupTitle": "Setup",
     "setupSleep": "Your week",

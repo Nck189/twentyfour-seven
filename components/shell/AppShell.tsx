@@ -46,7 +46,9 @@ export function AppShell({ children, side }: { children: ReactNode; side: ReactN
         ))}
       </nav>
 
-      <main className="safe-top min-w-0 pb-[calc(76px+env(safe-area-inset-bottom))] lg:pb-0">{children}</main>
+      <main className="safe-top mx-auto w-full max-w-2xl min-w-0 pb-[calc(76px+env(safe-area-inset-bottom))] lg:max-w-none lg:pb-0">
+        {children}
+      </main>
 
       <aside className="safe-top hidden min-w-0 border-l border-line bg-surface-2/40 lg:block">{side}</aside>
 
