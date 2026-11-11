@@ -627,6 +627,8 @@
     "phoneDone": "Time's up — let's close today.",
     "closeTitle": "Close today",
     "closeHint": "Which blocks didn't happen? Tag why — no judgement, it's data.",
+    "asUsual": "Today went as usual",
+    "asUsualHint": "Every block not tapped yet is marked done (logged after the fact, so no tickets).",
     "allClosed": "Every block is closed. Nice.",
     "reason": "Reason for {block}",
     "closeBlock": "Mark done",

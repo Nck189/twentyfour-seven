@@ -145,6 +145,20 @@ export function NightRitual({
         </p>
       ) : (
         <>
+          {/* R7 (playtest R1): a normal day is one tap — the blocks happened, just weren't tapped.
+              Logged after the fact: not a miss, but no tickets or growth (like any backfill). */}
+          <button
+            type="button"
+            onClick={() => {
+              sfx.tick();
+              for (const b of open) void closeDone(b);
+            }}
+            className="tap flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary-soft px-4 font-bold text-primary"
+          >
+            <CheckIcon className="h-5 w-5" />
+            {t("asUsual")}
+          </button>
+          <p className="-mt-1 text-sm text-muted">{t("asUsualHint")}</p>
           {notStarted.length > 1 && (
             <section aria-label={t("reasonAll")} className="flex flex-col gap-2">
               <h4 className="text-sm font-bold text-muted">{t("reasonAll")}</h4>

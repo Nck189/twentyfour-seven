@@ -195,6 +195,30 @@ test("Night ritual: one tap tags every open block with the same reason", async (
   await expectTouchTargets(page);
 });
 
+test("R7: 'Today went as usual' closes every open block as done (backfilled, no miss, no ticket)", async ({
+  page,
+}) => {
+  const id = await newUserOn(page);
+  await setWakeMinutesAgo(id, DOWN_TIME_MINUTES_AFTER_WAKE);
+  const before = (await gameState(id))?.tickets ?? 0;
+  await page.goto("/today");
+  const sheet = page.getByRole("dialog", { name: "Night ritual" });
+  await expect(sheet).toBeVisible();
+  await sheet.getByRole("button", { name: "Next" }).click();
+  await sheet.getByRole("button", { name: /Today went as usual/ }).click();
+  await expect(sheet.getByText("Every block is closed. Nice.")).toBeVisible();
+  await expect
+    .poll(async () =>
+      (await blockLogs(id))
+        .filter((l) => l.closed_at && l.started_at && l.backfilled && !l.miss_reason)
+        .map((l) => l.block)
+        .sort(),
+    )
+    .toEqual(["focus", "free", "gradation", "wake", "work"]);
+  expect((await gameState(id))?.tickets ?? 0).toBe(before);
+  await expectTouchTargets(page);
+});
+
 test("R-M4-3: a block that was started closes as done (no miss reason); 'same for all' skips it", async ({
   page,
 }) => {
