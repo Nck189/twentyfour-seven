@@ -51,6 +51,17 @@ describe("which day is today (wake → next wake)", () => {
     expect(currentDayDate(ctx(), at("2026-11-03", "09:30"))).toBe("2026-11-02");
   });
 
+  it("an early 'I'm up' starts the day before its target (playtest R1 P2)", () => {
+    // Target 10:00, pressed at 09:20: from then on it's the new day, not yesterday's Down Time.
+    const pressed = new Set(["2026-11-03"]);
+    expect(currentDayDate(ctx(), at("2026-11-03", "09:25"), undefined, pressed)).toBe("2026-11-03");
+    expect(currentDayDate(ctx(), at("2026-11-03", "09:25"))).toBe("2026-11-02");
+    // A press on another date doesn't start this one.
+    expect(currentDayDate(ctx(), at("2026-11-03", "09:25"), undefined, new Set(["2026-11-02"]))).toBe(
+      "2026-11-02",
+    );
+  });
+
   it("uses the profile timezone, not the machine's", () => {
     const ny = ctx({ timezone: "America/New_York" });
     const t = new Date("2026-11-03T14:30:00Z"); // 09:30 NY → before 10:00 wake

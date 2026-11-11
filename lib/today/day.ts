@@ -153,8 +153,15 @@ export function plannedWake(ctx: DayContext, date: string): { wake: string; base
  * Before today's wake it's still yesterday's day. `pinned` (date → wake target as pressed, else
  * as frozen by the server) wins over the live plan, as on the server (`_wake_day`, R-M9-R2-1).
  */
-export function currentDayDate(ctx: DayContext, now: Date, pinned?: Record<string, string>): string {
+export function currentDayDate(
+  ctx: DayContext,
+  now: Date,
+  pinned?: Record<string, string>,
+  /** Dates with an "I'm up": that day has started, even before its target (playtest R1 P2). */
+  pressed?: ReadonlySet<string>,
+): string {
   const d0 = localDate(now, ctx.timezone);
+  if (pressed?.has(d0)) return d0;
   const pin = pinned?.[d0];
   const wake = pin ? new Date(pin) : planFor(ctx, d0).wake;
   return now.getTime() < wake.getTime() ? addDays(d0, -1) : d0;

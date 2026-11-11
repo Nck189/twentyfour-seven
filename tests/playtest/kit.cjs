@@ -179,7 +179,8 @@ function travel(name, days, hhmm, { resume = false } = {}) {
     if (!pick || Math.abs(k) < Math.abs(pick.k)) pick = { d, z, k, shift };
   }
   if (!pick) throw new Error(`can't reach ${hhmm} right now (UTC offsets only go −12…+14 h)`);
-  if (pick.shift > 5 && !resume) throw new Error(`${hhmm} on day ${st.day + days} is already past for ${name}`);
+  if (pick.shift > 5 && !resume)
+    throw new Error(`${hhmm} on day ${st.day + days} is already past for ${name}`);
   if (pick.k !== 0 || pick.shift !== 0) sql(`select qa.shift_user(${lit(id)}, ${pick.k}, ${pick.shift})`);
   setTz(name, pick.z.name);
   writeState(name, { ...readState(name), day: st.day + days, date: pick.d, off: pick.z.off });

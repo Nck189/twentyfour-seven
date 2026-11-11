@@ -233,9 +233,10 @@ export function useToday(now: Date) {
     () => ({ ...frozen, ...Object.fromEntries(Object.values(wakes).map((w) => [w.date, w.target_wake])) }),
     [wakes, frozen],
   );
+  const pressed = useMemo(() => new Set(Object.values(wakes).map((w) => w.date)), [wakes]);
   const dayDate = useMemo(
-    () => (loaded ? currentDayDate(loaded.ctx, now, pinned) : null),
-    [loaded, now, pinned],
+    () => (loaded ? currentDayDate(loaded.ctx, now, pinned, pressed) : null),
+    [loaded, now, pinned, pressed],
   );
   const timeline = useMemo(
     () => (loaded && dayDate ? timelineFor(loaded.ctx, dayDate) : null),
