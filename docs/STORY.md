@@ -1,17 +1,17 @@
 # Story events: the orange cat (draft)
 
-Minnie's call (2026-11-12): milestone events with short cutscenes, told by an **orange farm cat**. Built **after the economy PR and before M11**. This is a draft for her to read; nothing is final until she OKs the beats and the cat's name.
+Minnie's call (2026-11-12): milestone events with short cutscenes, told by an **orange farm cat**. Built **after the economy PR and before M11**. This is a draft for her to read; nothing is final until she OKs the beats. The cat's name is set.
 
 ## The cat
 - **Who:** an orange tabby who lived on the old farm before you came. Curious, a bit lazy, very loyal. Never judges and never nags. It naps when you're away and is happy when you come back.
-- **Name:** Minnie picks it (ideas: ส้มจี๊ด / Som, ข้าวตัง, Mango).
+- **Name:** **ส้ม / Som** (Minnie, 2026-11-12).
 - **Art:**
   - Built like the other animals: flat, no outlines, 3 tones, light from the top-left, readable at 48 px.
   - Poses: sit, sleep, stretch, happy, look-up, carry-seed.
 - **Where it shows up:**
   - cutscenes;
   - the welcome-back card (R3);
-  - the M11 pushes ("ส้มจี๊ดรออยู่นะ");
+  - the M11 pushes ("ส้มรออยู่นะ" / "Som is waiting for you");
   - sometimes napping on the farm scene.
 
 ## Chapters (one beat each, unlocked by real progress)
