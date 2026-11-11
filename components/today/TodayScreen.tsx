@@ -25,6 +25,7 @@ import { TodayReviewLine } from "@/components/stats/ReviewLine";
 import { Tip } from "@/components/tips/Tip";
 import { BlockCheckin } from "./BlockCheckin";
 import { BlockTasks } from "./BlockTasks";
+import { WelcomeBackCard } from "./WelcomeBackCard";
 import { Sheet } from "./BlockSheet";
 import { ModeCard } from "./ModeCard";
 import { NapCard, isNapRunning } from "./NapCard";
@@ -190,6 +191,7 @@ export function TodayScreen() {
       {/* Under the header, next to the streak chip it explains. */}
       <Tip id="streak" when={!!streak.view && tipsQuiet} />
       {onboarding.show && <WelcomeCard onLater={() => void onboarding.later()} />}
+      {!onboarding.show && <WelcomeBackCard />}
 
       {tl.mode !== "normal" && (
         <p className="mx-4 mb-3 inline-block rounded-full bg-primary-soft px-3 py-1 text-sm font-bold text-primary lg:mx-6">

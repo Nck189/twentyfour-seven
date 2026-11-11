@@ -940,5 +940,15 @@
       "plots": "Each plot is one block of your day. Do the block and its crop grows; skip it and weeds come.",
       "capsule": "Tickets come from waking on time and the Night ritual. Spend them here for new seeds."
     }
+  },
+  "welcomeBack": {
+    "title": "Welcome back",
+    "body": "Your farm waited for you: nothing was lost while you were away. Pick up from today.",
+    "start": "Start today",
+    "gift": "+1 ticket, a welcome-back gift",
+    "goalTitle": "Back on track",
+    "goalBody": "{done} of {need} easy days (I'm up on time + Night ritual) this week",
+    "goalClaim": "Collect +2 tickets",
+    "goalGift": "+2 tickets. You're back on track."
   }
 }
