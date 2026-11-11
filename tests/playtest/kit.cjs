@@ -13,6 +13,7 @@
  *   kit.nextDay("minnie", "06:55")               // a new day begins at ≈ 06:55
  *   kit.skipDays("lapser", 3, "08:10")           // gone 3 days, back at ≈ 08:10
  *   kit.now("minnie")                            // { day, date, local, tz }
+ *   kit.resume("minnie", "13:05")                // after the run was paused: back to ≈ 13:05 today
  */
 const { execFileSync } = require("node:child_process");
 const fs = require("node:fs");
@@ -164,7 +165,7 @@ function now(name) {
  * history moves with it (dates by whole days, timestamps by minutes) so every past event keeps
  * its local date and time. Reload any open page afterwards.
  */
-function travel(name, days, hhmm) {
+function travel(name, days, hhmm, { resume = false } = {}) {
   const st = timeState(name);
   const id = uid(name);
   const targetLabel = addDays(st.date, days);
@@ -178,7 +179,7 @@ function travel(name, days, hhmm) {
     if (!pick || Math.abs(k) < Math.abs(pick.k)) pick = { d, z, k, shift };
   }
   if (!pick) throw new Error(`can't reach ${hhmm} right now (UTC offsets only go −12…+14 h)`);
-  if (pick.shift > 5) throw new Error(`${hhmm} on day ${st.day + days} is already past for ${name}`);
+  if (pick.shift > 5 && !resume) throw new Error(`${hhmm} on day ${st.day + days} is already past for ${name}`);
   if (pick.k !== 0 || pick.shift !== 0) sql(`select qa.shift_user(${lit(id)}, ${pick.k}, ${pick.shift})`);
   setTz(name, pick.z.name);
   writeState(name, { ...readState(name), day: st.day + days, date: pick.d, off: pick.z.off });
@@ -187,6 +188,12 @@ function travel(name, days, hhmm) {
 const at = (name, hhmm) => travel(name, 0, hhmm);
 const nextDay = (name, hhmm) => travel(name, 1, hhmm);
 const skipDays = (name, days, hhmm) => travel(name, days, hhmm);
+/**
+ * After a pause in the run itself (the players stopped, real hours went by), puts the persona's
+ * clock back to ≈ `hhmm` on its current day, where it was. History moves forward by the pause,
+ * so nothing that happened before reads as later than it did.
+ */
+const resume = (name, hhmm) => travel(name, 0, hhmm, { resume: true });
 
 // ---------- email ----------
 /** The 6-digit code from the newest email to this persona (what they'd read in their inbox). */
@@ -245,4 +252,4 @@ async function end(s) {
   await s.browser.close();
 }
 
-module.exports = { BASE, OUT, persona, start, shot, end, code, now, at, nextDay, skipDays, sql };
+module.exports = { BASE, OUT, persona, start, shot, end, code, now, at, nextDay, skipDays, resume, sql };
