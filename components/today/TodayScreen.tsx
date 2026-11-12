@@ -8,8 +8,7 @@ import { formatDayLong, formatTime } from "@/lib/format";
 import { showBedCard } from "@/lib/today/bedtime";
 import { useNow } from "@/lib/hooks/useNow";
 import { currentBlock, type TimelineBlock } from "@/lib/today/day";
-import { setQuietUntil } from "@/lib/sound/sfx";
-import { quietUntilFor } from "@/lib/sound/quiet";
+import { useBlockClock } from "@/lib/today/blockClock";
 import { useToday } from "@/lib/today/useToday";
 import { NightRitual } from "@/components/night/NightRitual";
 import { WelcomeCard } from "@/components/onboarding/WelcomeCard";
@@ -96,11 +95,23 @@ export function TodayScreen() {
   const [dayOpen, setDayOpen] = useState(() => readDayOpen());
   const [allWarnings, setAllWarnings] = useState(false);
 
-  // Auto-quiet: sounds rest while the current block is Focus or Work (docs/STORY.md).
-  const quietUntil = today.timeline && clock ? quietUntilFor(currentBlock(today.timeline, now)) : 0;
+  // Save today's block times for the whole app (auto-quiet and Som's director on any screen,
+  // G7 STORY-R6/R8): the block clock reads them every 30 s.
+  const saveBlocks = useBlockClock((st) => st.save);
+  const blocksKey = today.timeline?.blocks
+    .map((b) => `${b.key}@${b.start.getTime()}-${b.end.getTime()}`)
+    .join("|");
   useEffect(() => {
-    setQuietUntil(quietUntil);
-  }, [quietUntil]);
+    if (!today.timeline) return;
+    saveBlocks(
+      today.timeline.blocks.map((b) => ({
+        key: b.key,
+        start: b.start.toISOString(),
+        end: b.end.toISOString(),
+      })),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- blocksKey captures the block times
+  }, [blocksKey, saveBlocks]);
 
   if (!clock || today.status === "loading") {
     return (

@@ -1,5 +1,7 @@
 "use client";
 
+import { useNow } from "@/lib/hooks/useNow";
+import { blockAt, storyBusy, useBlockClock } from "@/lib/today/blockClock";
 import { Cutscene } from "@/components/story/Cutscene";
 import { useStory } from "@/lib/story/useStory";
 import { useTranslations } from "next-intl";
@@ -50,7 +52,11 @@ export function FarmScreen({ compact = false }: { compact?: boolean }) {
   const animals = useAnimals();
   const unlocks = useUnlocks();
   // Story beats with Som play on the Farm tab only (a calm moment), not in the iPad side panel.
-  const story = useStory(compact ? "other" : "farm");
+  // Not during the wake window or Down Time (G7 STORY-R6), from the day's saved block times.
+  const clock = useNow(60_000);
+  const blocks = useBlockClock((s) => s.blocks);
+  const busy = clock ? storyBusy(blockAt(blocks, clock)) : false;
+  const story = useStory(compact ? "other" : "farm", busy);
   return (
     <>
       {story.playing && (
