@@ -41,6 +41,10 @@
   --art-blush: #f8d3e0;
   --art-blush-light: #fdeef3;
   --art-blush-dark: #eeb3c8;
+  /* Rust (the red panda): redder than Som's orange so the two never look alike. */
+  --art-rust: #d77a54;
+  --art-rust-light: #eba07e;
+  --art-rust-dark: #b9603e;
   --art-cream: #f3efe4;
   --art-white: #ffffff;
   --art-sun: #ffdb8e;
