@@ -1075,6 +1075,33 @@
       "l1": "Som has been rummaging in the old shed.",
       "l2": "It drags out a dusty watering can. Your three good days earned it.",
       "l3": "The farm feels a little more like home."
+    },
+    "wish": {
+      "label": "Your wish (optional, only you can see it)",
+      "placeholder": "e.g. pass my exams, sleep before midnight",
+      "private": "Private · {n, plural, one {# character left} other {# characters left}}",
+      "float": "Float it",
+      "skip": "Not this time",
+      "error": "Couldn't float it right now. Try again?"
+    },
+    "lotus_open": {
+      "title": "Candle Lotus",
+      "l1": "Som is staring into the pond, very, very still.",
+      "l2": "A lotus has opened, and inside it glows a tiny flame.",
+      "l3": "Som brings you a seed from it. Candle Lotus seeds are in the shop until the 14th."
+    },
+    "lotus_market": {
+      "title": "The krathong market",
+      "l1": "Lanterns on the water: the krathong market is open.",
+      "l2": "Candle Lotus sells for ×1.5 here until the month ends.",
+      "l3": "Someone is asking for three Candle Lotus. There's a special order in the market."
+    },
+    "lotus_use": {
+      "title": "Float a wish",
+      "l1": "Som carries your Candle Lotus down to the water.",
+      "l2": "It's Loy Krathong season. People float their wishes away on the water.",
+      "l3": "Want to float one too? It's just for you, and you can skip.",
+      "l4": "Your wish drifts away with its tiny flame. Som will keep it safe until next Loy Krathong."
     }
   }
 }

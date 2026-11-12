@@ -8,7 +8,12 @@ import { getSupabase } from "@/lib/supabase/client";
 
 export type PlayingBeat = { beat: StoryBeatId; gift: StoryGift | null };
 
-type Status = { seen: string[]; today: boolean; facts: { harvests: number; good_days: number } };
+type Status = {
+  seen: string[];
+  today: boolean;
+  /** `day` = the seasonal calendar's date; `season_uses` = `<crop>:<season-year>` keys. */
+  facts: { harvests: number; good_days: number; day?: string; season_uses?: string[] };
+};
 
 /**
  * Story beats at a calm moment (docs/STORY.md). Asks the server what was seen, lets the pure
@@ -32,7 +37,12 @@ export function useStory(moment: StoryMoment, busy = false) {
         busy,
         seen: s.seen ?? [],
         seenToday: Boolean(s.today),
-        facts: { harvests: s.facts?.harvests ?? 0, goodDays: s.facts?.good_days ?? 0 },
+        facts: {
+          harvests: s.facts?.harvests ?? 0,
+          goodDays: s.facts?.good_days ?? 0,
+          today: s.facts?.day,
+          seasonUses: s.facts?.season_uses ?? [],
+        },
       });
       if (!beat) return;
       const claim = await client.rpc("claim_story_beat", { p_beat: beat });
