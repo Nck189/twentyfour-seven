@@ -14,17 +14,18 @@ Minnie: "Plan for letting people top up money later to trade for things. Don't b
 5. **Kind to students:** small prices, one-time purchases, and a subscription that's easy to cancel.
 
 ## What people would want to pay for
-Ordered by how much they'd likely sell versus how fair they feel:
+Built on what only 24/7 has: Som, the farm's life sim, Thai seasons, and a planner that knows your real day. Minnie noted on 2026-11-12 that generic "focus app" items (tree species, sound packs) feel like Forest, so they're left out.
 
 | # | Product | What it is | Why people pay | Price idea (THB) |
 |---|---|---|---|---|
 | 1 | **Seasonal Farm Pass** (monthly) | Each month's seasonal crop (STORY.md) has a free reward track that everyone gets. The paid track adds cosmetic variants: a golden-petal Candle Lotus, Som's Loy Krathong outfit, a themed stall skin. Progress comes from **minimum days**, so the pass *rewards the habit* rather than replacing it. | It renews every month with the story, and the collection keeps growing. | 59–79 / month |
-| 2 | **Som's wardrobe** | Outfits and accessories for Som (raincoat, school uniform, chef hat), shown in cutscenes and on the farm. | Attachment to the companion; cute; easy to show friends. | 29–49 each |
-| 3 | **Farm themes** | Whole-farm looks (beach farm, Doi mountain farm, night-market farm), plus sky and plot skins. | Self-expression; the farm becomes "mine". | 69–99 |
-| 4 | **Decor sets** | Furniture sets: a Thai house porch, a café corner, a lantern garden. Free decor still exists. | Decorating is the long-term pull. | 35–69 |
-| 5 | **Cozy sound packs** | Rain, a Bangkok café, temple bells for the Night ritual phone timer and the Focus block. | Useful every day and calming. | 35 |
-| 6 | **Supporter** (optional subscription) | Includes the Farm Pass and one outfit a month, plus a small "ผู้สนับสนุน" leaf badge and a thank-you scene with Som. | Supporting a small indie student project. | 79 / month |
-| 7 | **Gift to a friend** (with M12 sharing) | Buy an outfit or decor for a friend's farm. | Social, and a cheap birthday gift. | the item's price |
+| 2 | **Som's wardrobe** | Outfits for Som (raincoat, school uniform for exam week, chef hat), shown in cutscenes and on the farm. | Attachment to the companion. | 29–49 each |
+| 3 | **Som's house: rooms and furniture** | The farmhouse (economy upgrade) opens inside: a reading nook, a kitchen and a sleeping corner, where Som naps in your furniture. | A cozy home, and Som visibly uses it. | 35–99 per set |
+| 4 | **Thai farm themes** | Whole-farm looks tied to Thai places: a Doi mountain farm with mist, a canal farm with boats, a riverside night market. | Self-expression with a local feel no other app has. | 69–99 |
+| 5 | **Story-card frames** | Your weekly summary and year in review as an IG-story-sized card, with paid frames and Som stickers. The basic frame is free. | People already share "insights"; this makes sharing pretty. | 29–39 |
+| 6 | **Visiting friends** | Cosmetic visitors that wander the farm: a hornbill postman, a baby elephant, a pair of sparrows. No gameplay. | Collectible life on the farm. | 39–59 |
+| 7 | **Supporter** (optional subscription) | Includes the Farm Pass and one wardrobe item a month, plus a small "ผู้สนับสนุน" leaf on your farm sign and a thank-you scene with Som. | Supporting a small indie student project. | 79 / month |
+| 8 | **Gift to a friend** (with M12 sharing) | Buy a wardrobe item or a visitor for a friend's farm. | Social, and a cheap birthday gift. | the item's price |
 
 **Not sold:**
 - tickets;
@@ -47,4 +48,4 @@ Ordered by how much they'd likely sell versus how fair they feel:
 
 ## When
 - **After** the closed beta proves people come back (see the beta KPIs). Selling to people who don't stay is wasted effort.
-- **Order:** the story and seasonal crops first, since the free track needs them. Then Som's wardrobe and the Farm Pass. Themes and sound packs later.
+- **Order:** the story and seasonal crops first, since the free track needs them. Then Som's wardrobe, the Farm Pass and story-card frames. Rooms, themes and visitors later.

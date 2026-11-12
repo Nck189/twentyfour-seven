@@ -78,3 +78,13 @@ Each month has **3 beats**, all directed by the same rules as above (one a day, 
 3. Each other crop, with its art and beats, ahead of its month.
 
 Each "use" reward is server-side and checked once per crop per year.
+
+## More Som moments (small, high value; part of the story work)
+Approved to add on 2026-11-12 ("ถ้ามีทำได้เลย"). Each reuses existing art and data:
+1. **Sunday with Som:** the weekly review opens with Som reacting to *your* week, and shows the best day, the best block and the miss reason that came up most. The tone is kind: "สัปดาห์นี้ตื่นทัน 5 เช้า ส้มภูมิใจ". It turns the review from a form into a moment.
+2. **Meet the new animal:** when an animal hatches, a 3-panel scene shows Som meeting it. Each of the 13 species reacts differently: the chick hides behind Som, the cow licks Som, the pig steals Som's cushion.
+3. **Exam week** (students, Minnie's own case):
+   - When the Plan has an appointment tagged exam/สอบ, Som wears a headband, brings snacks to the Focus block card, and the Night ritual says "พรุ่งนี้สอบ นอนให้พอนะ".
+   - The day after the exam: a short "you did it" scene.
+
+Later, if the orders feel flat: a **hornbill postman** NPC who brings the daily orders, as a one-line scene per order.
