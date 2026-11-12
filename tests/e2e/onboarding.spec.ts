@@ -108,6 +108,42 @@ test("my own: sleep times + weekdays + a class slot, then first-10s one block at
   expect(free.fixed_events).toEqual([expect.objectContaining({ key: "work", start: "13:00", end: "17:00" })]);
 });
 
+test("slot edits are saved in order: a slow earlier save can't undo a later one (CI 2026-11-11)", async ({
+  page,
+}) => {
+  const id = await newUser(page);
+  // The save with the default end (12:00) is slow, so it reaches the server after the 17:00 one.
+  await page.route(
+    (url) => url.pathname.endsWith("/rest/v1/templates"),
+    async (route) => {
+      const body = route.request().postData() ?? "";
+      if (route.request().method() === "PATCH" && body.includes('"end":"12:00"'))
+        await new Promise((r) => setTimeout(r, 1500));
+      await route.fallback();
+    },
+  );
+  await page.goto("/welcome");
+  await page.getByRole("button", { name: /My own/ }).click();
+  const week = page.getByRole("region", { name: "Your week" });
+  await week.getByRole("list", { name: "Kinds of day" }).getByRole("button").first().click();
+  const first = page.getByRole("region", { name: "Free weekday" });
+  await first.getByRole("button", { name: "Add class or work time" }).click();
+  await first.getByRole("radio", { name: "Work" }).click();
+  await first.getByLabel("Work starts").fill("13:00");
+  await first.getByLabel("Work ends").fill("17:00");
+  await first.getByRole("button", { name: "Done" }).click();
+  await expect(week.getByRole("button", { name: /Free weekday/ })).toContainText("13:00–17:00");
+  // Every save lands, and the last edit is the one kept.
+  await expect
+    .poll(async () => (await templates(id)).find((t) => t.key === "free_weekday")?.fixed_events, {
+      timeout: 15_000,
+    })
+    .toEqual([expect.objectContaining({ key: "work", start: "13:00", end: "17:00" })]);
+  await page.waitForTimeout(2000); // nothing older lands after it
+  const free = (await templates(id)).find((t) => t.key === "free_weekday")!;
+  expect(free.fixed_events).toEqual([expect.objectContaining({ key: "work", start: "13:00", end: "17:00" })]);
+});
+
 test("import a timetable (.ics): weekly slots become kinds of day", async ({ page }) => {
   const id = await newUser(page);
   await page.goto("/welcome?step=week&from=more");

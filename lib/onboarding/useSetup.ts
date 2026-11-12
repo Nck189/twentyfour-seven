@@ -25,9 +25,12 @@ export function useSetup() {
   const [error, setError] = useState(false);
   /** Bumps after bulk changes (starter, import, same sleep for all) so editors re-read values. */
   const [version, setVersion] = useState(0);
+  /** Bulk changes in flight; a kind opened meanwhile would be remounted (edits lost) when they land. */
+  const [busy, setBusy] = useState(0);
   const [timezone, setTimezone] = useState(DEFAULT_TZ);
   const blocksRef = useRef<BlockSetting[]>([]);
   const templatesRef = useRef<TemplateRow[]>([]);
+  const queues = useRef(new Map<string, Promise<void>>());
 
   useEffect(() => {
     let cancelled = false;
@@ -79,7 +82,17 @@ export function useSetup() {
       const before = templatesRef.current;
       templatesRef.current = before.map((t) => (t.id === id ? { ...t, ...patch } : t));
       setTemplates(templatesRef.current);
-      const { error: err } = await client.from("templates").update(patch).eq("id", id);
+      // One kind's saves go out one at a time, in order: two quick edits sent together could
+      // land out of order and the older one would win (CI 2026-11-11: a slot saved as 13:00–12:00).
+      const prev = queues.current.get(id) ?? Promise.resolve();
+      const run = prev.then(() => client.from("templates").update(patch).eq("id", id));
+      const done = run.then(
+        () => undefined,
+        () => undefined,
+      );
+      queues.current.set(id, done);
+      const { error: err } = await run;
+      if (queues.current.get(id) === done) queues.current.delete(id);
       if (err) {
         templatesRef.current = before;
         setTemplates(before);
@@ -304,13 +317,18 @@ export function useSetup() {
   /** Same bed/wake for every kind of day. */
   const setAllSleep = useCallback(
     async (wake: string, sleepMin: number) => {
-      for (const t of templatesRef.current.filter((x) => x.auto_apply)) {
-        await patchTemplate(t.id, {
-          target_wake: wake,
-          blocks: { ...t.blocks, sleep: { ...t.blocks?.sleep, duration_min: sleepMin } },
-        });
+      setBusy((n) => n + 1);
+      try {
+        for (const t of templatesRef.current.filter((x) => x.auto_apply)) {
+          await patchTemplate(t.id, {
+            target_wake: wake,
+            blocks: { ...t.blocks, sleep: { ...t.blocks?.sleep, duration_min: sleepMin } },
+          });
+        }
+        setVersion((v) => v + 1);
+      } finally {
+        setBusy((n) => n - 1);
       }
-      setVersion((v) => v + 1);
     },
     [patchTemplate],
   );
@@ -319,6 +337,7 @@ export function useSetup() {
     status,
     error,
     version,
+    busy: busy > 0,
     timezone,
     applyStarter,
     applyWeekKinds,

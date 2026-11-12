@@ -148,7 +148,7 @@ export function FarmView({
         />
         <span
           aria-hidden="true"
-          className="max-w-full truncate rounded-full bg-surface/90 px-1.5 text-center text-xs font-bold text-ink"
+          className="line-clamp-2 max-w-full rounded-lg bg-surface/90 px-1.5 text-center text-xs leading-tight font-bold break-words text-ink"
         >
           {blocks(`name.${slot}`)}
         </span>

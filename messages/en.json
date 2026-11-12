@@ -66,7 +66,8 @@
       "done": "Done",
       "missed": "Missed",
       "backfilled": "Backfilled",
-      "upcoming": "Upcoming"
+      "upcoming": "Upcoming",
+      "setAside": "Not today"
     },
     "block": {
       "start": "Start",
@@ -93,7 +94,11 @@
       "fixedEvent": "Fixed",
       "backfilledStart": "Backfilled",
       "changeFirst10": "Change today's first 10 minutes",
-      "none": "No first-10"
+      "none": "No first-10",
+      "early": "Started early",
+      "tasks": "Planned tasks",
+      "taskCoins": "+{n} coins",
+      "first10Start": "Started with the first 10"
     },
     "nap": {
       "title": "Power nap",
@@ -248,7 +253,9 @@
     "buyItem": "Buy {item} for {price} coins",
     "yourSeeds": "Your seeds",
     "seedOwned": "{crop}, {n} owned",
-    "onlyThisMonth": "This month"
+    "onlyThisMonth": "This month",
+    "lastChance": "One more missed {block} and it dies. Do {block} today, or mark it done in the Night ritual, to save it.",
+    "lastChanceToday": "{crop} in {block}: one more miss and it dies"
   },
   "crops": {
     "radish": "Radish",
@@ -440,7 +447,7 @@
     "account": "Account",
     "signedInAs": "Signed in as {email}",
     "signOut": "Sign out",
-    "install": "Install on iPhone",
+    "install": "Install as an app",
     "installSteps": "In Safari, tap Share, then “Add to Home Screen”.",
     "setupTitle": "Setup",
     "setupSleep": "Your week",
@@ -599,7 +606,8 @@
     "more": "More: project, deadline, steps",
     "titleLabel": "Task",
     "earlier": "From earlier days",
-    "loadError": "Couldn't load your tasks."
+    "loadError": "Couldn't load your tasks.",
+    "markDone": "Mark task finished"
   },
   "errors": {
     "notFoundTitle": "Page not found",
@@ -624,6 +632,8 @@
     "phoneDone": "Time's up — let's close today.",
     "closeTitle": "Close today",
     "closeHint": "Which blocks didn't happen? Tag why — no judgement, it's data.",
+    "asUsual": "Today went as usual",
+    "asUsualHint": "Every block not tapped yet is marked done (logged after the fact, so no tickets).",
     "allClosed": "Every block is closed. Nice.",
     "reason": "Reason for {block}",
     "closeBlock": "Mark done",
@@ -931,5 +941,15 @@
       "plots": "Each plot is one block of your day. Do the block and its crop grows; skip it and weeds come.",
       "capsule": "Tickets come from waking on time and the Night ritual. Spend them here for new seeds."
     }
+  },
+  "welcomeBack": {
+    "title": "Welcome back",
+    "body": "Your farm waited for you: no plant wilted or died while you were away. Pick up from today.",
+    "start": "Start today",
+    "gift": "+1 ticket, a welcome-back gift",
+    "goalTitle": "Back on track",
+    "goalBody": "{done} of {need} easy days (I'm up on time + Night ritual) in the next 5 days",
+    "goalClaim": "Collect +2 tickets",
+    "goalGift": "+2 tickets. You're back on track."
   }
 }

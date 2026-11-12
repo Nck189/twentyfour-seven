@@ -84,10 +84,11 @@ export function simulatePlot(p: Planting, days: readonly DayFacts[]): PlotView {
       missStreak = 0;
       if (!weeds) {
         growthDays++;
-        const log = day.logs[p.slot]!;
+        // A credited block (an in-window "I'm up", the Night ritual) may have no log of its own.
+        const log = day.logs[p.slot];
         record.days++;
-        if (first10Done(log)) record.first10Days++;
-        const rate = checklistRate(log);
+        if (log && first10Done(log)) record.first10Days++;
+        const rate = log ? checklistRate(log) : null;
         if (rate !== null) record.checklistRates.push(rate);
         for (const m of todayWeather) mutations.add(m);
         if (growthDays >= crop.growDays) {
@@ -131,4 +132,9 @@ function isNextDay(a: string, b: string): boolean {
   const da = Date.parse(`${a}T00:00:00Z`);
   const db = Date.parse(`${b}T00:00:00Z`);
   return db - da === 86_400_000;
+}
+
+/** A growing plot one more miss away from dying: the farm says so before it happens (R1 R2). */
+export function oneMissFromDeath(v: Pick<PlotView, "status" | "missStreak">): boolean {
+  return v.status === "growing" && v.missStreak === DEAD_AT_MISSES - 1;
 }

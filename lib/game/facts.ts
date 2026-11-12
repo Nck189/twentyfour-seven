@@ -37,10 +37,12 @@ export function buildDayFacts(i: FactsInput): DayFacts[] {
   }
   const wakeOk = new Set(i.wakes.filter((w) => w.in_window && !w.backfilled).map((w) => w.date));
   const nights = new Set(i.nights);
+  const anyWake = new Set(i.wakes.map((w) => w.date));
   const lateNights = new Set(i.lateNights ?? []);
   const exercised = new Set(i.exercise.map((at) => localDate(new Date(at), i.timezone)));
   const out: DayFacts[] = [];
   for (let d = i.from; d <= i.today; d = addDays(d, 1)) {
+    const away = d < i.today && !logsByDate.has(d) && !anyWake.has(d) && !nights.has(d) && !exercised.has(d);
     out.push({
       date: d,
       mode: i.modes[d] ?? "normal",
@@ -50,6 +52,7 @@ export function buildDayFacts(i: FactsInput): DayFacts[] {
       exercised: exercised.has(d),
       ...(d === i.today ? { open: [...BLOCK_KEYS] } : {}),
       ...(lateNights.has(addDays(d, 1)) ? { excused: ["free" as BlockKey] } : {}),
+      ...(away ? { away: true } : {}),
     });
   }
   return out;

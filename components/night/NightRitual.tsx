@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useState, type JSX } from "react";
+import { useEffect, useRef, useState, type JSX, type ReactNode } from "react";
 import { PlantAll } from "@/components/farm/PlantAll";
 import { DayEditor } from "@/components/plan/DayEditor";
 import { SaveStatus } from "@/components/plan/SaveStatus";
@@ -50,6 +50,8 @@ type Props = {
   goToBed: (b: TimelineBlock, at: Date, first10: boolean) => Promise<void>;
   timezone: string;
   onClose: () => void;
+  /** Blocks a lived action already counts as done (an in-window "I'm up" is Wake's; R1). */
+  credited?: readonly string[];
 };
 
 /**
@@ -65,6 +67,7 @@ export function NightRitual({
   goToBed,
   timezone,
   onClose,
+  credited = [],
 }: Props) {
   const t = useTranslations("night");
   const tc = useTranslations("common");
@@ -101,7 +104,10 @@ export function NightRitual({
   }, [phoneEnds]);
 
   // Blocks of today (Wake…Free) that never closed.
-  const open = timeline.blocks.filter((b) => b.key !== "down" && b.key !== "sleep" && !logFor(b).closed_at);
+  // A credited block happened (G7 R1-fixes F4): not "not done", and no shared miss reason for it.
+  const open = timeline.blocks.filter(
+    (b) => b.key !== "down" && b.key !== "sleep" && !logFor(b).closed_at && !credited.includes(b.key),
+  );
   // Started but never finished = it happened: one tap closes it as done (R-M4-3).
   const started = (b: TimelineBlock) => {
     const l = logFor(b);
@@ -145,6 +151,20 @@ export function NightRitual({
         </p>
       ) : (
         <>
+          {/* R7 (playtest R1): a normal day is one tap — the blocks happened, just weren't tapped.
+              Logged after the fact: not a miss, but no tickets or growth (like any backfill). */}
+          <button
+            type="button"
+            onClick={() => {
+              sfx.tick();
+              for (const b of open) void closeDone(b);
+            }}
+            className="tap flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary-soft px-4 font-bold text-primary"
+          >
+            <CheckIcon className="h-5 w-5" />
+            {t("asUsual")}
+          </button>
+          <p className="-mt-1 text-sm text-muted">{t("asUsualHint")}</p>
           {notStarted.length > 1 && (
             <section aria-label={t("reasonAll")} className="flex flex-col gap-2">
               <h4 className="text-sm font-bold text-muted">{t("reasonAll")}</h4>
@@ -352,7 +372,9 @@ export function NightRitual({
           />
         ))}
       </div>
-      {steps[step]}
+      {/* Within a step the sheet never shrinks: a bottom sheet that shrinks under a finger turns a
+          quick second tap (e.g. on "Today went as usual") into a tap on the backdrop (G7 S3). */}
+      <StepBox key={step}>{steps[step]}</StepBox>
       <div className="mt-4 flex justify-between gap-2">
         <Button variant="ghost" disabled={step === 0} onClick={() => setStep((s) => s - 1)}>
           {t("back")}
@@ -369,5 +391,22 @@ export function NightRitual({
         )}
       </div>
     </Sheet>
+  );
+}
+
+function StepBox({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [minH, setMinH] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setMinH((m) => Math.max(m, el.offsetHeight)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return (
+    <div ref={ref} style={{ minHeight: minH || undefined }}>
+      {children}
+    </div>
   );
 }

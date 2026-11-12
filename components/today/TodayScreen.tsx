@@ -19,10 +19,13 @@ import { useAnimals } from "@/lib/animals/useAnimals";
 import { StreakChip, StreakNotice } from "@/components/streak/StreakChip";
 import { useStreak } from "@/lib/streak/useStreak";
 import { TodayUnlockLine, UnlockNotice } from "@/components/farm/CollectionBook";
+import { LastChanceLine } from "@/components/farm/LastChanceLine";
 import { useUnlocks } from "@/lib/unlocks/useUnlocks";
 import { TodayReviewLine } from "@/components/stats/ReviewLine";
 import { Tip } from "@/components/tips/Tip";
 import { BlockCheckin } from "./BlockCheckin";
+import { BlockTasks } from "./BlockTasks";
+import { WelcomeBackCard } from "./WelcomeBackCard";
 import { Sheet } from "./BlockSheet";
 import { ModeCard } from "./ModeCard";
 import { NapCard, isNapRunning } from "./NapCard";
@@ -136,9 +139,12 @@ export function TodayScreen() {
   // Once offered it stays until Done/Close, even when Down ends mid-flow (R-M4-4).
   if (autoOffer && !ritualOpen) setRitualOpen(true);
   // One thing at a time: what's on screen depends on the part of the day.
-  const next = cur ? tl.blocks[tl.blocks.indexOf(cur) + 1] : undefined;
+  // Up before the day's first block (an early "I'm up" starts the day, P2): nothing is current
+  // yet, so the next thing is the first block still ahead (G7 R1-fixes F3).
+  const next = cur ? tl.blocks[tl.blocks.indexOf(cur) + 1] : tl.blocks.find((b) => b.start > now);
   const wake = today.wakeCard;
-  const showWake = wake && (wake.canPress || cur?.key === "wake" || cur?.key === "sleep");
+  const showWake =
+    wake && (wake.canPress || cur?.key === "wake" || cur?.key === "sleep" || (!cur && !!wake.event));
   // After the ritual, near bedtime: "Going to bed" starts Sleep (G7 R-M10-R3-1).
   const sleepBlock = tl.blocks.find((b) => b.key === "sleep");
   const bedCard =
@@ -151,6 +157,11 @@ export function TodayScreen() {
       cur?.key,
       text.first10("sleep", sleepBlock.first10) !== null,
     );
+  // Blocks a lived action counts as done (R1): the timeline labels them, the ritual skips them.
+  const creditedKeys = [
+    ...(wake?.event?.in_window && !wake.event.backfilled && wake.event.date === tl.date ? ["wake"] : []),
+    ...(today.nightDone ? ["down"] : []),
+  ];
   const showCurrent = cur && !bedCard && cur.key !== "sleep" && !(cur.key === "down" && !today.nightDone);
   const napRunning = isNapRunning();
   const warnings = allWarnings ? tl.warnings : tl.warnings.slice(0, 1);
@@ -188,6 +199,7 @@ export function TodayScreen() {
       {/* Under the header, next to the streak chip it explains. */}
       <Tip id="streak" when={!!streak.view && tipsQuiet} />
       {onboarding.show && <WelcomeCard onLater={() => void onboarding.later()} />}
+      {!onboarding.show && <WelcomeBackCard />}
 
       {tl.mode !== "normal" && (
         <p className="mx-4 mb-3 inline-block rounded-full bg-primary-soft px-3 py-1 text-sm font-bold text-primary lg:mx-6">
@@ -270,6 +282,7 @@ export function TodayScreen() {
             actions={today.actions}
             ownFirst10={today.blockSettings.find((b) => b.key === cur.key)?.first10_options}
           />
+          <BlockTasks userId={today.userId} date={cur.logDate} block={cur.key} />
         </section>
       )}
       {bedCard && sleepBlock && (
@@ -307,6 +320,7 @@ export function TodayScreen() {
       <Tip id="exercise" when={!!animals.state && tipsQuiet} />
 
       {!onboarding.show && <TodayReviewLine />}
+      <LastChanceLine />
       {unlocks && !onboarding.show && <TodayUnlockLine state={unlocks} />}
 
       <div className="mx-4 mb-2 lg:mx-6">
@@ -329,6 +343,7 @@ export function TodayScreen() {
           now={now}
           timezone={today.timezone}
           currentKey={cur?.key}
+          credited={creditedKeys}
           onOpen={(b) => setOpenKey(b.key)}
         />
       )}
@@ -356,6 +371,7 @@ export function TodayScreen() {
           complete={today.actions.completeNightRitual}
           goToBed={today.actions.goToBed}
           timezone={today.timezone}
+          credited={creditedKeys}
           onClose={() => {
             markOffered(tl.date);
             setRitualOpen(false);

@@ -130,7 +130,11 @@ test("CJ-11 drag a task onto a day (mouse)", async ({ page, isMobile }) => {
   await expect
     .poll(async () => (await backlogItems(id))[0])
     .toMatchObject({ scheduled_date: tomorrow(), block: "work", status: "scheduled" });
-  await target.click();
+  // dnd-kit swallows a click that lands right after a drop: retry until the day is selected.
+  await expect(async () => {
+    await target.click();
+    await expect(target).toHaveAttribute("aria-pressed", "true", { timeout: 1000 });
+  }).toPass();
   await expect(page.getByRole("region", { name: "Tomorrow" }).getByText("1h of 9h free")).toBeVisible();
 });
 
@@ -140,11 +144,11 @@ test("finishing a task grants coins once (server-side)", async ({ page }) => {
   await page.goto("/plan");
   await page.getByRole("button", { name: "Edit Pay rent" }).click();
   const sheet = page.getByRole("dialog", { name: "Pay rent" });
-  await sheet.getByRole("button", { name: "Done", exact: true }).click();
+  await sheet.getByRole("button", { name: "Mark task finished" }).click();
   await expect(sheet.getByText("+20 coins")).toBeVisible();
   expect((await gameState(id)).coins).toBe(20);
   await sheet.getByRole("button", { name: "Not done yet" }).click();
-  await sheet.getByRole("button", { name: "Done", exact: true }).click();
+  await sheet.getByRole("button", { name: "Mark task finished" }).click();
   await expect(sheet.getByText("Done again — coins only count once")).toBeVisible();
   expect((await gameState(id)).coins).toBe(20);
 });

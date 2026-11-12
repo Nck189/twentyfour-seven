@@ -32,7 +32,17 @@ export function Onboarding() {
   const fromMore = params.get("from") === "more";
   // "sleep" is the older name of the week step (links from earlier builds).
   const asked = (params.get("step") === "sleep" ? "week" : params.get("step")) as Step | null;
-  const [step, setStep] = useState<Step>(asked && STEPS.includes(asked) ? asked : "starter");
+  const [step, setStepState] = useState<Step>(asked && STEPS.includes(asked) ? asked : "starter");
+  // The step lives in the URL too, so a reload resumes it instead of starting over (playtest R1
+  // P5: restarting re-ran the starter and piled up duplicate kinds of day).
+  const setStep = (next: Step) => {
+    setStepState(next);
+    const q = new URLSearchParams(window.location.search);
+    q.set("step", next);
+    // history.replaceState, not router.replace: a router navigation re-renders the page through
+    // Suspense, which could drop the open kind editor and its unsaved edits (CI, WebKit).
+    window.history.replaceState(window.history.state, "", `?${q.toString()}`);
+  };
   const setup = useSetup();
   const [kindOpen, setKindOpen] = useState(false);
 
@@ -120,6 +130,7 @@ export function Onboarding() {
             <WeekStep
               templates={setup.templates}
               version={setup.version}
+              busy={setup.busy}
               nameOf={nameOf}
               onSleep={setup.setSleep}
               onAllSleep={(w, m) => void setup.setAllSleep(w, m)}

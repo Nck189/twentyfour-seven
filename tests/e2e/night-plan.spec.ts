@@ -4,6 +4,7 @@ import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import {
   blockLogs,
   dayPlans,
+  addWakeEvent,
   gameState,
   rest,
   setAllTemplates,
@@ -193,6 +194,91 @@ test("Night ritual: one tap tags every open block with the same reason", async (
     .poll(async () => (await blockLogs(id)).filter((l) => l.miss_reason === "sleepy").length)
     .toBe(5);
   await expectTouchTargets(page);
+});
+
+test("R7: 'Today went as usual' closes every open block as done (backfilled, no miss, no ticket)", async ({
+  page,
+}) => {
+  const id = await newUserOn(page);
+  await setWakeMinutesAgo(id, DOWN_TIME_MINUTES_AFTER_WAKE);
+  const before = (await gameState(id))?.tickets ?? 0;
+  await page.goto("/today");
+  const sheet = page.getByRole("dialog", { name: "Night ritual" });
+  await expect(sheet).toBeVisible();
+  await sheet.getByRole("button", { name: "Next" }).click();
+  await sheet.getByRole("button", { name: /Today went as usual/ }).click();
+  await expect(sheet.getByText("Every block is closed. Nice.")).toBeVisible();
+  await expect
+    .poll(async () =>
+      (await blockLogs(id))
+        .filter((l) => l.closed_at && l.started_at && l.backfilled && !l.miss_reason)
+        .map((l) => l.block)
+        .sort(),
+    )
+    .toEqual(["focus", "free", "gradation", "wake", "work"]);
+  expect((await gameState(id))?.tickets ?? 0).toBe(before);
+  await expectTouchTargets(page);
+});
+
+test("G7 F1: 'Today went as usual' keeps a block started live and on time live (its growth stays)", async ({
+  page,
+}) => {
+  const id = await newUserOn(page);
+  await setWakeMinutesAgo(id, DOWN_TIME_MINUTES_AFTER_WAKE);
+  const wokeAt = Date.now() - DOWN_TIME_MINUTES_AFTER_WAKE * 60_000;
+  const day = localDate(new Date(wokeAt), "Asia/Bangkok");
+  // Focus (wake + 1 h) was started live, 2 min after its planned start.
+  await rest("block_logs", {
+    method: "POST",
+    body: JSON.stringify({
+      user_id: id,
+      date: day,
+      block: "focus",
+      planned_start: new Date(wokeAt + 60 * 60_000).toISOString(),
+      started_at: new Date(wokeAt + 62 * 60_000).toISOString(),
+      backfilled: false,
+    }),
+  });
+  await page.goto("/today");
+  const sheet = page.getByRole("dialog", { name: "Night ritual" });
+  await expect(sheet).toBeVisible();
+  await sheet.getByRole("button", { name: "Next" }).click();
+  await sheet.getByRole("button", { name: /Today went as usual/ }).click();
+  await expect(sheet.getByText("Every block is closed. Nice.")).toBeVisible();
+  await expect
+    .poll(async () => {
+      const f = (await blockLogs(id)).find((l) => l.block === "focus");
+      return { closed: !!f?.closed_at, backfilled: f?.backfilled };
+    })
+    .toEqual({ closed: true, backfilled: false });
+});
+
+test("G7 F4: an in-window I'm up counts as Wake: the ritual doesn't list it as not done", async ({
+  page,
+}) => {
+  const id = await newUserOn(page);
+  await setWakeMinutesAgo(id, DOWN_TIME_MINUTES_AFTER_WAKE);
+  const day = localDate(new Date(Date.now() - DOWN_TIME_MINUTES_AFTER_WAKE * 60_000), "Asia/Bangkok");
+  await addWakeEvent(id, day, true);
+  await page.goto("/today");
+  const sheet = page.getByRole("dialog", { name: "Night ritual" });
+  await expect(sheet).toBeVisible();
+  await sheet.getByRole("button", { name: "Next" }).click();
+  await expect(sheet.getByRole("group", { name: "Reason for Wake" })).toHaveCount(0);
+  await expect(sheet.getByRole("button", { name: "Mark done Wake" })).toHaveCount(0);
+  await sheet
+    .getByRole("region", { name: "Same reason for all" })
+    .getByRole("button", { name: "Sleepy" })
+    .click();
+  await expect(sheet.getByText("Every block is closed. Nice.")).toBeVisible();
+  await expect
+    .poll(async () =>
+      (await blockLogs(id))
+        .filter((l) => l.miss_reason === "sleepy")
+        .map((l) => l.block)
+        .sort(),
+    )
+    .toEqual(["focus", "free", "gradation", "work"]);
 });
 
 test("R-M4-3: a block that was started closes as done (no miss reason); 'same for all' skips it", async ({

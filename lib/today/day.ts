@@ -153,8 +153,15 @@ export function plannedWake(ctx: DayContext, date: string): { wake: string; base
  * Before today's wake it's still yesterday's day. `pinned` (date → wake target as pressed, else
  * as frozen by the server) wins over the live plan, as on the server (`_wake_day`, R-M9-R2-1).
  */
-export function currentDayDate(ctx: DayContext, now: Date, pinned?: Record<string, string>): string {
+export function currentDayDate(
+  ctx: DayContext,
+  now: Date,
+  pinned?: Record<string, string>,
+  /** Dates with an "I'm up": that day has started, even before its target (playtest R1 P2). */
+  pressed?: ReadonlySet<string>,
+): string {
   const d0 = localDate(now, ctx.timezone);
+  if (pressed?.has(d0)) return d0;
   const pin = pinned?.[d0];
   const wake = pin ? new Date(pin) : planFor(ctx, d0).wake;
   return now.getTime() < wake.getTime() ? addDays(d0, -1) : d0;
@@ -222,6 +229,27 @@ export function timelineFor(ctx: DayContext, date: string): Timeline {
   };
 }
 
+/**
+ * Kinds of day to offer in a picker: the user's own (auto-applied or tied to weekdays) and the
+ * one already chosen. Presets a starter switched off (no weekdays, not auto-applied) stay
+ * hidden (playtest R1 P5: office saw 8 kinds she never made).
+ */
+export function isOfferedKind(
+  t: { id: string; auto_apply: boolean; weekdays: number[] },
+  selectedId?: string,
+): boolean {
+  return t.auto_apply || t.weekdays.length > 0 || t.id === selectedId;
+}
+
+/**
+ * Blocks that got no time today (the engine squeezed them to 0 min, e.g. Focus between a late
+ * wake and a fixed work start). They can't be done, so they're set aside as planned deviations
+ * instead of judged as missed (playtest R1 P1).
+ */
+export function emptyBlocks(t: Timeline): TimelineBlock[] {
+  return t.blocks.filter((b) => b.end.getTime() <= b.start.getTime());
+}
+
 export function currentBlock(t: Timeline, now: Date): TimelineBlock | undefined {
   return t.blocks.find((b) => b.start.getTime() <= now.getTime() && now.getTime() < b.end.getTime());
 }
@@ -231,6 +259,12 @@ export { ON_TIME_MIN };
 /** SPEC §4.3: on time = started within ±10 min of the planned start. */
 export function isOnTime(plannedStart: Date, startedAt: Date): boolean {
   return Math.abs(startedAt.getTime() - plannedStart.getTime()) <= ON_TIME_MIN * 60_000;
+}
+
+/** How a start compares with the plan, for its label: an early start isn't "late" (R1 P6). */
+export function startTiming(plannedStart: Date, startedAt: Date): "early" | "onTime" | "late" {
+  if (isOnTime(plannedStart, startedAt)) return "onTime";
+  return startedAt.getTime() < plannedStart.getTime() ? "early" : "late";
 }
 
 /** A block whose end has passed is logged as a backfill (no tickets or mutations). */

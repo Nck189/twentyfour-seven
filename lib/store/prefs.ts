@@ -27,11 +27,19 @@ type PrefsState = {
   setSkipAnimations: (skip: boolean) => void;
 };
 
+/** The first visit's language: the device's first preference if it's Thai, else English (R1 P8). */
+export function detectLocale(languages: readonly string[]): Locale {
+  return languages[0]?.toLowerCase().startsWith("th") ? "th" : "en";
+}
+const deviceLocale = (): Locale =>
+  typeof navigator === "undefined" ? "en" : detectLocale(navigator.languages ?? [navigator.language]);
+
 /** Per-device UI preferences. Locale/sound are also synced to `profiles` after login. */
 export const usePrefs = create<PrefsState>()(
   persist(
     (set) => ({
-      locale: "en",
+      // Stored prefs win after hydration; this only decides a first visit.
+      locale: deviceLocale(),
       theme: "system",
       soundOn: true,
       skipAnimations: false,

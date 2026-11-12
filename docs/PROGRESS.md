@@ -1,15 +1,19 @@
 # PROGRESS — 24/7
 
-## Now (2026-11-10, evening)
-- ✅ **v1 is done.** M10 (PR #10) and the Mac visual baselines (PR #11) are merged.
-  - CI is green on all 6 devices. The repo is public for now (Minnie), so Actions minutes are free.
-  - The Sleep question is settled (Minnie OK). Goodnight starts Sleep when bedtime is within 10 min; otherwise Today shows a "Going to bed" card. Day score is no longer capped near 73%.
-  - The Stats redesign is OK'd by Minnie: plain words, no "OEE", 3 tabs.
-- ✅ **Prod is up to date.** Minnie ran `db push` (3 migrations) and then `npm run qc:prod` on 2026-11-10: G6 passed, 22/22 plus Lighthouse. M8–M10 have every QC gate except the Mac visual baselines (G3) for Today, Plan and Stats.
-- ⏳ **Minnie, optional:** set the repo back to private once she no longer needs free CI minutes.
-- Next:
-  1. the v1 playtest pilot (docs/PLAYTEST_PLAN.md: 4 personas × 7 days, starting from setup). It needs a local Supabase, so it runs on the Mac or in CI, not in a plain cloud container.
-  2. M11.
+## Now (2026-11-12, ~02:00 Bangkok)
+- ✅ **Playtest pilot R1 done** (4 personas × 7 days, local). Report: `docs/playtest/R1/REPORT.md`. Minnie OK'd the fix list on 2026-11-11.
+- 🔄 **PR #14:** P1–P9 fixes + rule changes R1, R2, R3, R5, R7. Test-first; 441 unit/integration tests, local E2E green.
+  - CI: WebKit flakiness on this branch was ~2.5× main's; the last push (e29d85d) lightens Today's load.
+  - G7 independent review: in progress. The reviewer was paused by a usage limit, then resumed.
+  - After merge, Minnie runs `npx supabase db push --remote` for 4 migrations: early_wake_day, credit_lived_actions, away_days, welcome_back.
+- 🔄 **Economy v2** (Minnie OK: "โอเคทุกอย่างที่ถามมา"; plan in `docs/ECONOMY.md`) is built on the local branch `econ-local`. It goes up as the next PR after #14 merges.
+  - Done:
+    - server-judged harvest quality and weather (parity test, 40 random weeks);
+    - market, seed shop, ticket exchange, upgrades, daily orders and reward jar RPCs;
+    - the Shop UI and the farmhouse art.
+  - Left: G7 review and the PR.
+- Known: the Thai visual baselines (G3, Mac) need re-recording once, because the Thai wording changed.
+- Next: M11 (push notifications; Down Time first), then R6/R8 and v2.
 
 ## ➡️ HANDOFF — read this first (any session: cloud or Minnie's Mac terminal)
 Minnie is asleep (from 2026-11-03 ~02:00 Bangkok). The build moved between a cloud session and her Mac; whichever session runs now continues from here.

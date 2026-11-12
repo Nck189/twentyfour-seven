@@ -141,3 +141,29 @@ Format: date · decision · why · how to change it
   - On-time stays ±10 min, as for every block, and the server still stamps the time. Goodnight near bedtime makes Sleep a full success. An early Goodnight (say at the start of Down Time) logs Sleep as done but not on time, which still lets a day reach about 86%. Early is deliberately not counted as on time: Goodnight at 21:30 followed by phone until 01:00 shouldn't count as good sleep.
   - Client-side, through the same queued check-in path as every other block, so no migration is needed.
 - 2026-11-10 · The check-in guard's "planned start belongs to this wake-day" window is now midnight −6 h … +48 h (was +36 h). A wake-day runs wake → next wake, so a 23:59 wake puts that day's blocks up to 48 h after its midnight. CI caught the old bound when Goodnight's Sleep start read as a backfill in a test whose wake was late in the evening. Integration test first, then the migration `20261110010000_block_logs_day_window`.
+- 2026-11-11 · Minnie OK'd the playtest R1 plan ("โอเคตามนั้นเลย"). Order of work:
+  1. **Bugs P1–P9** (docs/playtest/R1/REPORT.md §8A).
+  2. **Rule changes R1, R2, R3, R4, R5, R7:**
+     - R1: the ritual is Down's start, "I'm up" is Wake's, "Going to bed" is Sleep's, and a first-10 within the block counts as a start;
+     - R2: a day with no app open is "away", and a plot warns before it dies;
+     - R3: welcome back;
+     - R4: a market for produce;
+     - R5: tasks on Today;
+     - R7: "วันนี้ทำตามปกติ" in the ritual.
+  3. **Later:** R6 (block-time edits) and R8 (odds table, animals in the scene).
+- 2026-11-11 · Minnie: coins need uses beyond decor and plot expansion, or there's no long-term reason to play. Plan, built with R4 (the market):
+  1. **A real-life reward jar:** the user sets their own rewards with a coin price and redeems them. A token economy; it makes coins worth something outside the game.
+  2. **A seed shop:** buy the crop you want, with no gacha; rarer costs more.
+  3. **Ticket exchange:** 150 coins = 1 ticket, at most 2 a week.
+  4. **Tool, barn and house upgrades in tiers,** each with a visible next goal.
+  - Animal treats and outfits, app themes and seasonal collections come in M14. Machines and upgrades come in M13 (Factory).
+  - New coin sources: market sales, daily delivery orders, and Perfect-day / streak bonuses.
+- 2026-11-11 · Minnie: most people won't bother setting up real-life rewards, so the reward jar isn't prominent. Placement is my call: a small "รางวัลของฉัน" tab inside the Farm coin shop, plus one quiet line the first time coins reach about 300. Nothing asks the user to set it up, and coins have other uses either way.
+- 2026-11-11 · Thai wording (playtest R1 P9), my call: the Thai UI uses Thai names for the day parts and rituals. Night ritual → "รูทีนก่อนนอน", Down Time → "พักก่อนนอน", Gradation → "เปลี่ยนโหมด", Template → "เทมเพลต", Sunrise/Night tickets → "ตั๋วเช้า"/"ตั๋วกลางคืน", first-10 → "10 นาทีแรก". English stays as in SPEC. Kept in English on purpose: Must / Should / Just start, Keep / Problem / Try (named methods), Rare / Epic / Legendary (common game words), Backlog / Inbox, Export JSON/CSV. The Thai visual baselines (G3, Mac) need re-recording once.
+- 2026-11-11 · 12-hour time fields (P9): left as they are. `<input type="time">` follows the device's own 12/24-hour setting (iOS: Settings → General → Date & Time), not the page language; replacing it would lose the iOS time wheel.
+- 2026-11-11 · Away days (R2, Minnie OK), my call on the rule: a finished wake-day with nothing logged at all (no wake press, block log, Night ritual or workout) counts as "away". Every block is excused for the farm (no weeds, wilt or death) and the day has no Day score, like Vacation. Opening the app without logging anything still counts as away; the cost is that a fully untouched day never punishes, which is the kind behaviour R2 asked for. A plot one miss from dying says so on Today and in its sheet. Server mirror: `_away_day` in `_plot_ripe` (migration 20261111020000).
+- 2026-11-11 · Welcome back (R3, Minnie OK), my calls: a "return" is 3+ away days in a row right before today (raised from 2 after G7: a skipped weekend isn't a lapse), after at least one active day (a new account isn't "coming back"). The card offers one tap, "Start today", which claims the gift (+1 ticket, at most once a week) instead of waiting for the first wake, so the gift arrives at the moment of return. The "back on track" goal is 3 minimum days within 5 days of the welcome, paying +2 tickets once. All of it is decided server-side (`welcome_back_status`, `claim_welcome_back`, `claim_back_on_track`, migration 20261111030000).
+- 2026-11-12 · Minnie: milestone events with short cutscenes, told by a main character. She picked an **orange farm cat** as the companion and the order **after the economy PR, before M11**. The plan:
+  - A rule-based "director" (pure `lib/game/director.ts`) decides which story beat fires: at most one a day, only at calm moments (opening the Farm, or after Goodnight), never at wake or Down Time. The server records which beats were seen, plus any reward.
+  - Scripts live in `content/story.ts` (EN/TH). Cutscenes are 3–5 flat SVG panels, 10–20 s, and can always be skipped.
+  - The cat also voices the welcome-back card and the M11 pushes.

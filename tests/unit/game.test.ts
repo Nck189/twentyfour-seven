@@ -13,6 +13,7 @@ import {
   isMinimumDay,
   isPerfectDay,
   mutationMultiplier,
+  oneMissFromDeath,
   qualityOf,
   roll,
   simulatePlot,
@@ -324,7 +325,10 @@ describe("a seeded week produces the right farm (M6 done-when)", () => {
     return ds.map((d, i) => {
       const p = perfect(d, { exercised: i % 2 === 0 });
       if (i === 1) p.logs.free = undefined; // Tue: free missed (lettuce was ready Mon: safe)
-      if (i >= 2 && i <= 5) p.logs.down = undefined; // Wed–Sat: down skipped (Thu is excused)
+      // Wed–Sat: down skipped (Thu is excused). Tagged with a reason in the ritual: the ritual
+      // itself would otherwise credit Down Time (playtest R1 R1).
+      if (i >= 2 && i <= 5)
+        p.logs.down = late(d, { started_at: null, first10_at: null, miss_reason: "phone" });
       if (i === 3) p.mode = "sick"; // Thu sick: excused, streak paused
       return p;
     });
@@ -435,5 +439,80 @@ describe("a planned late night is a planned deviation (SPEC §3, §8.4; G7 R-M6-
       exercise: [],
     });
     expect(f.map((d) => d.excused ?? [])).toEqual([[], ["free"], []]);
+  });
+});
+
+describe("lived actions are credited (playtest R1 R1, Minnie OK 2026-11-11)", () => {
+  const d = "2026-11-10";
+  it("an in-window 'I'm up' is Wake's success; the Night ritual in time is Down's", () => {
+    const f = day(d, {}, { wakeInWindow: true, nightRitualDone: true });
+    expect(blockResult(f, "wake")).toBe("success");
+    expect(blockResult(f, "down")).toBe("success");
+    // Without them, untouched blocks are missed as before.
+    const none = day(d, {});
+    expect(blockResult(none, "wake")).toBe("miss");
+    expect(blockResult(none, "down")).toBe("miss");
+    // A Sick/Vacation day stays excused.
+    expect(blockResult(day(d, {}, { mode: "sick", wakeInWindow: true }), "wake")).toBe("excused");
+  });
+  it("Day score counts them as on-time starts", () => {
+    const o = dayOee(day(d, {}, { wakeInWindow: true, nightRitualDone: true }))!;
+    expect(o.availability).toBeCloseTo(2 / 7);
+  });
+});
+
+describe("away days pause the farm (playtest R1 R2, Minnie OK 2026-11-11)", () => {
+  const empty = { logs: [], modes: {}, wakes: [], nights: [], exercise: [] };
+  it("a finished day with nothing logged at all is away; any wake, log, ritual or workout isn't; today never is", () => {
+    const f = buildDayFacts({
+      ...empty,
+      from: "2026-11-05",
+      today: "2026-11-10",
+      timezone: "Asia/Bangkok",
+      logs: [{ ...good("2026-11-06"), date: "2026-11-06", block: "focus" }],
+      wakes: [{ date: "2026-11-07", in_window: false, backfilled: true }],
+      nights: ["2026-11-08"],
+      exercise: ["2026-11-09T05:00:00Z"],
+    });
+    expect(f.map((d) => Boolean(d.away))).toEqual([true, false, false, false, false, false]);
+    const g = buildDayFacts({ ...empty, from: "2026-11-09", today: "2026-11-10", timezone: "Asia/Bangkok" });
+    expect(g.map((d) => Boolean(d.away))).toEqual([true, false]);
+  });
+  it("an away day excuses every block: no weeds, no wilt, no death, no Day score", () => {
+    const a = day("2026-11-10", {}, { away: true });
+    for (const b of BLOCK_KEYS) expect(blockResult(a, b)).toBe("excused");
+    expect(dayOee(a)).toBeNull();
+    const p = plant("focus", "sunflower", "2026-11-01");
+    const days = ["02", "03", "04", "05", "06", "07", "08"].map((dd) =>
+      day(`2026-11-${dd}`, {}, { away: true }),
+    );
+    expect(simulatePlot(p, days)).toMatchObject({
+      status: "growing",
+      weeds: false,
+      wiltLevel: 0,
+      missStreak: 0,
+    });
+  });
+  it("the plot warns one miss before it dies", () => {
+    const p = plant("focus", "sunflower", "2026-11-01");
+    const misses = (n: number) => Array.from({ length: n }, (_, i) => day(`2026-11-0${i + 2}`, {}));
+    expect(oneMissFromDeath(simulatePlot(p, misses(3)))).toBe(false);
+    expect(oneMissFromDeath(simulatePlot(p, misses(4)))).toBe(true);
+    expect(oneMissFromDeath(simulatePlot(p, misses(5)))).toBe(false); // already dead
+  });
+});
+
+describe("a first-10 done during the block counts as its start (playtest R1 R1, G7 F2)", () => {
+  const d = "2026-11-10";
+  it("late start but the first-10 was done live inside the block: success, and on time in Day score", () => {
+    const log = good(d, { started_at: T(d, "13:30"), first10_at: T(d, "13:30") }); // planned 09:00
+    expect(blockResult(day(d, { work: log }), "work")).toBe("success");
+    expect(dayOee(day(d, { work: log }))!.availability).toBeCloseTo(1 / 7, 6);
+  });
+  it("a backfilled first-10, or one before the block, doesn't count", () => {
+    expect(
+      blockResult(day(d, { work: late(d, { first10_at: T(d, "13:30"), backfilled: true }) }), "work"),
+    ).toBe("backfilled");
+    expect(blockResult(day(d, { work: late(d, { first10_at: T(d, "08:30") }) }), "work")).toBe("partial");
   });
 });

@@ -39,6 +39,11 @@ export type DayFacts = {
   excused?: BlockKey[];
   /** Blocks set to have no first-10 that day: left out of the first-10 rate. */
   noFirst10?: BlockKey[];
+  /**
+   * A finished day with nothing logged at all (no wake, block, ritual or workout): the person was
+   * away, so the farm pauses like Vacation (playtest R1 R2, Minnie OK 2026-11-11).
+   */
+  away?: boolean;
 };
 
 /**
@@ -68,16 +73,37 @@ export function first10Done(log: GameLog | undefined): boolean {
   return !!log && !log.backfilled && !!log.first10_at;
 }
 
+/**
+ * The block's start counts (playtest R1, Minnie OK 2026-11-11): started on time, or its first-10
+ * was done live once the block had begun — doing the first 10 minutes *is* starting it, even if
+ * "Start" wasn't tapped at the planned time. Mirrored in SQL (`_start_counts`).
+ */
+export function startCounts(log: GameLog): boolean {
+  if (startedOnTime(log)) return true;
+  if (log.backfilled || !log.first10_at || !log.planned_start) return false;
+  return Date.parse(log.first10_at) >= Date.parse(log.planned_start) - ON_TIME_MIN * 60_000;
+}
+
 function succeeded(log: GameLog): boolean {
   const rate = checklistRate(log);
-  return startedOnTime(log) || (rate !== null && rate >= SUCCESS_CHECKLIST_RATE);
+  return startCounts(log) || (rate !== null && rate >= SUCCESS_CHECKLIST_RATE);
+}
+
+/**
+ * Lived actions that count as a block's on-time start (playtest R1, Minnie 2026-11-11): an
+ * in-window "I'm up" is Wake's, the Night ritual done in time is Down Time's. (Sleep is started
+ * by Goodnight / "Going to bed" itself.) Mirrored in SQL (`_plot_ripe`, `_day_oee`).
+ */
+export function credited(day: DayFacts, block: BlockKey): boolean {
+  return (block === "wake" && day.wakeInWindow) || (block === "down" && day.nightRitualDone);
 }
 
 export function blockResult(day: DayFacts, block: BlockKey): BlockResult {
   const log = day.logs[block];
-  if (day.mode !== "normal") return "excused";
+  if (day.mode !== "normal" || day.away) return "excused";
   if (log?.planned_deviation) return "excused";
   if (log?.miss_reason) return day.excused?.includes(block) ? "excused" : "miss";
+  if (credited(day, block)) return "success";
   if (log?.backfilled) return "backfilled";
   if (log && succeeded(log)) return "success";
   if (day.open?.includes(block)) return "open";
@@ -104,7 +130,7 @@ export function dayOee(day: DayFacts): {
   quality: number;
   oee: number;
 } | null {
-  if (day.mode !== "normal") return null;
+  if (day.mode !== "normal" || day.away) return null;
   const planned = BLOCK_KEYS.filter((b) => !day.logs[b]?.planned_deviation);
   if (planned.length === 0) return null;
   let onTime = 0;
@@ -113,8 +139,9 @@ export function dayOee(day: DayFacts): {
   let itemsPlanned = 0;
   for (const b of planned) {
     const log = day.logs[b];
+    if (credited(day, b) && !log?.miss_reason) onTime++;
+    else if (log && startCounts(log)) onTime++;
     if (!log) continue;
-    if (startedOnTime(log)) onTime++;
     if (first10Done(log) && !day.noFirst10?.includes(b)) first10++;
     if (log.items_planned > 0) {
       itemsPlanned += log.items_planned;

@@ -4,6 +4,7 @@ import type { SubSlot } from "@/lib/engine/types";
 import { useLocale, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 import { BLOCK_KEYS, type BlockKey, type ChecklistItem } from "@/content/blocks";
+import { editableFirst10 } from "@/lib/onboarding";
 import { useBlockText } from "@/components/today/useBlockText";
 import { Button } from "@/components/ui/Button";
 import { CloseIcon, StepsIcon } from "@/components/ui/Icons";
@@ -12,7 +13,7 @@ import { parseHHMM, targetBedtime } from "@/lib/engine";
 import { formatDayLong, formatTime } from "@/lib/format";
 import type { DayPatch } from "@/lib/plan/usePlan";
 import { addDays, zonedInstant } from "@/lib/time";
-import { planFor, templateFor, type DayContext } from "@/lib/today/day";
+import { isOfferedKind, planFor, templateFor, type DayContext } from "@/lib/today/day";
 
 const STEP_MIN = 15;
 
@@ -134,23 +135,25 @@ export function DayEditor({
           {t("template")}
         </h3>
         <div role="radiogroup" aria-labelledby={`${ids}-tpl`} className="grid grid-cols-2 gap-2">
-          {ctx.templates.map((x) => (
-            <button
-              key={x.id}
-              type="button"
-              role="radio"
-              aria-checked={tpl?.id === x.id}
-              onClick={() => onChange(date, { template_id: x.id })}
-              className={`tap min-h-11 rounded-xl px-3 py-2 text-left text-sm font-bold ${
-                tpl?.id === x.id
-                  ? "bg-primary-soft text-primary ring-2 ring-primary ring-inset"
-                  : "bg-surface-2 text-ink"
-              }`}
-            >
-              {x.name ?? tt(x.key as Parameters<typeof tt>[0])}
-              <span className="block text-xs font-normal text-muted">{x.target_wake.slice(0, 5)}</span>
-            </button>
-          ))}
+          {ctx.templates
+            .filter((x) => isOfferedKind(x, tpl?.id))
+            .map((x) => (
+              <button
+                key={x.id}
+                type="button"
+                role="radio"
+                aria-checked={tpl?.id === x.id}
+                onClick={() => onChange(date, { template_id: x.id })}
+                className={`tap min-h-11 rounded-xl px-3 py-2 text-left text-sm font-bold ${
+                  tpl?.id === x.id
+                    ? "bg-primary-soft text-primary ring-2 ring-primary ring-inset"
+                    : "bg-surface-2 text-ink"
+                }`}
+              >
+                {x.name ?? tt(x.key as Parameters<typeof tt>[0])}
+                <span className="block text-xs font-normal text-muted">{x.target_wake.slice(0, 5)}</span>
+              </button>
+            ))}
         </div>
         {tpl?.options.attend_toggle && (
           <div className="mt-3">
@@ -298,7 +301,7 @@ export function DayEditor({
                     </label>
                     <input
                       id={`${ids}-${key}-f10`}
-                      value={meta.first10 ?? ""}
+                      value={editableFirst10(meta.first10, (raw) => text.first10(key, raw))}
                       placeholder={text.first10(key, null) ?? t("first10Placeholder")}
                       onChange={(e) => onChange(date, { block: { key, first10: e.target.value || null } })}
                       className="min-h-11 rounded-xl border border-line bg-surface px-3"

@@ -28,7 +28,7 @@ export function Sheet({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center md:p-6">
       {/* Backdrop: tap to close; hidden from assistive tech (the visible Close button is the accessible one). */}
       <button
         type="button"
@@ -41,7 +41,7 @@ export function Sheet({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="safe-bottom relative max-h-[88dvh] w-full max-w-lg overflow-y-auto rounded-t-[var(--radius-lg)] bg-surface p-4 lg:rounded-[var(--radius-lg)]"
+        className="safe-bottom relative max-h-[88dvh] w-full max-w-lg overflow-y-auto rounded-t-[var(--radius-lg)] bg-surface p-4 md:rounded-[var(--radius-lg)]"
       >
         <div className="mb-3 flex items-center justify-between gap-2">
           <h2 className="text-xl font-extrabold">{title}</h2>

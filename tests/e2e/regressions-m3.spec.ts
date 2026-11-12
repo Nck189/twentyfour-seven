@@ -31,6 +31,17 @@ test("M3-F2a early riser: 1 h before target the I'm up button shows (not yesterd
   await expect(page.getByRole("button", { name: /I'm up — out of bed/ })).toBeVisible();
 });
 
+test("G7 F3: an early I'm up confirms itself and shows what's next (not a blank Today)", async ({ page }) => {
+  test.skip(crossesMidnight(60), "target would land on tomorrow's date");
+  const id = await user(page);
+  await addWakeEvent(id, yesterday(), true);
+  await setWakeMinutesAgo(id, -40); // inside the early window, 40 min before the target
+  await page.goto("/today");
+  await page.getByRole("button", { name: /I'm up — out of bed/ }).click();
+  await expect(page.getByText(/^Up at \d{2}:\d{2}/)).toBeVisible();
+  await expect(page.getByText(/^Next: /)).toBeVisible();
+});
+
 test("M3-F2b app left open overnight: the button appears when the new wake window opens, no reload", async ({
   page,
 }) => {
@@ -125,7 +136,8 @@ async function setHidden(page: Page, hidden: boolean) {
   }, hidden);
 }
 const isLogsRefetch = (url: string, method: string) =>
-  method === "GET" && url.includes("/rest/v1/block_logs");
+  // Today's own query (date window ≤ today); the farm line on Today reads block_logs too.
+  method === "GET" && url.includes("/rest/v1/block_logs") && url.includes("date=lte.");
 
 test("CJ-15 flake: a quick app switch doesn't refetch, and a tap right after it is saved", async ({
   page,

@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import { rest, setAllTemplates, setWakeMinutesAgo, userIdFor } from "../helpers/db";
-import { wakeDay, leaveAfterSignIn } from "../helpers/day";
+import { gotoToday, wakeDay, leaveAfterSignIn } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
 import { addDays, zonedInstant } from "@/lib/time";
 
@@ -98,4 +98,36 @@ test("CJ-07 step 3: one tap plants tomorrow's seeds in every empty plot (SPEC §
   await expect
     .poll(async () => (await rest(`plots?user_id=eq.${id}&select=crop_id`)) as { crop_id: string }[])
     .toEqual(Array(7).fill({ crop_id: "carrot" }));
+});
+
+test("R2: a plot one miss from dying says so, on Today and in its sheet (playtest R1)", async ({ page }) => {
+  const id = await setup(page);
+  const today = wakeDay();
+  await rest(`plots?user_id=eq.${id}&slot=eq.focus`, {
+    method: "PATCH",
+    body: JSON.stringify({ crop_id: "sunflower", planted_on: addDays(today, -6), state: "growing" }),
+  });
+  // Four days the app was used (Work started on time) but Focus was skipped; yesterday away.
+  for (let i = 5; i >= 2; i--) {
+    const d = addDays(today, -i);
+    await rest("block_logs", {
+      method: "POST",
+      body: JSON.stringify({
+        user_id: id,
+        date: d,
+        block: "work",
+        planned_start: zonedInstant(d, 13 * 60, "Asia/Bangkok").toISOString(),
+        started_at: zonedInstant(d, 13 * 60 + 3, "Asia/Bangkok").toISOString(),
+      }),
+    });
+  }
+  await gotoToday(page);
+  const line = page.getByRole("link", { name: /Sunflower in Focus: one more miss/ });
+  await expect(line).toBeVisible();
+  await line.click();
+  await expect(page).toHaveURL(/\/farm/);
+  await page.getByRole("button", { name: /^Focus: Sunflower/ }).click();
+  await expect(
+    page.getByRole("dialog", { name: "Focus" }).getByText(/One more missed Focus and it dies/),
+  ).toBeVisible();
 });

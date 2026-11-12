@@ -5,9 +5,12 @@ import { parseHHMM } from "@/lib/engine";
 import {
   currentBlock,
   currentDayDate,
+  emptyBlocks,
+  isOfferedKind,
   inWakeWindow,
   isOnTime,
   isPastBlock,
+  startTiming,
   pickWakeCard,
   hasKindOfDay,
   planFor,
@@ -48,6 +51,17 @@ describe("which day is today (wake → next wake)", () => {
     expect(currentDayDate(ctx(), at("2026-11-03", "09:30"), pinned)).toBe("2026-11-03");
     expect(currentDayDate(ctx(), at("2026-11-03", "08:30"), pinned)).toBe("2026-11-02");
     expect(currentDayDate(ctx(), at("2026-11-03", "09:30"))).toBe("2026-11-02");
+  });
+
+  it("an early 'I'm up' starts the day before its target (playtest R1 P2)", () => {
+    // Target 10:00, pressed at 09:20: from then on it's the new day, not yesterday's Down Time.
+    const pressed = new Set(["2026-11-03"]);
+    expect(currentDayDate(ctx(), at("2026-11-03", "09:25"), undefined, pressed)).toBe("2026-11-03");
+    expect(currentDayDate(ctx(), at("2026-11-03", "09:25"))).toBe("2026-11-02");
+    // A press on another date doesn't start this one.
+    expect(currentDayDate(ctx(), at("2026-11-03", "09:25"), undefined, new Set(["2026-11-02"]))).toBe(
+      "2026-11-02",
+    );
   });
 
   it("uses the profile timezone, not the machine's", () => {
@@ -376,5 +390,61 @@ describe("an early appointment pulls the wake (R3-1: the server honours it withi
     expect(hm(new Date(p.wake))).toBe("06:00");
     expect(hm(new Date(p.base))).toBe("10:00");
     expect(hm(pickWakeCard(c, at("2026-11-02", "05:30"), "2026-11-02", {})!.target)).toBe("06:00");
+  });
+});
+
+describe("a block with no time left today (playtest R1 P1)", () => {
+  it("is listed as empty, so it can be set aside instead of judged as missed", () => {
+    const blocks = DEFAULT_BLOCKS.map((b) => (b.key === "focus" ? { ...b, duration_min: 0 } : b));
+    const t = timelineFor(ctx({ blocks }), "2026-11-02");
+    expect(emptyBlocks(t).map((b) => b.key)).toEqual(["focus"]);
+    expect(emptyBlocks(timelineFor(ctx(), "2026-11-02"))).toEqual([]);
+  });
+});
+
+describe("timeline status of a set-aside block", () => {
+  it("is 'setAside', not 'missed', once its time has passed", async () => {
+    const { blockStatus } = await import("@/components/today/Timeline");
+    const t = timelineFor(ctx(), "2026-11-02");
+    const b = t.blocks[1]!;
+    const log = {
+      date: "2026-11-02",
+      block: b.key,
+      planned_start: null,
+      started_at: null,
+      first10_at: null,
+      closed_at: null,
+      items_done: [],
+      items_planned: 0,
+      mood: null,
+      energy: null,
+      location: null,
+      backfilled: false,
+      miss_reason: null,
+      planned_deviation: true,
+    };
+    const later = new Date(b.end.getTime() + 60_000);
+    expect(blockStatus(b, log, later)).toBe("setAside");
+    expect(blockStatus(b, { ...log, planned_deviation: false }, later)).toBe("missed");
+  });
+});
+
+describe("kinds of day offered in a picker (playtest R1 P5)", () => {
+  it("hides presets a starter switched off, keeps the user's own and the chosen one", () => {
+    const kind = (id: string, auto: boolean, weekdays: number[]) => ({ id, auto_apply: auto, weekdays });
+    expect(isOfferedKind(kind("a", true, []))).toBe(true);
+    expect(isOfferedKind(kind("b", false, [6, 7]))).toBe(true);
+    expect(isOfferedKind(kind("c", false, []))).toBe(false);
+    expect(isOfferedKind(kind("c", false, []), "c")).toBe(true);
+  });
+});
+
+describe("start timing labels (playtest R1 P6)", () => {
+  it("an early start is 'early', not 'late'", () => {
+    const planned = at("2026-11-02", "23:00");
+    expect(startTiming(planned, at("2026-11-02", "22:35"))).toBe("early");
+    expect(startTiming(planned, at("2026-11-02", "22:55"))).toBe("onTime");
+    expect(startTiming(planned, at("2026-11-02", "23:10"))).toBe("onTime");
+    expect(startTiming(planned, at("2026-11-02", "23:11"))).toBe("late");
   });
 });

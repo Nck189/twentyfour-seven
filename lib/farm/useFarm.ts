@@ -42,7 +42,7 @@ export type FarmData = {
  * The farm (SPEC §8): plantings from `plots`, everything else computed by lib/game from the
  * logs. Planting and harvesting go through server RPCs (the server re-checks ripeness).
  */
-export function useFarm() {
+export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?: number } = {}) {
   const client = getSupabase();
   const [data, setData] = useState<FarmData | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -139,17 +139,20 @@ export function useFarm() {
           }
           setStatus((s) => (s === "ready" ? s : "error"));
         });
-    void run();
+    // A secondary reader (Today's warning line) waits a moment, so the page's own requests go first.
+    const start = delayMs > 0 ? setTimeout(() => void run(), delayMs) : null;
+    if (!start) void run();
     return () => {
       cancelled = true;
+      if (start) clearTimeout(start);
     };
-  }, [client, reload]);
+  }, [client, reload, delayMs]);
 
   // Planting/harvest on another device shows here too.
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !live) return;
     const channel = client
-      .channel(`farm-${userId}`)
+      .channel(`farm-${userId}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "plots", filter: `user_id=eq.${userId}` },
@@ -159,7 +162,7 @@ export function useFarm() {
     return () => {
       void client.removeChannel(channel);
     };
-  }, [client, userId]);
+  }, [client, userId, live]);
 
   const plant = useCallback(
     async (slot: BlockKey, crop: CropId, replace = false) => {

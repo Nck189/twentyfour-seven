@@ -1,0 +1,30 @@
+{
+  "minnie": {
+    "email": "minnie@playtest.invalid",
+    "device": "iPhone 15",
+    "locale": "th",
+    "theme": "light",
+    "who": "Minnie, 21, Industrial Engineering student in Bangkok. Class days + gym 3×/week. Plans the night before, likes cute things and numbers (knows OEE/SPC). Wakes ~07:00, bed ~23:30. Thai UI, mixes English terms."
+  },
+  "office": {
+    "email": "office@playtest.invalid",
+    "device": "iPhone SE",
+    "locale": "th",
+    "theme": "light",
+    "who": "Busy office worker, 32, Bangkok. Opens the app once or twice a day for ~30 s. Wakes 06:30, works 09–18, bed ~23:00. Low patience for setup, skips anything optional. Thai UI."
+  },
+  "lapser": {
+    "email": "lapser@playtest.invalid",
+    "device": "iPad (gen 7)",
+    "locale": "th",
+    "theme": "dark",
+    "who": "Enthusiastic starter, 25, freelancer. Very keen for 3 days, then disappears for 3 days (busy, forgets), then comes back. Wakes ~08:00, bed ~00:30. Thai UI, dark mode."
+  },
+  "maxer": {
+    "email": "maxer@playtest.invalid",
+    "device": "Desktop Chrome",
+    "locale": "en",
+    "theme": "dark",
+    "who": "Min-maxer gamer, 27, software tester. Reads every number, hoards tickets, wants to know the odds and what to chase. Wakes 08:30, bed ~01:00. English UI, dark mode, uses the Mac browser."
+  }
+}
