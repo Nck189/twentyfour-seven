@@ -24,6 +24,8 @@ import { useBacklog } from "@/lib/backlog/useBacklog";
 import { usePlan } from "@/lib/plan/usePlan";
 import { formatTime } from "@/lib/format";
 import { addDays } from "@/lib/time";
+import { hasExam } from "@/lib/game/exam";
+import { SomArt } from "@/components/art/Som";
 import { goodnightSleep } from "@/lib/today/bedtime";
 import type { Timeline, TimelineBlock } from "@/lib/today/day";
 import type { BlockLog } from "@/lib/today/useToday";
@@ -118,6 +120,8 @@ export function NightRitual({
   const tomorrowAppts = (plan.ctx?.dayPlans[tomorrow]?.overrides.fixed_events ?? []).filter(
     (e) => e.key === "appointment",
   );
+  const examTomorrow = hasExam(plan.ctx?.dayPlans[tomorrow]?.overrides.fixed_events ?? []);
+  const examToday = hasExam(timeline.fixedEvents);
   const unfinished = backlog.items.filter(
     (i) => i.status === "scheduled" && i.scheduled_date === timeline.date,
   );
@@ -274,6 +278,17 @@ export function NightRitual({
     // 3. Plan tomorrow
     <div key="plan" className="flex flex-col gap-3">
       <h3 className="text-lg font-bold">{t("planTitle")}</h3>
+      {(examTomorrow || examToday) && (
+        // Exam week with Som (docs/STORY.md): sleep before an exam; a kind word after one.
+        <p className="flex items-center gap-2 rounded-xl bg-primary-soft p-3 text-sm font-bold">
+          <SomArt
+            pose={examTomorrow ? "lookUp" : "happy"}
+            headband={examTomorrow}
+            className="h-10 w-10 shrink-0"
+          />
+          {examTomorrow ? t("examTomorrow") : t("examDone")}
+        </p>
+      )}
       {tomorrowAppts.length > 0 && (
         <p className="flex items-center gap-2 rounded-xl bg-warn-soft p-3 text-sm font-bold text-warn">
           <CalendarIcon className="h-4 w-4 shrink-0" />

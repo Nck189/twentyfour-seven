@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import { rest, setAllTemplates, userIdFor } from "../helpers/db";
-import { leaveAfterSignIn } from "../helpers/day";
+import { gotoToday, leaveAfterSignIn, wakeDay } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
 
 /** Story beats with Som (docs/STORY.md): a calm moment, skippable, once, recorded by the server. */
@@ -78,5 +78,24 @@ test("CJ-S-3 More: sound, quiet during Focus/Work and skip animations are switch
     "aria-checked",
     "false",
   );
+  await expectTouchTargets(page);
+});
+
+test("CJ-S-4 exam day: an appointment called 'Midterm' brings Som with a headband to Today", async ({ page }) => {
+  const id = await setup(page);
+  await rest("day_plans", {
+    method: "POST",
+    body: JSON.stringify({
+      user_id: id,
+      date: wakeDay(),
+      overrides: {
+        fixed_events: [
+          { id: "e1", key: "appointment", title: "Midterm IE", start: "13:00", end: "15:00", host: "work" },
+        ],
+      },
+    }),
+  });
+  await gotoToday(page);
+  await expect(page.getByRole("region", { name: "Exam day" })).toContainText("Exam day! Som packed you a snack.");
   await expectTouchTargets(page);
 });

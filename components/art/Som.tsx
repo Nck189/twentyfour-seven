@@ -56,12 +56,14 @@ function Head({
   mood,
   tilt = 0,
   seed = false,
+  headband = false,
 }: {
   cx: number;
   cy: number;
   mood: Mood;
   tilt?: number;
   seed?: boolean;
+  headband?: boolean;
 }) {
   const rx = 11.2;
   const ry = 9.6;
@@ -94,6 +96,29 @@ function Head({
       {/* two soft stripes */}
       <rect x={cx - 1.9} y={cy - 9.4} width={1.4} height={3.2} rx={0.7} fill={FUR.dark} />
       <rect x={cx + 0.6} y={cy - 9.4} width={1.4} height={2.6} rx={0.7} fill={FUR.dark} />
+      {headband && (
+        // Exam week: a red study headband, knotted on the right.
+        <g>
+          <rect x={cx - 9.2} y={cy - 5.8} width={18.4} height={2.6} rx={1.3} fill="var(--art-red)" />
+          <rect x={cx - 8.6} y={cy - 4.1} width={17.4} height={0.9} rx={0.45} fill="var(--art-red-dark)" />
+          <ellipse
+            cx={cx + 10.4}
+            cy={cy - 6}
+            rx={2}
+            ry={1}
+            fill="var(--art-red)"
+            transform={`rotate(-30 ${cx + 10.4} ${cy - 6})`}
+          />
+          <ellipse
+            cx={cx + 10.6}
+            cy={cy - 3.6}
+            rx={2}
+            ry={0.9}
+            fill="var(--art-red-dark)"
+            transform={`rotate(25 ${cx + 10.6} ${cy - 3.6})`}
+          />
+        </g>
+      )}
       <Eyes cx={cx} cy={cy + 1.4} mood={mood} />
       <ellipse cx={cx} cy={cy + 3.6} rx={0.95} ry={0.62} fill={NOSE} />
       <ellipse cx={cx - 7.2} cy={cy + 4} rx={1.9} ry={1.05} fill={BLUSH} />
@@ -148,10 +173,13 @@ export function SomArt({
   pose = "sit",
   className = "h-12 w-12",
   label,
+  headband = false,
 }: {
   pose?: SomPose;
   className?: string;
   label?: string;
+  /** Exam week (docs/STORY.md). */
+  headband?: boolean;
 }) {
   return (
     <Art className={className} label={label}>
@@ -192,6 +220,7 @@ export function SomArt({
             mood={pose === "happy" ? "happy" : pose === "lookUp" ? "up" : "open"}
             tilt={pose === "lookUp" ? -6 : 0}
             seed={pose === "carrySeed"}
+            headband={headband}
           />
           {pose === "happy" && (
             <g>

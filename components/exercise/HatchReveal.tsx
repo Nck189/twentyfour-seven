@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimalArt, EggArt } from "@/components/art/farm/Animals";
+import { SomArt } from "@/components/art/Som";
 import { RarityLight } from "@/components/art/farm/Capsule";
 import { Button } from "@/components/ui/Button";
 import { RARITIES } from "@/content/crops";
@@ -89,6 +90,11 @@ export function HatchReveal({ hatched, onDone }: { hatched: Hatched; onDone: () 
             </div>
             <p className="text-xl font-extrabold">{t("meet", { name })}</p>
             <p className="text-sm text-muted">{tg(`rarity.${hatched.rarity}`)}</p>
+            {/* Meet the new animal: Som's reaction, different for each species (docs/STORY.md). */}
+            <div className="mt-3 flex max-w-xs items-center gap-2 rounded-xl bg-surface p-2">
+              <SomArt pose="lookUp" className="h-12 w-12 shrink-0" />
+              <p className="text-sm">{t(`somMeets.${hatched.species}`)}</p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

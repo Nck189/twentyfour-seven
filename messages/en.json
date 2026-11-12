@@ -139,6 +139,10 @@
     "bed": {
       "title": "Going to bed",
       "hint": "Tap Start when you lie down. On time = within 10 min of your bedtime."
+    },
+    "exam": {
+      "label": "Exam day",
+      "today": "Exam day! Som packed you a snack. Breathe, you've got this."
     }
   },
   "plan": {
@@ -354,7 +358,12 @@
       "doneAlready": "This week's review is done. See you next Sunday.",
       "error": "Couldn't save. Try again.",
       "todayLine": "Weekly review is open · +3 tickets",
-      "score": "Day score"
+      "score": "Day score",
+      "som": {
+        "proud": "{n, plural, one {# day counted this week} other {# days counted this week}}. Som is proud of you.",
+        "good": "{n, plural, one {# day counted this week} other {# days counted this week}}. Som says that's a good start.",
+        "gentle": "A hard week. That's okay; Som will start the new one with you."
+      }
     },
     "wake": {
       "title": "Wake-up time",
@@ -672,7 +681,9 @@
     "seedsPlanted": "Planted in {n} plots. They grow each day their block goes well.",
     "seedsAllGrowing": "All 7 plots are growing.",
     "seedsError": "Some plots couldn't be planted. Try again from the Farm tab.",
-    "bedLater": "Sleep starts at {time}. When you lie down, tap Going to bed on Today."
+    "bedLater": "Sleep starts at {time}. When you lie down, tap Going to bed on Today.",
+    "examTomorrow": "Exam tomorrow. Som says: get a full night's sleep.",
+    "examDone": "You did the exam today. Som is proud; rest well."
   },
   "onboarding": {
     "cardTitle": "Make 24/7 yours in 2 minutes",
@@ -845,7 +856,22 @@
     "hatchTitle": "It hatched!",
     "meet": "Meet your {name}",
     "skip": "Skip",
-    "done": "Done"
+    "done": "Done",
+    "somMeets": {
+      "chicken": "The chick hides behind Som, then peeks out.",
+      "duck": "The duckling follows Som everywhere. Som pretends not to mind.",
+      "golden_goose": "Som stares at the shiny goose. The goose stares back.",
+      "bunny": "Som and the bunny touch noses. Friends.",
+      "cow": "The calf licks Som's head. Som is now very wet.",
+      "sheep": "Som naps on the lamb's soft wool.",
+      "pig": "The piglet steals Som's cushion. Som lets it.",
+      "cat": "Another cat? Som sniffs, then shares the sunny spot.",
+      "dog": "The pup wants to play. Som climbs a fence post to think about it.",
+      "goat": "The kid tries to nibble Som's tail. Som is not amused.",
+      "capybara": "Som sits on the capybara. The capybara doesn't mind at all.",
+      "alpaca": "Som disappears into the alpaca's fluff.",
+      "red_panda": "Som and the red panda compare tails. It's a tie."
+    }
   },
   "streak": {
     "title": "Streak",

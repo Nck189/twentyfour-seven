@@ -3,12 +3,14 @@
 import { useTranslations } from "next-intl";
 import { useMemo, useRef, useState } from "react";
 import { Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, XAxis, YAxis } from "recharts";
+import { SomArt } from "@/components/art/Som";
 import { TicketArt } from "@/components/art/Ticket";
 import { StreakCalendar } from "@/components/streak/StreakChip";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { Segmented } from "@/components/ui/Segmented";
 import { dayOee } from "@/lib/game/outcome";
+import { somWeek } from "@/lib/game/somLines";
 import {
   heatmap,
   homeVsOut,
@@ -140,6 +142,16 @@ function WeeklyReview({
   );
   return (
     <Card title={t("review.title")}>
+      {(() => {
+        // Sunday with Som: a kind reaction to this week before the numbers (docs/STORY.md).
+        const som = somWeek(summary);
+        return (
+          <div className="mb-3 flex items-center gap-3 rounded-xl bg-primary-soft p-3">
+            <SomArt pose={som.pose} className="h-14 w-14 shrink-0" />
+            <p className="text-sm font-bold">{t(`review.som.${som.mood}`, { n: som.n })}</p>
+          </div>
+        );
+      })()}
       <p className="mb-2 text-sm text-muted">{t("review.intro")}</p>
       <dl className="mb-3 grid grid-cols-3 gap-2 text-center">
         <div className="rounded-xl bg-surface-2 p-2">
