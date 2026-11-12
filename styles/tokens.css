@@ -37,6 +37,10 @@
   --art-pink: #f4a8c4;
   --art-pink-light: #f9cfde;
   --art-pink-dark: #db86a6;
+  /* Soft blush (the bunny, Minnie 2026-11-12): lighter than the pig's pink. */
+  --art-blush: #f8d3e0;
+  --art-blush-light: #fdeef3;
+  --art-blush-dark: #eeb3c8;
   --art-cream: #f3efe4;
   --art-white: #ffffff;
   --art-sun: #ffdb8e;
