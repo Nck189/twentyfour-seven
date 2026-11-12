@@ -1,11 +1,10 @@
 # PROGRESS — 24/7
 
-## Now (2026-11-13, ~04:00 Bangkok; Minnie asleep, "merge 16 when done, keep going until 08:00")
-- ✅ PR #14 (R1 fixes) and PR #15 (Economy v2) merged and on prod (G6 passed).
-- 🔄 **PR #16**: story with Som, seasonal crops + Candle Lotus, chibi animals (5+ QC rounds with Minnie), sound & motion settings. G7 PASS after fixes; merging on green CI (Minnie OK).
-  After merge, Minnie runs `npx supabase db push --remote` (3 migrations: story, seasonal, seasonal_story) and `npm run qc:prod`.
-- 🔄 **Next PR (local, on top of #16)**: Snow Strawberry beats + year in review (1 migration: snow_story), G7 STORY-R6/R8 (block clock: auto-quiet and Som's busy rule on every screen).
-- Then: Som's café (Minnie's popup flow), M11 push notifications, closed beta.
+## Now (2026-11-13, ~04:15 Bangkok; Minnie asleep, "merge 16 when done, keep going until 08:00")
+- ✅ PR #14, #15 and **#16** (story with Som, seasonal crops + Candle Lotus, chibi animals, sound & motion settings) merged.
+  **Minnie, on the Mac:** `git checkout main && git pull && npx supabase db push --remote` (3 migrations: story, seasonal, seasonal_story), then `npm run qc:prod`.
+- 🔄 **PR #17** (draft): Snow Strawberry beats + year in review, G7 STORY-R6/R8 (block clock: auto-quiet and Som's busy rule on every screen), **Som's café** (stamps, card gifts, the optional real-life coffee answer, game-only toggle). 2 migrations: snow_story, cafe. G7 review running.
+- Next: the coffee → sleep insight on Stats (needs ~2 weeks of answers), M11 push notifications, closed beta.
 - Waiting on Minnie: G7 STORY-R7 (should seasonal seeds plant only in their month and plants wilt after it?).
 - Known: Farm/Thai visual baselines (G3, Mac) need re-recording once; the prod sign-out E2E wait.
 
