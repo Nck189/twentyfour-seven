@@ -430,12 +430,15 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
             d={0.8}
             rim={0.3}
             lobes={[
-              [18.6, 24.6, 3.1, 7],
-              [18.9, 27.8, 3.4, 4],
-              // two shallow waves down the front of the neck: fluffy, not a chain of beads
-              [16.3, 22.2, 1.4, 2.3],
-              [16, 26, 1.5, 2.4],
-              [19.4, 30.6, 3.6, 3.1],
+              // a fuller, fluffier neck (Minnie): wider, with soft shallow waves down both sides
+              // (each bulges under a unit past the edge, so it reads as fleece, not beads)
+              [18.8, 24.8, 3.9, 6.8],
+              [19, 28, 4.2, 4],
+              [15.3, 22.4, 1.9, 2.5],
+              [14.9, 26.2, 2, 2.6],
+              [22.5, 22.2, 1.8, 2.4],
+              [22.9, 25.4, 1.6, 2.2],
+              [19.3, 30.5, 4.1, 3.2],
               [22.8, 28.8, 2.4, 2.6],
               [26, 27.6, 2.6],
               [30, 26.7, 2.9],
