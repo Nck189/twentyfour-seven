@@ -445,6 +445,8 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
               [34, 27, 2.8],
               [36.9, 29.2, 2.4],
               [30.6, 30.6, 8, 3.8],
+              // fills the one deep notch under the chest, where the ruff met the belly (Minnie)
+              [23.6, 31.9, 3.4, 2.5],
               ...hood,
             ]}
           />
