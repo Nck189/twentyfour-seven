@@ -194,7 +194,7 @@ type Review = { year: number; harvests: number; best_streak: number; mornings: n
 
 /** The year-end cake's year in review: three numbers from the user's own data (`year_review`). */
 function YearReview() {
-  const t = useTranslations("story.review");
+  const t = useTranslations("story");
   const [r, setR] = useState<Review | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -206,17 +206,17 @@ function YearReview() {
       cancelled = true;
     };
   }, []);
-  if (!r) return <p className="text-sm text-muted">{t("loading")}</p>;
+  if (!r) return <p className="text-sm text-muted">{t("review.loading")}</p>;
   return (
     <section
-      aria-label={t("title", { year: r.year })}
+      aria-label={t("review.title", { year: r.year })}
       className="w-full max-w-md rounded-2xl bg-primary-soft p-3 text-center"
     >
-      <p className="mb-2 text-sm font-extrabold text-primary">{t("title", { year: r.year })}</p>
+      <p className="mb-2 text-sm font-extrabold text-primary">{t("review.title", { year: r.year })}</p>
       <ul className="grid grid-cols-3 gap-2 text-sm font-bold">
-        <li>{t("harvests", { n: r.harvests })}</li>
-        <li>{t("streak", { n: r.best_streak })}</li>
-        <li>{t("mornings", { n: r.mornings })}</li>
+        <li>{t("review.harvests", { n: r.harvests })}</li>
+        <li>{t("review.streak", { n: r.best_streak })}</li>
+        <li>{t("review.mornings", { n: r.mornings })}</li>
       </ul>
     </section>
   );
