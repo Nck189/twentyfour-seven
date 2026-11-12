@@ -215,11 +215,11 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
   const neck = has("neck");
   // Chibi (Minnie 2026-11-12, like Som): a big head (drawn at r 7.2, scaled by K) on a small body.
   const hx = neck ? 17 : 16;
-  const hy = (neck ? 12.5 : 23) + (sleepy ? 1.5 : 0);
-  const K = neck ? 1.15 : 1.45;
+  const hy = (neck ? 12 : 23) + (sleepy ? 1.5 : 0);
+  const K = neck ? 1.05 : 1.45;
   return (
     <g>
-      <Shadow cx={23} rx={15} />
+      <Shadow cx={has("fleece") ? 27 : 23} rx={has("fleece") ? 13 : 15} />
       {/* tail (behind the body) */}
       {s.tail === "up" && (
         <ellipse cx={37.6} cy={25.5} rx={2} ry={5.2} fill={s.body.dark} transform="rotate(25 37.6 25.5)" />
@@ -253,13 +253,27 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
           <Fluff
             tone={coat}
             rim={0.35}
-            lobes={[
-              [38.6, 28.4 - (neck ? 2 : 0), 2.3],
-              [39.8, 30.2 - (neck ? 2 : 0), 1.8],
-              [37.6, 30.4, 2.2],
-            ]}
+            lobes={
+              neck
+                ? [
+                    [38.6, 27.8, 2],
+                    [39.4, 29.5, 1.6],
+                  ]
+                : [
+                    [38.6, 28.4, 2.3],
+                    [39.8, 30.2, 1.8],
+                    [37.6, 30.4, 2.2],
+                  ]
+            }
           />
-          <ellipse cx={37.8} cy={27.6} rx={1} ry={0.6} fill={coat.light} transform="rotate(-30 37.8 27.6)" />
+          <ellipse
+            cx={neck ? 38.2 : 37.8}
+            cy={neck ? 27.1 : 27.6}
+            rx={1}
+            ry={0.6}
+            fill={coat.light}
+            transform={`rotate(-30 ${neck ? 38.2 : 37.8} ${neck ? 27.1 : 27.6})`}
+          />
         </g>
       )}
       {s.tail === "flick" && (
@@ -276,17 +290,28 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
         </g>
       )}
       {/* legs */}
-      {[21.8, 25.2, 31.4, 34.8].map((x) => (
-        <rect
-          key={x}
-          x={x - 1.6}
-          y={neck ? 30 : 34}
-          width={3.2}
-          height={neck ? 10 : 6}
-          rx={1.6}
-          fill={s.legs ?? s.body.dark}
-        />
-      ))}
+      {neck ? (
+        // Alpaca: slim legs, the far pair a shade darker, with little rounded hooves.
+        <g>
+          {(
+            [
+              [24.4, s.body.dark],
+              [35, s.body.dark],
+              [21.6, s.body.base],
+              [32.2, s.body.base],
+            ] as const
+          ).map(([x, fill]) => (
+            <g key={x}>
+              <rect x={x - 1.3} y={32} width={2.6} height={8} rx={1.3} fill={fill} />
+              <rect x={x - 1.3} y={38.4} width={2.6} height={1.6} rx={0.8} fill="var(--art-wood-dark)" />
+            </g>
+          ))}
+        </g>
+      ) : (
+        [21.8, 25.2, 31.4, 34.8].map((x) => (
+          <rect key={x} x={x - 1.6} y={34} width={3.2} height={6} rx={1.6} fill={s.legs ?? s.body.dark} />
+        ))
+      )}
       {/* body: darker shape lower-right, base, top-left highlight */}
       {!has("fleece") && (
         <g>
@@ -354,31 +379,45 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
         </g>
       )}
       {has("fleece") && (
-        // Alpaca: one soft fleece from the chin down the whole neck and over the body (no bare neck),
-        // in a few big lobes so it reads as a cloud, not a stack of beads.
+        // Alpaca: one continuous fleece: a fluffy neck with a soft ruff at the chest, flowing into a
+        // round cloud of a body. Fluffy on top; underneath, one smooth convex belly (Minnie: a
+        // scalloped hem looked like a ghost). A few big lobes, never a chain of beads.
         <g>
           <Fluff
             tone={coat}
             d={0.8}
+            rim={0.3}
             lobes={[
-              [hx + 0.4, hy + 11, 3.6, 7.4],
-              [hx - 1.6, hy + 12.4, 2.6, 3.4],
-              [hx + 2.4, hy + 11.6, 2.6, 3.4],
-              // the bridge: the neck flows into the back without a crease
-              [hx + 3.6, hy + 13.6, 2.8, 3.2],
-              [hx + 5.2, hy + 15.2, 3, 3],
-              // fluffy on top only; underneath, one smooth curve from the chest to the tail
-              // (Minnie: a scalloped hem under the neck looked like a ghost)
-              // the body sits a little higher on longer legs (Minnie: proportions)
-              [24.6, 28.2, 3.2],
-              [28.6, 26, 3.4],
-              [33.2, 26.2, 3.4],
-              [36.2, 29, 2.8],
-              [hx + 2.2, hy + 16.2, 4.6, 3.6],
-              [28.6, 30.2, 9.6, 3.8],
+              [18.6, 24.6, 3.1, 7],
+              [18.9, 27.8, 3.4, 4],
+              // two shallow waves down the front of the neck: fluffy, not a chain of beads
+              [16.3, 22.2, 1.4, 2.3],
+              [16, 26, 1.5, 2.4],
+              [19.4, 30.6, 3.6, 3.1],
+              [22.8, 28.8, 2.4, 2.6],
+              [26, 27.6, 2.6],
+              [30, 26.7, 2.9],
+              [34, 27, 2.8],
+              [36.9, 29.2, 2.4],
+              [30.6, 30.6, 8, 3.8],
             ]}
           />
-          <ellipse cx={28} cy={23.6} rx={1.6} ry={0.6} fill={coat.light} transform="rotate(-10 28 23.6)" />
+          <ellipse
+            cx={29.2}
+            cy={24.6}
+            rx={1.7}
+            ry={0.6}
+            fill={coat.light}
+            transform="rotate(-10 29.2 24.6)"
+          />
+          <ellipse
+            cx={16.4}
+            cy={24.2}
+            rx={0.55}
+            ry={1.5}
+            fill={coat.light}
+            transform="rotate(12 16.4 24.2)"
+          />
         </g>
       )}
       <g transform={`translate(${hx} ${hy}) scale(${K}) translate(${-hx} ${-hy})`}>
@@ -498,21 +537,20 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
           </g>
         )}
         {s.ears === "banana" && (
-          <g fill={head.dark}>
-            <ellipse
-              cx={hx - 3.5}
-              cy={hy - 7}
-              rx={1.5}
-              ry={3.6}
-              transform={`rotate(-18 ${hx - 3.5} ${hy - 7})`}
-            />
-            <ellipse
-              cx={hx + 3.5}
-              cy={hy - 7}
-              rx={1.5}
-              ry={3.6}
-              transform={`rotate(18 ${hx + 3.5} ${hy - 7})`}
-            />
+          // Alpaca: banana ears curving in at the tips, a pale inner ear on each.
+          <g>
+            {[-1, 1].map((d) => (
+              <g key={d}>
+                <path
+                  d={`M${hx + 2.6 * d} ${hy - 4.8} Q${hx + 3.6 * d} ${hy - 9.6} ${hx + 5 * d} ${hy - 10.6} Q${hx + 5.7 * d} ${hy - 9.2} ${hx + 6 * d} ${hy - 4.4}Z`}
+                  fill={head.dark}
+                />
+                <path
+                  d={`M${hx + 3.7 * d} ${hy - 5.4} Q${hx + 4.3 * d} ${hy - 8.4} ${hx + 5 * d} ${hy - 9.1} Q${hx + 5.2 * d} ${hy - 7.8} ${hx + 5.1 * d} ${hy - 5.2}Z`}
+                  fill={TONES.pink.light}
+                />
+              </g>
+            ))}
           </g>
         )}
         {s.ears === "small" && (
@@ -694,25 +732,28 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
           </g>
         )}
         {has("topknot") && (
-          // The alpaca's fluffy fringe, the same fleece as its neck.
+          // The alpaca's pom-pom: a round puff of fleece on top between the ears, with a little
+          // fringe falling onto the forehead.
           <g>
             <Fluff
               tone={coat}
               d={0.5}
+              rim={0.25}
               lobes={[
-                [hx - 3.6, hy - 4.8, 2.4],
-                [hx, hy - 6.2, 2.9],
-                [hx + 3.6, hy - 4.8, 2.4],
-                [hx, hy - 4.4, 4.6, 2],
+                [hx, hy - 7.6, 3.2, 2.9],
+                [hx - 2.4, hy - 6.4, 2.2],
+                [hx + 2.4, hy - 6.6, 2.1],
+                [hx - 1.5, hy - 4.6, 1.8, 1.5],
+                [hx + 1.4, hy - 4.8, 1.7, 1.4],
               ]}
             />
             <ellipse
-              cx={hx - 1.6}
-              cy={hy - 7}
+              cx={hx - 1.4}
+              cy={hy - 9.1}
               rx={1.1}
               ry={0.5}
               fill={coat.light}
-              transform={`rotate(-25 ${hx - 1.6} ${hy - 7})`}
+              transform={`rotate(-25 ${hx - 1.4} ${hy - 9.1})`}
             />
           </g>
         )}
@@ -792,7 +833,21 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
             <ellipse cx={hx + 4.9} cy={hy + 3} rx={1.4} ry={0.8} fill={s.cheek ?? CHEEK} />
           </g>
         )}
-        {has("capy") ? null : has("collie") ? (
+        {has("topknot") ? (
+          // Alpaca: a soft pale muzzle, a tiny nose and a little smile.
+          <g>
+            <ellipse cx={hx} cy={hy + 3.6} rx={2.9} ry={2.1} fill={head.light} />
+            <ellipse cx={hx} cy={hy + 2.8} rx={0.75} ry={0.48} fill="var(--art-wood-dark)" />
+            <path
+              d={`M${hx - 1.1} ${hy + 3.9} Q${hx - 0.55} ${hy + 4.6} ${hx} ${hy + 3.9} Q${hx + 0.55} ${hy + 4.6} ${hx + 1.1} ${hy + 3.9}`}
+              fill="none"
+              stroke="var(--art-wood-dark)"
+              strokeWidth={0.45}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </g>
+        ) : has("capy") ? null : has("collie") ? (
           <g>
             <ellipse cx={hx} cy={hy + 3.4} rx={3.3} ry={2.3} fill="var(--art-cream)" />
             <ellipse cx={hx} cy={hy + 2.5} rx={1.15} ry={0.8} fill="var(--art-wood-dark)" />
