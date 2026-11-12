@@ -216,4 +216,11 @@ Format: date · decision · why · how to change it
   - **Story order (G7 R2-2):** first-week chapters 0–2, then month-only seasonal beats (their month is the only chance this year), then chapters 3+ (they wait a day and lose nothing).
   - **"30 days used" (ch6) = live "I'm up" days since sign-up** (G7 R2-1, S1): filled-in days and days before the account never count, so the 2 tickets can't be farmed by backfilling.
   - **Chapter R** (back after a lapse) is Som on the Welcome back card (a pose + one line), not a cutscene: the card already has the one-tap gift.
+- 2026-11-13 · M11 push notifications + .ics (SPEC §9), my calls:
+  - **Who plans the reminders:** Today (the engine already runs there) plans the day's reminders with `lib/push/schedule.ts` and uploads them with their text in the user's language (`set_push_schedule`: at most 24, within 36 h, replaces the unsent ones). The server never runs the engine. If Today isn't opened on a day, that day has no reminders except what was planned the night before (tomorrow's "I'm up" comes from tonight's Sleep end).
+  - **Relevance at send time:** `push_due()` skips a first-10 nudge once the block started, the "I'm up" reminder once pressed, the Night ritual reminder once done, and any kind switched off since. Quiet hours are applied when planning.
+  - **Kinds:** block start (not Wake or Sleep; the body is the block's first-10 if set), first-10 nudge 10 min in (only blocks with a first-10, only if not started), "I'm up" 10 min after the wake target, Night ritual at Down Time.
+  - **Sender:** a Supabase Edge Function (`push-send`, npm web-push) called every minute by pg_cron + pg_net with the service-role key from Vault. Gone devices (404/410) are dropped. Keys and the cron job are set up once by Minnie (`docs/M11-push-setup.md`); until then More says "coming soon" and nothing is asked.
+  - **iOS:** the permission prompt only after the "Turn on" tap; Safari tabs on iPhone/iPad get the Home Screen hint (iOS 16.4+); every push shows a notification.
+  - **.ics feed:** `/ics/<48-hex secret>.ics`, served by a Next route that reads only the engine inputs through the token-checked `ics_context` RPC and plans the next 14 days. Sleep is left out; times are UTC. "Make a new link" stops the old one.
 

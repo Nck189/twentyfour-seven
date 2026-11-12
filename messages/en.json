@@ -1290,6 +1290,16 @@
       "first10": "Just the first 10 minutes. Tap to start.",
       "wake": "Tap \"I'm up\" when you're out of bed.",
       "night": "Close today and plan tomorrow, about 5 minutes."
-    }
+    },
+    "icsName": "24/7 plan",
+    "calTitle": "Calendar",
+    "calHint": "Add your plan (blocks and fixed events, the next 2 weeks) to iPhone, iPad or Mac Calendar. Anyone with the link can see it, so keep it private.",
+    "calShow": "Get my calendar link",
+    "calCopy": "Copy link",
+    "calCopied": "Copied",
+    "calOpen": "Add to Calendar",
+    "calRotate": "Make a new link",
+    "calRotateHint": "The old link stops working.",
+    "calError": "Couldn't get the link. Try again."
   }
 }
