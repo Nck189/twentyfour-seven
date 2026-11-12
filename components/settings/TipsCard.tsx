@@ -10,15 +10,23 @@ export function TipsCard() {
   const t = useTranslations("tips");
   const showAgain = useTipsStore((s) => s.showAgain);
   const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
   return (
     <section className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
       <h2 className="mb-1 text-lg font-bold">{t("title")}</h2>
       <p className="mb-3 text-sm text-muted">{t("moreHint")}</p>
       <Button
         variant="secondary"
-        onClick={() => {
-          void showAgain();
-          setDone(true);
+        disabled={busy}
+        onClick={async () => {
+          // Confirm only once the account has saved it: leaving at once must not lose it.
+          setBusy(true);
+          try {
+            await showAgain();
+            setDone(true);
+          } finally {
+            setBusy(false);
+          }
         }}
       >
         {t("showAgain")}
