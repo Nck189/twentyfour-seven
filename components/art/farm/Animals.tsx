@@ -215,8 +215,8 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
   const neck = has("neck");
   // Chibi (Minnie 2026-11-12, like Som): a big head (drawn at r 7.2, scaled by K) on a small body.
   const hx = neck ? 17 : 16;
-  const hy = (neck ? 15 : 23) + (sleepy ? 1.5 : 0);
-  const K = neck ? 1.3 : 1.45;
+  const hy = (neck ? 12.5 : 23) + (sleepy ? 1.5 : 0);
+  const K = neck ? 1.15 : 1.45;
   return (
     <g>
       <Shadow cx={23} rx={15} />
@@ -254,8 +254,8 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
             tone={coat}
             rim={0.35}
             lobes={[
-              [38.6, 28.4, 2.3],
-              [39.8, 30.2, 1.8],
+              [38.6, 28.4 - (neck ? 2 : 0), 2.3],
+              [39.8, 30.2 - (neck ? 2 : 0), 1.8],
               [37.6, 30.4, 2.2],
             ]}
           />
@@ -277,7 +277,15 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
       )}
       {/* legs */}
       {[21.8, 25.2, 31.4, 34.8].map((x) => (
-        <rect key={x} x={x - 1.6} y={34} width={3.2} height={6} rx={1.6} fill={s.legs ?? s.body.dark} />
+        <rect
+          key={x}
+          x={x - 1.6}
+          y={neck ? 30 : 34}
+          width={3.2}
+          height={neck ? 10 : 6}
+          rx={1.6}
+          fill={s.legs ?? s.body.dark}
+        />
       ))}
       {/* body: darker shape lower-right, base, top-left highlight */}
       {!has("fleece") && (
@@ -361,15 +369,16 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
               [hx + 5.2, hy + 15.2, 3, 3],
               // fluffy on top only; underneath, one smooth curve from the chest to the tail
               // (Minnie: a scalloped hem under the neck looked like a ghost)
-              [24.6, 30.4, 3.2],
-              [28.6, 28.2, 3.4],
-              [33.2, 28.4, 3.4],
-              [36.2, 31.2, 2.8],
-              [hx + 2.2, hy + 15.4, 4.6, 3.6],
-              [28.6, 32.4, 9.6, 3.8],
+              // the body sits a little higher on longer legs (Minnie: proportions)
+              [24.6, 28.2, 3.2],
+              [28.6, 26, 3.4],
+              [33.2, 26.2, 3.4],
+              [36.2, 29, 2.8],
+              [hx + 2.2, hy + 16.2, 4.6, 3.6],
+              [28.6, 30.2, 9.6, 3.8],
             ]}
           />
-          <ellipse cx={28} cy={25.8} rx={1.6} ry={0.6} fill={coat.light} transform="rotate(-10 28 25.8)" />
+          <ellipse cx={28} cy={23.6} rx={1.6} ry={0.6} fill={coat.light} transform="rotate(-10 28 23.6)" />
         </g>
       )}
       <g transform={`translate(${hx} ${hy}) scale(${K}) translate(${-hx} ${-hy})`}>
