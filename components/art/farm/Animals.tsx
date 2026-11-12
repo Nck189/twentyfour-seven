@@ -94,7 +94,7 @@ const SPECS: Record<AnimalId, Spec> = {
   capybara: {
     plan: "beast",
     body: TONES.wood,
-    ears: "small",
+    ears: "none",
     tail: "none",
     // A bread-loaf head, a big blunt muzzle, tiny ears up top and calm half-closed eyes.
     extras: ["yuzu", "capy"],
@@ -133,7 +133,8 @@ function Eyes({
   if (relaxed)
     return (
       <g className="animal-blink">
-        <ellipse cx={x} cy={y} rx={1.25} ry={0.7} fill={EYE} />
+        <ellipse cx={x} cy={y} rx={1.1} ry={0.9} fill={EYE} />
+        <circle cx={x - 0.35} cy={y - 0.3} r={0.3} fill="var(--art-white)" />
       </g>
     );
   return (
@@ -173,8 +174,8 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
       {s.tail === "stripe" && (
         <g transform="rotate(35 37.5 27)">
           <ellipse cx={37.5} cy={27} rx={3} ry={6.6} fill={s.body.base} />
-          <rect x={34.5} y={24.2} width={6} height={1.8} rx={0.9} fill={s.body.dark} />
-          <rect x={34.5} y={28} width={6} height={1.8} rx={0.9} fill={s.body.dark} />
+          <rect x={34.9} y={24.2} width={5.2} height={1.8} rx={0.9} fill={s.body.light} />
+          <rect x={34.9} y={28} width={5.2} height={1.8} rx={0.9} fill={s.body.light} />
         </g>
       )}
       {s.tail === "curl" && (
@@ -237,17 +238,30 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
         </g>
       )}
       {has("shaggy") && (
-        // A goat's long coat: a shaggy, zigzag hem under the belly, and a lighter chest.
+        // A goat's long coat: a soft scalloped hem under the belly, locks along the back, a light chest.
         <g>
           <path
-            d="M21.6 34.6 L23.4 38.6 L25.4 35.8 L27.4 38.8 L29.4 35.8 L31.4 38.8 L33.4 35.8 L35.2 38.4 L37 34.2Z"
+            d="M21.6 34.2 Q23 37.8 24.6 36 Q26.2 38.2 28 36.2 Q29.8 38.2 31.6 36.2 Q33.4 38 35 35.8 Q36.4 37 37.2 33.8Z"
             fill={s.body.dark}
           />
           <path
-            d="M21 34 L22.8 38 L24.8 35.2 L26.8 38.2 L28.8 35.2 L30.8 38.2 L32.8 35.2 L34.6 37.8 L36.4 33.6Z"
+            d="M21 33.6 Q22.4 37.2 24 35.4 Q25.6 37.6 27.4 35.6 Q29.2 37.6 31 35.6 Q32.8 37.4 34.4 35.2 Q35.8 36.4 36.6 33.2Z"
             fill={s.body.base}
           />
-          <ellipse cx={21.4} cy={31} rx={3.4} ry={4.6} fill={s.body.light} />
+          {(
+            [
+              [24.5, 26],
+              [28.5, 25.2],
+              [32.5, 25.8],
+            ] as const
+          ).map(([x, y]) => (
+            <g key={x}>
+              <circle cx={x + 0.5} cy={y + 0.5} r={2} fill={s.body.dark} />
+              <circle cx={x} cy={y} r={2} fill={s.body.base} />
+            </g>
+          ))}
+          <ellipse cx={27} cy={27} rx={3.6} ry={1.4} fill={s.body.light} transform="rotate(-10 27 27)" />
+          <ellipse cx={21.4} cy={31} rx={2.6} ry={4.2} fill={s.body.light} />
         </g>
       )}
       {has("collie") && <ellipse cx={23.5} cy={32.5} rx={4.4} ry={4.6} fill="var(--art-cream)" />}
@@ -357,24 +371,13 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
           </g>
         )}
         {s.ears === "tipped" && (
-          // Border collie ears: big, set wide, standing; the top third folds forward and down
-          // over the ear (the flap is the darkest tone, so the fold reads at 48 px).
-          <g>
+          // Border collie ears, standing part: wide-set, ending in a rounded fold line.
+          <g fill={head.dark}>
             <path
-              d={`M${hx - 7.2} ${hy - 2.2} L${hx - 5.4} ${hy - 8} L${hx - 1.8} ${hy - 6}Z`}
-              fill={head.dark}
+              d={`M${hx - 7.4} ${hy - 2} L${hx - 6.8} ${hy - 7.4} Q${hx - 5.4} ${hy - 8.9} ${hx - 3.4} ${hy - 8.2} L${hx - 2} ${hy - 6.2}Z`}
             />
             <path
-              d={`M${hx + 1.8} ${hy - 6} L${hx + 5.4} ${hy - 8} L${hx + 7.2} ${hy - 2.2}Z`}
-              fill={head.dark}
-            />
-            <path
-              d={`M${hx - 6.9} ${hy - 7.4} Q${hx - 6.3} ${hy - 10.4} ${hx - 3.4} ${hy - 7.9} Q${hx - 4.6} ${hy - 6.2} ${hx - 5.6} ${hy - 4.8}Z`}
-              fill="var(--art-wood-dark)"
-            />
-            <path
-              d={`M${hx + 6.9} ${hy - 7.4} Q${hx + 6.3} ${hy - 10.4} ${hx + 3.4} ${hy - 7.9} Q${hx + 4.6} ${hy - 6.2} ${hx + 5.6} ${hy - 4.8}Z`}
-              fill="var(--art-wood-dark)"
+              d={`M${hx + 7.4} ${hy - 2} L${hx + 6.8} ${hy - 7.4} Q${hx + 5.4} ${hy - 8.9} ${hx + 3.4} ${hy - 8.2} L${hx + 2} ${hy - 6.2}Z`}
             />
           </g>
         )}
@@ -433,31 +436,29 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
           </g>
         )}
         {has("goatHorns") && (
-          <g fill="var(--art-wood)">
-            <ellipse
-              cx={hx - 2.6}
-              cy={hy - 8}
-              rx={1.1}
-              ry={3.4}
-              transform={`rotate(-28 ${hx - 2.6} ${hy - 8})`}
-            />
-            <ellipse
-              cx={hx + 2.6}
-              cy={hy - 8}
-              rx={1.1}
-              ry={3.4}
-              transform={`rotate(28 ${hx + 2.6} ${hy - 8})`}
-            />
+          <g>
+            {[-1, 1].map((d) => (
+              <g key={d} transform={`rotate(${28 * d} ${hx + 2.6 * d} ${hy - 8})`}>
+                <ellipse cx={hx + 2.6 * d} cy={hy - 8} rx={1.1} ry={3.4} fill="var(--art-wood)" />
+                <ellipse
+                  cx={hx + 2.6 * d + 0.45}
+                  cy={hy - 7.4}
+                  rx={0.45}
+                  ry={2.4}
+                  fill="var(--art-wood-dark)"
+                />
+              </g>
+            ))}
           </g>
         )}
         {/* head */}
         {/* a soft mochi head, a little wider than tall (like Som) */}
         {has("capy") ? (
           <g>
-            <circle cx={hx - 4.8} cy={hy - 6.4} r={1.3} fill={head.dark} />
-            <circle cx={hx + 4.8} cy={hy - 6.4} r={1.3} fill={head.dark} />
-            <rect x={hx - 6.4} y={hy - 6.6} width={13.6} height={14} rx={6.2} fill={head.dark} />
-            <rect x={hx - 6.8} y={hy - 7} width={13.2} height={13.4} rx={6} fill={head.base} />
+            <circle cx={hx - 4.4} cy={hy - 6.6} r={1.1} fill={head.dark} />
+            <circle cx={hx + 4.4} cy={hy - 6.6} r={1.1} fill={head.dark} />
+            <rect x={hx - 6.8} y={hy - 5.6} width={14.8} height={12.4} rx={5.8} fill={head.dark} />
+            <rect x={hx - 7.2} y={hy - 6} width={14.4} height={12} rx={5.6} fill={head.base} />
           </g>
         ) : (
           <g>
@@ -478,6 +479,17 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
             d={`M${hx - 0.5} ${hy - 6.4} Q${hx} ${hy - 6.9} ${hx + 0.5} ${hy - 6.4} L${hx + 1.5} ${hy + 1} L${hx - 1.5} ${hy + 1}Z`}
             fill="var(--art-cream)"
           />
+        )}
+        {s.ears === "tipped" && (
+          // ...and the folded tips: a soft teardrop hanging forward from the fold, over the head.
+          <g fill="var(--art-wood-dark)">
+            <path
+              d={`M${hx - 6.8} ${hy - 7.4} Q${hx - 5.4} ${hy - 8.9} ${hx - 3.4} ${hy - 8.2} Q${hx - 3.8} ${hy - 6.2} ${hx - 5.2} ${hy - 5.4} Q${hx - 6.4} ${hy - 5.8} ${hx - 6.8} ${hy - 7.4}Z`}
+            />
+            <path
+              d={`M${hx + 6.8} ${hy - 7.4} Q${hx + 5.4} ${hy - 8.9} ${hx + 3.4} ${hy - 8.2} Q${hx + 3.8} ${hy - 6.2} ${hx + 5.2} ${hy - 5.4} Q${hx + 6.4} ${hy - 5.8} ${hx + 6.8} ${hy - 7.4}Z`}
+            />
+          </g>
         )}
         {s.ears === "floppy" && (
           <g fill={head.dark}>
@@ -540,27 +552,39 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
         )}
         {has("beard") && (
           <path
-            d={`M${hx - 1.2} ${hy + 5.4} Q${hx} ${hy + 8.6} ${hx + 1.2} ${hy + 5.4}Z`}
-            fill={CREAM.base}
+            d={`M${hx - 1.6} ${hy + 4.6} Q${hx - 1.2} ${hy + 9.4} ${hx} ${hy + 10} Q${hx + 1.2} ${hy + 9.4} ${hx + 1.6} ${hy + 4.6}Z`}
+            fill={s.body.dark}
           />
         )}
         {has("mask") && (
           // Red panda: white cheeks and muzzle, white brows, rust "tear" marks under the eyes.
           <g>
             <g fill="var(--art-white)">
-              <ellipse cx={hx - 5.2} cy={hy + 2.2} rx={2.2} ry={2.6} />
-              <ellipse cx={hx + 5.2} cy={hy + 2.2} rx={2.2} ry={2.6} />
+              <ellipse cx={hx - 4.8} cy={hy + 2.2} rx={2} ry={2.6} />
+              <ellipse cx={hx + 4.8} cy={hy + 2.2} rx={2} ry={2.6} />
               <ellipse cx={hx} cy={hy + 3.8} rx={3} ry={2.2} />
               <ellipse cx={hx - 2.8} cy={hy - 2.4} rx={1.2} ry={0.7} />
               <ellipse cx={hx + 2.8} cy={hy - 2.4} rx={1.2} ry={0.7} />
             </g>
             <g fill={head.dark}>
-              <ellipse cx={hx - 3.4} cy={hy + 3.2} rx={0.8} ry={1.8} />
-              <ellipse cx={hx + 3.4} cy={hy + 3.2} rx={0.8} ry={1.8} />
+              <ellipse cx={hx - 3.9} cy={hy + 4} rx={0.6} ry={1} />
+              <ellipse cx={hx + 3.9} cy={hy + 4} rx={0.6} ry={1} />
             </g>
           </g>
         )}
-        {has("yuzu") && <Ball cx={hx + 1} cy={hy - 8} r={2.6} tone={TONES.yellow} />}
+        {has("yuzu") && (
+          <g>
+            <Ball cx={hx + 1} cy={hy - 8} r={2.6} tone={TONES.yellow} />
+            <ellipse
+              cx={hx + 2.6}
+              cy={hy - 10.3}
+              rx={1}
+              ry={0.5}
+              fill="var(--art-leaf-3)"
+              transform={`rotate(-30 ${hx + 2.6} ${hy - 10.3})`}
+            />
+          </g>
+        )}
         {/* face */}
         <Eyes x={hx - 3.6} y={hy + (has("capy") ? -1.8 : 0.8)} sleepy={sleepy} relaxed={has("capy")} />
         <Eyes x={hx + 3.6} y={hy + (has("capy") ? -1.8 : 0.8)} sleepy={sleepy} relaxed={has("capy")} />
@@ -569,7 +593,7 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
         {has("capy") ? (
           // A big blunt muzzle with two little nostrils on top.
           <g>
-            <rect x={hx - 4.4} y={hy + 1.4} width={8.4} height={4.6} rx={2.3} fill={head.light} />
+            <rect x={hx - 5} y={hy + 0.8} width={10} height={5.4} rx={2.7} fill={head.light} />
             <ellipse cx={hx - 1.3} cy={hy + 2.4} rx={0.6} ry={0.45} fill="var(--art-wood-dark)" />
             <ellipse cx={hx + 1.1} cy={hy + 2.4} rx={0.6} ry={0.45} fill="var(--art-wood-dark)" />
           </g>
@@ -614,7 +638,9 @@ function BirdArt({ s, sleepy }: { s: Bird; sleepy: boolean }) {
       <ellipse cx={27} cy={30.8} rx={9.1} ry={6.5} fill={s.body.base} />
       <ellipse cx={26} cy={26.6} rx={3} ry={1.3} fill={s.body.light} transform="rotate(-15 26 26.6)" />
       {/* tail feathers + wing */}
-      <path d="M35.5 27.5 L40.5 24 L39 31Z" fill={s.body.dark} />
+      {/* a short, upturned tail: two soft rounded feathers */}
+      <ellipse cx={37.8} cy={27.2} rx={3.4} ry={1.7} fill={s.body.dark} transform="rotate(-38 37.8 27.2)" />
+      <ellipse cx={36.8} cy={28.6} rx={2.8} ry={1.5} fill={s.body.base} transform="rotate(-24 36.8 28.6)" />
       <ellipse cx={30} cy={31.6} rx={4.6} ry={3} fill={s.body.dark} transform="rotate(-15 30 31.6)" />
       {s.long && <rect x={hx - 2.6} y={hy} width={5.2} height={32 - hy} rx={2.6} fill={s.body.base} />}
       {/* head */}
