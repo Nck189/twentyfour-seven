@@ -26,8 +26,7 @@ const PEACH: Tone = {
 const TAN: Tone = { base: "var(--art-wood-light)", dark: "var(--art-wood)", light: "var(--art-cream)" };
 /** Minnie round 5: wool and the goat's coat in a cream that still reads on a white pen tile. */
 const WOOL: Tone = { base: "var(--art-wool)", dark: "var(--art-wool-dark)", light: "var(--art-wool-light)" };
-/** Minnie round 5: a pale sky-blue alpaca (face and legs) under a soft sky-blue fleece. */
-const ICE: Tone = { base: "var(--art-ice)", dark: "var(--art-ice-dark)", light: "var(--art-ice-light)" };
+/** Minnie: the alpaca's sky-blue fleece (its face and legs stay caramel). */
 const SKY: Tone = { base: "var(--art-blue-light)", dark: "var(--art-blue)", light: "var(--art-ice-light)" };
 /** A soft rim in a white animal's own darker shade, so it never melts into a white tile. */
 const RIM = "var(--art-stone-dark)";
@@ -124,10 +123,10 @@ const SPECS: Record<AnimalId, Spec> = {
     // A bread-loaf head, a big blunt muzzle, tiny ears up top and calm half-closed eyes.
     extras: ["yuzu", "capy"],
   },
-  // A pale sky-blue face and legs under a sky-blue fleece that covers the body and the whole neck.
+  // A caramel face and legs (Minnie) under a sky-blue fleece that covers the body and the whole neck.
   alpaca: {
     plan: "beast",
-    body: ICE,
+    body: TAN,
     ears: "banana",
     tail: "wool",
     extras: ["neck", "topknot", "fleece"],
@@ -357,18 +356,17 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
               [hx + 0.4, hy + 11, 3.6, 7.4],
               [hx - 1.6, hy + 12.4, 2.6, 3.4],
               [hx + 2.4, hy + 11.6, 2.6, 3.4],
-              [hx - 0.2, hy + 16.6, 3.8, 3.6],
               // the bridge: the neck flows into the back without a crease
               [hx + 3.6, hy + 13.6, 2.8, 3.2],
               [hx + 5.2, hy + 15.2, 3, 3],
+              // fluffy on top only; underneath, one smooth curve from the chest to the tail
+              // (Minnie: a scalloped hem under the neck looked like a ghost)
               [24.6, 30.4, 3.2],
               [28.6, 28.2, 3.4],
               [33.2, 28.4, 3.4],
               [36.2, 31.2, 2.8],
-              [33.6, 34.2, 3],
-              [28.4, 34.6, 3.2],
-              [23.6, 34, 3],
-              [29.2, 31.6, 7, 3.8],
+              [hx + 2.2, hy + 15.4, 4.6, 3.6],
+              [28.6, 32.4, 9.6, 3.8],
             ]}
           />
           <ellipse cx={28} cy={25.8} rx={1.6} ry={0.6} fill={coat.light} transform="rotate(-10 28 25.8)" />
