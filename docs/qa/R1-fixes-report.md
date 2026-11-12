@@ -10,7 +10,7 @@
 | G2/G4 E2E | ✅ locally on Chromium: 99 passed. CI runs the WebKit matrix. Today's extra load was lightened after CI showed ~2.5× main's WebKit "internal error" rate. |
 | G3 Visual | ⚠️ The Thai baselines (Mac) need re-recording once: the Thai wording changed (P9). |
 | G5 Secrets | ✅ CI |
-| G6 Prod | After merge: Minnie runs `db push` (6 migrations), then `npm run qc:prod`. |
+| G6 Prod | ✅ 2026-11-12, after the merge: `npm run qc:prod` on prod gave 21 passed, 1 flaky (sign-out, passed on retry), 180 skipped (local-only), and Lighthouse ran. |
 | G7 Independent review | ✅ The first review failed (1 S1, 4 S2), and all five were fixed. The re-review at 85adfe6 passed with no new S1/S2. |
 
 ## G7 findings and fixes (`docs/qa/R1-fixes-review.md`)

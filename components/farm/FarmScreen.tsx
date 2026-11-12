@@ -27,7 +27,11 @@ import { Tip } from "@/components/tips/Tip";
 import { SeedDexSheet } from "./SeedDexSheet";
 import { sfx } from "@/lib/sound/sfx";
 import { HarvestPop } from "./HarvestPop";
-import { DECOR_ART, DecorShop } from "./DecorShop";
+import { DECOR_ART } from "./DecorShop";
+import { Shop } from "./Shop";
+import { parseItem, sellPrice } from "@/lib/game/market";
+import { Farmhouse } from "@/components/art/farm/Farmhouse";
+import { RewardJarHint } from "./RewardJarHint";
 import { PlotSheet } from "./PlotSheet";
 
 const LOCKED_FIELDS = 3;
@@ -75,7 +79,7 @@ export function FarmView({
   data: FarmData | null;
   status: "loading" | "ready" | "error";
   plant: (slot: BlockKey, crop: CropId, replace?: boolean) => Promise<boolean>;
-  harvest: (slot: BlockKey) => Promise<boolean>;
+  harvest: (slot: BlockKey) => Promise<string | null>;
   buyDecor: (item: DecorId) => Promise<boolean>;
   reload: () => void;
   /** Capsule machine + Seed-dex (absent in the compact side panel and the preview). */
@@ -92,7 +96,7 @@ export function FarmView({
   const blocks = useTranslations("blocks");
   const decorNames = useTranslations("decor");
   const [open, setOpen] = useState<BlockKey | null>(null);
-  const [pop, setPop] = useState<{ cropId: CropId; quality: Quality } | null>(null);
+  const [pop, setPop] = useState<{ cropId: CropId; quality: Quality; value?: number } | null>(null);
   const [sheet, setSheet] = useState<"capsules" | "dex" | null>(null);
   const endPop = useCallback(() => setPop(null), []);
 
@@ -166,6 +170,16 @@ export function FarmView({
         data-sky={sky}
       >
         <FarmSky phase={sky} className="absolute inset-x-0 top-0 h-28 w-full" />
+        {data.house > 0 && (
+          // Its ground line (y 40 of 48) sits on the field's top edge (pt-16 = 64px).
+          <div
+            role="img"
+            aria-label={t("house", { n: data.house })}
+            className="absolute top-[11px] right-24 z-10"
+          >
+            <Farmhouse level={data.house} className="h-16 w-16" />
+          </div>
+        )}
         <div className="relative pt-16">
           {farm.giants.map((g) => (
             <div
@@ -297,7 +311,8 @@ export function FarmView({
 
       {animals && <AnimalPen animals={animals} />}
 
-      {!compact && <DecorShop coins={data.coins} onBuy={buyDecor} season={seasonOf(data.today)} />}
+      {!compact && <RewardJarHint coins={data.coins} />}
+      {!compact && <Shop onBuyDecor={buyDecor} season={seasonOf(data.today)} onChanged={reload} />}
 
       {/* Feature reveal: the farm expansion shows after the first harvest. */}
       {!compact && (gacha?.state?.harvested ?? true) && (
@@ -329,17 +344,23 @@ export function FarmView({
           }}
           onHarvest={async () => {
             const p = farm.plots[open];
-            const ok = await harvest(open);
-            if (ok && p) {
+            const item = await harvest(open);
+            if (item && p) {
               sfx.harvest();
               setOpen(null);
-              setPop({ cropId: p.cropId, quality: p.quality });
+              // The server's judgement of this harvest (same rules as the farm shows).
+              const it = parseItem(item);
+              setPop({
+                cropId: p.cropId,
+                quality: it?.kind === "crop" ? it.quality : p.quality,
+                value: sellPrice(item, data.stall) ?? undefined,
+              });
             }
-            return ok;
+            return item !== null;
           }}
         />
       )}
-      {pop && <HarvestPop cropId={pop.cropId} quality={pop.quality} onDone={endPop} />}
+      {pop && <HarvestPop cropId={pop.cropId} quality={pop.quality} value={pop.value} onDone={endPop} />}
     </>
   );
 }

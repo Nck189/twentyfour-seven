@@ -14,25 +14,34 @@ export function DecorShop({
   coins,
   onBuy,
   season,
+  embedded = false,
 }: {
   coins: number;
   onBuy: (item: DecorId) => Promise<boolean>;
   /** This month's season: its festival item is in the shop only now (SPEC §8.8). */
   season?: Season;
+  /** Inside the farm shop: no own margin or coin count (the shop shows them). */
+  embedded?: boolean;
 }) {
   const t = useTranslations("farm");
   const names = useTranslations("decor");
   const [busy, setBusy] = useState<DecorId | null>(null);
   const [error, setError] = useState(false);
   return (
-    <section aria-label={t("decor")} className="mx-4 mt-4 lg:mx-6">
+    <section aria-label={t("decor")} className={embedded ? "" : "mx-4 mt-4 lg:mx-6"}>
       <div className="mb-1 flex items-center justify-between">
-        <h2 className="text-sm font-bold text-muted">{t("decor")}</h2>
-        <p className="flex items-center gap-1 text-sm font-bold">
-          <Coin className="h-5 w-5" />
-          <span aria-hidden="true">{coins}</span>
-          <span className="sr-only">{t("coins", { n: coins })}</span>
-        </p>
+        {embedded ? (
+          <h3 className="text-sm font-bold">{t("decor")}</h3>
+        ) : (
+          <h2 className="text-sm font-bold text-muted">{t("decor")}</h2>
+        )}
+        {!embedded && (
+          <p className="flex items-center gap-1 text-sm font-bold">
+            <Coin className="h-5 w-5" />
+            <span aria-hidden="true">{coins}</span>
+            <span className="sr-only">{t("coins", { n: coins })}</span>
+          </p>
+        )}
       </div>
       <ul className="grid grid-cols-4 gap-2">
         {[...(season?.festival ? [season.festival] : []), ...BASIC_DECOR].map((id: ShopDecorId) => {

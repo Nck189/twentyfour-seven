@@ -192,19 +192,23 @@ describe("harvest_plot", () => {
         expect([slot, farm.plots[slot as BlockKey]!.status === "ready"]).toEqual([slot, ripe]);
       }
     }
-    // The server agrees.
+    // The server agrees, and prices the produce by the same quality and weather (economy v2).
+    const shown = farmState(plantings, await loadFacts(u.id, d(10), t), u.id);
+    const ids = Object.entries(expected)
+      .filter(([, ripe]) => ripe)
+      .map(([slot]) => {
+        const v = shown.plots[slot as BlockKey]!;
+        return `crop:${v.cropId}:${v.quality}:${Math.round(v.multiplier * 100)}`;
+      })
+      .sort();
     for (const [slot, ripe] of Object.entries(expected)) {
       const r = await u.client.rpc("harvest_plot", { p_slot: slot });
       expect([slot, r.error === null]).toEqual([slot, ripe]);
     }
     // Produce in the inventory; regrowing tomato stays, the others leave the plot empty.
     const { data: inv } = await u.client.from("inventory").select("item_id, qty").order("item_id");
-    expect(inv).toEqual([
-      { item_id: "crop:carrot", qty: 1 },
-      { item_id: "crop:radish", qty: 1 },
-      { item_id: "crop:tomato", qty: 1 },
-      { item_id: "crop:turnip", qty: 1 },
-    ]);
+    expect(inv).toEqual(ids.map((item_id) => ({ item_id, qty: 1 })));
+    expect(ids.map((i) => i.split(":")[1])).toEqual(["carrot", "radish", "tomato", "turnip"]);
     const { data: plots } = await u.client
       .from("plots")
       .select("slot, crop_id")

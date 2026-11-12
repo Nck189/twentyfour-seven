@@ -98,7 +98,8 @@
       "early": "Started early",
       "tasks": "Planned tasks",
       "taskCoins": "+{n} coins",
-      "first10Start": "Started with the first 10"
+      "first10Start": "Started with the first 10",
+      "fertilized": "Fertilizer for the {block} plot: better quality, better price"
     },
     "nap": {
       "title": "Power nap",
@@ -255,7 +256,9 @@
     "seedOwned": "{crop}, {n} owned",
     "onlyThisMonth": "This month",
     "lastChance": "One more missed {block} and it dies. Do {block} today, or mark it done in the Night ritual, to save it.",
-    "lastChanceToday": "{crop} in {block}: one more miss and it dies"
+    "lastChanceToday": "{crop} in {block}: one more miss and it dies",
+    "house": "Farmhouse, level {n}",
+    "harvestValue": "Sells for {n} coins at the market"
   },
   "crops": {
     "radish": "Radish",
@@ -951,5 +954,74 @@
     "goalBody": "{done} of {need} easy days (I'm up on time + Night ritual) in the next 5 days",
     "goalClaim": "Collect +2 tickets",
     "goalGift": "+2 tickets. You're back on track."
+  },
+  "shop": {
+    "title": "Shop",
+    "coins": "{n} coins",
+    "loading": "Loading…",
+    "loadError": "Couldn't load the shop.",
+    "retry": "Try again",
+    "actionError": "Couldn't do that. Check your connection and try again.",
+    "tab": {
+      "market": "Market",
+      "shop": "Shop",
+      "upgrades": "Upgrades",
+      "rewardsShort": "Rewards"
+    },
+    "ordersTitle": "Today's orders",
+    "order": "{n} × {crop}",
+    "orderHave": "You have {n}",
+    "deliver": "Deliver · {coins}",
+    "delivered": "Delivered",
+    "sellTitle": "Sell produce",
+    "shelfEmpty": "Nothing to sell yet. Harvest a crop or collect from your animals.",
+    "sell": "Sell 1",
+    "sellOne": "Sell 1 {item} for {coins} coins",
+    "sellAll": "All",
+    "sellAllLabel": "Sell all {item} for {coins} coins",
+    "seedsTitle": "Seeds of the day",
+    "seedsHint": "New seeds every day. Rarer seeds come from capsules.",
+    "buySeed": "Buy {crop} seed for {coins} coins",
+    "exchangeTitle": "{coins} coins → 1 ticket",
+    "exchangeLeft": "{n} of {max} left this week",
+    "exchange": "Swap",
+    "level": "Level {n}",
+    "maxed": "Fully upgraded",
+    "upgradeTo": "Level {n} · {coins}",
+    "upgrade": {
+      "stall": {
+        "name": "Market stall",
+        "effect": "+10% on everything you sell, per level."
+      },
+      "barn": {
+        "name": "Barn",
+        "effect": "One more daily order per level."
+      },
+      "house": {
+        "name": "Farmhouse",
+        "effect": "Your farmhouse grows with each level."
+      }
+    },
+    "rewardsHint": "Treat yourself: set a real-life reward and save coins for it. Totally optional.",
+    "redeem": "Redeem",
+    "redeemLabel": "Redeem {title} for {coins} coins",
+    "remove": "Remove",
+    "removeLabel": "Remove {title}",
+    "rewardTitle": "Reward",
+    "rewardPlaceholder": "e.g. Bubble tea",
+    "rewardCost": "Coins",
+    "addReward": "Add reward",
+    "jarHint": "You can save coins for a reward of your own, under Shop → Rewards.",
+    "jarHintClose": "OK",
+    "refused": "The shop couldn't do that: not enough coins or produce, a limit reached, or the offer changed.",
+    "paidSold": "+{n} coins from the market",
+    "paidDelivered": "Delivered! +{n} coins",
+    "boughtSeed": "{crop} seed is in your bag — plant it on the farm",
+    "gotTicket": "+1 ticket — try your luck at the capsules",
+    "upgraded": "{name} is now level {n}",
+    "enjoy": "Enjoy {title}! −{n} coins. You earned it.",
+    "confirmRedeem": "Spend {n} coins",
+    "cancel": "Cancel",
+    "levelOf": "Level {n} of {max}"
   }
 }

@@ -150,13 +150,15 @@ export function FarmPreview() {
           farm,
           sky,
           today: TODAY,
+          house: 2,
+          stall: 0,
           empty: BLOCK_KEYS.filter((b) => !planted.has(b)),
           coins: 120,
           decor: ["fence", "fence", "flowers"],
         }}
         status="ready"
         plant={async () => true}
-        harvest={async () => true}
+        harvest={async () => "crop:radish:normal:100"}
         buyDecor={async () => true}
         gacha={SAMPLE_GACHA}
         animals={animals as never}

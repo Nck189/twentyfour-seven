@@ -80,6 +80,8 @@ test("CJ-05 check-in: first-10 → 3 items → close in ≤ 5 taps and ≤ 5 s",
     taps++;
   };
   await tap(/Map the day/);
+  // The first-10's reward shows at the moment of the tap (it fertilizes the block's plot).
+  await expect(card.getByText("Fertilizer for the Work plot: better quality, better price")).toBeVisible();
   await tap("Inbox zero");
   await tap("YOP draft");
   await tap("Email advisor");

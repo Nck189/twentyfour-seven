@@ -117,6 +117,8 @@ test("CJ-M9-3 this month's season banner; a festival month sells its item", asyn
   // The app and the shop both go by the wake-day (the 1st before wake is still last month).
   const season = seasonOf(wakeDay());
   await expect(page.getByRole("region", { name: /^This month: / })).toBeVisible();
+  // Decor lives in the farm Shop's "Shop" tab (economy v2).
+  await page.getByRole("region", { name: "Shop" }).getByRole("radio", { name: "Shop", exact: true }).click();
   const shop = page.getByRole("region", { name: "Decor" });
   if (season.festival) await expect(shop.getByText("This month")).toBeVisible();
   else await expect(shop.getByText("This month")).toHaveCount(0);

@@ -9,6 +9,7 @@ import {
   type ProduceId,
 } from "@/content/animals";
 import type { Rarity } from "@/content/crops";
+import { notifyWalletChange } from "@/lib/market/changes";
 import { getSupabase } from "@/lib/supabase/client";
 import { addDays, DEFAULT_TZ, isoWeekday, localDate, zonedInstant } from "@/lib/time";
 
@@ -168,6 +169,7 @@ export function useAnimals() {
       const { data, error } = await client.rpc("collect_produce", { p_id: id });
       if (error) return null;
       reload();
+      notifyWalletChange();
       return data.produce as ProduceId;
     },
     [client, reload],

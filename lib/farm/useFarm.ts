@@ -14,6 +14,7 @@ import {
 } from "@/lib/game";
 import { QUIET_RETRY_MS } from "@/lib/supabase/fetchWithTimeout";
 import { getSupabase } from "@/lib/supabase/client";
+import { notifyWalletChange } from "@/lib/market/changes";
 import { addDays } from "@/lib/time";
 import { loadDayContext } from "@/lib/today/loadContext";
 import { currentBlock, currentDayDate, timelineFor } from "@/lib/today/day";
@@ -36,12 +37,19 @@ export type FarmData = {
   decor: DecorId[];
   sky: SkyPhase;
   today: string;
+  /** Farmhouse upgrade level (economy v2); 0 = no house yet. */
+  house: number;
+  /** Market stall level: the harvest pop's price includes its bonus. */
+  stall: number;
 };
 
 /**
  * The farm (SPEC §8): plantings from `plots`, everything else computed by lib/game from the
  * logs. Planting and harvesting go through server RPCs (the server re-checks ripeness).
  */
+const levelOf = (rows: unknown, track: string): number =>
+  ((rows as { track: string; level: number }[] | null) ?? []).find((r) => r.track === track)?.level ?? 0;
+
 export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?: number } = {}) {
   const client = getSupabase();
   const [data, setData] = useState<FarmData | null>(null);
@@ -77,7 +85,7 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
       );
       const oldest = plantings.reduce((m, p) => (p.plantedOn < m ? p.plantedOn : m), today);
       const from = [addDays(oldest, -1), addDays(today, -FARM_HISTORY_DAYS)].sort().at(-1)!;
-      const [logs, plans, wakes, nights, ex, game, decorRows] = await Promise.all([
+      const [logs, plans, wakes, nights, ex, game, decorRows, houseRow] = await Promise.all([
         client.from("block_logs").select("*").gte("date", from),
         client.from("day_plans").select("date, mode, late_night").gte("date", from),
         client.from("wake_events").select("date, in_window, backfilled").gte("date", from),
@@ -88,6 +96,8 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
           .gte("at", `${addDays(from, -1)}T00:00:00Z`),
         client.from("game_state").select("coins").maybeSingle(),
         client.from("decor").select("item_id").order("created_at"),
+        // Optional: before the economy migration there's no table; the farm shows without a house.
+        client.from("upgrades").select("track, level"),
       ]);
       const err =
         logs.error ?? plans.error ?? wakes.error ?? nights.error ?? ex.error ?? game.error ?? decorRows.error;
@@ -118,6 +128,8 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
           coins: (game.data?.coins as number | undefined) ?? 0,
           decor: ((decorRows.data ?? []) as { item_id: string }[]).map((d) => d.item_id).filter(isDecorId),
           today,
+          house: levelOf(houseRow.data, "house"),
+          stall: levelOf(houseRow.data, "stall"),
         },
       };
     };
@@ -174,10 +186,14 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
   );
 
   const harvest = useCallback(
-    async (slot: BlockKey) => {
-      const { error } = await client.rpc("harvest_plot", { p_slot: slot });
-      if (!error) setReload((r) => r + 1);
-      return !error;
+    /** The produce item the server stored (its quality and weather), or null on failure. */
+    async (slot: BlockKey): Promise<string | null> => {
+      const { data, error } = await client.rpc("harvest_plot", { p_slot: slot });
+      if (error) return null;
+      setReload((r) => r + 1);
+      notifyWalletChange();
+      const r = data as { item?: string; crop: string };
+      return r.item ?? `crop:${r.crop}`; // before the economy migration: no item in the reply
     },
     [client],
   );
@@ -185,7 +201,10 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
   const buyDecor = useCallback(
     async (item: DecorId) => {
       const { error } = await client.rpc("buy_decor", { p_item: item });
-      if (!error) setReload((r) => r + 1);
+      if (!error) {
+        setReload((r) => r + 1);
+        notifyWalletChange();
+      }
       return !error;
     },
     [client],
