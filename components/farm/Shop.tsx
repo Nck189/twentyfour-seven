@@ -149,7 +149,7 @@ function Payoff({ notice }: { notice: Notice | null }) {
         <motion.p
           key={notice.text}
           role="status"
-          className="flex items-center gap-2 rounded-xl bg-primary-soft p-3 font-bold text-primary"
+          className="sticky top-2 z-10 flex items-center gap-2 rounded-xl bg-primary-soft p-3 font-bold text-primary"
           initial={skip ? false : { opacity: 0, y: -6, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0 }}
@@ -221,7 +221,6 @@ function MarketTab({ s, busy, run, m }: TabProps) {
                     <span className="block font-bold break-words">{name}</span>
                     <span className="text-xs text-muted">{t("orderHave", { n: have(o.crop) })}</span>
                   </span>
-                  <Price n={o.coins} />
                 </>
               }
               actions={
@@ -450,9 +449,6 @@ function Rewards({ s, busy, run, m }: TabProps) {
               actions={
                 confirming === r.id ? (
                   <>
-                    <Button variant="ghost" onClick={() => setConfirming(null)}>
-                      {t("cancel")}
-                    </Button>
                     <Button
                       disabled={busy !== null || s.coins < r.cost}
                       onClick={() => {
@@ -465,6 +461,10 @@ function Rewards({ s, busy, run, m }: TabProps) {
                       }}
                     >
                       {t("confirmRedeem", { n: r.cost })}
+                    </Button>
+                    {/* Where "Redeem" was: a double-tap lands on Cancel, not on spending (G7 N2). */}
+                    <Button variant="secondary" onClick={() => setConfirming(null)}>
+                      {t("cancel")}
                     </Button>
                   </>
                 ) : (

@@ -1013,7 +1013,7 @@
     "addReward": "Add reward",
     "jarHint": "You can save coins for a reward of your own, under Shop → Rewards.",
     "jarHintClose": "OK",
-    "refused": "The shop said no: not enough coins, or this week's limit is reached.",
+    "refused": "The shop couldn't do that: not enough coins or produce, a limit reached, or the offer changed.",
     "paidSold": "+{n} coins from the market",
     "paidDelivered": "Delivered! +{n} coins",
     "boughtSeed": "{crop} seed is in your bag — plant it on the farm",
