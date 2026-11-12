@@ -139,7 +139,7 @@ function CropCalendar({ today }: { today: string }) {
     <section aria-label={t("calendar.title")} className="mt-5">
       <h3 className="font-extrabold">{t("calendar.title")}</h3>
       <p className="mb-2 text-sm text-muted">{t("calendar.hint")}</p>
-      <ol className="grid grid-cols-4 gap-2">
+      <ol className="grid grid-cols-3 gap-2 sm:grid-cols-4">
         {cropCalendar(today).map((s) => {
           const name = month(s.returns, false);
           const when = !s.crop
@@ -154,7 +154,7 @@ function CropCalendar({ today }: { today: string }) {
               aria-current={s.current ? "date" : undefined}
               className={`flex min-h-11 flex-col items-center rounded-xl p-1 text-center ${s.current ? "bg-primary-soft" : "bg-surface-2"}`}
             >
-              <span className="text-[11px] font-bold" aria-hidden="true">
+              <span className="text-xs font-bold" aria-hidden="true">
                 {name}
               </span>
               {s.crop ? (
@@ -169,10 +169,10 @@ function CropCalendar({ today }: { today: string }) {
                   <CropArt cropId="candle_lotus" stage={1} className="h-12 w-12" />
                 </span>
               )}
-              <span className="w-full truncate text-[11px] font-bold" aria-hidden="true">
+              <span className="w-full text-xs leading-snug font-bold break-words" aria-hidden="true">
                 {s.crop ? crops(s.crop) : "?"}
               </span>
-              <span className="text-[10px] leading-tight text-muted" aria-hidden="true">
+              <span className="text-xs leading-snug text-muted" aria-hidden="true">
                 {when}
               </span>
             </li>

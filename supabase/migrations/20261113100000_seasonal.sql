@@ -40,7 +40,7 @@ create policy "own rows: select" on public.seasonal_orders for select to authent
 revoke all on public.seasonal_orders from anon, authenticated;
 grant select on public.seasonal_orders to authenticated;
 
--- Server-written events only (adds the seasonal ones).
+-- Server-written events only (adds the seasonal ones and story_seen, G7 STORY-R5).
 drop policy if exists "own rows: insert" on public.events;
 create policy "own rows: insert" on public.events for insert to authenticated
   with check (
@@ -52,7 +52,7 @@ create policy "own rows: insert" on public.events for insert to authenticated
                      'days_settled', 'weekly_review_done',
                      'produce_sold', 'seed_bought', 'ticket_exchanged', 'upgrade_bought',
                      'order_delivered', 'reward_redeemed',
-                     'seasonal_order_delivered', 'wish_floated')
+                     'seasonal_order_delivered', 'wish_floated', 'story_seen')
   );
 
 -- ---------- the crop catalog gains the seasonal crops (content/crops.ts) ----------

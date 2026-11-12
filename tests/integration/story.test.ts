@@ -102,3 +102,13 @@ describe("story beats (server)", () => {
     ).not.toBeNull();
   });
 });
+
+describe("G7 STORY-R5: story events are server-written only", () => {
+  it("a client can't insert a story_seen event", async () => {
+    const u = await newUser("story-ev");
+    const r = await u.client
+      .from("events")
+      .insert({ user_id: u.id, type: "story_seen", payload: { beat: "ch2_watering_can" } });
+    expect(r.error).not.toBeNull();
+  });
+});

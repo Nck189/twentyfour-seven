@@ -106,3 +106,24 @@ test("CJ-S-4 exam day: an appointment called 'Midterm' brings Som with a headban
   );
   await expectTouchTargets(page);
 });
+
+test("G7 STORY-R1: leaving the Farm while a beat's claim is in flight doesn't lose the scene", async ({
+  page,
+}) => {
+  await setup(page);
+  // A slow network: the claim answers only after the user has already left the Farm.
+  await page.route("**/rest/v1/rpc/claim_story_beat", async (route) => {
+    await new Promise((r) => setTimeout(r, 2500));
+    await route.continue();
+  });
+  await page.goto("/farm");
+  await page
+    .getByRole("navigation", { name: "Main navigation" })
+    .getByRole("link", { name: "Today" })
+    .click();
+  await expect(page.getByRole("heading", { name: "Today", level: 1 })).toBeVisible();
+  await page.waitForTimeout(3500); // the claim has been granted on the server by now
+  await page.unroute("**/rest/v1/rpc/claim_story_beat");
+  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Farm" }).click();
+  await expect(page.getByRole("dialog", { name: "Som" })).toBeVisible();
+});

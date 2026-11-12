@@ -20,9 +20,32 @@ describe("exam week (docs/STORY.md): an appointment tagged exam/สอบ", () =
     expect(isExam(null)).toBe(false);
     expect(isExam("")).toBe(false);
   });
+  it("G7 STORY-R2: everyday Thai/English words that contain สอบ/quiz/final aren't exams", () => {
+    for (const t of [
+      "ตรวจสอบรถ",
+      "สอบถามข้อมูลธนาคาร",
+      "ทดสอบระบบ",
+      "สอบสวน",
+      "Quiz night at bar",
+      "Final Fantasy night",
+      "Final project studio",
+    ])
+      expect(isExam(t)).toBe(false);
+    for (const t of ["Finals week", "Final exam Stat", "สอบปลายภาค", "สอบย่อย", "Quiz 2 OR"])
+      expect(isExam(t)).toBe(true);
+  });
+  it("G7 STORY-R16: only appointments count, not fixed class/work events", () => {
+    expect(hasExam([{ key: "class", title: "Midterm review class" }])).toBe(false);
+    expect(hasExam([{ key: "appointment", title: "Midterm" }])).toBe(true);
+  });
   it("hasExam looks at any event's title", () => {
-    expect(hasExam([{ title: "Dentist" }, { title: "Midterm" }])).toBe(true);
-    expect(hasExam([{ title: null }])).toBe(false);
+    expect(
+      hasExam([
+        { key: "appointment", title: "Dentist" },
+        { key: "appointment", title: "Midterm" },
+      ]),
+    ).toBe(true);
+    expect(hasExam([{ key: "appointment", title: null }])).toBe(false);
     expect(hasExam([])).toBe(false);
   });
 });

@@ -32,7 +32,7 @@ function Toggle({
       </span>
       <span
         aria-hidden="true"
-        className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${on ? "bg-primary" : "bg-line"}`}
+        className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${on ? "bg-primary" : "bg-muted"}`}
       >
         <span
           className={`absolute top-1 h-5 w-5 rounded-full bg-surface transition-[left] ${on ? "left-6" : "left-1"}`}

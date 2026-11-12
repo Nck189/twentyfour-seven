@@ -41,6 +41,14 @@ export function Cutscene({
   const [floating, setFloating] = useState(false);
   const [wishError, setWishError] = useState(false);
 
+  // A keyboard (iPad, Mac): Escape skips the scene, like the Skip button (G7 STORY-R14).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onDone();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onDone]);
   useEffect(() => {
     sfx.meow();
   }, []);
@@ -133,10 +141,10 @@ export function Cutscene({
               data-story-next
               value={wish}
               maxLength={WISH_MAX}
-              rows={2}
+              rows={4}
               onChange={(e) => setWish(e.target.value)}
               placeholder={t("wish.placeholder")}
-              className="min-h-11 resize-none rounded-xl bg-surface-2 px-3 py-2 font-normal"
+              className="min-h-11 resize-none rounded-xl bg-surface-2 px-3 py-2 leading-relaxed font-normal"
             />
           </label>
           <p className="text-xs text-muted">{t("wish.private", { n: WISH_MAX - wish.length })}</p>
