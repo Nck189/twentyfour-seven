@@ -68,7 +68,9 @@
   --art-wool: #f7eedc;
   --art-wool-light: #fffaf1;
   --art-wool-dark: #dccaa5;
-  /* Ice: the pale sky-blue alpaca's face and legs (its fleece is --art-blue-light). */
+  /* Fleece: the alpaca's light sky-blue coat (Minnie: a little lighter than --art-blue-light). */
+  --art-fleece: #d9ecf9;
+  /* Ice: pale sky-blue highlights. */
   --art-ice: #e4f1fb;
   --art-ice-light: #f6fbfe;
   --art-ice-dark: #b4d3ea;
