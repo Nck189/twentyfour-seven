@@ -123,7 +123,7 @@ begin
       reward := '{"decor": "cafe_table"}'::jsonb;
       insert into public.decor (user_id, item_id, x, y)
       values (uid, 'cafe_table',
-              (select count(*) from public.decor where user_id = uid and item_id = 'cafe_table'), 0);
+              (select count(*) from public.decor where user_id = uid), 0);
     else
       reward := '{"coins": 20}'::jsonb;
       update public.game_state set coins = coins + 20 where user_id = uid;

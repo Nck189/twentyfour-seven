@@ -2,6 +2,7 @@
  * Cutscene backdrops (docs/STORY.md): a wide flat scene, same artist as the farm (no outlines,
  * 2–3 tones, light from the top-left). The sky is the only gradient.
  */
+import type { ReactNode } from "react";
 import type { StoryScene as SceneId } from "@/content/story";
 
 const GROUND = 78;
@@ -393,6 +394,257 @@ function YearCake() {
   );
 }
 
+/** Chapter 3: the pen, a straw nest and the new arrival (a chick-shaped friend) by the fence. */
+function Pen() {
+  return (
+    <g>
+      <Fence from={2} to={158} />
+      <ellipse cx={26} cy={GROUND + 4} rx={22} ry={6} fill="var(--art-wilt-dark)" />
+      <ellipse cx={25} cy={GROUND + 2.6} rx={20} ry={5} fill="var(--art-wilt)" />
+      {[12, 20, 30, 38].map((x, i) => (
+        <rect
+          key={x}
+          x={x}
+          y={GROUND - 1 + (i % 2)}
+          width={7}
+          height={1.2}
+          rx={0.6}
+          fill="var(--art-yellow-light)"
+          transform={`rotate(${i % 2 ? 14 : -12} ${x + 3} ${GROUND})`}
+        />
+      ))}
+      {/* the egg it came from: the cracked bottom half and its cap, tipped over */}
+      <path
+        d={`M16 ${GROUND - 6} L18 ${GROUND - 9} L20 ${GROUND - 6.5} L22 ${GROUND - 9.4} L24 ${GROUND - 6.5} L26 ${GROUND - 9} L28 ${GROUND - 6} Q28 ${GROUND + 1} 22 ${GROUND + 1} Q16 ${GROUND + 1} 16 ${GROUND - 6}Z`}
+        fill="var(--art-stone)"
+      />
+      <path
+        d={`M16.6 ${GROUND - 5.6} L18 ${GROUND - 8} L20 ${GROUND - 5.8} L22 ${GROUND - 8.4} L24 ${GROUND - 5.8} L25.6 ${GROUND - 8} Q26.6 ${GROUND - 1} 21.4 ${GROUND} Q16.6 ${GROUND - 0.6} 16.6 ${GROUND - 5.6}Z`}
+        fill="var(--art-cream)"
+      />
+      <path
+        d={`M31 ${GROUND - 1} Q31 ${GROUND - 9} 37 ${GROUND - 8} L36 ${GROUND - 5} L38 ${GROUND - 3.4} L37 ${GROUND}Z`}
+        fill="var(--art-cream)"
+        transform={`rotate(-24 34 ${GROUND - 4})`}
+      />
+      {/* the chick */}
+      <g transform={`translate(134 ${GROUND + 6})`}>
+        <ellipse cx={0} cy={1} rx={9} ry={1.8} fill="var(--art-shadow)" />
+        <ellipse cx={0} cy={-6} rx={8} ry={7} fill="var(--art-yellow-dark)" />
+        <ellipse cx={-0.8} cy={-6.8} rx={7.2} ry={6.2} fill="var(--art-yellow)" />
+        <ellipse cx={-3} cy={-9} rx={2.6} ry={1.6} fill="var(--art-yellow-light)" />
+        <circle cx={-3.4} cy={-7} r={0.9} fill="var(--art-wood-dark)" />
+        <circle cx={1.8} cy={-7} r={0.9} fill="var(--art-wood-dark)" />
+        <path d="M-1.6 -5.4 L0.4 -5.4 L-0.6 -3.8Z" fill="var(--art-orange)" />
+        <ellipse
+          cx={6.4}
+          cy={-6}
+          rx={2.4}
+          ry={1.4}
+          fill="var(--art-yellow-dark)"
+          transform="rotate(-30 6.4 -6)"
+        />
+      </g>
+      <Tuft x={150} s={1.1} />
+      <Tuft x={112} s={0.9} />
+    </g>
+  );
+}
+
+/** Chapter 4: a low sun over soft hills and the freshly painted farm sign. */
+function Sunset() {
+  return (
+    <g>
+      <ellipse cx={40} cy={GROUND + 6} rx={70} ry={22} fill="var(--art-leaf-3)" />
+      <ellipse cx={136} cy={GROUND + 8} rx={56} ry={20} fill="var(--art-leaf-2)" />
+      <g>
+        <rect x={16} y={GROUND - 30} width={4} height={30} rx={2} fill="var(--art-wood-dark)" />
+        <rect x={42} y={GROUND - 30} width={4} height={30} rx={2} fill="var(--art-wood-dark)" />
+        <rect x={10} y={GROUND - 36} width={42} height={16} rx={4} fill="var(--art-wood-dark)" />
+        <rect x={9} y={GROUND - 37} width={41} height={15} rx={4} fill="var(--art-wood)" />
+        <rect x={12} y={GROUND - 35} width={14} height={2} rx={1} fill="var(--art-wood-light)" />
+        {/* fresh paint: a sprout and a little sun */}
+        <ellipse
+          cx={24}
+          cy={GROUND - 28}
+          rx={2.4}
+          ry={4}
+          fill="var(--art-leaf-3)"
+          transform={`rotate(-30 24 ${GROUND - 28})`}
+        />
+        <ellipse
+          cx={29}
+          cy={GROUND - 28}
+          rx={2.4}
+          ry={4}
+          fill="var(--art-leaf-2)"
+          transform={`rotate(30 29 ${GROUND - 28})`}
+        />
+        <rect x={26} y={GROUND - 28} width={1.4} height={5} rx={0.7} fill="var(--art-leaf-4)" />
+        <circle cx={40} cy={GROUND - 31} r={3} fill="var(--art-sun)" />
+      </g>
+      <Tuft x={148} s={1.3} />
+    </g>
+  );
+}
+
+/** Indoors: a plank floor and a skirting line over the ground (house, album, café). */
+function Floor() {
+  return (
+    <g>
+      <rect x={0} y={GROUND - 4} width={160} height={100 - GROUND + 4} fill="var(--art-wood)" />
+      <rect x={0} y={GROUND - 4} width={160} height={2.4} fill="var(--art-wood-dark)" />
+      {[24, 62, 100, 138].map((x) => (
+        <rect key={x} x={x} y={GROUND} width={1.2} height={22} fill="var(--art-wood-dark)" opacity={0.5} />
+      ))}
+    </g>
+  );
+}
+
+/** A window onto the day sky (flat sky tones, no gradient indoors). */
+function Window({ x, y }: { x: number; y: number }) {
+  return (
+    <g>
+      <rect x={x} y={y} width={30} height={26} rx={3} fill="var(--art-wood-dark)" />
+      <rect x={x + 2} y={y + 2} width={26} height={22} rx={2} fill="var(--art-ice)" />
+      <ellipse cx={x + 10} cy={y + 9} rx={6} ry={2.4} fill="var(--art-white)" />
+      <rect x={x + 14.4} y={y + 2} width={1.6} height={22} fill="var(--art-wood-dark)" />
+      <rect x={x + 2} y={y + 12.2} width={26} height={1.6} fill="var(--art-wood-dark)" />
+    </g>
+  );
+}
+
+/** Chapter 5: inside the farmhouse; a window and a pile of cushions (one is clearly the best). */
+function HouseInside() {
+  return (
+    <g>
+      <Floor />
+      <Window x={12} y={18} />
+      <g>
+        <ellipse cx={132} cy={GROUND + 6} rx={22} ry={3} fill="var(--art-wood-dark)" />
+        <rect x={112} y={GROUND - 6} width={40} height={12} rx={6} fill="var(--art-peach-dark)" />
+        <rect x={111} y={GROUND - 7} width={39} height={11} rx={5.5} fill="var(--art-peach)" />
+        <rect x={118} y={GROUND - 15} width={28} height={10} rx={5} fill="var(--art-blush-dark)" />
+        <rect x={117} y={GROUND - 16} width={27} height={9} rx={4.5} fill="var(--art-blush)" />
+        <ellipse cx={124} cy={GROUND - 14} rx={4} ry={1.4} fill="var(--art-blush-light)" />
+      </g>
+      <rect x={16} y={GROUND - 22} width={22} height={18} rx={2} fill="var(--art-wood-dark)" />
+      <rect x={15} y={GROUND - 23} width={21} height={17} rx={2} fill="var(--art-wood-light)" />
+      <ellipse cx={25} cy={GROUND - 27} rx={5} ry={4} fill="var(--art-leaf-3)" />
+      <ellipse cx={23.6} cy={GROUND - 28} rx={3.6} ry={2.8} fill="var(--art-leaf-2)" />
+    </g>
+  );
+}
+
+/** Chapter 6: a wall of little framed moments (a morning, a harvest, a rainy day, a pond). */
+function Album() {
+  const frame = (x: number, y: number, inner: ReactNode, tilt = 0) => (
+    <g transform={`rotate(${tilt} ${x + 11} ${y + 9})`}>
+      <rect x={x} y={y} width={22} height={18} rx={2} fill="var(--art-wood-dark)" />
+      <rect x={x + 2} y={y + 2} width={18} height={14} rx={1} fill="var(--art-ice-light)" />
+      {inner}
+    </g>
+  );
+  return (
+    <g>
+      <Floor />
+      {frame(8, 14, <circle cx={19} cy={23} r={4} fill="var(--art-sun)" />, -4)}
+      {frame(34, 30, <ellipse cx={45} cy={41} rx={6} ry={3} fill="var(--art-leaf-2)" />, 3)}
+      {frame(
+        116,
+        12,
+        <g>
+          <ellipse cx={127} cy={20} rx={6} ry={2.6} fill="var(--art-silver)" />
+          {[123, 127, 131].map((x) => (
+            <rect key={x} x={x} y={23} width={1} height={3} rx={0.5} fill="var(--art-blue)" />
+          ))}
+        </g>,
+        5,
+      )}
+      {frame(
+        130,
+        36,
+        <g>
+          <circle cx={141} cy={46} r={3} fill="var(--art-red)" />
+          <ellipse cx={141} cy={42.6} rx={2} ry={1} fill="var(--art-leaf-3)" />
+        </g>,
+        -3,
+      )}
+      {frame(10, 44, <ellipse cx={21} cy={53} rx={6} ry={2.4} fill="var(--art-blue-light)" />, 2)}
+      {/* string of tiny bunting across the top */}
+      <path d="M0 6 Q80 16 160 6" fill="none" stroke="var(--art-wood-dark)" strokeWidth={0.5} />
+      {[20, 44, 68, 92, 116, 140].map((x, i) => (
+        <path
+          key={x}
+          d={`M${x - 3} ${8 + 4 * (1 - ((x - 80) / 80) ** 2)} l6 0 l-3 5z`}
+          fill={["var(--art-pink)", "var(--art-yellow)", "var(--art-blue-light)"][i % 3]}
+        />
+      ))}
+    </g>
+  );
+}
+
+/** Som's café: a counter, a shelf of cups, a coffee machine and a little menu board. */
+function Cafe() {
+  return (
+    <g>
+      <Floor />
+      {/* menu board (no words: stripes and a cup) */}
+      <rect x={10} y={12} width={34} height={26} rx={3} fill="var(--art-wood-dark)" />
+      <rect x={12} y={14} width={30} height={22} rx={2} fill="var(--art-leaf-4)" />
+      {[18, 23, 28].map((y) => (
+        <rect key={y} x={16} y={y} width={14} height={1.6} rx={0.8} fill="var(--art-cream)" />
+      ))}
+      <rect x={33} y={18} width={5} height={6} rx={1.4} fill="var(--art-cream)" />
+      {/* shelf with cups */}
+      <rect x={112} y={30} width={40} height={2.4} rx={1.2} fill="var(--art-wood-dark)" />
+      {[118, 128, 138, 147].map((x, i) => (
+        <g key={x}>
+          <rect
+            x={x - 3}
+            y={23}
+            width={6}
+            height={7}
+            rx={1.6}
+            fill={["var(--art-cream)", "var(--art-blush)", "var(--art-ice)", "var(--art-peach)"][i]}
+          />
+        </g>
+      ))}
+      {/* hanging lamps */}
+      {[70, 92].map((x) => (
+        <g key={x}>
+          <rect x={x - 0.3} y={0} width={0.6} height={12} fill="var(--art-wood-dark)" />
+          <path d={`M${x - 5} 16 Q${x} 9 ${x + 5} 16Z`} fill="var(--art-yellow)" />
+          <ellipse cx={x} cy={16.4} rx={2} ry={1} fill="var(--art-yellow-light)" />
+        </g>
+      ))}
+      {/* the counter */}
+      <rect x={0} y={GROUND - 22} width={160} height={6} rx={2} fill="var(--art-wood-dark)" />
+      <rect x={0} y={GROUND - 23} width={160} height={5} rx={2} fill="var(--art-wood-light)" />
+      <rect x={0} y={GROUND - 17} width={160} height={17} fill="var(--art-wood)" />
+      {[20, 60, 100, 140].map((x) => (
+        <rect key={x} x={x} y={GROUND - 15} width={1.4} height={13} rx={0.7} fill="var(--art-wood-dark)" />
+      ))}
+      {/* coffee machine on the counter, left */}
+      <rect x={14} y={GROUND - 42} width={24} height={19} rx={3} fill="var(--art-silver-dark)" />
+      <rect x={13} y={GROUND - 43} width={23} height={18} rx={3} fill="var(--art-silver)" />
+      <rect x={15} y={GROUND - 41} width={6} height={2} rx={1} fill="var(--art-silver-light)" />
+      <rect x={22} y={GROUND - 33} width={5} height={3} rx={1} fill="var(--art-silver-dark)" />
+      <rect x={21} y={GROUND - 29} width={7} height={5} rx={1.6} fill="var(--art-cream)" />
+      {/* a ready cup on the right */}
+      <rect x={128} y={GROUND - 31} width={10} height={8} rx={2.4} fill="var(--art-cream)" />
+      <ellipse cx={133} cy={GROUND - 31} rx={5} ry={1.2} fill="var(--art-wood)" />
+      <path
+        d={`M131 ${GROUND - 35} Q129.6 ${GROUND - 38} 131.4 ${GROUND - 41}`}
+        fill="none"
+        stroke="var(--art-white)"
+        strokeWidth={1}
+        strokeLinecap="round"
+      />
+    </g>
+  );
+}
+
 const SKY: Record<SceneId, string> = {
   gate: "linear-gradient(var(--sky-day-top), var(--sky-day-bottom))",
   field: "linear-gradient(var(--sky-day-top), var(--sky-day-bottom))",
@@ -403,7 +655,15 @@ const SKY: Record<SceneId, string> = {
   snow_hill: "linear-gradient(var(--sky-sunrise-top), var(--sky-sunrise-bottom))",
   winter_market: "linear-gradient(var(--sky-night-top), var(--sky-night-bottom))",
   cake: "linear-gradient(var(--sky-dusk-top), var(--sky-dusk-bottom))",
+  pen: "linear-gradient(var(--sky-day-top), var(--sky-day-bottom))",
+  sunset: "linear-gradient(var(--sky-dusk-top), var(--sky-dusk-bottom))",
+  // Indoors: a flat wall colour (gradients are only for the sky).
+  house: "var(--art-latte-light)",
+  album: "var(--art-wool)",
+  cafe: "var(--art-latte)",
 };
+
+const INDOORS: readonly SceneId[] = ["house", "album", "cafe"];
 
 export function StoryScene({ scene, className = "" }: { scene: SceneId; className?: string }) {
   return (
@@ -417,7 +677,7 @@ export function StoryScene({ scene, className = "" }: { scene: SceneId; classNam
         preserveAspectRatio="xMidYMax slice"
         className="absolute inset-0 h-full w-full"
       >
-        {scene === "krathong" || scene === "winter_market" ? (
+        {INDOORS.includes(scene) ? null : scene === "krathong" || scene === "winter_market" ? (
           <g>
             <circle cx={128} cy={22} r={9} fill="var(--sky-moon)" />
             {[
@@ -430,8 +690,8 @@ export function StoryScene({ scene, className = "" }: { scene: SceneId; classNam
               <circle key={x} cx={x} cy={y} r={0.9} fill="var(--sky-star)" />
             ))}
           </g>
-        ) : scene === "water_market" || scene === "cake" ? (
-          <circle cx={132} cy={30} r={8} fill="var(--art-orange-light)" />
+        ) : scene === "water_market" || scene === "cake" || scene === "sunset" ? (
+          <circle cx={132} cy={scene === "sunset" ? 58 : 30} r={8} fill="var(--art-orange-light)" />
         ) : (
           <g>
             <ellipse cx={30} cy={20} rx={12} ry={5} fill="var(--art-cloud)" />
@@ -478,6 +738,11 @@ export function StoryScene({ scene, className = "" }: { scene: SceneId; classNam
         {scene === "snow_hill" && <MistHills />}
         {scene === "winter_market" && <WinterLights />}
         {scene === "cake" && <YearCake />}
+        {scene === "pen" && <Pen />}
+        {scene === "sunset" && <Sunset />}
+        {scene === "house" && <HouseInside />}
+        {scene === "album" && <Album />}
+        {scene === "cafe" && <Cafe />}
         {scene === "gate" && (
           <g>
             <Fence from={4} to={70} gate />

@@ -33,6 +33,7 @@ export function Cutscene({
 }) {
   const t = useTranslations("story");
   const tc = useTranslations("crops");
+  const td = useTranslations("decor");
   const reduce = useReducedMotion();
   const still = usePrefs((s) => s.skipAnimations) || Boolean(reduce);
   const panels = STORY[beat].panels;
@@ -78,7 +79,9 @@ export function Cutscene({
     ? null
     : "tickets" in gift
       ? t("gift.tickets", { n: gift.tickets })
-      : t("gift.seed", { n: gift.seed.n, crop: tc(gift.seed.crop) });
+      : "decor" in gift
+        ? t("gift.decor", { item: td(gift.decor) })
+        : t("gift.seed", { n: gift.seed.n, crop: tc(gift.seed.crop) });
 
   return (
     <div

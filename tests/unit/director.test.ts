@@ -69,6 +69,29 @@ describe("director (docs/STORY.md rules)", () => {
     expect(triggerMet({ kind: "always" }, facts())).toBe(true);
     expect(triggerMet({ kind: "harvests", need: 1 }, facts({ harvests: 1 }))).toBe(true);
     expect(triggerMet({ kind: "good_days", need: 3 }, facts({ goodDays: 2 }))).toBe(false);
+    expect(triggerMet({ kind: "hatched", need: 1 }, facts())).toBe(false);
+    expect(triggerMet({ kind: "hatched", need: 1 }, facts({ hatched: 1 }))).toBe(true);
+    expect(triggerMet({ kind: "best_streak", need: 7 }, facts({ bestStreak: 6 }))).toBe(false);
+    expect(triggerMet({ kind: "best_streak", need: 7 }, facts({ bestStreak: 7 }))).toBe(true);
+    expect(triggerMet({ kind: "days_used", need: 30 }, facts({ daysUsed: 30 }))).toBe(true);
+    expect(triggerMet({ kind: "house", need: 2 }, facts({ house: 1 }))).toBe(false);
+  });
+
+  it("chapters 3–6 and the café opening, in order, each when its data is there", () => {
+    const base = ["ch0_gate", "ch1_first_harvest", "ch2_watering_can"];
+    const all = facts({ harvests: 9, goodDays: 9, hatched: 1, bestStreak: 7, house: 2, daysUsed: 30 });
+    expect(nextBeat({ ...calm, seen: base, seenToday: false, facts: all })).toBe("ch3_new_friend");
+    expect(nextBeat({ ...calm, seen: [...base, "ch3_new_friend"], seenToday: false, facts: all })).toBe(
+      "ch4_sunset",
+    );
+    // Farmhouse 2 without a streak or a hatch: the move-in, then the café.
+    const house = facts({ harvests: 9, goodDays: 9, house: 2 });
+    expect(nextBeat({ ...calm, seen: base, seenToday: false, facts: house })).toBe("ch5_house");
+    expect(nextBeat({ ...calm, seen: [...base, "ch5_house"], seenToday: false, facts: house })).toBe(
+      "cafe_open",
+    );
+    expect(STORY.ch4_sunset.gift).toEqual({ decor: "farm_sign" });
+    expect(STORY.ch6_album.gift).toEqual({ tickets: 2 });
   });
 
   it("content: every beat has 3–5 panels and chapters are unique", () => {

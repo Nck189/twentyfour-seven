@@ -10,6 +10,12 @@ export const STORY_BEATS = [
   "ch0_gate",
   "ch1_first_harvest",
   "ch2_watering_can",
+  "ch3_new_friend",
+  "ch4_sunset",
+  "ch5_house",
+  "ch6_album",
+  // Som's café opens with the Farmhouse at level 2 (docs/STORY.md "Som's café").
+  "cafe_open",
   // Seasonal crop beats (docs/STORY.md "Seasonal crops"): November, Candle Lotus.
   "lotus_open",
   "lotus_market",
@@ -33,7 +39,12 @@ export type StoryScene =
   | "krathong"
   | "snow_hill"
   | "winter_market"
-  | "cake";
+  | "cake"
+  | "pen"
+  | "sunset"
+  | "house"
+  | "album"
+  | "cafe";
 /** Soft motion only: a slow pan, a small hop, or sparkles. With reduced motion, every panel is still. */
 export type StoryMotion = "none" | "pan" | "hop" | "sparkle";
 
@@ -50,9 +61,17 @@ export type StoryTrigger =
    */
   | { kind: "season"; crop: CropId; from: number }
   /** The first sale or delivery of a seasonal crop in its season-year. */
-  | { kind: "season_use"; crop: CropId };
+  | { kind: "season_use"; crop: CropId }
+  /** Animals ever hatched. */
+  | { kind: "hatched"; need: number }
+  /** The best streak ever (game_state.best_streak). */
+  | { kind: "best_streak"; need: number }
+  /** Wake-days with an "I'm up" (days used, not a streak). */
+  | { kind: "days_used"; need: number }
+  /** The Farmhouse level. */
+  | { kind: "house"; need: number };
 
-export type StoryGift = { seed: { crop: CropId; n: number } } | { tickets: number };
+export type StoryGift = { seed: { crop: CropId; n: number } } | { tickets: number } | { decor: "farm_sign" };
 
 export type StoryPanel = {
   scene: StoryScene;
@@ -105,6 +124,56 @@ export const STORY: Record<StoryBeatId, StoryBeat> = {
       { scene: "field", pose: "happy", line: "l3", motion: "sparkle" },
     ],
     gift: { tickets: 1 },
+  },
+  ch3_new_friend: {
+    chapter: 3,
+    trigger: { kind: "hatched", need: 1 },
+    panels: [
+      { scene: "pen", pose: "lookUp", line: "l1", motion: "pan" },
+      { scene: "pen", pose: "sit", line: "l2", motion: "none" },
+      { scene: "pen", pose: "sleep", line: "l3", motion: "sparkle" },
+    ],
+    gift: null,
+  },
+  ch4_sunset: {
+    chapter: 4,
+    trigger: { kind: "best_streak", need: 7 },
+    panels: [
+      { scene: "sunset", pose: "stretch", line: "l1", motion: "pan" },
+      { scene: "sunset", pose: "sit", line: "l2", motion: "none" },
+      { scene: "sunset", pose: "happy", line: "l3", motion: "sparkle" },
+    ],
+    gift: { decor: "farm_sign" },
+  },
+  ch5_house: {
+    chapter: 5,
+    trigger: { kind: "house", need: 1 },
+    panels: [
+      { scene: "house", pose: "lookUp", line: "l1", motion: "pan" },
+      { scene: "house", pose: "stretch", line: "l2", motion: "hop" },
+      { scene: "house", pose: "sleep", line: "l3", motion: "none" },
+    ],
+    gift: null,
+  },
+  ch6_album: {
+    chapter: 6,
+    trigger: { kind: "days_used", need: 30 },
+    panels: [
+      { scene: "album", pose: "sit", line: "l1", motion: "pan" },
+      { scene: "album", pose: "lookUp", line: "l2", motion: "sparkle" },
+      { scene: "album", pose: "happy", line: "l3", motion: "none" },
+    ],
+    gift: { tickets: 2 },
+  },
+  cafe_open: {
+    chapter: 9,
+    trigger: { kind: "house", need: 2 },
+    panels: [
+      { scene: "cafe", pose: "carrySeed", line: "l1", motion: "pan" },
+      { scene: "cafe", pose: "happy", line: "l2", motion: "sparkle" },
+      { scene: "cafe", pose: "sit", line: "l3", motion: "none" },
+    ],
+    gift: null,
   },
   lotus_open: {
     chapter: 70,

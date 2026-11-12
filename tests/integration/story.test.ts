@@ -103,6 +103,58 @@ describe("story beats (server)", () => {
   });
 });
 
+describe("chapters 3–6 and the café opening (docs/STORY.md)", () => {
+  it("each waits for its data; the sign is placed on the farm, the album pays 2 tickets", async () => {
+    const u = await newUser("story-ch3");
+    const s = (await u.client.rpc("story_status")).data as { facts: Record<string, number> };
+    expect(s.facts).toMatchObject({ hatched: 0, best_streak: 0, days_used: 0, house: 0 });
+    for (const b of ["ch3_new_friend", "ch4_sunset", "ch5_house", "ch6_album", "cafe_open"])
+      expect((await u.client.rpc("claim_story_beat", { p_beat: b })).error?.code).toBe("P0001");
+
+    await admin().from("animals").insert({ user_id: u.id, species: "chicken" });
+    expect((await u.client.rpc("claim_story_beat", { p_beat: "ch3_new_friend" })).error).toBeNull();
+
+    await ageSeen(u.id);
+    await admin().from("game_state").update({ best_streak: 7 }).eq("user_id", u.id);
+    expect((await u.client.rpc("claim_story_beat", { p_beat: "ch4_sunset" })).error).toBeNull();
+    const sign = await admin().from("decor").select("item_id").eq("user_id", u.id).eq("item_id", "farm_sign");
+    expect(sign.data).toHaveLength(1);
+
+    await ageSeen(u.id);
+    await admin()
+      .from("upgrades")
+      .upsert({ user_id: u.id, track: "house", level: 1 }, { onConflict: "user_id,track" });
+    expect((await u.client.rpc("claim_story_beat", { p_beat: "cafe_open" })).error?.code).toBe("P0001");
+    expect((await u.client.rpc("claim_story_beat", { p_beat: "ch5_house" })).error).toBeNull();
+    await ageSeen(u.id);
+    await admin()
+      .from("upgrades")
+      .upsert({ user_id: u.id, track: "house", level: 2 }, { onConflict: "user_id,track" });
+    expect((await u.client.rpc("claim_story_beat", { p_beat: "cafe_open" })).error).toBeNull();
+
+    // 30 days used, not in a row (every other day).
+    await ageSeen(u.id);
+    await admin()
+      .from("wake_events")
+      .insert(
+        Array.from({ length: 30 }, (_, i) => {
+          const date = new Date(Date.UTC(2026, 0, 1 + i * 2)).toISOString().slice(0, 10);
+          return {
+            user_id: u.id,
+            date,
+            target_wake: `${date}T00:00:00Z`,
+            pressed_at: `${date}T00:05:00Z`,
+            in_window: true,
+            backfilled: i % 3 === 0,
+          };
+        }),
+      );
+    const t0 = (await state(u.id)).tickets;
+    expect((await u.client.rpc("claim_story_beat", { p_beat: "ch6_album" })).error).toBeNull();
+    expect((await state(u.id)).tickets).toBe(t0 + 2);
+  });
+});
+
 describe("G7 STORY-R5: story events are server-written only", () => {
   it("a client can't insert a story_seen event", async () => {
     const u = await newUser("story-ev");

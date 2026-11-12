@@ -220,3 +220,21 @@ export function CafeTable({ className = "h-12 w-12" }: { className?: string }) {
     </Art>
   );
 }
+
+/** Reward decor (story chapter 4, a 7-day streak): the farm sign Som had repainted. */
+export function FarmSign({ className = "h-12 w-12" }: { className?: string }) {
+  return (
+    <Art className={className}>
+      <Shadow rx={12} />
+      <rect x={12} y={22} width={3.4} height={18} rx={1.7} fill="var(--art-wood-dark)" />
+      <rect x={32.6} y={22} width={3.4} height={18} rx={1.7} fill="var(--art-wood-dark)" />
+      <rect x={7} y={13} width={35} height={15} rx={4} fill="var(--art-wood-dark)" />
+      <rect x={6} y={12} width={34} height={14} rx={4} fill="var(--art-wood)" />
+      <rect x={9} y={14} width={12} height={2} rx={1} fill="var(--art-wood-light)" />
+      <ellipse cx={18} cy={20} rx={2.2} ry={3.6} fill="var(--art-leaf-3)" transform="rotate(-30 18 20)" />
+      <ellipse cx={22.6} cy={20} rx={2.2} ry={3.6} fill="var(--art-leaf-2)" transform="rotate(30 22.6 20)" />
+      <rect x={19.6} y={20} width={1.3} height={4.6} rx={0.65} fill="var(--art-leaf-4)" />
+      <circle cx={33} cy={18} r={2.8} fill="var(--art-sun)" />
+    </Art>
+  );
+}

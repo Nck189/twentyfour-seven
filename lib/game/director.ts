@@ -20,6 +20,10 @@ export type StoryFacts = {
   today?: string;
   /** Seasonal crops sold or delivered, as `<crop>:<season-year>`. */
   seasonUses?: readonly string[];
+  hatched?: number;
+  bestStreak?: number;
+  daysUsed?: number;
+  house?: number;
 };
 export type StoryMoment = "farm" | "goodnight" | "other";
 
@@ -41,6 +45,14 @@ export function triggerMet(t: StoryTrigger, f: StoryFacts): boolean {
       return (
         f.today !== undefined && (f.seasonUses ?? []).includes(`${t.crop}:${seasonYear(t.crop, f.today)}`)
       );
+    case "hatched":
+      return (f.hatched ?? 0) >= t.need;
+    case "best_streak":
+      return (f.bestStreak ?? 0) >= t.need;
+    case "days_used":
+      return (f.daysUsed ?? 0) >= t.need;
+    case "house":
+      return (f.house ?? 0) >= t.need;
   }
 }
 

@@ -301,7 +301,8 @@
     "star_tree": "Star tree",
     "garden_lantern": "Garden lantern",
     "mailbox": "Mailbox",
-    "cafe_table": "Café table"
+    "cafe_table": "Café table",
+    "farm_sign": "Farm sign"
   },
   "gacha": {
     "title": "Capsule machine",
@@ -1091,7 +1092,8 @@
     "done": "Done",
     "gift": {
       "seed": "Gift: {n, plural, one {# {crop} seed} other {# {crop} seeds}}",
-      "tickets": "Gift: {n, plural, one {+# ticket} other {+# tickets}}"
+      "tickets": "Gift: {n, plural, one {+# ticket} other {+# tickets}}",
+      "decor": "Gift: the {item} for your farm"
     },
     "ch0_gate": {
       "title": "Som",
@@ -1111,6 +1113,36 @@
       "l1": "Som has been rummaging in the old shed.",
       "l2": "It drags out a dusty watering can. Your three good days earned it.",
       "l3": "The farm feels a little more like home."
+    },
+    "ch3_new_friend": {
+      "title": "A new friend",
+      "l1": "Som stares at the new arrival. Who said anyone else could live here?",
+      "l2": "It pretends not to care. It cares a lot.",
+      "l3": "By afternoon they're napping in the same sunny spot."
+    },
+    "ch4_sunset": {
+      "title": "Seven days",
+      "l1": "Seven days in a row. Som wants a walk at sunset.",
+      "l2": "The old farm sign has faded. Som sits beside it, meaningfully.",
+      "l3": "Freshly painted. Now everyone knows whose farm this is."
+    },
+    "ch5_house": {
+      "title": "Moving in",
+      "l1": "The farmhouse is ready. Som inspects every corner.",
+      "l2": "Som tries every cushion and picks the best one.",
+      "l3": "That cushion is Som's now. You may visit."
+    },
+    "ch6_album": {
+      "title": "Thirty days",
+      "l1": "Thirty days on the farm. Not in a row, and that's fine.",
+      "l2": "Som has been collecting moments on the wall: mornings, harvests, rainy days.",
+      "l3": "A whole month of you. Som is proud."
+    },
+    "cafe_open": {
+      "title": "Som's café",
+      "l1": "The farmhouse has a new room, and it smells like coffee.",
+      "l2": "Som has opened a tiny café. The menu is short and the barista is fluffy.",
+      "l3": "Order anything, any time. Every cup gets a stamp."
     },
     "wish": {
       "label": "Your wish (optional, only you can see it)",
