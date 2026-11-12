@@ -1,16 +1,13 @@
 # PROGRESS — 24/7
 
-## Now (2026-11-12, ~16:00 Bangkok)
-- ✅ **PR #14** (R1 fixes) merged; G6 on prod passed.
-- ✅ **PR #15** (Economy v2) merged 2026-11-12. Minnie runs `npx supabase db push --remote` (2 migrations: harvest_value, market), then `npm run qc:prod`.
-- 🔄 **Next: Story with Som** (`docs/STORY.md`), before M11. Plan:
-  1. Som art (6 poses) + `story_seen` table + `claim_story_beat` RPC (gifts server-side).
-  2. `lib/game/director.ts` (pure: one beat a day, calm moments only, no repeats) + unit tests.
-  3. Cutscene player (skippable, reduced-motion = still panels, muted with the global mute) + E2E.
-  4. Chapters 0–2, then the 5 signature sounds + auto-quiet in Focus/Work blocks.
-  5. G1–G7, report `docs/qa/STORY-report.md`, PR.
-- After that: seasonal crops (Nov Candle Lotus, Dec Snow Strawberry), Som's café, then M11.
-- Known: the Farm/Thai visual baselines (G3, Mac) need re-recording once. The prod sign-out E2E needs a longer wait (prod cold start).
+## Now (2026-11-13, ~04:00 Bangkok; Minnie asleep, "merge 16 when done, keep going until 08:00")
+- ✅ PR #14 (R1 fixes) and PR #15 (Economy v2) merged and on prod (G6 passed).
+- 🔄 **PR #16**: story with Som, seasonal crops + Candle Lotus, chibi animals (5+ QC rounds with Minnie), sound & motion settings. G7 PASS after fixes; merging on green CI (Minnie OK).
+  After merge, Minnie runs `npx supabase db push --remote` (3 migrations: story, seasonal, seasonal_story) and `npm run qc:prod`.
+- 🔄 **Next PR (local, on top of #16)**: Snow Strawberry beats + year in review (1 migration: snow_story), G7 STORY-R6/R8 (block clock: auto-quiet and Som's busy rule on every screen).
+- Then: Som's café (Minnie's popup flow), M11 push notifications, closed beta.
+- Waiting on Minnie: G7 STORY-R7 (should seasonal seeds plant only in their month and plants wilt after it?).
+- Known: Farm/Thai visual baselines (G3, Mac) need re-recording once; the prod sign-out E2E wait.
 
 ## ➡️ HANDOFF — read this first (any session: cloud or Minnie's Mac terminal)
 Minnie is asleep (from 2026-11-03 ~02:00 Bangkok). The build moved between a cloud session and her Mac; whichever session runs now continues from here.
