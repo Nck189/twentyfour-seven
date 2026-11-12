@@ -6,13 +6,21 @@
  */
 import type { CropId } from "./crops";
 
-export const STORY_BEATS = ["ch0_gate", "ch1_first_harvest", "ch2_watering_can"] as const;
+export const STORY_BEATS = [
+  "ch0_gate",
+  "ch1_first_harvest",
+  "ch2_watering_can",
+  // Seasonal crop beats (docs/STORY.md "Seasonal crops"): November, Candle Lotus.
+  "lotus_open",
+  "lotus_market",
+  "lotus_use",
+] as const;
 export type StoryBeatId = (typeof STORY_BEATS)[number];
 
 export const SOM_POSES = ["sit", "sleep", "stretch", "happy", "lookUp", "carrySeed"] as const;
 export type SomPose = (typeof SOM_POSES)[number];
 
-export type StoryScene = "gate" | "field" | "shed";
+export type StoryScene = "gate" | "field" | "shed" | "lotus_pond" | "water_market" | "krathong";
 /** Soft motion only: a slow pan, a small hop, or sparkles. With reduced motion, every panel is still. */
 export type StoryMotion = "none" | "pan" | "hop" | "sparkle";
 
@@ -22,13 +30,28 @@ export type StoryTrigger =
   /** Harvests ever made (events of type `harvest`). */
   | { kind: "harvests"; need: number }
   /** Settled days that counted (day_results perfect or minimum). */
-  | { kind: "good_days"; need: number };
+  | { kind: "good_days"; need: number }
+  /**
+   * A seasonal crop's month is now, on or after day `from` (1 = planting season opens, 15 = the
+   * seasonal market). Once per crop per year; a month missed entirely waits for next year.
+   */
+  | { kind: "season"; crop: CropId; from: number }
+  /** The first sale or delivery of a seasonal crop in its season-year. */
+  | { kind: "season_use"; crop: CropId };
 
 export type StoryGift = { seed: { crop: CropId; n: number } } | { tickets: number };
 
-export type StoryPanel = { scene: StoryScene; pose: SomPose; line: string; motion: StoryMotion };
+export type StoryPanel = {
+  scene: StoryScene;
+  pose: SomPose;
+  line: string;
+  motion: StoryMotion;
+  /** An optional, skippable form on this panel ("wish": float a private wish, ≤ WISH_MAX). */
+  form?: "wish";
+};
 
 export type StoryBeat = {
+  /** Sort order (unique). Seasonal beats are 7x: after the main chapters, like STORY.md's ch. 7. */
   chapter: number;
   trigger: StoryTrigger;
   panels: StoryPanel[];
@@ -67,6 +90,46 @@ export const STORY: Record<StoryBeatId, StoryBeat> = {
     ],
     gift: { tickets: 1 },
   },
+  lotus_open: {
+    chapter: 70,
+    trigger: { kind: "season", crop: "candle_lotus", from: 1 },
+    panels: [
+      { scene: "lotus_pond", pose: "lookUp", line: "l1", motion: "pan" },
+      { scene: "lotus_pond", pose: "sit", line: "l2", motion: "sparkle" },
+      { scene: "lotus_pond", pose: "carrySeed", line: "l3", motion: "hop" },
+    ],
+    gift: { seed: { crop: "candle_lotus", n: 1 } },
+  },
+  lotus_market: {
+    chapter: 71,
+    trigger: { kind: "season", crop: "candle_lotus", from: 15 },
+    panels: [
+      { scene: "water_market", pose: "happy", line: "l1", motion: "pan" },
+      { scene: "water_market", pose: "lookUp", line: "l2", motion: "sparkle" },
+      { scene: "water_market", pose: "sit", line: "l3", motion: "none" },
+    ],
+    gift: null,
+  },
+  lotus_use: {
+    chapter: 72,
+    trigger: { kind: "season_use", crop: "candle_lotus" },
+    panels: [
+      { scene: "krathong", pose: "carrySeed", line: "l1", motion: "pan" },
+      { scene: "krathong", pose: "sit", line: "l2", motion: "none" },
+      { scene: "krathong", pose: "lookUp", line: "l3", motion: "none", form: "wish" },
+      { scene: "krathong", pose: "happy", line: "l4", motion: "pan" },
+    ],
+    gift: null,
+  },
+};
+
+/** A floated wish is private and short (SQL `wishes` checks the same). */
+export const WISH_MAX = 120;
+
+/** Seasonal beats happen once per crop per year: the server records them as `<beat>:<year>`. */
+export const isSeasonalBeat = (b: StoryBeatId): boolean => {
+  const k = STORY[b].trigger.kind;
+  return k === "season" || k === "season_use";
 };
 
 export const isStoryBeatId = (v: unknown): v is StoryBeatId =>

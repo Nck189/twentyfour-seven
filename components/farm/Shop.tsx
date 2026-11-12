@@ -210,8 +210,53 @@ function MarketTab({ s, busy, run, m }: TabProps) {
     s.shelf
       .filter((x) => x.item === `crop:${crop}` || x.item.startsWith(`crop:${crop}:`))
       .reduce((a, x) => a + x.qty, 0);
+  const so = m.season?.order ?? null;
   return (
     <>
+      {so && (
+        <section
+          aria-label={t("season.marketTitle", { crop: crops(so.crop) })}
+          className="flex flex-col gap-2 rounded-2xl bg-primary-soft p-3"
+        >
+          <h3 className="text-sm font-bold">{t("season.marketTitle", { crop: crops(so.crop) })}</h3>
+          <p className="text-xs text-muted">{t("season.marketHint", { crop: crops(so.crop) })}</p>
+          <ul className="flex flex-col gap-2">
+            <Row
+              label={t("season.order", { n: so.qty, crop: crops(so.crop) })}
+              top={
+                <>
+                  <CropArt cropId={so.crop} stage={3} status="ready" className="h-11 w-11 shrink-0" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-bold break-words">
+                      {t("season.order", { n: so.qty, crop: crops(so.crop) })}
+                    </span>
+                    <span className="text-xs text-muted">{t("orderHave", { n: have(so.crop) })}</span>
+                  </span>
+                </>
+              }
+              actions={
+                so.done ? (
+                  <span className="text-sm font-bold text-primary">{t("delivered")}</span>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    disabled={have(so.crop) < so.qty || busy !== null}
+                    onClick={() =>
+                      void run(
+                        "order-seasonal",
+                        () => m.deliverSeasonal(),
+                        (r) => ({ text: t("paidDelivered", { n: earned(r) }), coins: earned(r) }),
+                      )
+                    }
+                  >
+                    {t("deliver", { coins: so.coins })}
+                  </Button>
+                )
+              }
+            />
+          </ul>
+        </section>
+      )}
       <h3 className="text-sm font-bold">{t("ordersTitle")}</h3>
       <ul className="flex flex-col gap-2">
         {s.orders.map((o) => {
@@ -285,6 +330,11 @@ function MarketTab({ s, busy, run, m }: TabProps) {
                           {counted > 1 && ` · ${tf("multiplier", { n: Math.round(counted * 10) / 10 })}`}
                         </span>
                       )}
+                      {(x.season ?? 1) > 1 && (
+                        <span className="block text-xs font-bold text-primary">
+                          {t("season.priceTag", { n: x.season ?? 1 })}
+                        </span>
+                      )}
                     </span>
                     <Price n={x.price} />
                   </>
@@ -336,8 +386,37 @@ function SeedsAndTickets({ s, busy, run, m }: TabProps) {
   const t = useTranslations("shop");
   const crops = useTranslations("crops");
   const left = s.exchange.max - s.exchange.used;
+  const seasonal = m.season?.seed ?? null;
   return (
     <>
+      {seasonal && (
+        <section
+          aria-label={t("season.seedTitle")}
+          className="flex flex-wrap items-center gap-3 rounded-2xl bg-primary-soft p-3"
+        >
+          <CropArt cropId={seasonal.crop} stage={3} status="ready" className="h-12 w-12 shrink-0" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-bold">{t("season.seedTitle")}</span>
+            <span className="block font-bold break-words">{crops(seasonal.crop)}</span>
+            <span className="text-xs text-muted">{t("season.seedHint")}</span>
+          </span>
+          <Button
+            variant="secondary"
+            disabled={busy !== null || s.coins < seasonal.price}
+            aria-label={t("buySeed", { crop: crops(seasonal.crop), coins: seasonal.price })}
+            onClick={() =>
+              void run(
+                `seed-${seasonal.crop}`,
+                () => m.buySeed(seasonal.crop),
+                () => ({ text: t("boughtSeed", { crop: crops(seasonal.crop) }) }),
+              )
+            }
+          >
+            <Coin className="h-4 w-4" />
+            {seasonal.price}
+          </Button>
+        </section>
+      )}
       <h3 className="text-sm font-bold">{t("seedsTitle")}</h3>
       <ul className="grid grid-cols-3 gap-2">
         {s.seeds.map((x) => (

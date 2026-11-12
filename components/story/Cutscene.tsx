@@ -6,7 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import { SomArt } from "@/components/art/Som";
 import { Sparkle } from "@/components/art/farm/parts";
 import { Button } from "@/components/ui/Button";
-import { STORY, type StoryBeatId, type StoryGift } from "@/content/story";
+import { STORY, WISH_MAX, type StoryBeatId, type StoryGift } from "@/content/story";
+import { getSupabase } from "@/lib/supabase/client";
 import { sfx } from "@/lib/sound/sfx";
 import { usePrefs } from "@/lib/store/prefs";
 import { StoryScene } from "./StoryScene";
@@ -14,7 +15,9 @@ import { StoryScene } from "./StoryScene";
 /**
  * A short story beat with Som (docs/STORY.md): 3–5 panels, tap Next, Skip any time. With reduced
  * motion or "skip animations" every panel is still. The meow follows the global mute. The gift
- * (already granted by the server) shows on the last panel.
+ * (already granted by the server) shows on the last panel. A panel with a wish form (Candle
+ * Lotus) asks for an optional private wish: "Float it" sends it to the server and plays the last
+ * panel; "Not this time" closes the scene and writes nothing.
  */
 export function Cutscene({
   beat,
@@ -34,13 +37,26 @@ export function Cutscene({
   const panel = panels[i]!;
   const last = i === panels.length - 1;
   const box = useRef<HTMLDivElement>(null);
+  const [wish, setWish] = useState("");
+  const [floating, setFloating] = useState(false);
+  const [wishError, setWishError] = useState(false);
 
   useEffect(() => {
     sfx.meow();
   }, []);
   useEffect(() => {
-    box.current?.querySelector<HTMLButtonElement>("button[data-story-next]")?.focus();
+    box.current?.querySelector<HTMLElement>("[data-story-next]")?.focus();
   }, [i]);
+
+  const float = async () => {
+    if (floating || !wish.trim()) return;
+    setFloating(true);
+    setWishError(false);
+    const { error } = await getSupabase().rpc("float_wish", { p_wish: wish.trim() });
+    setFloating(false);
+    if (error) setWishError(true);
+    else setI(i + 1);
+  };
 
   const giftLine = !gift
     ? null
@@ -76,7 +92,11 @@ export function Cutscene({
           <SomArt pose={panel.pose} className="h-auto w-full" />
         </motion.div>
         {panel.motion === "sparkle" && (
-          <svg aria-hidden="true" viewBox="0 0 160 100" className="pointer-events-none absolute inset-0 h-full w-full">
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 160 100"
+            className="pointer-events-none absolute inset-0 h-full w-full"
+          >
             {[
               [40, 30, 4],
               [118, 22, 3],
@@ -99,16 +119,53 @@ export function Cutscene({
         {t(`${beat}.${panel.line}` as Parameters<typeof t>[0])}
       </p>
       {last && giftLine && <p className="text-base font-extrabold text-primary">{giftLine}</p>}
-      <div className="flex gap-3">
-        {!last && (
-          <Button variant="secondary" onClick={onDone}>
-            {t("skip")}
+      {panel.form === "wish" ? (
+        <form
+          className="flex w-full max-w-md flex-col gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void float();
+          }}
+        >
+          <label className="flex flex-col gap-1 text-sm font-bold">
+            {t("wish.label")}
+            <textarea
+              data-story-next
+              value={wish}
+              maxLength={WISH_MAX}
+              rows={2}
+              onChange={(e) => setWish(e.target.value)}
+              placeholder={t("wish.placeholder")}
+              className="min-h-11 resize-none rounded-xl bg-surface-2 px-3 py-2 font-normal"
+            />
+          </label>
+          <p className="text-xs text-muted">{t("wish.private", { n: WISH_MAX - wish.length })}</p>
+          {wishError && (
+            <p role="alert" className="text-sm font-bold text-accent">
+              {t("wish.error")}
+            </p>
+          )}
+          <div className="flex justify-center gap-3">
+            <Button type="button" variant="secondary" onClick={onDone}>
+              {t("wish.skip")}
+            </Button>
+            <Button type="submit" className="min-w-32" disabled={floating || !wish.trim()}>
+              {t("wish.float")}
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <div className="flex gap-3">
+          {!last && (
+            <Button variant="secondary" onClick={onDone}>
+              {t("skip")}
+            </Button>
+          )}
+          <Button data-story-next className="min-w-32" onClick={() => (last ? onDone() : setI(i + 1))}>
+            {last ? t("done") : t("next")}
           </Button>
-        )}
-        <Button data-story-next className="min-w-32" onClick={() => (last ? onDone() : setI(i + 1))}>
-          {last ? t("done") : t("next")}
-        </Button>
-      </div>
+        </div>
+      )}
       <p className="text-xs text-muted" aria-hidden="true">
         {i + 1} / {panels.length}
       </p>

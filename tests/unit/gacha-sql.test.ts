@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { CROP_IDS, CROPS } from "@/content/crops";
+import { CROPS, GACHA_CROP_IDS } from "@/content/crops";
 import { DUPE_SHARDS, PITY, RATES, STAR_UP_COST } from "@/content/gacha";
 
 /** The gacha SQL mirrors content/gacha.ts + content/crops.ts (the server rolls). */
@@ -23,14 +23,14 @@ describe("gacha SQL mirrors the content", () => {
     expect(roll).toContain(`se + 1 >= ${PITY.epic}`);
     expect(roll).toContain(`sr + 1 >= ${PITY.rare}`);
   });
-  it("crop pools per rarity, in catalog order", () => {
+  it("crop pools per rarity, in catalog order (seasonal crops are never in the capsule pools)", () => {
     for (const r of ["common", "uncommon", "rare", "epic"] as const) {
-      const ids = CROP_IDS.filter((id) => CROPS[id].rarity === r)
+      const ids = GACHA_CROP_IDS.filter((id) => CROPS[id].rarity === r)
         .map((id) => `'${id}'`)
         .join(", ");
       expect(roll).toContain(`when '${r}' then array[${ids}]`);
     }
-    const leg = CROP_IDS.filter((id) => CROPS[id].rarity === "legendary")
+    const leg = GACHA_CROP_IDS.filter((id) => CROPS[id].rarity === "legendary")
       .map((id) => `'${id}'`)
       .join(", ");
     expect(roll).toContain(`else array[${leg}]`);

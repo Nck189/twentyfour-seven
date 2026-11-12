@@ -28,6 +28,9 @@ export const EXPORT_TABLES = [
   "rewards",
   "reward_redemptions",
   "story_seen",
+  "season_clock",
+  "seasonal_orders",
+  "wishes",
 ] as const;
 export type ExportTable = (typeof EXPORT_TABLES)[number];
 
@@ -68,4 +71,7 @@ export const EXPORT_ORDER: Record<ExportTable, string[]> = {
   rewards: ["id"],
   reward_redemptions: ["id"],
   story_seen: ["beat"],
+  season_clock: ["user_id"],
+  seasonal_orders: ["crop_id", "year"],
+  wishes: ["year"],
 };
