@@ -35,6 +35,9 @@ export const CROP_IDS = [
   "moon_melon",
   "crystal_rose",
   "rainbow_corn",
+  // Seasonal crops (content/seasonal.ts): one a month, never from the standard capsule pool.
+  "candle_lotus",
+  "snow_strawberry",
 ] as const;
 export type CropId = (typeof CROP_IDS)[number];
 
@@ -46,6 +49,11 @@ export type Crop = {
   regrow: boolean;
   /** Can merge into a giant crop across 3 adjacent block plots (SPEC §8.2 \*). */
   giant: boolean;
+  /**
+   * A seasonal crop (docs/STORY.md "Seasonal crops"): its month is in content/seasonal.ts. It is
+   * never in the capsule pools or the Seed-dex grid; it regrows so one seed lasts its season.
+   */
+  seasonal: boolean;
 };
 
 const crop = (id: CropId, rarity: Rarity, extra: Partial<Crop> = {}): Crop => ({
@@ -54,6 +62,7 @@ const crop = (id: CropId, rarity: Rarity, extra: Partial<Crop> = {}): Crop => ({
   growDays: GROW_DAYS[rarity],
   regrow: rarity === "uncommon",
   giant: false,
+  seasonal: false,
   ...extra,
 });
 
@@ -78,7 +87,12 @@ export const CROPS: Record<CropId, Crop> = {
   moon_melon: crop("moon_melon", "legendary"),
   crystal_rose: crop("crystal_rose", "legendary"),
   rainbow_corn: crop("rainbow_corn", "legendary"),
+  candle_lotus: crop("candle_lotus", "rare", { seasonal: true, regrow: true }),
+  snow_strawberry: crop("snow_strawberry", "rare", { seasonal: true, regrow: true }),
 };
+
+/** The capsule machine's crops (and the Seed-dex grid): everything but the seasonal crops. */
+export const GACHA_CROP_IDS: readonly CropId[] = CROP_IDS.filter((id) => !CROPS[id].seasonal);
 
 /**
  * Seeds anyone can plant before the gacha exists (M7 adds an inventory). Server: plant_seed

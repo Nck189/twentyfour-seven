@@ -10,10 +10,21 @@ export type MarketStatus = {
   today: string;
   coins: number;
   levels: Record<UpgradeTrack, number>;
-  shelf: { item: string; qty: number; price: number }[];
+  /** `season`: the seasonal market multiplier counted in `price` (1, or 1.5 for the month's crop). */
+  shelf: { item: string; qty: number; price: number; season?: number }[];
   seeds: { crop: CropId; price: number }[];
   orders: { slot: number; crop: CropId; qty: number; coins: number; done: boolean }[];
   exchange: { price: number; max: number; used: number };
+};
+/** The seasonal crop calendar today (server `season_status`, docs/STORY.md "Seasonal crops"). */
+export type SeasonStatus = {
+  today: string;
+  month: number;
+  crop: CropId | null;
+  phase: "planting" | "market";
+  seed: { crop: CropId; price: number } | null;
+  mult: number;
+  order: { crop: CropId; qty: number; coins: number; done: boolean } | null;
 };
 export type Reward = { id: string; title: string; cost: number };
 /** An action's outcome: refused = the server said no (coins, limits), not a network failure. */
@@ -26,6 +37,7 @@ export type ActResult = { ok: boolean; refused: boolean; data: Record<string, un
 export function useMarket() {
   const client = getSupabase();
   const [status, setStatus] = useState<MarketStatus | null>(null);
+  const [season, setSeason] = useState<SeasonStatus | null>(null);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [error, setError] = useState(false);
   const [tick, setTick] = useState(0);
@@ -36,9 +48,10 @@ export function useMarket() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [s, r] = await Promise.all([
+      const [s, r, ss] = await Promise.all([
         client.rpc("market_status"),
         client.from("rewards").select("id, title, cost").eq("archived", false).order("created_at"),
+        client.rpc("season_status"),
       ]);
       if (cancelled) return;
       if (s.error || !s.data) {
@@ -48,6 +61,8 @@ export function useMarket() {
       setError(false);
       setStatus(s.data as MarketStatus);
       setRewards((r.data ?? []) as Reward[]);
+      // Seasonal extras are optional: without them the shop works as before.
+      setSeason(ss.error || !ss.data ? null : (ss.data as SeasonStatus));
     })();
     return () => {
       cancelled = true;
@@ -70,6 +85,7 @@ export function useMarket() {
 
   return {
     status,
+    season,
     rewards,
     error,
     reload,
@@ -78,6 +94,7 @@ export function useMarket() {
     exchange: () => act("exchange_ticket"),
     upgrade: (track: UpgradeTrack) => act("buy_upgrade", { p_track: track }),
     deliver: (slot: number) => act("deliver_order", { p_slot: slot }),
+    deliverSeasonal: () => act("deliver_seasonal_order"),
     redeem: (id: string) => act("redeem_reward", { p_id: id }),
     addReward: async (title: string, cost: number): Promise<ActResult> => {
       const { error: err } = await client.from("rewards").insert({ title: title.trim(), cost });

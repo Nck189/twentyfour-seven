@@ -1,13 +1,15 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { formatDayLong, formatTime } from "@/lib/format";
 import { showBedCard } from "@/lib/today/bedtime";
 import { useNow } from "@/lib/hooks/useNow";
 import { currentBlock, type TimelineBlock } from "@/lib/today/day";
+import { setQuietUntil } from "@/lib/sound/sfx";
+import { quietUntilFor } from "@/lib/sound/quiet";
 import { useToday } from "@/lib/today/useToday";
 import { NightRitual } from "@/components/night/NightRitual";
 import { WelcomeCard } from "@/components/onboarding/WelcomeCard";
@@ -26,6 +28,7 @@ import { Tip } from "@/components/tips/Tip";
 import { BlockCheckin } from "./BlockCheckin";
 import { BlockTasks } from "./BlockTasks";
 import { WelcomeBackCard } from "./WelcomeBackCard";
+import { ExamCard } from "./ExamCard";
 import { Sheet } from "./BlockSheet";
 import { ModeCard } from "./ModeCard";
 import { NapCard, isNapRunning } from "./NapCard";
@@ -92,6 +95,12 @@ export function TodayScreen() {
   // Today renders its content only on the client (it waits for the clock), so storage is safe here.
   const [dayOpen, setDayOpen] = useState(() => readDayOpen());
   const [allWarnings, setAllWarnings] = useState(false);
+
+  // Auto-quiet: sounds rest while the current block is Focus or Work (docs/STORY.md).
+  const quietUntil = today.timeline && clock ? quietUntilFor(currentBlock(today.timeline, now)) : 0;
+  useEffect(() => {
+    setQuietUntil(quietUntil);
+  }, [quietUntil]);
 
   if (!clock || today.status === "loading") {
     return (
@@ -200,6 +209,7 @@ export function TodayScreen() {
       <Tip id="streak" when={!!streak.view && tipsQuiet} />
       {onboarding.show && <WelcomeCard onLater={() => void onboarding.later()} />}
       {!onboarding.show && <WelcomeBackCard />}
+      <ExamCard timeline={tl} />
 
       {tl.mode !== "normal" && (
         <p className="mx-4 mb-3 inline-block rounded-full bg-primary-soft px-3 py-1 text-sm font-bold text-primary lg:mx-6">

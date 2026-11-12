@@ -28,14 +28,17 @@ export function parseItem(itemId: string): MarketItem | null {
   return { kind, cropId: id, quality: q as Quality, mult: Number(m) / 100 };
 }
 
-/** Coins for one unit at a stall of this level (null: not sellable). */
-export function sellPrice(itemId: string, stallLevel: number): number | null {
+/**
+ * Coins for one unit at a stall of this level (null: not sellable). `season` is the seasonal
+ * market multiplier (lib/game/seasonal `seasonPriceMult`, ×1.5 for that month's crop).
+ */
+export function sellPrice(itemId: string, stallLevel: number, season = 1): number | null {
   const it = parseItem(itemId);
   if (!it) return null;
   const stall = 1 + STALL_BONUS * stallLevel;
   if (it.kind === "produce") return Math.round(PRODUCE_PRICE[it.id] * stall);
   const base = SELL_BASE[CROPS[it.cropId].rarity];
-  return Math.round(base * QUALITY_PRICE[it.quality] * Math.min(it.mult, WEATHER_PRICE_CAP) * stall);
+  return Math.round(base * QUALITY_PRICE[it.quality] * Math.min(it.mult, WEATHER_PRICE_CAP) * stall * season);
 }
 
 /** A daily order's coins for `qty` of a crop. */

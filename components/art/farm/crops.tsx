@@ -1,5 +1,5 @@
 /**
- * The 20 crops, ripe (SPEC §8.2). Each draws in a 48 × 48 box, ground at y = 40, light from the
+ * The 20 crops plus the seasonal ones, ripe (SPEC §8.2, docs/STORY.md). Each draws in a 48 × 48 box, ground at y = 40, light from the
  * top-left, 2–3 tones per object, no outlines. Readable at 48 px: one big shape per crop.
  */
 import type { ReactNode } from "react";
@@ -98,25 +98,50 @@ function Carrot() {
   );
 }
 
+/** A berry's colors: red for the strawberry, snowy white for the Snow Strawberry. */
+type BerryTone = { dark: string; base: string; light: string; seed: string };
+const RED_BERRY: BerryTone = {
+  dark: "var(--art-red-dark)",
+  base: "var(--art-red)",
+  light: "var(--art-red-light)",
+  seed: "var(--art-yellow-light)",
+};
+const SNOW_BERRY: BerryTone = {
+  dark: "var(--art-silver)",
+  base: "var(--art-cream)",
+  light: "var(--art-white)",
+  seed: "var(--art-red-light)",
+};
+
 /** A heart-shaped berry (strawberry) with seeds and a leafy cap. */
-function Berry({ cx, cy, s = 1 }: { cx: number; cy: number; s?: number }) {
+function Berry({
+  cx,
+  cy,
+  s = 1,
+  tone = RED_BERRY,
+}: {
+  cx: number;
+  cy: number;
+  s?: number;
+  tone?: BerryTone;
+}) {
   const p = (dx: number, dy: number) => `${cx + dx * s} ${cy + dy * s}`;
   return (
     <g>
       <path
         d={`M${p(-5.2, -2.6)} Q${p(-5.8, 4.5)} ${p(0.4, 7.6)} Q${p(6.2, 4.5)} ${p(5.2, -2.6)} Q${p(0.4, -5.6)} ${p(-5.2, -2.6)}Z`}
-        fill="var(--art-red-dark)"
+        fill={tone.dark}
       />
       <path
         d={`M${p(-5.2, -2.6)} Q${p(-5.6, 4)} ${p(-0.2, 6.8)} Q${p(4.8, 3.8)} ${p(4.4, -2.8)} Q${p(-0.2, -5.4)} ${p(-5.2, -2.6)}Z`}
-        fill="var(--art-red)"
+        fill={tone.base}
       />
       <ellipse
         cx={cx - 2.8 * s}
         cy={cy - 1 * s}
         rx={1.2 * s}
         ry={0.8 * s}
-        fill="var(--art-red-light)"
+        fill={tone.light}
         transform={`rotate(-40 ${cx - 2.8 * s} ${cy - 1 * s})`}
       />
       {[
@@ -131,7 +156,7 @@ function Berry({ cx, cy, s = 1 }: { cx: number; cy: number; s?: number }) {
           cy={cy + dy! * s}
           rx={0.5 * s}
           ry={0.75 * s}
-          fill="var(--art-yellow-light)"
+          fill={tone.seed}
         />
       ))}
       <Leaf cx={cx - 2 * s} cy={cy - 4 * s} rx={2.6 * s} ry={1.2 * s} rot={-20} fill="var(--art-leaf-3)" />
@@ -149,6 +174,95 @@ function Strawberry() {
       <Leaf cx={24} cy={26} rx={6} ry={4.2} fill="var(--art-leaf-1)" />
       <Berry cx={17.5} cy={32} s={0.95} />
       <Berry cx={29} cy={30} s={1.1} />
+    </g>
+  );
+}
+
+/** Snow Strawberry (December): white berries with pink seeds, a dusting of frost. */
+function SnowStrawberry() {
+  return (
+    <g>
+      <Shadow rx={13} />
+      <Leaf cx={15} cy={33} rx={7} ry={4} rot={-18} fill="var(--art-leaf-3)" />
+      <Leaf cx={33} cy={32} rx={7} ry={4} rot={18} fill="var(--art-leaf-4)" />
+      <Leaf cx={24} cy={26} rx={6} ry={4.2} fill="var(--art-leaf-1)" />
+      <Berry cx={17.5} cy={32} s={0.95} tone={SNOW_BERRY} />
+      <Berry cx={29} cy={30} s={1.1} tone={SNOW_BERRY} />
+      <Sparkle cx={37} cy={20} r={2.2} fill="var(--art-blue-light)" />
+      <Sparkle cx={10.5} cy={24} r={1.5} fill="var(--art-blue-light)" />
+    </g>
+  );
+}
+
+/** A lotus petal: a pointed oval rotated about its base at (x, y). */
+function Petal({
+  x,
+  y,
+  len,
+  w,
+  rot,
+  fill,
+}: {
+  x: number;
+  y: number;
+  len: number;
+  w: number;
+  rot: number;
+  fill: string;
+}) {
+  return (
+    <path
+      d={`M${x} ${y} Q${x - w} ${y - len * 0.45} ${x} ${y - len} Q${x + w} ${y - len * 0.45} ${x} ${y}Z`}
+      fill={fill}
+      transform={`rotate(${rot} ${x} ${y})`}
+    />
+  );
+}
+
+/**
+ * Candle Lotus (November, Loy Krathong): a pink lotus on its pads with a tiny warm flame in the
+ * middle. Flat tones only: the flame is three yellows, no gradient; light from the top-left, so
+ * the left petals are the light ones and the right ones the dark ones.
+ */
+function CandleLotus() {
+  return (
+    <g>
+      <Shadow rx={14} />
+      {/* lily pads on the water line */}
+      <ellipse cx={13.5} cy={38.6} rx={9} ry={2.8} fill="var(--art-leaf-4)" />
+      <ellipse cx={13} cy={38} rx={8.4} ry={2.4} fill="var(--art-leaf-1)" />
+      <ellipse cx={35} cy={39} rx={8} ry={2.6} fill="var(--art-leaf-4)" />
+      <ellipse cx={34.5} cy={38.4} rx={7.4} ry={2.2} fill="var(--art-leaf-3)" />
+      <Stem top={30} w={2.6} />
+      {/* back petals, opening outward */}
+      <Petal x={24} y={30} len={15} w={5} rot={-58} fill="var(--art-pink)" />
+      <Petal x={24} y={30} len={15} w={5} rot={58} fill="var(--art-pink-dark)" />
+      <Petal x={24} y={30} len={16} w={5.2} rot={-26} fill="var(--art-pink-light)" />
+      <Petal x={24} y={30} len={16} w={5.2} rot={26} fill="var(--art-pink-dark)" />
+      {/* a soft glow and the tiny flame, held in the cup */}
+      <circle cx={24} cy={17} r={5.4} fill="var(--art-yellow-light)" opacity={0.6} />
+      <path
+        d="M24 10 Q28.2 15.6 26.8 18.6 Q24 21.6 21.2 18.6 Q19.8 15.6 24 10Z"
+        fill="var(--art-yellow-dark)"
+      />
+      <path
+        d="M23.6 10.6 Q27 15.6 25.8 18.2 Q23.6 20.6 21.6 18.2 Q20.4 15.6 23.6 10.6Z"
+        fill="var(--art-yellow)"
+      />
+      <ellipse cx={23.4} cy={17.2} rx={1.3} ry={2.1} fill="var(--art-yellow-light)" />
+      {/* front petals: a cup around the flame's foot */}
+      <Petal x={24} y={30} len={11} w={5.4} rot={-44} fill="var(--art-pink-light)" />
+      <Petal x={24} y={30} len={11} w={5.4} rot={44} fill="var(--art-pink-dark)" />
+      <Petal x={24} y={30.6} len={11} w={5.6} rot={0} fill="var(--art-pink)" />
+      <ellipse
+        cx={21.6}
+        cy={24.4}
+        rx={1}
+        ry={2.2}
+        fill="var(--art-white)"
+        opacity={0.7}
+        transform="rotate(-12 21.6 24.4)"
+      />
     </g>
   );
 }
@@ -588,6 +702,8 @@ export const RIPE: Record<CropId, () => ReactNode> = {
   moon_melon: MoonMelon,
   crystal_rose: CrystalRose,
   rainbow_corn: () => <CornPlant rows={RAINBOW_ROWS} />,
+  candle_lotus: CandleLotus,
+  snow_strawberry: SnowStrawberry,
 };
 
 /** The fruit color a crop shows while young (a bud), so crops are told apart mid-growth. */
@@ -612,4 +728,6 @@ export const CROP_TONE: Record<CropId, keyof typeof TONES> = {
   moon_melon: "blue",
   crystal_rose: "pink",
   rainbow_corn: "yellow",
+  candle_lotus: "pink",
+  snow_strawberry: "silver",
 };

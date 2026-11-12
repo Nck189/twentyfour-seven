@@ -1,12 +1,13 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ScarecrowArt, StreakSun } from "@/components/art/Streak";
 import { TicketArt } from "@/components/art/Ticket";
 import { Sheet } from "@/components/today/BlockSheet";
 import type { DayKind } from "@/lib/game/streak";
 import type { StreakView } from "@/lib/streak/useStreak";
+import { sfx } from "@/lib/sound/sfx";
 import { addDays, isoWeekday } from "@/lib/time";
 
 const CELL: Record<DayKind, string> = {
@@ -105,6 +106,10 @@ export function StreakChip({ view }: { view: StreakView }) {
 export function StreakNotice({ view }: { view: StreakView }) {
   const t = useTranslations("streak");
   const [seen, setSeen] = useState(false);
+  const milestone = view.granted.some((g) => g.reason !== "perfect_day");
+  useEffect(() => {
+    if (milestone) sfx.celebrate();
+  }, [milestone]);
   if (seen || view.granted.length === 0) return null;
   const total = view.granted.reduce((n, g) => n + g.amount, 0);
   const lines = view.granted.map((g) =>

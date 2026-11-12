@@ -1,5 +1,7 @@
 "use client";
 
+import { Cutscene } from "@/components/story/Cutscene";
+import { useStory } from "@/lib/story/useStory";
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { FarmSky } from "@/components/art/farm/FarmSky";
@@ -20,7 +22,7 @@ import { SeasonBanner } from "./SeasonBanner";
 import { CollectionBook, UnlockNotice } from "./CollectionBook";
 import { useUnlocks } from "@/lib/unlocks/useUnlocks";
 import { seasonOf } from "@/content/seasons";
-import { CROP_IDS } from "@/content/crops";
+import { GACHA_CROP_IDS } from "@/content/crops";
 import { Capsule, CapsuleMachine } from "@/components/art/farm/Capsule";
 import { CapsuleSheet } from "./CapsuleSheet";
 import { Tip } from "@/components/tips/Tip";
@@ -30,6 +32,7 @@ import { HarvestPop } from "./HarvestPop";
 import { DECOR_ART } from "./DecorShop";
 import { Shop } from "./Shop";
 import { parseItem, sellPrice } from "@/lib/game/market";
+import { seasonPriceMult } from "@/lib/game/seasonal";
 import { Farmhouse } from "@/components/art/farm/Farmhouse";
 import { RewardJarHint } from "./RewardJarHint";
 import { PlotSheet } from "./PlotSheet";
@@ -46,19 +49,31 @@ export function FarmScreen({ compact = false }: { compact?: boolean }) {
   const gacha = useGacha();
   const animals = useAnimals();
   const unlocks = useUnlocks();
+  // Story beats with Som play on the Farm tab only (a calm moment), not in the iPad side panel.
+  const story = useStory(compact ? "other" : "farm");
   return (
-    <FarmView
-      unlocks={compact ? undefined : (unlocks ?? undefined)}
-      gacha={compact ? undefined : gacha}
-      animals={compact ? undefined : animals}
-      compact={compact}
-      data={data}
-      status={status}
-      plant={plant}
-      harvest={harvest}
-      buyDecor={buyDecor}
-      reload={reload}
-    />
+    <>
+      {story.playing && (
+        <Cutscene
+          beat={story.playing.beat}
+          gift={story.playing.gift}
+          onDone={story.done}
+          onSettled={story.settle}
+        />
+      )}
+      <FarmView
+        unlocks={compact ? undefined : (unlocks ?? undefined)}
+        gacha={compact ? undefined : gacha}
+        animals={compact ? undefined : animals}
+        compact={compact}
+        data={data}
+        status={status}
+        plant={plant}
+        harvest={harvest}
+        buyDecor={buyDecor}
+        reload={reload}
+      />
+    </>
   );
 }
 
@@ -282,7 +297,7 @@ export function FarmView({
             <span className="min-w-0">
               <span className="block truncate font-extrabold">{tg("dexTitle")}</span>
               <span className="block text-sm text-muted">
-                {tg("dexShort", { have: Object.keys(gacha.state.dex).length, total: CROP_IDS.length })}
+                {tg("dexShort", { have: Object.keys(gacha.state.dex).length, total: GACHA_CROP_IDS.length })}
               </span>
             </span>
           </button>
@@ -304,7 +319,12 @@ export function FarmView({
         />
       )}
       {sheet === "dex" && gacha?.state && (
-        <SeedDexSheet state={gacha.state} starUp={gacha.starUp} onClose={() => setSheet(null)} />
+        <SeedDexSheet
+          state={gacha.state}
+          starUp={gacha.starUp}
+          today={data.today}
+          onClose={() => setSheet(null)}
+        />
       )}
 
       {unlocks && <CollectionBook state={unlocks} />}
@@ -353,7 +373,7 @@ export function FarmView({
               setPop({
                 cropId: p.cropId,
                 quality: it?.kind === "crop" ? it.quality : p.quality,
-                value: sellPrice(item, data.stall) ?? undefined,
+                value: sellPrice(item, data.stall, seasonPriceMult(item, data.today)) ?? undefined,
               });
             }
             return item !== null;

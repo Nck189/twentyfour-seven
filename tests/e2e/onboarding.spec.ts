@@ -192,7 +192,7 @@ test("Today: switch today's first-10 from the block card", async ({ page }) => {
 test("More → Setup opens each part to edit later", async ({ page }) => {
   await newUser(page);
   await page.goto("/more");
-  await page.getByRole("link", { name: "First 10 minutes" }).click();
+  await page.getByRole("link", { name: "First 10 minutes", exact: true }).click();
   await expect(page).toHaveURL(/step=first10/);
   await expect(page.getByRole("heading", { name: "Your first 10 minutes" })).toBeVisible();
   await page.getByRole("button", { name: "Close" }).click();

@@ -30,3 +30,20 @@ it("a double-tap on Star up stars up once (R-M7-4)", () => {
   fireEvent.click(btn);
   expect(starUp).toHaveBeenCalledTimes(1);
 });
+
+it("the crop calendar: 12 months, the current one marked, unannounced months as silhouettes", () => {
+  render(
+    <NextIntlClientProvider locale="en" messages={en}>
+      <SeedDexSheet state={state} starUp={vi.fn()} today="2026-11-12" onClose={() => {}} />
+    </NextIntlClientProvider>,
+  );
+  const cal = screen.getByRole("region", { name: "Crop calendar" });
+  const months = cal.querySelectorAll("li");
+  expect(months).toHaveLength(12);
+  const now = cal.querySelector('[aria-current="date"]')!;
+  expect(now.getAttribute("aria-label")).toBe("Nov: Candle Lotus, Seeds in the shop until the 14th");
+  expect(months[11]!.getAttribute("aria-label")).toBe("Dec: Snow Strawberry, Next in Dec 2026");
+  expect(months[0]!.getAttribute("aria-label")).toBe("Jan: not announced yet");
+  // The capsule grid never lists seasonal crops.
+  expect(screen.getByText("1 of 20 found · 5%")).toBeTruthy();
+});

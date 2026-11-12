@@ -37,6 +37,18 @@
   --art-pink: #f4a8c4;
   --art-pink-light: #f9cfde;
   --art-pink-dark: #db86a6;
+  /* Soft blush (the bunny, Minnie 2026-11-12): lighter than the pig's pink. */
+  --art-blush: #f8d3e0;
+  --art-blush-light: #fdeef3;
+  --art-blush-dark: #eeb3c8;
+  /* Peach pink (the pig, Minnie 2026-11-12): a light pink with a warm orange tint. */
+  --art-peach: #f7c3ad;
+  --art-peach-light: #fcdfd2;
+  --art-peach-dark: #e9a48b;
+  /* Rust (the red panda): redder than Som's orange so the two never look alike. */
+  --art-rust: #d77a54;
+  --art-rust-light: #eba07e;
+  --art-rust-dark: #b9603e;
   --art-cream: #f3efe4;
   --art-white: #ffffff;
   --art-sun: #ffdb8e;
@@ -51,6 +63,19 @@
   --art-stone: #ddd6c7;
   --art-stone-light: #ece7dc;
   --art-stone-dark: #c3baa7;
+  /* Wool (sheep, goat coat): a warm cream with a clearly darker same-hue shade, so it still
+     reads on a white pen tile (#ffffff) and on the dark one (#2d2a25). */
+  --art-wool: #f7eedc;
+  --art-wool-light: #fffaf1;
+  --art-wool-dark: #dccaa5;
+  /* Latte: the alpaca's face and legs, a lighter caramel (Minnie). */
+  --art-latte: #f2dfc7;
+  --art-latte-light: #fbf2e6;
+  --art-latte-dark: #dfbf9a;
+  /* Ice: pale sky-blue highlights. */
+  --art-ice: #e4f1fb;
+  --art-ice-light: #f6fbfe;
+  --art-ice-dark: #b4d3ea;
   --art-wilt: #dccb8e; /* dry, yellowed leaf spots */
   --art-wilt-dark: #c2ad6f;
 

@@ -139,6 +139,10 @@
     "bed": {
       "title": "Going to bed",
       "hint": "Tap Start when you lie down. On time = within 10 min of your bedtime."
+    },
+    "exam": {
+      "label": "Exam day",
+      "today": "Exam day! Som packed you a snack. Breathe, you've got this."
     }
   },
   "plan": {
@@ -280,7 +284,9 @@
     "star_fruit": "Star fruit",
     "moon_melon": "Moon melon",
     "crystal_rose": "Crystal rose",
-    "rainbow_corn": "Rainbow corn"
+    "rainbow_corn": "Rainbow corn",
+    "candle_lotus": "Candle Lotus",
+    "snow_strawberry": "Snow Strawberry"
   },
   "decor": {
     "fence": "Fence",
@@ -325,7 +331,16 @@
     "stars": "★{n}",
     "shardsHave": "{n, plural, one {# shard} other {# shards}}",
     "starUp": "Star up · {n, plural, one {# shard} other {# shards}}",
-    "maxStar": "★5 — fully grown up!"
+    "maxStar": "★5 — fully grown up!",
+    "calendar": {
+      "title": "Crop calendar",
+      "hint": "One seasonal crop a month. Missed one? It comes back the same month next year.",
+      "planting": "Seeds in the shop until the {day}th",
+      "market": "Seasonal market now",
+      "returns": "Next in {when}",
+      "soon": "Coming soon",
+      "unknown": "not announced yet"
+    }
   },
   "stats": {
     "title": "Stats",
@@ -354,7 +369,12 @@
       "doneAlready": "This week's review is done. See you next Sunday.",
       "error": "Couldn't save. Try again.",
       "todayLine": "Weekly review is open · +3 tickets",
-      "score": "Day score"
+      "score": "Day score",
+      "som": {
+        "proud": "{n, plural, one {# day counted this week} other {# days counted this week}}. Som is proud of you.",
+        "good": "{n, plural, one {# day counted this week} other {# days counted this week}}. Som says that's a good start.",
+        "gentle": "A hard week. That's okay; Som will start the new one with you."
+      }
     },
     "wake": {
       "title": "Wake-up time",
@@ -455,7 +475,13 @@
     "setupTitle": "Setup",
     "setupSleep": "Your week",
     "setupFirst10": "First 10 minutes",
-    "installDone": "Added to your Home Screen."
+    "installDone": "Added to your Home Screen.",
+    "soundTitle": "Sound & motion",
+    "soundOn": "Sounds",
+    "autoQuiet": "Quiet during Focus and Work",
+    "autoQuietHint": "Sounds rest in class or at work and come back after. Timers you set still ring.",
+    "skipAnimations": "Skip animations",
+    "skipAnimationsHint": "Capsules, hatching and story scenes show at once."
   },
   "blocks": {
     "name": {
@@ -666,7 +692,9 @@
     "seedsPlanted": "Planted in {n} plots. They grow each day their block goes well.",
     "seedsAllGrowing": "All 7 plots are growing.",
     "seedsError": "Some plots couldn't be planted. Try again from the Farm tab.",
-    "bedLater": "Sleep starts at {time}. When you lie down, tap Going to bed on Today."
+    "bedLater": "Sleep starts at {time}. When you lie down, tap Going to bed on Today.",
+    "examTomorrow": "Exam tomorrow. Som says: get a full night's sleep.",
+    "examDone": "You did the exam today. Som is proud; rest well."
   },
   "onboarding": {
     "cardTitle": "Make 24/7 yours in 2 minutes",
@@ -839,7 +867,22 @@
     "hatchTitle": "It hatched!",
     "meet": "Meet your {name}",
     "skip": "Skip",
-    "done": "Done"
+    "done": "Done",
+    "somMeets": {
+      "chicken": "The chick hides behind Som, then peeks out.",
+      "duck": "The duckling follows Som everywhere. Som pretends not to mind.",
+      "golden_goose": "Som stares at the shiny goose. The goose stares back.",
+      "bunny": "Som and the bunny touch noses. Friends.",
+      "cow": "The calf licks Som's head. Som is now very wet.",
+      "sheep": "Som naps on the lamb's soft wool.",
+      "pig": "The piglet steals Som's cushion. Som lets it.",
+      "cat": "Another cat? Som sniffs, then shares the sunny spot.",
+      "dog": "The pup wants to play. Som climbs a fence post to think about it.",
+      "goat": "The kid tries to nibble Som's tail. Som is not amused.",
+      "capybara": "Som sits on the capybara. The capybara doesn't mind at all.",
+      "alpaca": "Som disappears into the alpaca's fluff.",
+      "red_panda": "Som and the red panda compare tails. It's a tie."
+    }
   },
   "streak": {
     "title": "Streak",
@@ -1022,6 +1065,69 @@
     "enjoy": "Enjoy {title}! −{n} coins. You earned it.",
     "confirmRedeem": "Spend {n} coins",
     "cancel": "Cancel",
-    "levelOf": "Level {n} of {max}"
+    "levelOf": "Level {n} of {max}",
+    "season": {
+      "seedTitle": "Seasonal seed · planting season",
+      "seedHint": "Only on days 1–14 of its month. Missed it? It comes back next year.",
+      "marketTitle": "Seasonal market · {crop}",
+      "marketHint": "{crop} sells for ×1.5 until the month ends, and there's one special order.",
+      "order": "Special order: {crop} × {n}",
+      "priceTag": "Seasonal market ×{n}"
+    }
+  },
+  "story": {
+    "next": "Next",
+    "skip": "Skip",
+    "done": "Done",
+    "gift": {
+      "seed": "Gift: {n, plural, one {# {crop} seed} other {# {crop} seeds}}",
+      "tickets": "Gift: {n, plural, one {+# ticket} other {+# tickets}}"
+    },
+    "ch0_gate": {
+      "title": "Som",
+      "l1": "An orange cat is napping by the old gate.",
+      "l2": "It stretches, yawns, and looks right at you.",
+      "l3": "“Mrrp?” It seems to have been waiting for someone.",
+      "l4": "Som follows you in. The farm has a cat now."
+    },
+    "ch1_first_harvest": {
+      "title": "First harvest",
+      "l1": "Som sniffs your first harvest, very seriously.",
+      "l2": "It decides one radish leaf belongs to Som.",
+      "l3": "In return, Som brings you a seed it found. Fair trade."
+    },
+    "ch2_watering_can": {
+      "title": "Three good days",
+      "l1": "Som has been rummaging in the old shed.",
+      "l2": "It drags out a dusty watering can. Your three good days earned it.",
+      "l3": "The farm feels a little more like home."
+    },
+    "wish": {
+      "label": "Your wish (optional, only you can see it)",
+      "placeholder": "e.g. pass my exams, sleep before midnight",
+      "private": "Private · {n, plural, one {# character left} other {# characters left}}",
+      "float": "Float it",
+      "skip": "Not this time",
+      "error": "Couldn't float it right now. Try again?"
+    },
+    "lotus_open": {
+      "title": "Candle Lotus",
+      "l1": "Som is staring into the pond, very, very still.",
+      "l2": "A lotus has opened, and inside it glows a tiny flame.",
+      "l3": "Som brings you a seed from it. Candle Lotus seeds are in the shop until the 14th."
+    },
+    "lotus_market": {
+      "title": "The krathong market",
+      "l1": "Lanterns on the water: the krathong market is open.",
+      "l2": "Candle Lotus sells for ×1.5 here until the month ends.",
+      "l3": "Someone is asking for three Candle Lotus. There's a special order in the market."
+    },
+    "lotus_use": {
+      "title": "Float a wish",
+      "l1": "Som carries your Candle Lotus down to the water.",
+      "l2": "It's Loy Krathong season. People float their wishes away on the water.",
+      "l3": "Want to float one too? It's just for you, and you can skip.",
+      "l4": "Your wish drifts away with its tiny flame. Som will keep it safe until next Loy Krathong."
+    }
   }
 }

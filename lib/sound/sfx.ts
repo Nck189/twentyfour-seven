@@ -1,6 +1,7 @@
 "use client";
 
 import { usePrefs } from "@/lib/store/prefs";
+import { shouldPlay } from "./quiet";
 
 /**
  * Tiny WebAudio synth for short SFX (no audio files). iOS only allows audio after a user
@@ -26,8 +27,24 @@ export function unlockAudio() {
 
 type Note = { freq: number; at: number; dur: number; type?: OscillatorType; gain?: number };
 
-function play(notes: Note[]) {
-  if (!usePrefs.getState().soundOn) return;
+/** End of the current Focus/Work block (ms), set by Today; 0 = not in a quiet block. */
+let quietUntil = 0;
+export function setQuietUntil(ms: number) {
+  quietUntil = ms;
+}
+
+function play(notes: Note[], essential = false) {
+  const p = usePrefs.getState();
+  if (
+    !shouldPlay({
+      soundOn: p.soundOn,
+      autoQuiet: p.autoQuiet ?? true,
+      quietUntil,
+      now: Date.now(),
+      essential,
+    })
+  )
+    return;
   const ac = audio();
   if (!ac) return;
   const t0 = ac.currentTime + 0.01;
@@ -115,11 +132,62 @@ export const sfx = {
       { freq: 659, at: 0.1, dur: 0.15 },
       { freq: 784, at: 0.2, dur: 0.25 },
     ]),
+  /** A timer the user set (power nap): rings even during a quiet block (never when muted). */
   alarm: () =>
     play(
       [0, 0.25, 0.5].flatMap((at) => [
         { freq: 988, at, dur: 0.12, type: "square" as OscillatorType, gain: 0.15 },
         { freq: 784, at: at + 0.12, dur: 0.1, type: "square" as OscillatorType, gain: 0.12 },
       ]),
+      true,
     ),
+  /** Goodnight: a soft 2-second lullaby, falling. */
+  lullaby: () =>
+    play(
+      [784, 659, 587, 523, 392].map((freq, i) => ({
+        freq,
+        at: i * 0.38,
+        dur: 0.55,
+        type: "sine" as OscillatorType,
+        gain: 0.1,
+      })),
+    ),
+  /** Coins earned: a bright two-note clink (separate from the harvest). */
+  coin: () =>
+    play([
+      { freq: 1568, at: 0, dur: 0.07, type: "triangle", gain: 0.12 },
+      { freq: 2093, at: 0.06, dur: 0.16, type: "triangle", gain: 0.1 },
+    ]),
+  /** A streak milestone or welcome back: a soft rising celebration. */
+  celebrate: () =>
+    play(
+      [523, 659, 784, 1047, 784, 1047].map((freq, i) => ({
+        freq,
+        at: i * 0.1,
+        dur: i === 5 ? 0.35 : 0.12,
+        type: "triangle" as OscillatorType,
+        gain: 0.12,
+      })),
+    ),
+  /** Som: a short meow (a pitch glide up, then down). */
+  meow: () => {
+    const p = usePrefs.getState();
+    if (!shouldPlay({ soundOn: p.soundOn, autoQuiet: p.autoQuiet ?? true, quietUntil, now: Date.now() }))
+      return;
+    const ac = audio();
+    if (!ac) return;
+    const t0 = ac.currentTime + 0.01;
+    const osc = ac.createOscillator();
+    const g = ac.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(520, t0);
+    osc.frequency.exponentialRampToValueAtTime(880, t0 + 0.12);
+    osc.frequency.exponentialRampToValueAtTime(560, t0 + 0.38);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.14, t0 + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.42);
+    osc.connect(g).connect(ac.destination);
+    osc.start(t0);
+    osc.stop(t0 + 0.45);
+  },
 };

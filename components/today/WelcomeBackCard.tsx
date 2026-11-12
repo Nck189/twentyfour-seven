@@ -32,7 +32,7 @@ export function WelcomeBackCard() {
           onClick={async () => {
             setBusy(true);
             if (await claimWelcome()) {
-              sfx.tick();
+              sfx.celebrate();
               setGift("welcome");
             }
             setBusy(false);
@@ -66,7 +66,7 @@ export function WelcomeBackCard() {
               onClick={async () => {
                 setBusy(true);
                 if (await claimGoal()) {
-                  sfx.tick();
+                  sfx.celebrate();
                   setGift("goal");
                 }
                 setBusy(false);

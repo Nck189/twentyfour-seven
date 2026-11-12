@@ -1,4 +1,4 @@
-import { CROP_IDS, CROPS, RARITIES, type CropId, type Rarity } from "@/content/crops";
+import { CROPS, GACHA_CROP_IDS, RARITIES, type CropId, type Rarity } from "@/content/crops";
 import { PITY, RATES } from "@/content/gacha";
 
 /** Pulls since the last result of that tier or better (what `game_state.pity` stores). */
@@ -32,7 +32,7 @@ export function roll(p: Pity, r: number, c: number): { rarity: Rarity; cropId: C
   // Guarantees (the Nth pull without one).
   if (RANK[rarity] < RANK.epic && p.since_epic + 1 >= PITY.epic) rarity = "epic";
   if (RANK[rarity] < RANK.rare && p.since_rare + 1 >= PITY.rare) rarity = "rare";
-  const pool = CROP_IDS.filter((id) => CROPS[id].rarity === rarity);
+  const pool = GACHA_CROP_IDS.filter((id) => CROPS[id].rarity === rarity);
   const cropId = pool[Math.min(pool.length - 1, Math.floor(c * pool.length))]!;
   const k = RANK[rarity];
   return {

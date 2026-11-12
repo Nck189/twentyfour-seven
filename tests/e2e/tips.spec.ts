@@ -47,8 +47,22 @@ test("CJ-M10-2 a tip shows once, one at a time; Skip all turns them off; More br
 
   // More → Show tips again.
   await page.goto("/more");
-  await page.getByRole("button", { name: "Show tips again" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Tips are back on." })).toBeVisible();
+  // A tap before the page is interactive does nothing; tap again until it answers (CI WebKit).
+  await expect(async () => {
+    await page.getByRole("button", { name: "Show tips again" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Tips are back on." })).toBeVisible({
+      timeout: 1000,
+    });
+  }).toPass();
+  // "Back on" only shows once the account has saved it (CI 2026-11-12: leaving at once lost it).
+  expect(
+    (
+      (await rest(`profiles?user_id=eq.${id}&select=tips_seen,tips_off`)) as {
+        tips_seen: string[];
+        tips_off: boolean;
+      }[]
+    )[0],
+  ).toEqual({ tips_seen: [], tips_off: false });
   await page.goto("/plan");
   await expect(tip).toContainText("Plan any day here");
 });
