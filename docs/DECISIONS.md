@@ -174,3 +174,8 @@ Format: date · decision · why · how to change it
   - **Upgrades are cosmetic or economic only:** the stall raises sell prices, the barn adds daily orders, and the house grows the farmhouse art. None of them touch habit rules.
   - **The reward jar hint shows once per browser,** remembered in localStorage. It's a convenience, not data.
 - 2026-11-12 · Minnie OK: seasonal crops, one a month (twelve, see `docs/STORY.md`), with something new every two weeks: planting season on days 1–14, then a seasonal market at ×1.5 with a special order. No FOMO: a missed crop returns next year. Minnie also asked for story beats tied to each crop, three per month: the opening, the market, and the first use. Each use pays something different (fireworks sky, อั่งเปา coins, blossom quality, mango party, rain soup, lotus pond, fireflies, jasmine note + chime, moon lantern, Som's scarf, a floated wish that returns next year, a year in review). Built after the Som story base; November and December first.
+- 2026-11-12 · Minnie: plan paid extras for later, but don't build them yet. The plan is in `docs/MONETIZATION.md`.
+  - Money never buys the habit: no streaks, Day score, growth, tickets or coins.
+  - Nothing paid is random (no loot boxes), and every gameplay item stays free to earn.
+  - What's sold is cosmetics and comfort: a seasonal Farm Pass whose paid track progresses by minimum days, Som's wardrobe, themes, decor sets, sound packs, a supporter subscription and gifts.
+  - Timing: after the closed beta shows people stay.
