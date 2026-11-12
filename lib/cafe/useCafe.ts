@@ -69,12 +69,13 @@ export function useCafe(enabled = true) {
     [client],
   );
 
+  /** "already": today was answered elsewhere (another tab, bedtime); the first answer stays. */
   const answer = useCallback(
-    async (a: CoffeeAnswer): Promise<boolean> => {
+    async (a: CoffeeAnswer): Promise<"ok" | "already" | "error"> => {
       const r = await client.rpc("answer_coffee", { p_answer: a });
-      // Already answered (another tab): the server keeps the first one; just refresh.
       reload();
-      return !r.error;
+      if (!r.error) return "ok";
+      return r.error.code === "P0001" ? "already" : "error";
     },
     [client, reload],
   );

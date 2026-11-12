@@ -85,3 +85,73 @@
 | R-C14 | Story chapters 3–6 + `cafe_open` built; barista outfit deferred (DECISIONS). |
 | R-C15 | Fixed: migrations renamed to 20261113120000/130000/140000. |
 | R-C16 | Added: close-while-asking → later (E2E CJ-CAFE-4), play refuses bedtime, year review outside December, water never asks. |
+
+## Re-review (G7 round 2, 2026-11-13): `git diff 31f7193..ac01e00`
+Covers 91f022f (the coffee → bedtime insight), 4c850ac (chapters 3–6 + `cafe_open`, `story_chapters` migration, new scenes, FarmSign) and ac01e00 (the fixes).
+
+### What I ran
+| Check | Result |
+|---|---|
+| `tsc`, `eslint .`, `prettier --check` on changed files, `i18n:check` (1015 keys), `art:lint` | all pass |
+| `vitest run tests/unit` | 344/344 |
+| Integration: cafe, snow-story, story, seasonal-story, rls | 95/95 |
+| Probe: 5 parallel `claim_story_beat('ch4_sunset')` | 1 ok, 4 "already seen"; exactly 1 `farm_sign` row |
+| Probe: bedtime paths | no order → refused; water only → refused; latte left unanswered → the bedtime insert works, and a later `answer_coffee` is refused; "play" → bedtime refused |
+| Probe: `add_real_cup` | refused without a "yes"; on a "yes" day it keeps the latest slot and logs `coffee_cup_added` |
+| Probe: brand-new account backfills 30 days, then claims `ch6_album` | **granted, tickets 0 → 2 on day one** (R2-1) |
+
+### Fix verification
+| ID | Verdict |
+|---|---|
+| R-C1 | **Verified.** Later cards return `{card: n}`; no coins or tickets move (tested). |
+| R-C2 | **Verified.** `year_review` uses the season-year, and the 2027-01-05 case returns 2026. |
+| R-C3 | **Verified.** Art lint is clean. |
+| R-C4 | **Verified.** Only coffee/tea asks (`_cafe_caffeine`, parity-tested); `drink` is stored; `answer_coffee` needs a caffeinated order that wake-day. |
+| R-C5 | **Verified.** `add_real_cup` keeps the latest slot, and the button shows only on "yes" days. |
+| R-C6 | **Verified.** An unanswered caffeinated order gets one bedtime question (server insert path plus `ordered` in the status). |
+| R-C7 | **Mostly.** "Noted" now waits for the server and failures restore the question. The "already answered" case still loops (R2-3). |
+| R-C8 | **Verified.** |
+| R-C9 | **Moot** (no coins). |
+| R-C10 | **Verified.** `storyBusyAt` waits 2 h after the saved day ends (unit-tested). Auto-quiet is not guessed, which is logged. |
+| R-C11 | **Verified.** |
+| R-C12 | **Verified** ("Best streak so far"). |
+| R-C13 | **Accepted** in DECISIONS. OK. |
+| R-C14 | **Verified.** Chapters and the café scene are built; the barista outfit is deferred and logged. |
+| R-C15 | **Verified.** The names are strictly increasing and not on prod. |
+| R-C16 | **Verified** for (b), (c), (d) and (f). (a) the order race is still only covered by my probe; the story claim race is tested. |
+
+### New findings
+| ID | Sev | Where | Failure scenario | Suggested fix |
+|---|---|---|---|---|
+| R2-1 | **S1** | `supabase/migrations/20261113140000_story_chapters.sql:37, 62, 85` | **Chapter 6's 2 tickets can be claimed on a new account's first day.** `days_used` counts *any* wake event, backfills included, and `backfill_wake` accepts the past 30 days even before the account existed. A brand-new account can backfill 30 days and claim `ch6_album` at once (reproduced: tickets 0 → 2). STORY.md: "30 days used". Gifts must be decided from real data. | Count only days the app was really used, on or after the account's creation date, e.g. `not w.backfilled` (or live wakes plus Night rituals) and `w.date >= created_on`. Add an integration test that 30 backfills don't unlock ch6. |
+| R2-2 | S3 | `content/story.ts` chapters 3–9 vs seasonal 70+; `lib/game/director.ts:75` | **Evergreen chapters delay the month-only seasonal beats.** When this ships, an existing user with animals, a 7+ best streak and Farmhouse 1–2 has ch3, ch4, ch5, ch6 and `cafe_open` queued; at one beat per wake-day that's up to 5 calm days first. A user who visits the Farm rarely can then miss a month's beat (Lotus/Snow opening or market) until next year. The snow opening line also says seeds are on sale "until the 14th". | Sort the month-only seasonal beats (`season` triggers) before the evergreen chapters, which can always wait. Add a director unit test. |
+| R2-3 | S3 | `components/farm/CafeSheet.tsx` `reply()` | **"Already answered" loops.** If the day was answered elsewhere (another tab or device, or a bedtime answer), every reply fails with "Couldn't reach the café" and the question comes back. The menu stays disabled until the sheet is closed. | Treat P0001 "already answered" as done (reload), or hide the question when `cafe.status.answer` is set. |
+| R2-4 | S3 | `messages/th.json` `stats.coffee.from` / `collecting`; EN `stats.coffee.*` | **The insight wording misdescribes the groups.** In TH, `{other} วันที่ไม่ได้กิน` reads as "days you didn't drink any", but `other` also holds morning-coffee days. EN/TH both say "coffee" although tea now counts. | TH: "วันที่ไม่ได้ดื่มช่วงบ่าย/เย็น". EN/TH: "coffee or tea". |
+| R2-5 | S3 | `story_chapters.sql:125-127` | **Story tickets skip the ledger.** Story tickets (ch2's 1, now ch6's 2) are added directly to `game_state` instead of going through the ticket ledger (`ticket_grants` and the `ticket_granted` event) that other ticket sources use. The pattern pre-exists, but now there are more tickets. | Use `_grant_tickets(uid, n, 'story', …)`. |
+| R2-6 | S4 | `cafe.sql:238` | The bedtime insert stores `drink = null` although a caffeinated order exists. | Store `_cafe_last_caffeine(uid, d)`. |
+| R2-7 | S4 | `messages/*` `ch4_sunset.l1`, `cafe_open` | `ch4` plays on a best-ever streak of 7, possibly long after a lapse, yet says "Seven days in a row" as if current. `cafe_open` ("has opened") plays for users who already use the café. Both are expected per the "waits for a calm moment" rule. | Soften: "You once kept it up for seven days…" / "The café has a proper sign now". |
+| R2-8 | S4 | `story.gift.decor` EN | "Gift: the Farm sign for your farm" has a capital letter mid-sentence and says "farm" twice. | "Gift: a farm sign" (lower-case the decor name, or use a separate key). |
+| R2-9 | S4 | `cafe.sql` night path | If game-only is turned off after an order made while it was on, bedtime asks about a day whose popup never showed. | Ignore; or store `asked` on the order. |
+| R2-10 | S4 | `claim_story_beat` | The server doesn't enforce chapter order (e.g. ch6 before ch0). The client always picks the lowest chapter. | Optional: require earlier evergreen chapters to have been seen. |
+
+### Checked and OK (round 2)
+- **Chapter triggers:** the SQL matches `content/story.ts` and STORY.md (hatched ≥ 1, best streak ≥ 7, house ≥ 1, 30 days used, house ≥ 2 for the café). The gifts mirror the content and are tested.
+- **Decor gifts:** the farm sign is granted once under parallel claims (the `game_state` lock plus the "already seen" check after it).
+- **New RPCs and helpers:** `add_real_cup` is executable by authenticated users only; the new `_cafe_*` helpers are revoked. `coffee_cup_added` is on the events deny-list.
+- **The café is never locked behind `cafe_open`:** the button still depends only on Farmhouse ≥ 2.
+- **Insight:** it uses only answered days ("play", unanswered and "later" with no bedtime answer are excluded), needs 8+ days on each side, and says "It looks like…".
+- **New scenes and FarmSign:** they pass the art lint; EN/TH keys are complete.
+
+### Verdict (round 2)
+**FAIL.** 1 × S1 open (R2-1). No S2. 4 × S3 (R2-2..R2-5) and 5 × S4. Fix R2-1 test-first; re-checking R2-1 alone is enough for PASS.
+
+
+## Fixes after the re-review (2026-11-13)
+| ID | Status |
+|---|---|
+| R2-1 (S1) | Fixed test-first: `days_used` counts only live "I'm up" days on or after the account's creation date (local). New integration test: a new account with 30 backfilled + 30 pre-sign-up live days gets `days_used = 0` and can't claim `ch6_album`; the chapter test now needs 30 live days after sign-up. |
+| R2-2 (S3) | Fixed: the director plays first-week chapters 0–2, then month-only seasonal beats, then chapters 3+ (unit-tested both ways). |
+| R2-3 (S3) | Fixed: an answer on an already-answered day says "You already answered today" (the first answer stays), no error loop. |
+| R2-4 (S3) | Fixed: the insight says "coffee or tea" and the other group is "other days (none, or only in the morning)" in EN and TH. |
+| R2-5 (S3) | Accepted: story tickets are recorded in `story_seen.gift` + the `story_seen` event (the existing pattern for ch2); a shared ticket ledger is a separate cleanup. |
+| S4 "Farm sign" capital | Fixed: "Gift for your farm: {item}". Other S4s accepted. |

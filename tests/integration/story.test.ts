@@ -132,26 +132,61 @@ describe("chapters 3–6 and the café opening (docs/STORY.md)", () => {
       .upsert({ user_id: u.id, track: "house", level: 2 }, { onConflict: "user_id,track" });
     expect((await u.client.rpc("claim_story_beat", { p_beat: "cafe_open" })).error).toBeNull();
 
-    // 30 days used, not in a row (every other day).
+    // 30 days used, not in a row (every other day), since the account was made.
     await ageSeen(u.id);
     await admin()
+      .from("profiles")
+      .update({ created_at: new Date(Date.UTC(2025, 11, 20)).toISOString() })
+      .eq("user_id", u.id);
+    const wake = (i: number, backfilled: boolean) => {
+      const date = new Date(Date.UTC(2026, 0, 1 + i * 2)).toISOString().slice(0, 10);
+      return {
+        user_id: u.id,
+        date,
+        target_wake: `${date}T00:00:00Z`,
+        pressed_at: `${date}T00:05:00Z`,
+        in_window: true,
+        backfilled,
+      };
+    };
+    // G7 R2-1 (S1): filled-in days don't count (backfill reaches 30 days back, even before sign-up).
+    await admin()
       .from("wake_events")
-      .insert(
-        Array.from({ length: 30 }, (_, i) => {
-          const date = new Date(Date.UTC(2026, 0, 1 + i * 2)).toISOString().slice(0, 10);
-          return {
-            user_id: u.id,
-            date,
-            target_wake: `${date}T00:00:00Z`,
-            pressed_at: `${date}T00:05:00Z`,
-            in_window: true,
-            backfilled: i % 3 === 0,
-          };
-        }),
-      );
+      .insert(Array.from({ length: 30 }, (_, i) => wake(i, i % 3 === 0)));
+    expect((await u.client.rpc("claim_story_beat", { p_beat: "ch6_album" })).error?.code).toBe("P0001");
+    await admin().from("wake_events").update({ backfilled: false }).eq("user_id", u.id);
     const t0 = (await state(u.id)).tickets;
     expect((await u.client.rpc("claim_story_beat", { p_beat: "ch6_album" })).error).toBeNull();
     expect((await state(u.id)).tickets).toBe(t0 + 2);
+  });
+});
+
+describe("G7 R2-1: days used never count filled-in days or days before the account", () => {
+  it("a new account backfilling 30 days can't claim the 30-day album", async () => {
+    const u = await newUser("story-backfill");
+    const today = new Date();
+    const rows = Array.from({ length: 30 }, (_, i) => {
+      const date = new Date(today.getTime() - (i + 1) * 86_400_000).toISOString().slice(0, 10);
+      return {
+        user_id: u.id,
+        date,
+        target_wake: `${date}T00:00:00Z`,
+        pressed_at: `${date}T00:05:00Z`,
+        in_window: true,
+        backfilled: true,
+      };
+    });
+    await admin().from("wake_events").insert(rows);
+    // Even if they were live presses: all before the account existed.
+    await admin()
+      .from("wake_events")
+      .insert(rows.map((r) => ({ ...r, date: r.date.replace(/^2026/, "2025"), backfilled: false })));
+    const t0 = (await state(u.id)).tickets;
+    expect((await u.client.rpc("claim_story_beat", { p_beat: "ch6_album" })).error?.code).toBe("P0001");
+    expect((await state(u.id)).tickets).toBe(t0);
+    expect(
+      ((await u.client.rpc("story_status")).data as { facts: { days_used: number } }).facts.days_used,
+    ).toBe(0);
   });
 });
 

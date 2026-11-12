@@ -21,7 +21,7 @@ export function CafeSheet({ cafe, onClose }: { cafe: ReturnType<typeof useCafe>;
   const t = useTranslations("cafe");
   const [last, setLast] = useState<{ drink: DrinkId; r: OrderResult } | null>(null);
   const [asking, setAsking] = useState(false);
-  const [answered, setAnswered] = useState<CoffeeAnswer | null>(null);
+  const [answered, setAnswered] = useState<CoffeeAnswer | "already" | null>(null);
   const [error, setError] = useState(false);
   const [cup, setCup] = useState<CoffeeSlot | null>(null);
   const busy = useRef(false);
@@ -34,8 +34,11 @@ export function CafeSheet({ cafe, onClose }: { cafe: ReturnType<typeof useCafe>;
   const reply = async (a: CoffeeAnswer) => {
     setAsking(false);
     setError(false);
-    // G7 R-C7: "Noted" only once the server has it; on failure the question comes back.
-    if (await cafe.answer(a)) setAnswered(a);
+    // G7 R-C7: "Noted" only once the server has it; on failure the question comes back. Already
+    // answered elsewhere (R2-3): say so, the first answer stays.
+    const r = await cafe.answer(a);
+    if (r === "ok") setAnswered(a);
+    else if (r === "already") setAnswered("already");
     else {
       setError(true);
       setAsking(true);
@@ -44,7 +47,7 @@ export function CafeSheet({ cafe, onClose }: { cafe: ReturnType<typeof useCafe>;
 
   const close = () => {
     // Closing the question counts as "later" (asked once more at bedtime), never as "no".
-    if (asking) void cafe.answer("later");
+    if (asking) void cafe.answer("later"); // "already" is fine too: the first answer stays
     onClose();
   };
 

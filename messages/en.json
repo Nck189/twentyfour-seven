@@ -459,12 +459,12 @@
       "reason": "Missed most because"
     },
     "coffee": {
-      "title": "Coffee and bedtime",
-      "later": "It looks like on days with an afternoon or evening coffee, you say Goodnight about {n} min later.",
-      "earlier": "It looks like on days with an afternoon or evening coffee, you say Goodnight about {n} min earlier.",
-      "same": "It looks like afternoon or evening coffee doesn't change your bedtime much.",
-      "from": "From {late} days with afternoon/evening coffee and {other} days without.",
-      "collecting": "Still collecting: {late} days with afternoon/evening coffee, {other} without (needs {need} each).",
+      "title": "Coffee, tea and bedtime",
+      "later": "It looks like on days with an afternoon or evening coffee or tea, you say Goodnight about {n} min later.",
+      "earlier": "It looks like on days with an afternoon or evening coffee or tea, you say Goodnight about {n} min earlier.",
+      "same": "It looks like afternoon or evening coffee or tea doesn't change your bedtime much.",
+      "from": "From {late} days with afternoon/evening coffee or tea and {other} other days (none, or only in the morning).",
+      "collecting": "Still collecting: {late} days with afternoon/evening coffee or tea, {other} other days (needs {need} each).",
       "help": "Only days you answered in Som's café count. A pattern, not a cause."
     }
   },
@@ -1094,7 +1094,7 @@
     "gift": {
       "seed": "Gift: {n, plural, one {# {crop} seed} other {# {crop} seeds}}",
       "tickets": "Gift: {n, plural, one {+# ticket} other {+# tickets}}",
-      "decor": "Gift: the {item} for your farm"
+      "decor": "Gift for your farm: {item}"
     },
     "ch0_gate": {
       "title": "Som",
@@ -1219,7 +1219,8 @@
     "answered": {
       "yes": "Noted. Enjoy!",
       "later": "OK, I'll ask once at bedtime.",
-      "play": "Just for fun. Noted."
+      "play": "Just for fun. Noted.",
+      "already": "You already answered today. That answer stays."
     },
     "error": "Couldn't reach the café. Try again.",
     "privacy": "Turn the question off any time: More → Som's café.",

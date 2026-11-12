@@ -33,8 +33,12 @@ as $$
                              where public._season_month(u.crop) is not null), '[]'::jsonb),
     'hatched', (select count(*) from public.animals a where a.user_id = uid),
     'best_streak', coalesce((select g.best_streak from public.game_state g where g.user_id = uid), 0),
-    -- Days the app was used: wake-days with an "I'm up" (live or filled in later), not a streak.
-    'days_used', (select count(distinct w.date) from public.wake_events w where w.user_id = uid),
+    -- Days the app was used, not a streak: live "I'm up" presses since the account was made (G7
+    -- R2-1: filled-in days and days before sign-up never count; backfill reaches 30 days back).
+    'days_used', (select count(distinct w.date) from public.wake_events w, tz
+                  where w.user_id = uid and not w.backfilled
+                    and w.date >= coalesce((select (p.created_at at time zone tz.name)::date
+                                            from public.profiles p where p.user_id = uid), w.date)),
     'house', public._upgrade_level(uid, 'house')
   )
 $$;

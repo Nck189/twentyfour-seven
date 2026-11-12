@@ -213,4 +213,7 @@ Format: date · decision · why · how to change it
   - **Accepted (S3):** a drink ordered before pressing "I'm up" belongs to the previous wake-day (R-C13): the day runs wake → next wake everywhere in the app.
   - **Block clock, next morning (R-C10):** for up to 2 h after the saved day ends, Som's scenes wait (most likely the wake window); auto-quiet is not guessed.
   - **Story chapters 3–6 + the café opening** are built (R-C14); Som's barista outfit is **deferred** to the wardrobe work.
+  - **Story order (G7 R2-2):** first-week chapters 0–2, then month-only seasonal beats (their month is the only chance this year), then chapters 3+ (they wait a day and lose nothing).
+  - **"30 days used" (ch6) = live "I'm up" days since sign-up** (G7 R2-1, S1): filled-in days and days before the account never count, so the 2 tickets can't be farmed by backfilling.
+  - **Chapter R** (back after a lapse) is Som on the Welcome back card (a pose + one line), not a cutscene: the card already has the one-tap gift.
 

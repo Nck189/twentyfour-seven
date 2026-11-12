@@ -144,9 +144,11 @@ test("CJ-CAFE-3 Stats → Sleep: coffee vs bedtime once 8+ answered days on each
 
   await page.goto("/stats");
   await page.getByRole("radiogroup", { name: "Stats view" }).getByRole("radio", { name: "Sleep" }).click();
-  const card = page.getByRole("region", { name: "Coffee and bedtime" });
+  const card = page.getByRole("region", { name: "Coffee, tea and bedtime" });
   await expect(card).toContainText("you say Goodnight about 35 min later");
-  await expect(card).toContainText("From 9 days with afternoon/evening coffee and 11 days without.");
+  await expect(card).toContainText(
+    "From 9 days with afternoon/evening coffee or tea and 11 other days (none, or only in the morning).",
+  );
   await expectNoSeriousA11y(page);
 });
 

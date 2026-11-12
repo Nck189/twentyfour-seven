@@ -91,6 +91,14 @@ describe("director (docs/STORY.md rules)", () => {
       "cafe_open",
     );
     expect(STORY.ch4_sunset.gift).toEqual({ decor: "farm_sign" });
+    // G7 R2-2: in November, the Lotus opening (month-only) goes before queued chapters 3+…
+    expect(nextBeat({ ...calm, seen: base, seenToday: false, facts: { ...all, today: "2026-11-03" } })).toBe(
+      "lotus_open",
+    );
+    // …but never before the first-week chapters 0–2.
+    expect(
+      nextBeat({ ...calm, seen: ["ch0_gate"], seenToday: false, facts: { ...all, today: "2026-11-03" } }),
+    ).toBe("ch1_first_harvest");
     expect(STORY.ch6_album.gift).toEqual({ tickets: 2 });
   });
 
