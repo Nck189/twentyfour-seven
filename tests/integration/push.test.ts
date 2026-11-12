@@ -1,0 +1,159 @@
+import { describe, expect, it } from "vitest";
+import { admin, anon, newUser } from "./helpers";
+
+/** M11 push notifications (SPEC §9): subscriptions, the uploaded plan, and what's due to send. */
+const inMin = (m: number) => new Date(Date.now() + m * 60_000).toISOString();
+const item = (ref: string, kind: string, fireAt: string, day: string, block: string | null = null) => ({
+  ref,
+  kind,
+  day,
+  block,
+  fire_at: fireAt,
+  title: "Focus",
+  body: "Open the thesis doc",
+});
+const sub = (n: string) => ({
+  p_endpoint: `https://push.example.com/${n}`,
+  p_p256dh: "BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM",
+  p_auth: "tBHItJI5svbpez7KI4CCXg",
+});
+const due = async () =>
+  (await admin().rpc("push_due", { p_limit: 500 })).data as { user_id: string; ref: string }[];
+
+describe("push notifications (server)", () => {
+  it("a device subscribes once per endpoint; it moves to whoever signs in on it", async () => {
+    const u = await newUser("push-sub");
+    const v = await newUser("push-sub-2");
+    const s = sub(`dev-${u.id}`);
+    expect((await u.client.rpc("save_push_subscription", s)).error).toBeNull();
+    expect((await u.client.rpc("save_push_subscription", s)).error).toBeNull();
+    expect((await u.client.from("push_subscriptions").select("endpoint")).data).toHaveLength(1);
+    expect((await v.client.rpc("save_push_subscription", s)).error).toBeNull();
+    expect((await u.client.from("push_subscriptions").select("endpoint")).data).toEqual([]);
+    expect((await v.client.from("push_subscriptions").select("endpoint")).data).toHaveLength(1);
+    // Clients can't insert directly, and anon can't subscribe.
+    expect(
+      (
+        await u.client
+          .from("push_subscriptions")
+          .insert({ user_id: u.id, endpoint: "https://x/y", p256dh: "a", auth: "b" })
+      ).error,
+    ).not.toBeNull();
+    expect((await anon().rpc("save_push_subscription", sub("anon"))).error).not.toBeNull();
+    expect(
+      (await u.client.rpc("save_push_subscription", { ...sub("x"), p_endpoint: "http://insecure" })).error,
+    ).not.toBeNull();
+  });
+
+  it("the uploaded plan replaces upcoming reminders; limits are checked; only the server sends", async () => {
+    const u = await newUser("push-plan");
+    const day = new Date().toISOString().slice(0, 10);
+    const plan = [
+      item("block_start:x:focus", "block_start", inMin(30), day, "focus"),
+      item("night:x", "night", inMin(60), day),
+    ];
+    expect((await u.client.rpc("set_push_schedule", { p_items: plan })).data).toBe(2);
+    expect((await u.client.rpc("set_push_schedule", { p_items: plan.slice(0, 1) })).data).toBe(1);
+    expect((await u.client.from("push_schedule").select("ref")).data).toEqual([
+      { ref: "block_start:x:focus" },
+    ]);
+    // Too far ahead, in the past, too many, unknown kind: refused.
+    expect(
+      (await u.client.rpc("set_push_schedule", { p_items: [item("a", "night", inMin(60 * 40), day)] })).error
+        ?.code,
+    ).toBe("22023");
+    expect(
+      (await u.client.rpc("set_push_schedule", { p_items: [item("a", "night", inMin(-5), day)] })).error
+        ?.code,
+    ).toBe("22023");
+    expect(
+      (
+        await u.client.rpc("set_push_schedule", {
+          p_items: Array.from({ length: 25 }, (_, i) => item(`r${i}`, "night", inMin(10 + i), day)),
+        })
+      ).error?.code,
+    ).toBe("22023");
+    expect(
+      (await u.client.rpc("set_push_schedule", { p_items: [item("a", "spam", inMin(10), day)] })).error,
+    ).not.toBeNull();
+    // The sender's functions are service-role only.
+    expect((await u.client.rpc("push_due", { p_limit: 10 })).error).not.toBeNull();
+    expect((await u.client.rpc("push_mark_sent", { p_user: u.id, p_ref: "x" })).error).not.toBeNull();
+    expect(
+      (
+        await u.client
+          .from("push_schedule")
+          .insert({ user_id: u.id, ref: "z", kind: "night", day, fire_at: inMin(5), title: "t", body: "" })
+      ).error,
+    ).not.toBeNull();
+  });
+
+  it("push_due: due and wanted only; skips a started block, a pressed 'I'm up', a done Night ritual, a turned-off kind", async () => {
+    const u = await newUser("push-due");
+    await u.client.rpc("save_push_subscription", sub(`due-${u.id}`));
+    const day = "2026-11-12";
+    // Plan rows directly (they're "due": fire_at a few minutes ago).
+    const rows = [
+      ["block_start:d:work", "block_start", "work"],
+      ["first10:d:focus", "first10", "focus"],
+      ["first10:d:work", "first10", "work"],
+      ["wake:d", "wake", null],
+      ["night:d", "night", null],
+      ["night:old", "night", null],
+    ].map(([ref, kind, block]) => ({
+      user_id: u.id,
+      ref,
+      kind,
+      day,
+      block,
+      fire_at: ref === "night:old" ? inMin(-30) : inMin(-2),
+      title: "t",
+      body: "",
+    }));
+    await admin().from("push_schedule").insert(rows);
+    await admin()
+      .from("block_logs")
+      .insert({ user_id: u.id, date: day, block: "focus", started_at: inMin(-5) });
+    await admin()
+      .from("wake_events")
+      .insert({
+        user_id: u.id,
+        date: day,
+        target_wake: inMin(-60),
+        pressed_at: inMin(-50),
+        in_window: true,
+        backfilled: false,
+      });
+    const mine = async () =>
+      (await due())
+        .filter((r) => r.user_id === u.id)
+        .map((r) => r.ref)
+        .sort();
+    expect(await mine()).toEqual(["block_start:d:work", "first10:d:work", "night:d"]);
+    await admin()
+      .from("events")
+      .insert({ user_id: u.id, type: "night_ritual_completed", payload: { date: day } });
+    await admin().from("profiles").update({ push_block_start: false }).eq("user_id", u.id);
+    expect(await mine()).toEqual(["first10:d:work"]);
+    await admin().rpc("push_mark_sent", { p_user: u.id, p_ref: "first10:d:work" });
+    expect(await mine()).toEqual([]);
+    // A gone device is dropped.
+    await admin().rpc("push_drop_endpoint", { p_endpoint: `https://push.example.com/due-${u.id}` });
+    expect((await u.client.from("push_subscriptions").select("id")).data).toEqual([]);
+  });
+
+  it("prefs: switches and quiet hours are the user's own columns, validated", async () => {
+    const u = await newUser("push-prefs");
+    expect(
+      (
+        await u.client
+          .from("profiles")
+          .update({ push_night: false, push_quiet_start: "22:30", push_quiet_end: "07:00" })
+          .eq("user_id", u.id)
+      ).error,
+    ).toBeNull();
+    expect(
+      (await u.client.from("profiles").update({ push_quiet_start: "25:00" }).eq("user_id", u.id)).error,
+    ).not.toBeNull();
+  });
+});
