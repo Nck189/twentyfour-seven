@@ -35,7 +35,15 @@ export function setQuietUntil(ms: number) {
 
 function play(notes: Note[], essential = false) {
   const p = usePrefs.getState();
-  if (!shouldPlay({ soundOn: p.soundOn, autoQuiet: p.autoQuiet ?? true, quietUntil, now: Date.now(), essential }))
+  if (
+    !shouldPlay({
+      soundOn: p.soundOn,
+      autoQuiet: p.autoQuiet ?? true,
+      quietUntil,
+      now: Date.now(),
+      essential,
+    })
+  )
     return;
   const ac = audio();
   if (!ac) return;
@@ -136,7 +144,13 @@ export const sfx = {
   /** Goodnight: a soft 2-second lullaby, falling. */
   lullaby: () =>
     play(
-      [784, 659, 587, 523, 392].map((freq, i) => ({ freq, at: i * 0.38, dur: 0.55, type: "sine" as OscillatorType, gain: 0.1 })),
+      [784, 659, 587, 523, 392].map((freq, i) => ({
+        freq,
+        at: i * 0.38,
+        dur: 0.55,
+        type: "sine" as OscillatorType,
+        gain: 0.1,
+      })),
     ),
   /** Coins earned: a bright two-note clink (separate from the harvest). */
   coin: () =>
@@ -158,7 +172,8 @@ export const sfx = {
   /** Som: a short meow (a pitch glide up, then down). */
   meow: () => {
     const p = usePrefs.getState();
-    if (!shouldPlay({ soundOn: p.soundOn, autoQuiet: p.autoQuiet ?? true, quietUntil, now: Date.now() })) return;
+    if (!shouldPlay({ soundOn: p.soundOn, autoQuiet: p.autoQuiet ?? true, quietUntil, now: Date.now() }))
+      return;
     const ac = audio();
     if (!ac) return;
     const t0 = ac.currentTime + 0.01;

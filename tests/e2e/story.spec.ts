@@ -51,7 +51,10 @@ test("CJ-S-2 Skip closes a beat at once; its gift is already in the inventory", 
     method: "POST",
     body: JSON.stringify({ user_id: id, beat: "ch0_gate", day: "2000-01-01" }),
   });
-  await rest("events", { method: "POST", body: JSON.stringify({ user_id: id, type: "harvest", payload: {} }) });
+  await rest("events", {
+    method: "POST",
+    body: JSON.stringify({ user_id: id, type: "harvest", payload: {} }),
+  });
   await page.goto("/farm");
   const scene = page.getByRole("dialog", { name: "First harvest" });
   await expect(scene).toBeVisible();
@@ -81,7 +84,9 @@ test("CJ-S-3 More: sound, quiet during Focus/Work and skip animations are switch
   await expectTouchTargets(page);
 });
 
-test("CJ-S-4 exam day: an appointment called 'Midterm' brings Som with a headband to Today", async ({ page }) => {
+test("CJ-S-4 exam day: an appointment called 'Midterm' brings Som with a headband to Today", async ({
+  page,
+}) => {
   const id = await setup(page);
   await rest("day_plans", {
     method: "POST",
@@ -96,6 +101,8 @@ test("CJ-S-4 exam day: an appointment called 'Midterm' brings Som with a headban
     }),
   });
   await gotoToday(page);
-  await expect(page.getByRole("region", { name: "Exam day" })).toContainText("Exam day! Som packed you a snack.");
+  await expect(page.getByRole("region", { name: "Exam day" })).toContainText(
+    "Exam day! Som packed you a snack.",
+  );
   await expectTouchTargets(page);
 });

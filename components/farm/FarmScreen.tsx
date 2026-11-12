@@ -55,16 +55,16 @@ export function FarmScreen({ compact = false }: { compact?: boolean }) {
     <>
       {story.playing && <Cutscene beat={story.playing.beat} gift={story.playing.gift} onDone={story.done} />}
       <FarmView
-      unlocks={compact ? undefined : (unlocks ?? undefined)}
-      gacha={compact ? undefined : gacha}
-      animals={compact ? undefined : animals}
-      compact={compact}
-      data={data}
-      status={status}
-      plant={plant}
-      harvest={harvest}
-      buyDecor={buyDecor}
-      reload={reload}
+        unlocks={compact ? undefined : (unlocks ?? undefined)}
+        gacha={compact ? undefined : gacha}
+        animals={compact ? undefined : animals}
+        compact={compact}
+        data={data}
+        status={status}
+        plant={plant}
+        harvest={harvest}
+        buyDecor={buyDecor}
+        reload={reload}
       />
     </>
   );
@@ -312,7 +312,12 @@ export function FarmView({
         />
       )}
       {sheet === "dex" && gacha?.state && (
-        <SeedDexSheet state={gacha.state} starUp={gacha.starUp} today={data.today} onClose={() => setSheet(null)} />
+        <SeedDexSheet
+          state={gacha.state}
+          starUp={gacha.starUp}
+          today={data.today}
+          onClose={() => setSheet(null)}
+        />
       )}
 
       {unlocks && <CollectionBook state={unlocks} />}

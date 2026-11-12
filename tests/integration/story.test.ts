@@ -6,11 +6,16 @@ import { admin, anon, newUser } from "./helpers";
 const state = async (id: string) =>
   (await admin().from("game_state").select("tickets").eq("user_id", id).single()).data as { tickets: number };
 const seedQty = async (id: string, crop: string) =>
-  ((await admin().from("inventory").select("qty").eq("user_id", id).eq("item_id", `seed:${crop}`).maybeSingle())
-    .data?.qty as number | undefined) ?? 0;
+  ((
+    await admin()
+      .from("inventory")
+      .select("qty")
+      .eq("user_id", id)
+      .eq("item_id", `seed:${crop}`)
+      .maybeSingle()
+  ).data?.qty as number | undefined) ?? 0;
 /** Moves a seen beat to an earlier day, so the one-a-day rule lets the next one through. */
-const ageSeen = (id: string) =>
-  admin().from("story_seen").update({ day: "2000-01-01" }).eq("user_id", id);
+const ageSeen = (id: string) => admin().from("story_seen").update({ day: "2000-01-01" }).eq("user_id", id);
 
 describe("story beats (server)", () => {
   it("gifts: SQL mirrors content/story.ts", async () => {
@@ -30,7 +35,11 @@ describe("story beats (server)", () => {
     expect(r.data).toMatchObject({ beat: "ch0_gate", gift: null });
     expect((await u.client.rpc("claim_story_beat", { p_beat: "ch0_gate" })).error?.code).toBe("P0001");
     expect((await u.client.rpc("story_status")).data).toMatchObject({ seen: ["ch0_gate"], today: true });
-    const ev = await admin().from("events").select("type, payload").eq("user_id", u.id).eq("type", "story_seen");
+    const ev = await admin()
+      .from("events")
+      .select("type, payload")
+      .eq("user_id", u.id)
+      .eq("type", "story_seen");
     expect(ev.data).toHaveLength(1);
   });
 
@@ -39,15 +48,21 @@ describe("story beats (server)", () => {
     await u.client.rpc("claim_story_beat", { p_beat: "ch0_gate" });
     await ageSeen(u.id);
     // No harvest yet → refused.
-    expect((await u.client.rpc("claim_story_beat", { p_beat: "ch1_first_harvest" })).error?.code).toBe("P0001");
-    await admin().from("events").insert({ user_id: u.id, type: "harvest", payload: { crop: "radish" } });
+    expect((await u.client.rpc("claim_story_beat", { p_beat: "ch1_first_harvest" })).error?.code).toBe(
+      "P0001",
+    );
+    await admin()
+      .from("events")
+      .insert({ user_id: u.id, type: "harvest", payload: { crop: "radish" } });
     const before = await seedQty(u.id, "radish");
     const r = await u.client.rpc("claim_story_beat", { p_beat: "ch1_first_harvest" });
     expect(r.error).toBeNull();
     expect(await seedQty(u.id, "radish")).toBe(before + 1);
     // Chapter 2 needs 3 counted days.
     await ageSeen(u.id);
-    expect((await u.client.rpc("claim_story_beat", { p_beat: "ch2_watering_can" })).error?.code).toBe("P0001");
+    expect((await u.client.rpc("claim_story_beat", { p_beat: "ch2_watering_can" })).error?.code).toBe(
+      "P0001",
+    );
     await admin()
       .from("day_results")
       .insert(
@@ -79,8 +94,11 @@ describe("story beats (server)", () => {
     const other = await newUser("story-other");
     expect((await other.client.from("story_seen").select("*")).data).toEqual([]);
     expect(
-      (await other.client.from("story_seen").insert({ user_id: other.id, beat: "ch2_watering_can", day: "2026-01-01" }))
-        .error,
+      (
+        await other.client
+          .from("story_seen")
+          .insert({ user_id: other.id, beat: "ch2_watering_can", day: "2026-01-01" })
+      ).error,
     ).not.toBeNull();
   });
 });

@@ -3,7 +3,15 @@ import { hasExam, isExam } from "@/lib/game/exam";
 
 describe("exam week (docs/STORY.md): an appointment tagged exam/สอบ", () => {
   it("recognises exams in English and Thai", () => {
-    for (const t of ["Exam Calc 1", "Midterm IE", "final exam", "Quiz 3", "สอบกลางภาค", "สอบ OR", "ควิซ สถิติ"])
+    for (const t of [
+      "Exam Calc 1",
+      "Midterm IE",
+      "final exam",
+      "Quiz 3",
+      "สอบกลางภาค",
+      "สอบ OR",
+      "ควิซ สถิติ",
+    ])
       expect(isExam(t)).toBe(true);
   });
   it("ignores ordinary appointments and empty titles", () => {
