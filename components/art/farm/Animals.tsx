@@ -27,7 +27,13 @@ const TAN: Tone = { base: "var(--art-wood-light)", dark: "var(--art-wood)", ligh
 /** Minnie round 5: wool and the goat's coat in a cream that still reads on a white pen tile. */
 const WOOL: Tone = { base: "var(--art-wool)", dark: "var(--art-wool-dark)", light: "var(--art-wool-light)" };
 /** Minnie: the alpaca's sky-blue fleece (its face and legs stay caramel). */
-const SKY: Tone = { base: "var(--art-fleece)", dark: "var(--art-blue)", light: "var(--art-ice-light)" };
+const SKY: Tone = { base: "var(--art-blue-light)", dark: "var(--art-blue)", light: "var(--art-ice-light)" };
+/** Minnie: the alpaca's face and legs, a lighter caramel than the dog's tan. */
+const LATTE: Tone = {
+  base: "var(--art-latte)",
+  dark: "var(--art-latte-dark)",
+  light: "var(--art-latte-light)",
+};
 /** A soft rim in a white animal's own darker shade, so it never melts into a white tile. */
 const RIM = "var(--art-stone-dark)";
 
@@ -126,7 +132,7 @@ const SPECS: Record<AnimalId, Spec> = {
   // A caramel face and legs (Minnie) under a sky-blue fleece that covers the body and the whole neck.
   alpaca: {
     plan: "beast",
-    body: TAN,
+    body: LATTE,
     ears: "banana",
     tail: "wool",
     extras: ["neck", "topknot", "fleece"],
