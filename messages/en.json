@@ -1001,6 +1001,7 @@
   },
   "welcomeBack": {
     "title": "Welcome back",
+    "som": "Som wakes up from a long nap, stretches, and is so glad to see you.",
     "body": "Your farm waited for you: no plant wilted or died while you were away. Pick up from today.",
     "start": "Start today",
     "gift": "+1 ticket, a welcome-back gift",
