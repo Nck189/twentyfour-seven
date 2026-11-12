@@ -308,6 +308,91 @@ function StallBoat({ x }: { x: number }) {
   );
 }
 
+/** December's cool hills (Doi): layered misty hills and white strawberry plants. */
+function MistHills() {
+  return (
+    <g>
+      <ellipse cx={34} cy={GROUND + 4} rx={52} ry={26} fill="var(--art-leaf-2)" />
+      <ellipse cx={124} cy={GROUND + 6} rx={60} ry={30} fill="var(--art-leaf-3)" />
+      <ellipse cx={80} cy={GROUND - 6} rx={70} ry={5} fill="var(--art-cloud)" opacity={0.85} />
+      <ellipse cx={30} cy={GROUND - 14} rx={26} ry={3.4} fill="var(--art-cloud)" opacity={0.7} />
+      {[30, 52, 108, 130].map((x, i) => (
+        <g key={x}>
+          <ellipse cx={x - 3} cy={GROUND + 6} rx={3} ry={1.8} fill="var(--art-leaf-4)" />
+          <ellipse cx={x + 3} cy={GROUND + 6} rx={3} ry={1.8} fill="var(--art-leaf-3)" />
+          <ellipse cx={x} cy={GROUND + 8.6 + (i % 2)} rx={1.9} ry={2.3} fill="var(--art-stone)" />
+          <ellipse cx={x - 0.4} cy={GROUND + 8.2 + (i % 2)} rx={1.6} ry={2} fill="var(--art-white)" />
+          <circle cx={x - 0.6} cy={GROUND + 7.8 + (i % 2)} r={0.3} fill="var(--art-pink)" />
+        </g>
+      ))}
+    </g>
+  );
+}
+
+/** The winter-lights market: string lights between posts and a little stall. */
+function WinterLights() {
+  return (
+    <g>
+      {[8, 80, 152].map((x) => (
+        <rect key={x} x={x - 1.2} y={GROUND - 42} width={2.4} height={42} rx={1.2} fill="var(--art-wood)" />
+      ))}
+      {[
+        [8, 80],
+        [80, 152],
+      ].map(([a, b]) => (
+        <g key={a}>
+          <path
+            d={`M${a} ${GROUND - 40} Q${(a! + b!) / 2} ${GROUND - 28} ${b} ${GROUND - 40}`}
+            fill="none"
+            stroke="var(--art-wood-dark)"
+            strokeWidth={0.6}
+          />
+          {Array.from({ length: 7 }, (_, i) => {
+            const t = (i + 1) / 8;
+            const x = a! + (b! - a!) * t;
+            const y = GROUND - 40 + 4 * 12 * t * (1 - t);
+            const fill = ["var(--art-yellow-light)", "var(--art-pink-light)", "var(--art-blue-light)"][i % 3];
+            return <circle key={i} cx={x} cy={y + 1.4} r={1.4} fill={fill} />;
+          })}
+        </g>
+      ))}
+      <rect x={52} y={GROUND - 16} width={56} height={16} rx={2} fill="var(--art-wood-dark)" />
+      <rect x={50} y={GROUND - 17} width={56} height={16} rx={2} fill="var(--art-wood)" />
+      <path d={`M46 ${GROUND - 17} L78 ${GROUND - 27} L110 ${GROUND - 17}Z`} fill="var(--art-red)" />
+      {[60, 70, 80, 90, 100].map((x) => (
+        <g key={x}>
+          <ellipse cx={x} cy={GROUND - 19} rx={2.4} ry={2.8} fill="var(--art-stone)" />
+          <ellipse cx={x - 0.3} cy={GROUND - 19.4} rx={2} ry={2.4} fill="var(--art-white)" />
+        </g>
+      ))}
+    </g>
+  );
+}
+
+/** The year-end cake on a little table: white strawberries on top, one candle. */
+function YearCake() {
+  return (
+    <g>
+      <rect x={46} y={GROUND - 12} width={68} height={4} rx={2} fill="var(--art-wood-dark)" />
+      <rect x={44} y={GROUND - 13} width={68} height={4} rx={2} fill="var(--art-wood)" />
+      <rect x={52} y={GROUND - 9} width={3} height={9} rx={1.5} fill="var(--art-wood-dark)" />
+      <rect x={101} y={GROUND - 9} width={3} height={9} rx={1.5} fill="var(--art-wood-dark)" />
+      <rect x={62} y={GROUND - 31} width={34} height={18} rx={5} fill="var(--art-pink-dark)" />
+      <rect x={61} y={GROUND - 32} width={33} height={17} rx={5} fill="var(--art-pink-light)" />
+      <rect x={61} y={GROUND - 32} width={33} height={5} rx={2.5} fill="var(--art-white)" />
+      {[66, 74, 82, 90].map((x) => (
+        <g key={x}>
+          <ellipse cx={x} cy={GROUND - 34} rx={2} ry={2.4} fill="var(--art-stone)" />
+          <ellipse cx={x - 0.3} cy={GROUND - 34.3} rx={1.7} ry={2} fill="var(--art-white)" />
+        </g>
+      ))}
+      <rect x={77} y={GROUND - 42} width={1.6} height={7} rx={0.8} fill="var(--art-blue)" />
+      <ellipse cx={77.8} cy={GROUND - 44} rx={1.2} ry={1.8} fill="var(--art-yellow)" />
+      <ellipse cx={77.8} cy={GROUND - 43.6} rx={0.6} ry={0.9} fill="var(--art-yellow-light)" />
+    </g>
+  );
+}
+
 const SKY: Record<SceneId, string> = {
   gate: "linear-gradient(var(--sky-day-top), var(--sky-day-bottom))",
   field: "linear-gradient(var(--sky-day-top), var(--sky-day-bottom))",
@@ -315,6 +400,9 @@ const SKY: Record<SceneId, string> = {
   lotus_pond: "linear-gradient(var(--sky-day-top), var(--sky-day-bottom))",
   water_market: "linear-gradient(var(--sky-dusk-top), var(--sky-dusk-bottom))",
   krathong: "linear-gradient(var(--sky-night-top), var(--sky-night-bottom))",
+  snow_hill: "linear-gradient(var(--sky-sunrise-top), var(--sky-sunrise-bottom))",
+  winter_market: "linear-gradient(var(--sky-night-top), var(--sky-night-bottom))",
+  cake: "linear-gradient(var(--sky-dusk-top), var(--sky-dusk-bottom))",
 };
 
 export function StoryScene({ scene, className = "" }: { scene: SceneId; className?: string }) {
@@ -329,7 +417,7 @@ export function StoryScene({ scene, className = "" }: { scene: SceneId; classNam
         preserveAspectRatio="xMidYMax slice"
         className="absolute inset-0 h-full w-full"
       >
-        {scene === "krathong" ? (
+        {scene === "krathong" || scene === "winter_market" ? (
           <g>
             <circle cx={128} cy={22} r={9} fill="var(--sky-moon)" />
             {[
@@ -342,7 +430,7 @@ export function StoryScene({ scene, className = "" }: { scene: SceneId; classNam
               <circle key={x} cx={x} cy={y} r={0.9} fill="var(--sky-star)" />
             ))}
           </g>
-        ) : scene === "water_market" ? (
+        ) : scene === "water_market" || scene === "cake" ? (
           <circle cx={132} cy={30} r={8} fill="var(--art-orange-light)" />
         ) : (
           <g>
@@ -387,6 +475,9 @@ export function StoryScene({ scene, className = "" }: { scene: SceneId; classNam
             <PondLotus x={20} y={85} s={0.8} />
           </g>
         )}
+        {scene === "snow_hill" && <MistHills />}
+        {scene === "winter_market" && <WinterLights />}
+        {scene === "cake" && <YearCake />}
         {scene === "gate" && (
           <g>
             <Fence from={4} to={70} gate />

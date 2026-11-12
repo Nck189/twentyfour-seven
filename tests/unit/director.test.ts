@@ -99,8 +99,12 @@ describe("seasonal beats (Candle Lotus, docs/STORY.md)", () => {
     expect(nextBeat({ ...calm, seen, seenToday: false, facts: at("2027-11-02") })).toBe("lotus_open");
   });
 
-  it("outside November the opening and market wait for next year (the crop comes back too)", () => {
-    expect(nextBeat({ ...calm, seen: main, seenToday: false, facts: at("2026-12-01") })).toBeNull();
+  it("outside November the Lotus opening and market wait for next year (the crop comes back too)", () => {
+    // December has its own crop: its opening plays instead of the Lotus's.
+    expect(nextBeat({ ...calm, seen: main, seenToday: false, facts: at("2026-12-01") })).toBe("snow_open");
+    expect(
+      nextBeat({ ...calm, seen: [...main, "snow_open:2026"], seenToday: false, facts: at("2026-12-01") }),
+    ).toBeNull();
     expect(nextBeat({ ...calm, seen: main, seenToday: false, facts: at("2026-10-31") })).toBeNull();
     expect(nextBeat({ ...calm, seen: main, seenToday: false, facts: facts() })).toBeNull();
   });
@@ -146,5 +150,25 @@ describe("seasonal beats (Candle Lotus, docs/STORY.md)", () => {
     });
     expect(STORY.lotus_use.trigger).toEqual({ kind: "season_use", crop: "candle_lotus" });
     expect(STORY.lotus_use.panels.filter((p) => p.form === "wish")).toHaveLength(1);
+  });
+});
+
+describe("seasonal beats (Snow Strawberry, December)", () => {
+  const main = ["ch0_gate", "ch1_first_harvest", "ch2_watering_can"];
+  const at = (today: string, seasonUses: string[] = []) => facts({ today, seasonUses });
+  it("opening Dec 1, market Dec 15, use after a sale; the use beat shows the year in review", () => {
+    expect(nextBeat({ ...calm, seen: main, seenToday: false, facts: at("2026-12-03") })).toBe("snow_open");
+    const seen = [...main, "snow_open:2026"];
+    expect(nextBeat({ ...calm, seen, seenToday: false, facts: at("2026-12-14") })).toBeNull();
+    expect(nextBeat({ ...calm, seen, seenToday: false, facts: at("2026-12-15") })).toBe("snow_market");
+    expect(
+      nextBeat({
+        ...calm,
+        seen: [...seen, "snow_market:2026"],
+        seenToday: false,
+        facts: at("2026-12-20", ["snow_strawberry:2026"]),
+      }),
+    ).toBe("snow_use");
+    expect(STORY.snow_use.panels.filter((p) => p.form === "review")).toHaveLength(1);
   });
 });

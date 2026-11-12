@@ -1128,6 +1128,32 @@
       "l2": "It's Loy Krathong season. People float their wishes away on the water.",
       "l3": "Want to float one too? It's just for you, and you can skip.",
       "l4": "Your wish drifts away with its tiny flame. Som will keep it safe until next Loy Krathong."
+    },
+    "snow_open": {
+      "title": "Snow Strawberry",
+      "l1": "Mist rolls over the hills. Som's whiskers are cold.",
+      "l2": "Between the leaves: strawberries, white as the mist.",
+      "l3": "Som brings you a seed. Snow Strawberry seeds are in the shop until the 14th."
+    },
+    "snow_market": {
+      "title": "The winter-lights market",
+      "l1": "Little lights on a string: the winter market is open.",
+      "l2": "Snow Strawberries sell for more until the end of the month.",
+      "l3": "Som warms its paws by a stall and waits for you."
+    },
+    "snow_use": {
+      "title": "The year-end cake",
+      "l1": "Som carries your Snow Strawberry to the kitchen.",
+      "l2": "A year-end cake, with white strawberries on top.",
+      "l3": "Som looks back at your year with you.",
+      "l4": "Here's to next year. Som will be right here."
+    },
+    "review": {
+      "title": "Your {year}",
+      "harvests": "{n, plural, one {# harvest} other {# harvests}}",
+      "streak": "{n, plural, one {Best streak: # day} other {Best streak: # days}}",
+      "mornings": "{n, plural, one {# morning on time} other {# mornings on time}}",
+      "loading": "Counting your year…"
     }
   }
 }

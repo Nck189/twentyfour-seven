@@ -135,6 +135,7 @@ export function Cutscene({
         {t(`${beat}.${panel.line}` as Parameters<typeof t>[0])}
       </p>
       {last && giftLine && <p className="text-base font-extrabold text-primary">{giftLine}</p>}
+      {panel.form === "review" && <YearReview />}
       {panel.form === "wish" ? (
         <form
           className="flex w-full max-w-md flex-col gap-2"
@@ -186,5 +187,37 @@ export function Cutscene({
         {i + 1} / {panels.length}
       </p>
     </div>
+  );
+}
+
+type Review = { year: number; harvests: number; best_streak: number; mornings: number };
+
+/** The year-end cake's year in review: three numbers from the user's own data (`year_review`). */
+function YearReview() {
+  const t = useTranslations("story.review");
+  const [r, setR] = useState<Review | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const { data, error } = await getSupabase().rpc("year_review");
+      if (!cancelled && !error && data) setR(data as Review);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  if (!r) return <p className="text-sm text-muted">{t("loading")}</p>;
+  return (
+    <section
+      aria-label={t("title", { year: r.year })}
+      className="w-full max-w-md rounded-2xl bg-primary-soft p-3 text-center"
+    >
+      <p className="mb-2 text-sm font-extrabold text-primary">{t("title", { year: r.year })}</p>
+      <ul className="grid grid-cols-3 gap-2 text-sm font-bold">
+        <li>{t("harvests", { n: r.harvests })}</li>
+        <li>{t("streak", { n: r.best_streak })}</li>
+        <li>{t("mornings", { n: r.mornings })}</li>
+      </ul>
+    </section>
   );
 }
