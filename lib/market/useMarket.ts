@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { CropId } from "@/content/crops";
 import type { UpgradeTrack } from "@/content/economy";
 import { getSupabase } from "@/lib/supabase/client";
+import { onWalletChange } from "./changes";
 
 export type MarketStatus = {
   today: string;
@@ -15,6 +16,8 @@ export type MarketStatus = {
   exchange: { price: number; max: number; used: number };
 };
 export type Reward = { id: string; title: string; cost: number };
+/** An action's outcome: refused = the server said no (coins, limits), not a network failure. */
+export type ActResult = { ok: boolean; refused: boolean; data: Record<string, unknown> | null };
 
 /**
  * The farm shop (docs/ECONOMY.md): what the server says is on offer, and actions that ask the
@@ -27,6 +30,8 @@ export function useMarket() {
   const [error, setError] = useState(false);
   const [tick, setTick] = useState(0);
   const reload = useCallback(() => setTick((n) => n + 1), []);
+  // A harvest, collected produce or a decor purchase elsewhere on the page changes the shelf/coins.
+  useEffect(() => onWalletChange(reload), [reload]);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,10 +56,14 @@ export function useMarket() {
 
   /** Runs one server action; true on success. The shop reloads either way. */
   const act = useCallback(
-    async (fn: string, args: Record<string, unknown> = {}) => {
-      const { error: err } = await client.rpc(fn, args);
+    async (fn: string, args: Record<string, unknown> = {}): Promise<ActResult> => {
+      const { data, error: err } = await client.rpc(fn, args);
       reload();
-      return !err;
+      return {
+        ok: !err,
+        refused: ["P0001", "P0002", "22023"].includes(err?.code ?? ""),
+        data: (data as Record<string, unknown> | null) ?? null,
+      };
     },
     [client, reload],
   );
@@ -70,15 +79,15 @@ export function useMarket() {
     upgrade: (track: UpgradeTrack) => act("buy_upgrade", { p_track: track }),
     deliver: (slot: number) => act("deliver_order", { p_slot: slot }),
     redeem: (id: string) => act("redeem_reward", { p_id: id }),
-    addReward: async (title: string, cost: number) => {
+    addReward: async (title: string, cost: number): Promise<ActResult> => {
       const { error: err } = await client.from("rewards").insert({ title: title.trim(), cost });
       reload();
-      return !err;
+      return { ok: !err, refused: false, data: null };
     },
-    removeReward: async (id: string) => {
+    removeReward: async (id: string): Promise<ActResult> => {
       const { error: err } = await client.from("rewards").update({ archived: true }).eq("id", id);
       reload();
-      return !err;
+      return { ok: !err, refused: false, data: null };
     },
   };
 }

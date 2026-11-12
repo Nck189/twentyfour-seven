@@ -33,6 +33,7 @@ test("shop: sell produce, buy a seed, swap coins for a ticket, upgrade, and a re
   await expectTouchTargets(page);
   await expectNoHorizontalScroll(page);
   await shop.getByRole("button", { name: "Sell 1 Tomato for 45 coins" }).click();
+  await expect(shop.getByRole("status")).toContainText("+45 coins from the market");
   await expect(shop.getByText("645 coins")).toBeAttached();
 
   // Shop: a seed of the day (uncommon, 30) and the ticket swap (150).
@@ -57,6 +58,8 @@ test("shop: sell produce, buy a seed, swap coins for a ticket, upgrade, and a re
   await shop.getByLabel("Coins").fill("100");
   await shop.getByRole("button", { name: "Add reward" }).click();
   await shop.getByRole("button", { name: "Redeem Bubble tea for 100 coins" }).click();
+  await shop.getByRole("button", { name: "Spend 100 coins" }).click(); // two taps for real savings
+  await expect(shop.getByRole("status")).toContainText("Enjoy Bubble tea!");
   await expect(shop.getByText("165 coins")).toBeAttached();
   await expectTouchTargets(page);
 

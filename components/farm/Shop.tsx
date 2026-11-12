@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
 import { Coin } from "@/components/art/Coin";
@@ -8,15 +9,26 @@ import { CropArt } from "@/components/art/farm/CropArt";
 import { ProduceArt } from "@/components/art/farm/Animals";
 import { Button } from "@/components/ui/Button";
 import { Segmented } from "@/components/ui/Segmented";
-import { REWARD_COST, REWARD_TITLE_MAX, UPGRADE_TRACKS, type UpgradeTrack } from "@/content/economy";
+import {
+  REWARD_COST,
+  REWARD_TITLE_MAX,
+  UPGRADE_PRICES,
+  UPGRADE_TRACKS,
+  WEATHER_PRICE_CAP,
+  type UpgradeTrack,
+} from "@/content/economy";
 import type { DecorId } from "@/content/decor";
 import type { Season } from "@/content/seasons";
 import { nextUpgradePrice, parseItem } from "@/lib/game/market";
-import { useMarket, type MarketStatus } from "@/lib/market/useMarket";
+import { notifyWalletChange } from "@/lib/market/changes";
+import { useMarket, type ActResult, type MarketStatus } from "@/lib/market/useMarket";
 import { sfx } from "@/lib/sound/sfx";
+import { usePrefs } from "@/lib/store/prefs";
 import { DecorShop } from "./DecorShop";
 
 type Tab = "market" | "shop" | "upgrades" | "rewards";
+/** What the last action got the player (shown as a small payoff line; G7 ECON E5). */
+type Notice = { text: string; coins?: number };
 
 /**
  * The farm shop (docs/ECONOMY.md, Minnie OK 2026-11-11): sell produce and fill daily orders,
@@ -37,18 +49,24 @@ export function Shop({
   const m = useMarket();
   const [tab, setTab] = useState<Tab>("market");
   const [busy, setBusy] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<"refused" | "network" | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
   const s = m.status;
 
-  const run = async (key: string, action: () => Promise<boolean>) => {
+  const run: Run = async (key, action, payoff) => {
     setBusy(key);
-    setFailed(false);
-    const ok = await action();
+    setFailed(null);
+    setNotice(null);
+    const r = await action();
     setBusy(null);
-    if (ok) {
-      sfx.tick();
+    if (r.ok) {
+      const n = payoff?.(r);
+      if (n?.coins && n.coins > 0) sfx.harvest();
+      else sfx.tick();
+      setNotice(n ?? null);
       onChanged();
-    } else setFailed(true);
+      notifyWalletChange();
+    } else setFailed(r.refused ? "refused" : "network");
   };
 
   return (
@@ -66,7 +84,12 @@ export function Shop({
       <Segmented<Tab>
         label={t("title")}
         value={tab}
-        onChange={setTab}
+        onChange={(v) => {
+          setTab(v);
+          setNotice(null);
+          setFailed(null);
+          m.reload();
+        }}
         compact
         options={[
           { value: "market", label: t("tab.market") },
@@ -75,6 +98,7 @@ export function Shop({
           { value: "rewards", label: t("tab.rewardsShort") },
         ]}
       />
+      <Payoff notice={notice} />
       {m.error && !s && (
         <p role="alert" className="rounded-xl bg-accent-soft p-3 text-sm font-bold">
           {t("loadError")}{" "}
@@ -95,39 +119,80 @@ export function Shop({
       {s && tab === "rewards" && <Rewards s={s} busy={busy} run={run} m={m} />}
       {failed && (
         <p role="alert" className="rounded-xl bg-accent-soft p-3 text-sm font-bold">
-          {t("actionError")}
+          {t(failed === "refused" ? "refused" : "actionError")}
         </p>
       )}
     </section>
   );
 }
 
+type Run = (
+  key: string,
+  action: () => Promise<ActResult>,
+  payoff?: (r: ActResult) => Notice,
+) => Promise<void>;
+
 type TabProps = {
   s: MarketStatus;
   busy: string | null;
-  run: (key: string, action: () => Promise<boolean>) => Promise<void>;
+  run: Run;
   m: ReturnType<typeof useMarket>;
 };
 
-function Card({ children, label }: { children: ReactNode; label?: string }) {
+/** The payoff of the last action: a coin pop and one line (still with reduced motion). */
+function Payoff({ notice }: { notice: Notice | null }) {
+  const reduce = useReducedMotion();
+  const skip = usePrefs((p) => p.skipAnimations) || Boolean(reduce);
   return (
-    <li
-      aria-label={label}
-      className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-surface p-2 pr-3"
-    >
-      {children}
-    </li>
+    <AnimatePresence>
+      {notice && (
+        <motion.p
+          key={notice.text}
+          role="status"
+          className="flex items-center gap-2 rounded-xl bg-primary-soft p-3 font-bold text-primary"
+          initial={skip ? false : { opacity: 0, y: -6, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          {notice.coins !== undefined && (
+            <motion.span
+              aria-hidden="true"
+              className="inline-flex"
+              initial={skip ? false : { scale: 0.3, rotate: -40 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", stiffness: 420, damping: 12 }}
+            >
+              <Coin className="h-6 w-6" />
+            </motion.span>
+          )}
+          <span className="min-w-0 flex-1 break-words">{notice.text}</span>
+        </motion.p>
+      )}
+    </AnimatePresence>
   );
 }
 
 function Price({ n }: { n: number }) {
   return (
-    <span className="flex items-center gap-0.5 text-sm font-bold" aria-hidden="true">
+    <span className="flex shrink-0 items-center gap-0.5 text-sm font-bold" aria-hidden="true">
       <Coin className="h-4 w-4" />
       {n}
     </span>
   );
 }
+
+/** A two-line row: picture, name and price on top; actions below (nothing gets squeezed). */
+function Row({ label, top, actions }: { label: string; top: ReactNode; actions: ReactNode }) {
+  return (
+    <li aria-label={label} className="flex flex-col gap-2 rounded-xl bg-surface p-2 pr-3">
+      <div className="flex items-center gap-3">{top}</div>
+      <div className="flex flex-wrap justify-end gap-2">{actions}</div>
+    </li>
+  );
+}
+
+const earned = (r: ActResult) => Number(r.data?.earned ?? 0);
 
 function MarketTab({ s, busy, run, m }: TabProps) {
   const t = useTranslations("shop");
@@ -144,26 +209,41 @@ function MarketTab({ s, busy, run, m }: TabProps) {
       <ul className="flex flex-col gap-2">
         {s.orders.map((o) => {
           const enough = have(o.crop) >= o.qty;
+          const name = t("order", { n: o.qty, crop: crops(o.crop) });
           return (
-            <Card key={o.slot} label={t("order", { n: o.qty, crop: crops(o.crop) })}>
-              <CropArt cropId={o.crop} stage={3} status="ready" className="h-11 w-11 shrink-0" />
-              <span className="min-w-0 flex-1">
-                <span className="block font-bold">{t("order", { n: o.qty, crop: crops(o.crop) })}</span>
-                <span className="text-xs text-muted">{t("orderHave", { n: have(o.crop) })}</span>
-              </span>
-              {o.done ? (
-                <span className="text-sm font-bold text-primary">{t("delivered")}</span>
-              ) : (
-                <Button
-                  variant="secondary"
-                  disabled={!enough || busy !== null}
-                  onClick={() => void run(`order-${o.slot}`, () => m.deliver(o.slot))}
-                >
-                  <Coin className="h-4 w-4" />
-                  {t("deliver", { coins: o.coins })}
-                </Button>
-              )}
-            </Card>
+            <Row
+              key={o.slot}
+              label={name}
+              top={
+                <>
+                  <CropArt cropId={o.crop} stage={3} status="ready" className="h-11 w-11 shrink-0" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-bold break-words">{name}</span>
+                    <span className="text-xs text-muted">{t("orderHave", { n: have(o.crop) })}</span>
+                  </span>
+                  <Price n={o.coins} />
+                </>
+              }
+              actions={
+                o.done ? (
+                  <span className="text-sm font-bold text-primary">{t("delivered")}</span>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    disabled={!enough || busy !== null}
+                    onClick={() =>
+                      void run(
+                        `order-${o.slot}`,
+                        () => m.deliver(o.slot),
+                        (r) => ({ text: t("paidDelivered", { n: earned(r) }), coins: earned(r) }),
+                      )
+                    }
+                  >
+                    {t("deliver", { coins: o.coins })}
+                  </Button>
+                )
+              }
+            />
           );
         })}
       </ul>
@@ -176,52 +256,68 @@ function MarketTab({ s, busy, run, m }: TabProps) {
             const it = parseItem(x.item);
             if (!it) return null;
             const name = it.kind === "crop" ? crops(it.cropId) : produce(it.id);
+            // The weather bonus as the market counts it (capped), so the label matches the price.
+            const counted = it.kind === "crop" ? Math.min(it.mult, WEATHER_PRICE_CAP) : 1;
             return (
-              <li
+              <Row
                 key={x.item}
-                aria-label={name}
-                className="flex flex-col gap-2 rounded-xl bg-surface p-2 pr-3"
-              >
-                <div className="flex items-center gap-3">
-                  {it.kind === "crop" ? (
-                    <CropArt cropId={it.cropId} stage={3} status="ready" className="h-11 w-11 shrink-0" />
-                  ) : (
-                    <ProduceArt id={it.id} className="h-11 w-11 shrink-0" />
-                  )}
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-bold">
-                      {name} <span className="text-muted">×{x.qty}</span>
-                    </span>
-                    {it.kind === "crop" && (
-                      <span className="text-xs text-muted">
-                        {tf(`qualityName.${it.quality}`)}
-                        {it.mult > 1 && ` · ${tf("multiplier", { n: Math.round(it.mult * 10) / 10 })}`}
-                      </span>
+                label={name}
+                top={
+                  <>
+                    {it.kind === "crop" ? (
+                      <CropArt cropId={it.cropId} stage={3} status="ready" className="h-11 w-11 shrink-0" />
+                    ) : (
+                      <ProduceArt id={it.id} className="h-11 w-11 shrink-0" />
                     )}
-                  </span>
-                  <Price n={x.price} />
-                </div>
-                <div className="flex justify-end gap-2">
-                  {x.qty > 1 && (
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-bold break-words">
+                        {name} <span className="text-muted">×{x.qty}</span>
+                      </span>
+                      {it.kind === "crop" && (
+                        <span className="text-xs text-muted">
+                          {tf(`qualityName.${it.quality}`)}
+                          {counted > 1 && ` · ${tf("multiplier", { n: Math.round(counted * 10) / 10 })}`}
+                        </span>
+                      )}
+                    </span>
+                    <Price n={x.price} />
+                  </>
+                }
+                actions={
+                  <>
+                    {x.qty > 1 && (
+                      <Button
+                        variant="ghost"
+                        disabled={busy !== null}
+                        aria-label={t("sellAllLabel", { item: name, coins: x.price * x.qty })}
+                        onClick={() =>
+                          void run(
+                            `sellall-${x.item}`,
+                            () => m.sell(x.item, x.qty),
+                            (r) => ({ text: t("paidSold", { n: earned(r) }), coins: earned(r) }),
+                          )
+                        }
+                      >
+                        {t("sellAll")}
+                      </Button>
+                    )}
                     <Button
-                      variant="ghost"
+                      variant="secondary"
                       disabled={busy !== null}
-                      aria-label={t("sellAllLabel", { item: name, coins: x.price * x.qty })}
-                      onClick={() => void run(`sellall-${x.item}`, () => m.sell(x.item, x.qty))}
+                      aria-label={t("sellOne", { item: name, coins: x.price })}
+                      onClick={() =>
+                        void run(
+                          `sell-${x.item}`,
+                          () => m.sell(x.item, 1),
+                          (r) => ({ text: t("paidSold", { n: earned(r) }), coins: earned(r) }),
+                        )
+                      }
                     >
-                      {t("sellAll")}
+                      {t("sell")}
                     </Button>
-                  )}
-                  <Button
-                    variant="secondary"
-                    disabled={busy !== null}
-                    aria-label={t("sellOne", { item: name, coins: x.price })}
-                    onClick={() => void run(`sell-${x.item}`, () => m.sell(x.item, 1))}
-                  >
-                    {t("sell")}
-                  </Button>
-                </div>
-              </li>
+                  </>
+                }
+              />
             );
           })}
         </ul>
@@ -244,18 +340,24 @@ function SeedsAndTickets({ s, busy, run, m }: TabProps) {
               type="button"
               disabled={busy !== null || s.coins < x.price}
               aria-label={t("buySeed", { crop: crops(x.crop), coins: x.price })}
-              onClick={() => void run(`seed-${x.crop}`, () => m.buySeed(x.crop))}
+              onClick={() =>
+                void run(
+                  `seed-${x.crop}`,
+                  () => m.buySeed(x.crop),
+                  () => ({ text: t("boughtSeed", { crop: crops(x.crop) }) }),
+                )
+              }
               className="tap flex min-h-11 w-full flex-col items-center rounded-xl bg-surface p-2 disabled:opacity-50"
             >
               <CropArt cropId={x.crop} stage={3} status="ready" className="h-12 w-12" />
-              <span className="text-xs font-bold">{crops(x.crop)}</span>
+              <span className="text-xs font-bold break-words">{crops(x.crop)}</span>
               <Price n={x.price} />
             </button>
           </li>
         ))}
       </ul>
       <p className="text-xs text-muted">{t("seedsHint")}</p>
-      <div className="flex items-center gap-3 rounded-xl bg-surface p-3">
+      <div className="flex flex-wrap items-center gap-3 rounded-xl bg-surface p-3">
         <TicketArt className="h-10 w-14 shrink-0" />
         <span className="min-w-0 flex-1">
           <span className="block font-bold">{t("exchangeTitle", { coins: s.exchange.price })}</span>
@@ -264,7 +366,7 @@ function SeedsAndTickets({ s, busy, run, m }: TabProps) {
         <Button
           variant="secondary"
           disabled={busy !== null || left <= 0 || s.coins < s.exchange.price}
-          onClick={() => void run("exchange", m.exchange)}
+          onClick={() => void run("exchange", m.exchange, () => ({ text: t("gotTicket") }))}
         >
           {t("exchange")}
         </Button>
@@ -280,16 +382,16 @@ function Upgrades({ s, busy, run, m }: TabProps) {
       {UPGRADE_TRACKS.map((track: UpgradeTrack) => {
         const level = s.levels[track];
         const price = nextUpgradePrice(track, level);
-        const max = level + (price === null ? 0 : 1) + (nextUpgradePrice(track, level + 1) === null ? 0 : 1);
+        const max = UPGRADE_PRICES[track].length;
         return (
           <li key={track} className="flex flex-col gap-2 rounded-xl bg-surface p-3">
             <div className="flex items-center justify-between gap-2">
               <span className="font-bold">{t(`upgrade.${track}.name`)}</span>
-              <span className="text-sm text-muted">{t("level", { n: level })}</span>
+              <span className="text-sm text-muted">{t("levelOf", { n: level, max })}</span>
             </div>
             <p className="text-sm text-muted">{t(`upgrade.${track}.effect`)}</p>
             <div className="flex gap-1" aria-hidden="true">
-              {Array.from({ length: Math.max(max, level) }, (_, i) => (
+              {Array.from({ length: max }, (_, i) => (
                 <span
                   key={i}
                   className={`h-2 flex-1 rounded-full ${i < level ? "bg-primary" : "bg-surface-2"}`}
@@ -302,7 +404,13 @@ function Upgrades({ s, busy, run, m }: TabProps) {
               <Button
                 variant="secondary"
                 disabled={busy !== null || s.coins < price}
-                onClick={() => void run(`up-${track}`, () => m.upgrade(track))}
+                onClick={() =>
+                  void run(
+                    `up-${track}`,
+                    () => m.upgrade(track),
+                    () => ({ text: t("upgraded", { name: t(`upgrade.${track}.name`), n: level + 1 }) }),
+                  )
+                }
               >
                 <Coin className="h-4 w-4" />
                 {t("upgradeTo", { n: level + 1, coins: price })}
@@ -319,6 +427,8 @@ function Rewards({ s, busy, run, m }: TabProps) {
   const t = useTranslations("shop");
   const [title, setTitle] = useState("");
   const [cost, setCost] = useState("100");
+  // Spending real savings is a two-tap action: first tap asks, second confirms (G7 S3).
+  const [confirming, setConfirming] = useState<string | null>(null);
   const n = Number(cost);
   const valid =
     title.trim().length > 0 && Number.isInteger(n) && n >= REWARD_COST.min && n <= REWARD_COST.max;
@@ -328,26 +438,57 @@ function Rewards({ s, busy, run, m }: TabProps) {
       {m.rewards.length > 0 && (
         <ul className="flex flex-col gap-2">
           {m.rewards.map((r) => (
-            <Card key={r.id} label={r.title}>
-              <span className="min-w-0 flex-1 font-bold [overflow-wrap:anywhere]">{r.title}</span>
-              <Price n={r.cost} />
-              <Button
-                variant="secondary"
-                disabled={busy !== null || s.coins < r.cost}
-                aria-label={t("redeemLabel", { title: r.title, coins: r.cost })}
-                onClick={() => void run(`redeem-${r.id}`, () => m.redeem(r.id))}
-              >
-                {t("redeem")}
-              </Button>
-              <Button
-                variant="ghost"
-                disabled={busy !== null}
-                aria-label={t("removeLabel", { title: r.title })}
-                onClick={() => void run(`rm-${r.id}`, () => m.removeReward(r.id))}
-              >
-                {t("remove")}
-              </Button>
-            </Card>
+            <Row
+              key={r.id}
+              label={r.title}
+              top={
+                <>
+                  <span className="min-w-0 flex-1 font-bold break-words">{r.title}</span>
+                  <Price n={r.cost} />
+                </>
+              }
+              actions={
+                confirming === r.id ? (
+                  <>
+                    <Button variant="ghost" onClick={() => setConfirming(null)}>
+                      {t("cancel")}
+                    </Button>
+                    <Button
+                      disabled={busy !== null || s.coins < r.cost}
+                      onClick={() => {
+                        setConfirming(null);
+                        void run(
+                          `redeem-${r.id}`,
+                          () => m.redeem(r.id),
+                          () => ({ text: t("enjoy", { title: r.title, n: r.cost }), coins: 0 }),
+                        );
+                      }}
+                    >
+                      {t("confirmRedeem", { n: r.cost })}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="ghost"
+                      disabled={busy !== null}
+                      aria-label={t("removeLabel", { title: r.title })}
+                      onClick={() => void run(`rm-${r.id}`, () => m.removeReward(r.id))}
+                    >
+                      {t("remove")}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      disabled={busy !== null || s.coins < r.cost}
+                      aria-label={t("redeemLabel", { title: r.title, coins: r.cost })}
+                      onClick={() => setConfirming(r.id)}
+                    >
+                      {t("redeem")}
+                    </Button>
+                  </>
+                )
+              }
+            />
           ))}
         </ul>
       )}
@@ -357,9 +498,9 @@ function Rewards({ s, busy, run, m }: TabProps) {
           e.preventDefault();
           if (!valid) return;
           void run("add-reward", async () => {
-            const ok = await m.addReward(title, n);
-            if (ok) setTitle("");
-            return ok;
+            const r = await m.addReward(title, n);
+            if (r.ok) setTitle("");
+            return r;
           });
         }}
       >

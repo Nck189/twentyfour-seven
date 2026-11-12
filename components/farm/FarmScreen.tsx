@@ -353,7 +353,7 @@ export function FarmView({
               setPop({
                 cropId: p.cropId,
                 quality: it?.kind === "crop" ? it.quality : p.quality,
-                value: sellPrice(item, 0) ?? undefined,
+                value: sellPrice(item, data.stall) ?? undefined,
               });
             }
             return item !== null;

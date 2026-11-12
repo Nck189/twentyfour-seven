@@ -1012,6 +1012,16 @@
     "rewardCost": "Coins",
     "addReward": "Add reward",
     "jarHint": "You can save coins for a reward of your own, under Shop → Rewards.",
-    "jarHintClose": "OK"
+    "jarHintClose": "OK",
+    "refused": "The shop said no: not enough coins, or this week's limit is reached.",
+    "paidSold": "+{n} coins from the market",
+    "paidDelivered": "Delivered! +{n} coins",
+    "boughtSeed": "{crop} seed is in your bag — plant it on the farm",
+    "gotTicket": "+1 ticket — try your luck at the capsules",
+    "upgraded": "{name} is now level {n}",
+    "enjoy": "Enjoy {title}! −{n} coins. You earned it.",
+    "confirmRedeem": "Spend {n} coins",
+    "cancel": "Cancel",
+    "levelOf": "Level {n} of {max}"
   }
 }

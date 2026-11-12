@@ -17,7 +17,7 @@ export function Farmhouse({ level, className = "h-16 w-16" }: { level: number; c
   const big = level >= 3;
   const mid = level >= 2;
   // Walls get wider per level; the roof follows.
-  const wx = big ? 8 : mid ? 10 : 14;
+  const wx = big ? 5 : mid ? 10 : 14;
   const ww = 48 - 2 * wx;
   const wallTop = big ? 22 : 26;
   return (
@@ -62,6 +62,13 @@ export function Farmhouse({ level, className = "h-16 w-16" }: { level: number; c
       {mid && <Window x={wx + ww - 9} y={wallTop + 4} />}
       {big && (
         <g>
+          {/* attic window in the gable */}
+          <circle cx={24} cy={wallTop - 5} r={2.6} fill={TONES.blue.dark} />
+          <circle cx={24} cy={wallTop - 5} r={2} fill={TONES.blue.base} />
+          <circle cx={23.3} cy={wallTop - 5.7} r={0.7} fill={TONES.blue.light} />
+          {/* porch posts */}
+          <rect x={17.5} y={31} width={1.4} height={9} rx={0.6} fill="var(--art-wood-dark)" />
+          <rect x={29.1} y={31} width={1.4} height={9} rx={0.6} fill="var(--art-wood-dark)" />
           {/* porch roof + flower box */}
           <rect x={17} y={30} width={14} height={2} rx={1} fill="var(--art-wood-dark)" />
           <rect x={wx + 3} y={wallTop + 10.5} width={6} height={2} rx={1} fill="var(--art-leaf-light)" />
