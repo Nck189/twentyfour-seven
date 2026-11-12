@@ -17,6 +17,12 @@ const BLUSH: Tone = {
   dark: "var(--art-blush-dark)",
   light: "var(--art-blush-light)",
 };
+/** Minnie 2026-11-12: the pig is a light pink with a warm orange tint. */
+const PEACH: Tone = {
+  base: "var(--art-peach)",
+  dark: "var(--art-peach-dark)",
+  light: "var(--art-peach-light)",
+};
 const TAN: Tone = { base: "var(--art-wood-light)", dark: "var(--art-wood)", light: "var(--art-cream)" };
 
 type Ears = "round" | "pointy" | "floppy" | "long" | "small" | "banana" | "tipped" | "pig" | "side" | "none";
@@ -73,7 +79,7 @@ const SPECS: Record<AnimalId, Spec> = {
     extras: ["spots", "horns"],
   },
   sheep: { plan: "beast", body: CREAM, head: TONES.stone, ears: "small", tail: "none", extras: ["wool"] },
-  pig: { plan: "beast", body: TONES.pink, ears: "pig", snout: TONES.pink, tail: "curl" },
+  pig: { plan: "beast", body: PEACH, ears: "pig", snout: PEACH, tail: "curl" },
   cat: { plan: "beast", body: TONES.silver, ears: "pointy", tail: "up" }, // grey, so it never looks like Som (Minnie)
   // A chocolate border collie (Minnie 2026-11-12; no black in our palette): white blaze, muzzle,
   // ruff and tail tip, ears that stand and fold at the tip.
@@ -351,23 +357,24 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
           </g>
         )}
         {s.ears === "tipped" && (
-          // Collie ears: they stand, then the tip folds outward and down.
-          <g fill={head.dark}>
-            <path d={`M${hx - 6.6} ${hy - 2.5} L${hx - 5.4} ${hy - 10} L${hx - 1.8} ${hy - 5.8}Z`} />
-            <path d={`M${hx + 1.8} ${hy - 5.8} L${hx + 5.4} ${hy - 10} L${hx + 6.6} ${hy - 2.5}Z`} />
-            <ellipse
-              cx={hx - 6.6}
-              cy={hy - 9}
-              rx={1.9}
-              ry={1.1}
-              transform={`rotate(-40 ${hx - 6.6} ${hy - 9})`}
+          // Border collie ears: big, set wide, standing; the top third folds forward and down
+          // over the ear (the flap is the darkest tone, so the fold reads at 48 px).
+          <g>
+            <path
+              d={`M${hx - 7.2} ${hy - 2.2} L${hx - 5.4} ${hy - 8} L${hx - 1.8} ${hy - 6}Z`}
+              fill={head.dark}
             />
-            <ellipse
-              cx={hx + 6.6}
-              cy={hy - 9}
-              rx={1.9}
-              ry={1.1}
-              transform={`rotate(40 ${hx + 6.6} ${hy - 9})`}
+            <path
+              d={`M${hx + 1.8} ${hy - 6} L${hx + 5.4} ${hy - 8} L${hx + 7.2} ${hy - 2.2}Z`}
+              fill={head.dark}
+            />
+            <path
+              d={`M${hx - 6.9} ${hy - 7.4} Q${hx - 6.3} ${hy - 10.4} ${hx - 3.4} ${hy - 7.9} Q${hx - 4.6} ${hy - 6.2} ${hx - 5.6} ${hy - 4.8}Z`}
+              fill="var(--art-wood-dark)"
+            />
+            <path
+              d={`M${hx + 6.9} ${hy - 7.4} Q${hx + 6.3} ${hy - 10.4} ${hx + 3.4} ${hy - 7.9} Q${hx + 4.6} ${hy - 6.2} ${hx + 5.6} ${hy - 4.8}Z`}
+              fill="var(--art-wood-dark)"
             />
           </g>
         )}

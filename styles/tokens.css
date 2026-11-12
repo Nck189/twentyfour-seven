@@ -41,6 +41,10 @@
   --art-blush: #f8d3e0;
   --art-blush-light: #fdeef3;
   --art-blush-dark: #eeb3c8;
+  /* Peach pink (the pig, Minnie 2026-11-12): a light pink with a warm orange tint. */
+  --art-peach: #f7c3ad;
+  --art-peach-light: #fcdfd2;
+  --art-peach-dark: #e9a48b;
   /* Rust (the red panda): redder than Som's orange so the two never look alike. */
   --art-rust: #d77a54;
   --art-rust-light: #eba07e;
