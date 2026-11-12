@@ -53,7 +53,14 @@ export function FarmScreen({ compact = false }: { compact?: boolean }) {
   const story = useStory(compact ? "other" : "farm");
   return (
     <>
-      {story.playing && <Cutscene beat={story.playing.beat} gift={story.playing.gift} onDone={story.done} />}
+      {story.playing && (
+        <Cutscene
+          beat={story.playing.beat}
+          gift={story.playing.gift}
+          onDone={story.done}
+          onSettled={story.settle}
+        />
+      )}
       <FarmView
         unlocks={compact ? undefined : (unlocks ?? undefined)}
         gacha={compact ? undefined : gacha}

@@ -23,10 +23,13 @@ export function Cutscene({
   beat,
   gift,
   onDone,
+  onSettled,
 }: {
   beat: StoryBeatId;
   gift: StoryGift | null;
   onDone: () => void;
+  /** The scene's lasting part is done (a wish floated): it must not replay even if left now. */
+  onSettled?: () => void;
 }) {
   const t = useTranslations("story");
   const tc = useTranslations("crops");
@@ -62,8 +65,13 @@ export function Cutscene({
     setWishError(false);
     const { error } = await getSupabase().rpc("float_wish", { p_wish: wish.trim() });
     setFloating(false);
-    if (error) setWishError(true);
-    else setI(i + 1);
+    // "Already floated" means a replay after the wish was saved (G7 STORY-R22): that's a success.
+    if (error && error.message !== "already floated") {
+      setWishError(true);
+      return;
+    }
+    onSettled?.();
+    setI(i + 1);
   };
 
   const giftLine = !gift

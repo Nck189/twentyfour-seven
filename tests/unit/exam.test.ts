@@ -29,6 +29,9 @@ describe("exam week (docs/STORY.md): an appointment tagged exam/สอบ", () =
       "Quiz night at bar",
       "Final Fantasy night",
       "Final project studio",
+      "สอบเทียบเครื่องมือ",
+      "นัดผู้สอบบัญชี",
+      "NBA Finals",
     ])
       expect(isExam(t)).toBe(false);
     for (const t of ["Finals week", "Final exam Stat", "สอบปลายภาค", "สอบย่อย", "Quiz 2 OR"])

@@ -122,3 +122,28 @@ test("CJ-SEASON-2 Float a wish is optional: Not this time writes nothing; a floa
     { year: 2026, wish: "Sleep before midnight" },
   ]);
 });
+
+test("G7 STORY-R22: after a wish floats, leaving before Done doesn't replay the scene or show an error", async ({
+  page,
+}) => {
+  const id = await setup(page, "season-wish-r22");
+  await setClock(id, "2026-11-20");
+  await rest(`story_seen?user_id=eq.${id}&beat=eq.lotus_use:2026`, { method: "DELETE" });
+  await rest("events", {
+    method: "POST",
+    body: JSON.stringify({
+      user_id: id,
+      type: "produce_sold",
+      payload: { item: "crop:candle_lotus:normal:100", qty: 1, coins: 24 },
+    }),
+  });
+  await page.goto("/farm");
+  const scene = page.getByRole("dialog", { name: "Float a wish" });
+  for (let i = 0; i < 2; i++) await scene.getByRole("button", { name: "Next" }).click();
+  await scene.getByLabel("Your wish (optional, only you can see it)").fill("Read more books");
+  await scene.getByRole("button", { name: "Float it" }).click();
+  await expect(scene.getByText(/Your wish drifts away with its tiny flame/)).toBeVisible();
+  await page.reload(); // left before tapping Done
+  await expect(page.getByRole("heading", { name: "Farm", level: 1 })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Float a wish" })).toHaveCount(0);
+});

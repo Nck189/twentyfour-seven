@@ -98,5 +98,7 @@ export function useStory(moment: StoryMoment, busy = false) {
     writePending(null);
     setPlaying(null);
   }, []);
-  return { playing, done };
+  // A floated wish settles the beat: if the user leaves before Done, it doesn't replay (STORY-R22).
+  const settle = useCallback(() => writePending(null), []);
+  return { playing, done, settle };
 }

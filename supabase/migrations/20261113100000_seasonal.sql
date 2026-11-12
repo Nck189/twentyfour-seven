@@ -218,8 +218,8 @@ as $$
   select public._sell_price(p_item, p_stall, 1)
 $$;
 
--- Daily orders never ask for a seasonal crop (it has its own special order, and can't be grown
--- out of season).
+-- Daily orders never ask for a seasonal crop (it has its own special order). Note: until Minnie
+-- decides G7 STORY-R7, a stored seasonal seed can still be planted any month and the plant regrows.
 create or replace function public._orders(uid uuid, d date)
 returns table (slot integer, crop_id text, qty integer, coins integer)
 language plpgsql

@@ -150,3 +150,49 @@ I could not open the animal restyle at 48 px in a prod build, because `/dev/art`
 1. **Make a claimed beat survive** a navigation, reload or slow network, and give "Float a wish" a fallback entry point (STORY-R1). Players will see this as "the story skipped itself".
 2. **Tighten the exam matcher** for Thai (ตรวจสอบ/สอบถาม) and limit it to appointments (STORY-R2, STORY-R16). It's Minnie's own use case, and a wrong "exam tomorrow" at night undermines trust.
 3. **Thai layout pass on the crop calendar and the wish box** (STORY-R3, STORY-R9), then re-shoot TH light/dark. Also fix `format:check` (STORY-R4) and add `story_seen` to the event deny list (STORY-R5). Both are one-line fixes.
+
+---
+
+## Re-review (32fb795)
+
+- **Scope:** `git diff db2e3cc..32fb795`, which covers f226823 (Prettier) and 32fb795 (the fixes).
+- **Method:** the same environment rules as the first review. The fixes were checked:
+  - against a fresh production build of HEAD in an isolated scratch copy (Chromium, 390×844, touch);
+  - with authenticated probes against local Supabase;
+  - by re-running my own original repros.
+
+### Gates re-run
+- **G1:** typecheck, lint, Prettier, i18n (927 keys) and art lint all ✅. `format:check` is now clean.
+- **G2:** vitest **564/564** ✅.
+- **E2E (Chromium mobile):** **103 passed, 6 skipped, 0 failed**. `story.spec.ts` (including "G7 STORY-R1") and the onboarding test were repeated 4×: 24/24 ✅. WebKit is still not available in this container, so CI's WebKit matrix remains the source of truth for iPhone.
+
+### Per-finding status
+| ID | Sev | Status | Evidence (my repro on 32fb795) |
+|---|---|---|---|
+| R1 | S2 | ✅ **Fixed** | I delayed the claim 2.5 s and left Farm via the tab bar mid-claim. `story_seen=[ch0_gate]` and `247-story-pending={uid,beat,gift}` were kept, and back on Farm the scene plays. Reloading mid-scene replays it. Skip clears the pending beat, and Skip + reload shows no scene. **Regression checks:** (a) another account on the same device: B never sees A's beat (it is keyed by uid), and B's own ch0 plays; (b) with storage blocked (getItem/setItem throw), the beat plays once and closes with no page errors; (c) the pending entry holds only `{uid, beat, gift}`, never the wish text. **New issue found: R22** (below). R23 is an S4 edge case. |
+| R2 | S2 | ✅ **Fixed** | `ตรวจสอบรถ`, `สอบถามข้อมูลธนาคาร`, `ทดสอบระบบ`, `สอบสวน`, `Quiz night at bar` and `Final Fantasy night` → false. `สอบกลางภาค`, `สอบ OR`, `สอบย่อย`, `ควิซ สถิติ`, `Midterm IE`, `Quiz 3`, `final exam` and `Finals week` → true. Residual false positives (S4, R24): `สอบเทียบเครื่องมือ` (calibration, a common IE term), `ผู้สอบบัญชี` (auditor), `NBA Finals`. The new lookbehind regex needs Safari ≥ 16.4, which is Next 16's default browserslist baseline, so it is not a new constraint. |
+| R3 | S2 | ✅ **Fixed** | Seed-dex calendar in TH at 390 px: 3 columns, names wrap in full ("บัวหลวงแสงเทียน", "สตรอว์เบอร์รีหิมะ"), all text 12 px. No span overflows (`scrollWidth ≤ clientWidth`) and there is no horizontal scroll. R5 → 4. |
+| R4 | S3 | ✅ Fixed | `format:check` passes. |
+| R5 | S3 | ✅ Fixed | The client insert of `type:'story_seen'` → **42501**, and an ordinary client event type still inserts. **Note:** the fix edits the already-written migration `20261113100000_seasonal.sql`, which is OK only because it has never been pushed to prod. Any database that already applied the old version (e.g. a local DB on Minnie's Mac) keeps the old policy until it is reset. |
+| R6 | S3 | ⏸ Deferred to M11 (DECISIONS) | Accepted as a Known issue: beats are user-initiated (Farm tab only). |
+| R7 | S3 | ⏸ Waiting for Minnie | **The DECISIONS entry says "the SQL comment now says so", but `20261113100000_seasonal.sql:221-222` still says "can't be grown out of season".** This is an S4 doc/code mismatch: update the comment. |
+| R8 | S3 | ⏸ Deferred to M11 | Accepted as a Known issue. |
+| R9 | S3 | ✅ Fixed | `rows={4}` and `leading-relaxed`. A 120-char Thai wish fits without clipping. |
+| R10–R13, R15, R17–R19 | S4 | Accepted (DECISIONS) | OK as logged. |
+| R14 | S4 | ✅ Fixed (partly) | Escape closes the scene (verified). There is still no focus trap; accepted as S4. |
+| R16 | S4 | ✅ Fixed | `hasExam` counts only `key === "appointment"`: a class titled "Final exam" → false, an appointment → true. |
+| R20 | S4 | ✅ Fixed | In dark mode the off track is `rgb(194,185,169)` on the `rgb(45,42,37)` card, which is clearly visible. |
+| R21 | S4 | ✅ Fixed | `exact: true`; 4/4 green when repeated in parallel. |
+
+### New findings from the fixes
+| ID | Sev | Where | Steps to reproduce | Expected | Actual | Suggested fix |
+|---|---|---|---|---|---|---|
+| R22 | S3 | `lib/story/useStory.ts` (the pending beat is cleared only by `done`) + `components/story/Cutscene.tsx` (wish panel) | 1. Get to "Float a wish".<br>2. Type a wish and tap **Float it** (the server stores it and the scene moves to panel 4).<br>3. Reload or leave the app before tapping **Done**.<br>4. Open Farm. | The scene doesn't ask again for a wish that is already floated (or it skips straight to the ending). | The whole `lotus_use` scene replays, including the wish form. Floating again shows **"Couldn't float it right now. Try again?"** (`role=alert`), because the server refuses "already floated". This implies the first wish failed and invites endless retries; only "Not this time" or Escape ends it. Nothing is lost, but the message is wrong. | Either clear the pending beat once the wish panel succeeds (or skip the form), or have the Cutscene check `wishes` for this year on mount and skip the form panel. At minimum, map the `already floated` error to a kind "Your wish is already on the water" and advance. Write the test first (E2E: float, reload, then expect no form or the kind line). |
+| R23 | S4 | `lib/story/useStory.ts` (one global `247-story-pending` key) | On a shared device, A leaves mid-claim (A's pending is stored), signs out, and B signs in and opens Farm. B's own claim **overwrites** A's pending entry, so when A signs back in A's scene is gone (A's gift is still granted on the server). | Each user's pending beat survives. | The last writer wins. Rare: it needs a shared device plus a mid-claim exit. | Key the entry per user (`247-story-pending:<uid>`), or keep a small map keyed by uid. |
+| R24 | S4 | `lib/game/exam.ts` | Appointments titled `สอบเทียบเครื่องมือ`, `ผู้สอบบัญชี` or `NBA Finals`. | Not an exam. | Counted as an exam. | Add `เทียบ` to the negative lookahead and `ผู้` to the lookbehind, and require "finals" to be the first word or to sit next to "week/exam". Optional. |
+
+### Verdict (32fb795): **PASS**
+- **S1/S2:** none open. R1, R2 and R3 are verified fixed by my own repros, with no S1/S2 regressions.
+- **Remaining S3 Known issues:** R6 and R8 (M11), R7 (waiting for Minnie) and the new **R22**. R22 is quick to fix and worth doing before merge, because it makes a successful wish look like a failure.
+- **Remaining S4s:** R23, R24, the R7 comment mismatch and the accepted list.
+- **Gate status:** G7 is satisfied for this milestone. G6 (prod `db push` + `qc:prod`) and the WebKit CI matrix are still the owner's steps.
