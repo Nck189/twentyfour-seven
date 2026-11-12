@@ -10,6 +10,7 @@ import { startCounts } from "@/lib/game/outcome";
 import { startTiming, isPastBlock, type TimelineBlock } from "@/lib/today/day";
 import type { BlockLog } from "@/lib/today/useToday";
 import { CheckRow } from "./Checkbox";
+import { Fertilized } from "./Fertilized";
 import { SwapIcon } from "@/components/ui/Icons";
 import { NONE, first10Options } from "@/lib/onboarding";
 import { useBlockText } from "./useBlockText";
@@ -187,12 +188,15 @@ export function BlockCheckin({
             label={first10Text}
             disabled={closed}
             onToggle={() => {
-              (log.first10_at ? sfx.untick : sfx.tick)();
+              (log.first10_at ? sfx.untick : sfx.pop)();
               void actions.toggleFirst10(block, new Date());
             }}
           />
         ) : (
           <p className="text-sm text-muted">{t("first10Unset")}</p>
+        )}
+        {log.first10_at && !log.backfilled && (
+          <Fertilized key={log.first10_at} text={t("fertilized", { block: text.name(block.key) })} />
         )}
       </section>
 
