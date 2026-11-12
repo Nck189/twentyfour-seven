@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CROP_IDS, CROPS, GROW_DAYS, STARTER_CROPS } from "@/content/crops";
 import { BLOCK_KEYS } from "@/content/blocks";
@@ -7,6 +7,14 @@ import { DEAD_AT_MISSES, ON_TIME_MIN, SUCCESS_CHECKLIST_RATE } from "@/content/g
 /** The farm SQL mirrors content/crops.ts + content/game.ts (the server re-checks ripeness). */
 const sql = readFileSync("supabase/migrations/20261103060000_m6_farm.sql", "utf8");
 const list = (s: string) => [...s.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]);
+/** The latest migration that (re)defines a function is the live one (seasonal crops joined later). */
+const latest = (fn: string) =>
+  readdirSync("supabase/migrations")
+    .filter((f) => f.endsWith(".sql"))
+    .sort()
+    .map((f) => readFileSync(`supabase/migrations/${f}`, "utf8"))
+    .filter((t) => t.includes(`function public.${fn}(`))
+    .at(-1)!;
 
 describe("farm SQL mirrors the static content", () => {
   it("starter seeds", () => {
@@ -14,7 +22,7 @@ describe("farm SQL mirrors the static content", () => {
     expect(list(m[1]!)).toEqual(STARTER_CROPS);
   });
   it("grow days per crop", () => {
-    const body = sql.match(/_crop_grow_days[\s\S]*?end\)::smallint/)![0];
+    const body = latest("_crop_grow_days").match(/_crop_grow_days[\s\S]*?end\)::smallint/)![0];
     const fromSql: Record<string, number> = {};
     for (const m of body.matchAll(/when p_crop in \(([^)]+)\) then (\d+)/g))
       for (const id of list(m[1]!)) fromSql[id!] = Number(m[2]);
@@ -22,7 +30,7 @@ describe("farm SQL mirrors the static content", () => {
     expect(Object.values(GROW_DAYS)).toEqual([1, 2, 3, 5, 7]);
   });
   it("regrowing crops, block plots, success and death numbers", () => {
-    const regrow = sql.match(/_crop_regrows[\s\S]*?p_crop in \(([^)]+)\)/)!;
+    const regrow = latest("_crop_regrows").match(/_crop_regrows[\s\S]*?p_crop in \(([^)]+)\)/)!;
     expect(list(regrow[1]!)).toEqual(CROP_IDS.filter((id) => CROPS[id].regrow));
     const slots = sql.match(/p_slot not in \(([^)]+)\)/)!;
     expect(list(slots[1]!)).toEqual([...BLOCK_KEYS]);

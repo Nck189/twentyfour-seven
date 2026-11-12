@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BLOCK_KEYS, type BlockKey } from "@/content/blocks";
-import { CROPS, CROP_IDS, GROW_DAYS, STARTER_CROPS } from "@/content/crops";
+import { CROPS, CROP_IDS, GACHA_CROP_IDS, GROW_DAYS, STARTER_CROPS } from "@/content/crops";
 import { MUTATION_MULTIPLIER } from "@/content/game";
 import {
   blockResult,
@@ -70,16 +70,21 @@ const plant = (slot: BlockKey, cropId: Planting["cropId"], plantedOn: string, st
 });
 
 describe("crop catalog (SPEC §8.2)", () => {
-  it("20 crops, 4 per rarity, grow days by rarity, pumpkin + melon go giant, uncommon regrow", () => {
-    expect(CROP_IDS).toHaveLength(20);
+  it("20 capsule crops, 4 per rarity, grow days by rarity, pumpkin + melon go giant, uncommon regrow", () => {
+    expect(GACHA_CROP_IDS).toHaveLength(20);
     for (const r of Object.keys(GROW_DAYS) as (keyof typeof GROW_DAYS)[]) {
-      const of = CROP_IDS.filter((id) => CROPS[id].rarity === r);
+      const of = GACHA_CROP_IDS.filter((id) => CROPS[id].rarity === r);
       expect(of).toHaveLength(4);
       of.forEach((id) => expect(CROPS[id].growDays).toBe(GROW_DAYS[r]));
     }
     expect(GROW_DAYS).toEqual({ common: 1, uncommon: 2, rare: 3, epic: 5, legendary: 7 });
     expect(CROP_IDS.filter((id) => CROPS[id].giant)).toEqual(["pumpkin", "melon"]);
-    expect(CROP_IDS.filter((id) => CROPS[id].regrow)).toEqual(["strawberry", "blueberry", "tomato", "corn"]);
+    expect(GACHA_CROP_IDS.filter((id) => CROPS[id].regrow)).toEqual([
+      "strawberry",
+      "blueberry",
+      "tomato",
+      "corn",
+    ]);
     STARTER_CROPS.forEach((id) => expect(CROPS[id].rarity).toBe("common"));
   });
 });

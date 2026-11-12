@@ -280,7 +280,9 @@
     "star_fruit": "Star fruit",
     "moon_melon": "Moon melon",
     "crystal_rose": "Crystal rose",
-    "rainbow_corn": "Rainbow corn"
+    "rainbow_corn": "Rainbow corn",
+    "candle_lotus": "Candle Lotus",
+    "snow_strawberry": "Snow Strawberry"
   },
   "decor": {
     "fence": "Fence",
@@ -325,7 +327,16 @@
     "stars": "★{n}",
     "shardsHave": "{n, plural, one {# shard} other {# shards}}",
     "starUp": "Star up · {n, plural, one {# shard} other {# shards}}",
-    "maxStar": "★5 — fully grown up!"
+    "maxStar": "★5 — fully grown up!",
+    "calendar": {
+      "title": "Crop calendar",
+      "hint": "One seasonal crop a month. Missed one? It comes back the same month next year.",
+      "planting": "Seeds in the shop until the {day}th",
+      "market": "Seasonal market now",
+      "returns": "Back {when}",
+      "soon": "Coming soon",
+      "unknown": "not announced yet"
+    }
   },
   "stats": {
     "title": "Stats",
@@ -1028,7 +1039,15 @@
     "enjoy": "Enjoy {title}! −{n} coins. You earned it.",
     "confirmRedeem": "Spend {n} coins",
     "cancel": "Cancel",
-    "levelOf": "Level {n} of {max}"
+    "levelOf": "Level {n} of {max}",
+    "season": {
+      "seedTitle": "Seasonal seed · planting season",
+      "seedHint": "Only on days 1–14 of its month. Missed it? It comes back next year.",
+      "marketTitle": "Seasonal market · {crop}",
+      "marketHint": "{crop} sells for ×1.5 until the month ends, and there's one special order.",
+      "order": "Special order: {crop} × {n}",
+      "priceTag": "Seasonal market ×{n}"
+    }
   },
   "story": {
     "next": "Next",
