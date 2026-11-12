@@ -155,3 +155,31 @@ Covers 91f022f (the coffee → bedtime insight), 4c850ac (chapters 3–6 + `cafe
 | R2-4 (S3) | Fixed: the insight says "coffee or tea" and the other group is "other days (none, or only in the morning)" in EN and TH. |
 | R2-5 (S3) | Accepted: story tickets are recorded in `story_seen.gift` + the `story_seen` event (the existing pattern for ch2); a shared ticket ledger is a separate cleanup. |
 | S4 "Farm sign" capital | Fixed: "Gift for your farm: {item}". Other S4s accepted. |
+
+## Round 3 (G7, 2026-11-13): `git diff ac01e00..3e22e23`
+
+### Checks
+| Check | Result |
+|---|---|
+| `tsc`, `eslint .`, `prettier --check` (changed files), `i18n:check` (1017 keys), `art:lint` | all pass |
+| `vitest run tests/unit` | 348/348 |
+| Integration: story, cafe, snow-story, seasonal-story | 16/16 |
+| Backfill probe (re-run): new account backfills 30 days, then claims `ch6_album` | `days_used` = 0; claim refused ("not yet"); tickets stay 0 |
+| Direct-write probes | inserting a live `wake_events` row → RLS denied; flipping `backfilled` → 0 rows; moving `profiles.created_at` → permission denied |
+| Positive probe: 30 live wake days after the account's creation date | `days_used` = 30; ch6 granted |
+
+### Fix verification
+| ID | Verdict |
+|---|---|
+| R2-1 (S1) | **Verified.** `days_used` counts only `not backfilled` days on or after the local creation date. Clients can't fake live wakes or move `created_at`. A new integration test covers a new account backfilling 30 days. |
+| R2-2 | **Verified.** Chapters 0–2 come first, then month-only seasonal beats (`season` triggers), then the other chapters. A unit test was added. |
+| R2-3 | **Verified.** A P0001 error shows "You already answered today" and the question doesn't loop. |
+| R2-4 | **Verified.** EN and TH say "coffee or tea", and the other group is "other days (none, or only in the morning)". |
+| R2-8 | **Verified.** "Gift for your farm: {item}". |
+| 94d7865 (chapter R) | **OK.** Som (stretch pose) and the new line are on the Welcome back card; the keys are in both EN and TH. |
+
+### New minor finding
+- **R3-1 (S4), `lib/cafe/useCafe.ts` `answer()`:** every P0001 is mapped to "already". That includes `answer_coffee`'s "no coffee or tea ordered today", which happens only if the wake-day rolls over between ordering and answering. In that case the copy would say "already answered". It is harmless.
+
+### Verdict (round 3)
+**PASS.** No open S1/S2. Still open: S3 R2-5 (story tickets skip `ticket_grants`; the pattern predates this PR). Also open as S4: R2-6, R2-7, R2-9, R2-10, R3-1, and the remaining S4s from round 1.
