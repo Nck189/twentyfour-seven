@@ -79,6 +79,8 @@ Each month has **3 beats**, all directed by the same rules as above (one a day, 
 
 Each "use" reward is server-side and checked once per crop per year.
 
+**Built (2026-11-12):** the calendar (`content/seasonal.ts`), the seed shop / ×1.5 market / special order (3 for 118) on the server, the 12-slot crop calendar in the Seed-dex, Candle Lotus art and its three beats with "Float a wish", Snow Strawberry's calendar entry and art. Seasonal crops are rare and regrow. The opening beat gives 1 seed; the market beat has no gift. The opening and market beats play only in their month (missed → next year). **Deferred:** the capsule drop, December's beats, and the wish's return scene next Loy Krathong (the wish is stored for it). Details in `docs/DECISIONS.md`.
+
 ## More Som moments (small, high value; part of the story work)
 Approved to add on 2026-11-12 ("ถ้ามีทำได้เลย"). Each reuses existing art and data:
 1. **Sunday with Som:** the weekly review opens with Som reacting to *your* week, and shows the best day, the best block and the miss reason that came up most. The tone is kind: "สัปดาห์นี้ตื่นทัน 5 เช้า ส้มภูมิใจ". It turns the review from a form into a moment.
