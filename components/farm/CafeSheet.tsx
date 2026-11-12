@@ -5,16 +5,17 @@ import { useRef, useState } from "react";
 import { Cup } from "@/components/art/farm/Cup";
 import { Sheet } from "@/components/today/BlockSheet";
 import { Button } from "@/components/ui/Button";
-import { CARD_SIZE, DRINKS, type CoffeeAnswer, type DrinkId } from "@/content/cafe";
+import { CARD_SIZE, DRINKS, type CoffeeAnswer, type CoffeeSlot, type DrinkId } from "@/content/cafe";
 import { cardProgress } from "@/lib/game/cafe";
 import type { OrderResult, useCafe } from "@/lib/cafe/useCafe";
 import { sfx } from "@/lib/sound/sfx";
 
 /**
- * Som's café (docs/STORY.md): order any drink for a stamp (a game, any time); a full card of 10
- * gives a gift. Right after an order — at most once a wake-day, never when "game only" is on — it
- * asks whether you drank one in real life too: yes / later / just playing. Closing it is "later",
- * so the Night ritual can ask once at bedtime. The server decides stamps, gifts and the asking.
+ * Som's café (docs/STORY.md): order any drink for a stamp (a game, any time); the first full card of
+ * 10 gives the café table. Right after a coffee or tea — at most once a wake-day, never when "game
+ * only" is on — it asks whether you drank one in real life too: yes / later / just playing. Closing
+ * it is "later" (and leaving it unanswered is asked once at bedtime). After "yes", another real
+ * cup can be added. The server decides stamps, gifts and the asking.
  */
 export function CafeSheet({ cafe, onClose }: { cafe: ReturnType<typeof useCafe>; onClose: () => void }) {
   const t = useTranslations("cafe");
@@ -22,6 +23,7 @@ export function CafeSheet({ cafe, onClose }: { cafe: ReturnType<typeof useCafe>;
   const [asking, setAsking] = useState(false);
   const [answered, setAnswered] = useState<CoffeeAnswer | null>(null);
   const [error, setError] = useState(false);
+  const [cup, setCup] = useState<CoffeeSlot | null>(null);
   const busy = useRef(false);
   const [pending, setPending] = useState(false);
   const stamps = last?.r.stamps ?? cafe.status?.stamps ?? 0;
@@ -31,8 +33,13 @@ export function CafeSheet({ cafe, onClose }: { cafe: ReturnType<typeof useCafe>;
 
   const reply = async (a: CoffeeAnswer) => {
     setAsking(false);
-    setAnswered(a);
-    if (!(await cafe.answer(a))) setError(true);
+    setError(false);
+    // G7 R-C7: "Noted" only once the server has it; on failure the question comes back.
+    if (await cafe.answer(a)) setAnswered(a);
+    else {
+      setError(true);
+      setAsking(true);
+    }
   };
 
   const close = () => {
@@ -69,7 +76,7 @@ export function CafeSheet({ cafe, onClose }: { cafe: ReturnType<typeof useCafe>;
         <div role="status" className="mb-3 rounded-xl bg-primary-soft p-3 font-bold text-primary">
           <p>{t("ordered", { drink: t(`drink.${last.drink}`) })}</p>
           {last.r.reward && "decor" in last.r.reward && <p>{t("rewardTable")}</p>}
-          {last.r.reward && "coins" in last.r.reward && <p>{t("rewardCoins", { n: last.r.reward.coins })}</p>}
+          {last.r.reward && "card" in last.r.reward && <p>{t("rewardCard", { n: last.r.reward.card })}</p>}
         </div>
       )}
 
@@ -92,6 +99,28 @@ export function CafeSheet({ cafe, onClose }: { cafe: ReturnType<typeof useCafe>;
         <p role="status" className="mb-3 text-sm text-muted">
           {t(`answered.${answered}`)}
         </p>
+      )}
+      {/* G7 R-C5: a "yes" day can add another real cup (the day keeps the latest time of day). */}
+      {cafe.status?.answer === "yes" && !asking && !cafe.status.gameOnly && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <Button
+            variant="secondary"
+            disabled={pending}
+            onClick={async () => {
+              setError(false);
+              const s = await cafe.addRealCup();
+              if (s) setCup(s);
+              else setError(true);
+            }}
+          >
+            {t("addCup")}
+          </Button>
+          {cup && (
+            <p role="status" className="text-sm text-muted">
+              {t("addedCup", { slot: t(`slot.${cup}`) })}
+            </p>
+          )}
+        </div>
       )}
       {error && (
         <p role="alert" className="mb-3 rounded-xl bg-accent-soft p-3 font-bold text-accent">

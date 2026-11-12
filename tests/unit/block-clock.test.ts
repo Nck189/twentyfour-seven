@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { blockAt, storyBusy, type SavedBlock } from "@/lib/today/blockClock";
+import { blockAt, storyBusy, storyBusyAt, type SavedBlock } from "@/lib/today/blockClock";
 
 const at = (h: number, m = 0) => new Date(2026, 10, 12, h, m);
 const day: SavedBlock[] = [
@@ -30,5 +30,14 @@ describe("block clock (G7 STORY-R6/R8: the current block on any screen)", () => 
     expect(storyBusy(blockAt(day, at(21, 30)))).toBe(true);
     expect(storyBusy(blockAt(day, at(12)))).toBe(false);
     expect(storyBusy(null)).toBe(false);
+  });
+
+  it("G7 R-C10: the next morning, before Today saves the new day, scenes still wait (≤ 2 h)", () => {
+    expect(storyBusyAt(day, at(12))).toBe(false);
+    expect(storyBusyAt(day, at(7, 10))).toBe(true);
+    // The saved Sleep ended at 07:00 on the 13th: the new day's wake window, not saved yet.
+    expect(storyBusyAt(day, new Date(2026, 10, 13, 7, 20))).toBe(true);
+    expect(storyBusyAt(day, new Date(2026, 10, 13, 9, 30))).toBe(false);
+    expect(storyBusyAt([], at(7, 10))).toBe(false);
   });
 });

@@ -67,7 +67,7 @@ test("CJ-CAFE-1 order a latte for a stamp; 'Later' is asked once at bedtime", as
     await ritual.getByRole("button", { name: "Next" }).click();
     await expect(ritual.getByText(`Step ${n} of 4`)).toBeVisible();
   }
-  const night = ritual.getByRole("region", { name: "Coffee today in real life?" });
+  const night = ritual.getByRole("region", { name: "Coffee or tea today in real life? (your latest cup)" });
   await expect(night).toBeVisible();
   await expectTouchTargets(page);
   await night.getByRole("button", { name: "Afternoon" }).click();
@@ -96,8 +96,8 @@ test("CJ-CAFE-2 'Use the café in the game only' never asks; the café stays clo
   await page.goto("/farm");
   await page.getByRole("button", { name: /Som's café/ }).click();
   const sheet = page.getByRole("dialog", { name: "Som's café" });
-  await sheet.getByRole("button", { name: "Cocoa" }).click();
-  await expect(sheet.getByText("Som made you a Cocoa. Stamp!")).toBeVisible();
+  await sheet.getByRole("button", { name: "Latte" }).click();
+  await expect(sheet.getByText("Som made you a Latte. Stamp!")).toBeVisible();
   await expect(sheet.getByRole("region", { name: "Did you have one in real life too?" })).toHaveCount(0);
   expect(await rest(`coffee_answers?user_id=eq.${id}&select=answer`)).toEqual([]);
 
@@ -148,4 +148,35 @@ test("CJ-CAFE-3 Stats → Sleep: coffee vs bedtime once 8+ answered days on each
   await expect(card).toContainText("you say Goodnight about 35 min later");
   await expect(card).toContainText("From 9 days with afternoon/evening coffee and 11 days without.");
   await expectNoSeriousA11y(page);
+});
+
+test("CJ-CAFE-4 water never asks; closing the question counts as 'Later'; a 'Yes' day can add another real cup", async ({
+  page,
+}) => {
+  const id = await setup(page, "cafe-close");
+  await page.goto("/farm");
+  await page.getByRole("button", { name: /Som's café/ }).click();
+  const sheet = page.getByRole("dialog", { name: "Som's café" });
+  const ask = sheet.getByRole("region", { name: "Did you have one in real life too?" });
+  await sheet.getByRole("button", { name: "Water" }).click();
+  await expect(sheet.getByText("Som made you a Water. Stamp!")).toBeVisible();
+  await expect(ask).toHaveCount(0);
+  await sheet.getByRole("button", { name: "Thai tea" }).click();
+  await expect(ask).toBeVisible();
+  await sheet.getByRole("button", { name: "Close" }).click();
+  await expect(sheet).toHaveCount(0);
+  await expect
+    .poll(() => rest(`coffee_answers?user_id=eq.${id}&select=answer,drink`))
+    .toEqual([{ answer: "later", drink: "thai_tea" }]);
+
+  const v = await setup(page, "cafe-cup");
+  await page.goto("/farm");
+  await page.getByRole("button", { name: /Som's café/ }).click();
+  await sheet.getByRole("button", { name: "Americano" }).click();
+  await ask.getByRole("button", { name: "Yes" }).click();
+  await expect(sheet.getByText("Noted. Enjoy!")).toBeVisible();
+  await sheet.getByRole("button", { name: "I had another real one" }).click();
+  await expect(sheet.getByText(/Noted\. Latest real cup: (Morning|Afternoon|Evening)\./)).toBeVisible();
+  await expectTouchTargets(page);
+  expect(await rest(`coffee_answers?user_id=eq.${v}&select=answer`)).toEqual([{ answer: "yes" }]);
 });

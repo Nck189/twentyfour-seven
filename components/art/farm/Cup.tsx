@@ -43,13 +43,10 @@ export function Cup({
         </>
       ) : (
         <>
-          {/* handle */}
+          {/* handle: a filled C (no thick strokes) */}
           <path
-            d="M32 21 Q39.4 21 38.6 27.4 Q37.8 32.4 31.6 32"
-            fill="none"
-            stroke="var(--art-stone-dark)"
-            strokeWidth={3}
-            strokeLinecap="round"
+            d="M31 20.2 Q40.4 20 39.6 27.4 Q38.8 33.8 31 33.2 L31.2 30.4 Q36.4 30.6 36.8 27.2 Q37.2 22.8 31 23Z"
+            fill="var(--art-stone-dark)"
           />
           {/* mug: shadow side, base, the drink's surface, highlight */}
           <path

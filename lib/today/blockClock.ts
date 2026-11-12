@@ -29,6 +29,25 @@ export function storyBusy(block: ClockBlock | null): boolean {
   return block?.key === "wake" || block?.key === "down";
 }
 
+/** How long after the saved day ends (its Sleep ends at the next wake target) to still wait. */
+export const STALE_WAIT_MS = 2 * 60 * 60_000;
+
+/**
+ * Som's "busy" from the saved blocks (G7 R-C10). In a saved block: the wake window and Down Time
+ * are busy. Just after the saved day ended (the next morning, before Today has saved the new day)
+ * it's most likely the wake window, so scenes wait for up to STALE_WAIT_MS. Otherwise (nothing
+ * saved, or long after) nothing is guessed.
+ */
+export function storyBusyAt(blocks: readonly SavedBlock[], now: Date): boolean {
+  const cur = blockAt(blocks, now);
+  if (cur) return storyBusy(cur);
+  const ends = blocks.map((b) => new Date(b.end).getTime()).filter((t) => !Number.isNaN(t));
+  if (ends.length === 0) return false;
+  const last = Math.max(...ends);
+  const t = now.getTime();
+  return t >= last && t < last + STALE_WAIT_MS;
+}
+
 type BlockClockState = { blocks: SavedBlock[]; save: (blocks: SavedBlock[]) => void };
 
 export const useBlockClock = create<BlockClockState>()(

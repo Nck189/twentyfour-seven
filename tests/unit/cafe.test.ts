@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { askAfterOrder, askAtBedtime, cardProgress, coffeeDay, coffeeSleep, slotOf } from "@/lib/game/cafe";
+import {
+  askAfterOrder,
+  askAtBedtime,
+  cardProgress,
+  coffeeDay,
+  coffeeSleep,
+  laterSlot,
+  slotOf,
+} from "@/lib/game/cafe";
 
 describe("Som's café (docs/STORY.md, Minnie's popup flow)", () => {
   it("a stamp card fills at 10, then starts again; stamps never expire", () => {
@@ -9,20 +17,42 @@ describe("Som's café (docs/STORY.md, Minnie's popup flow)", () => {
     expect(cardProgress(23)).toEqual({ cards: 2, onCard: 3 });
   });
 
-  it("asks 'in real life too?' right after an order at most once a day, never when turned off", () => {
-    expect(askAfterOrder({ answeredToday: null, gameOnly: false })).toBe(true);
-    expect(askAfterOrder({ answeredToday: "later", gameOnly: false })).toBe(false);
-    expect(askAfterOrder({ answeredToday: "yes", gameOnly: false })).toBe(false);
-    expect(askAfterOrder({ answeredToday: null, gameOnly: true })).toBe(false);
+  it("asks 'in real life too?' right after a coffee/tea order at most once a day, never when turned off", () => {
+    expect(askAfterOrder({ answeredToday: null, gameOnly: false, drink: "latte" })).toBe(true);
+    expect(askAfterOrder({ answeredToday: null, gameOnly: false, drink: "thai_tea" })).toBe(true);
+    // G7 R-C4: water and cocoa never ask (a "yes" after water isn't a coffee day).
+    expect(askAfterOrder({ answeredToday: null, gameOnly: false, drink: "water" })).toBe(false);
+    expect(askAfterOrder({ answeredToday: null, gameOnly: false, drink: "cocoa" })).toBe(false);
+    expect(askAfterOrder({ answeredToday: "later", gameOnly: false, drink: "latte" })).toBe(false);
+    expect(askAfterOrder({ answeredToday: "yes", gameOnly: false, drink: "latte" })).toBe(false);
+    expect(askAfterOrder({ answeredToday: null, gameOnly: true, drink: "latte" })).toBe(false);
   });
 
-  it("the bedtime question comes only after 'later' (or a closed popup); never after yes/just playing", () => {
-    expect(askAtBedtime({ answeredToday: "later", nightAnswered: false, gameOnly: false })).toBe(true);
-    expect(askAtBedtime({ answeredToday: "later", nightAnswered: true, gameOnly: false })).toBe(false);
-    expect(askAtBedtime({ answeredToday: "yes", nightAnswered: false, gameOnly: false })).toBe(false);
-    expect(askAtBedtime({ answeredToday: "play", nightAnswered: false, gameOnly: false })).toBe(false);
-    expect(askAtBedtime({ answeredToday: null, nightAnswered: false, gameOnly: false })).toBe(false);
-    expect(askAtBedtime({ answeredToday: "later", nightAnswered: false, gameOnly: true })).toBe(false);
+  it("the bedtime question comes after 'later' or an unanswered question; never after yes/just playing", () => {
+    const at = (
+      answeredToday: "yes" | "later" | "play" | null,
+      o: Partial<{ night: boolean; off: boolean; ordered: boolean }> = {},
+    ) =>
+      askAtBedtime({
+        answeredToday,
+        nightAnswered: o.night ?? false,
+        gameOnly: o.off ?? false,
+        orderedToday: o.ordered ?? true,
+      });
+    expect(at("later")).toBe(true);
+    expect(at("later", { night: true })).toBe(false);
+    expect(at("yes")).toBe(false);
+    expect(at("play")).toBe(false);
+    // G7 R-C6: left without an answer (tab switch, app closed) → asked once at bedtime.
+    expect(at(null)).toBe(true);
+    expect(at(null, { ordered: false })).toBe(false);
+    expect(at("later", { off: true })).toBe(false);
+  });
+
+  it("another real cup keeps the day's latest time of day (G7 R-C5)", () => {
+    expect(laterSlot("morning", "afternoon")).toBe("afternoon");
+    expect(laterSlot("evening", "morning")).toBe("evening");
+    expect(laterSlot(null, "morning")).toBe("morning");
   });
 
   it("a real coffee's time of day: morning before noon, afternoon until 17:00, then evening", () => {

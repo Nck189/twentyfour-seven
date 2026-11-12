@@ -95,5 +95,8 @@ describe("Snow Strawberry beats (server)", () => {
     expect(r.error).toBeNull();
     expect(r.data).toEqual({ year: 2026, harvests: 2, best_streak: 12, mornings: 2 });
     expect((await anon().rpc("year_review")).error).not.toBeNull();
+    // G7 R-C2: the cake can wait into January (or a later first sale): still last season's year.
+    await clock(u.id, "2027-01-05");
+    expect((await u.client.rpc("year_review")).data).toMatchObject({ year: 2026, harvests: 2 });
   });
 });

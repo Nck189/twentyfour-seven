@@ -3,23 +3,41 @@
  * question comes right after an order at most once a day (yes / later / just playing), with one
  * bedtime fallback only after "later". Unanswered or "just playing" days never count as "no coffee".
  */
-import { CARD_SIZE, type CoffeeAnswer, type CoffeeSlot } from "@/content/cafe";
+import { CARD_SIZE, isCaffeinated, type CoffeeAnswer, type CoffeeSlot, type DrinkId } from "@/content/cafe";
 
 export function cardProgress(stamps: number): { cards: number; onCard: number } {
   const n = Math.max(0, Math.floor(stamps));
   return { cards: Math.floor(n / CARD_SIZE), onCard: n % CARD_SIZE };
 }
 
-export function askAfterOrder(s: { answeredToday: CoffeeAnswer | null; gameOnly: boolean }): boolean {
-  return !s.gameOnly && s.answeredToday === null;
+/** Right after an order: only a caffeinated drink, once a wake-day, never when game-only. */
+export function askAfterOrder(s: {
+  answeredToday: CoffeeAnswer | null;
+  gameOnly: boolean;
+  drink: DrinkId;
+}): boolean {
+  return !s.gameOnly && s.answeredToday === null && isCaffeinated(s.drink);
 }
 
+/**
+ * At bedtime, once: after "later", or after a caffeinated order whose question was left unanswered
+ * (closed, switched tabs: G7 R-C6). Never after "yes" / "just playing", never when game-only.
+ */
 export function askAtBedtime(s: {
   answeredToday: CoffeeAnswer | null;
   nightAnswered: boolean;
   gameOnly: boolean;
+  /** A caffeinated drink was ordered this wake-day. */
+  orderedToday: boolean;
 }): boolean {
-  return !s.gameOnly && s.answeredToday === "later" && !s.nightAnswered;
+  if (s.gameOnly || s.nightAnswered) return false;
+  return s.answeredToday === "later" || (s.answeredToday === null && s.orderedToday);
+}
+
+const RANK: Record<CoffeeSlot, number> = { none: 0, morning: 1, afternoon: 2, evening: 3 };
+/** Another real cup on a "yes" day: the day keeps its latest time of day (G7 R-C5). */
+export function laterSlot(a: CoffeeSlot | null, b: CoffeeSlot): CoffeeSlot {
+  return a !== null && RANK[a] >= RANK[b] ? a : b;
 }
 
 /** The time of day a real coffee counts in (the order's time for "yes"). */

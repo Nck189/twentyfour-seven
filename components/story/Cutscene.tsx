@@ -199,16 +199,21 @@ type Review = { year: number; harvests: number; best_streak: number; mornings: n
 function YearReview() {
   const t = useTranslations("story");
   const [r, setR] = useState<Review | null>(null);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       const { data, error } = await getSupabase().rpc("year_review");
-      if (!cancelled && !error && data) setR(data as Review);
+      if (cancelled) return;
+      if (!error && data) setR(data as Review);
+      else setFailed(true);
     })();
     return () => {
       cancelled = true;
     };
   }, []);
+  // G7 R-C11: never "Counting…" forever; the scene goes on without the numbers.
+  if (failed) return <p className="text-sm text-muted">{t("review.error")}</p>;
   if (!r) return <p className="text-sm text-muted">{t("review.loading")}</p>;
   return (
     <section

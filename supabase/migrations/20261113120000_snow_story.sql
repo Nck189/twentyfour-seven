@@ -57,8 +57,9 @@ as $$
   end
 $$;
 
--- The year in review for the year-end cake (Snow Strawberry use beat): this user's own year, by
--- the calendar's date (the wake-day, or the test clock). {year, harvests, best_streak, mornings}.
+-- The year in review for the year-end cake (Snow Strawberry use beat): this user's own year. The
+-- year is the beat's season-year (G7 R-C2): a first sale on 4 Jan 2027 is still 2026's cake.
+-- {year, harvests, best_streak (all-time, labelled "so far"), mornings}.
 create or replace function public.year_review()
 returns jsonb
 language plpgsql
@@ -74,7 +75,7 @@ begin
   if uid is null then
     raise exception 'not authenticated' using errcode = '42501';
   end if;
-  y := extract(year from public._season_day(uid))::integer;
+  y := public._season_year('snow_strawberry', public._season_day(uid));
   tz := coalesce((select p.timezone from public.profiles p where p.user_id = uid), 'Asia/Bangkok');
   return jsonb_build_object(
     'year', y,

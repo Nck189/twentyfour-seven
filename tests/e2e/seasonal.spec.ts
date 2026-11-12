@@ -173,7 +173,7 @@ test("CJ-SEASON-3 Snow Strawberry: the year-end cake shows the user's own year i
   for (let i = 0; i < 2; i++) await scene.getByRole("button", { name: "Next" }).click();
   const review = scene.getByRole("region", { name: "Your 2026" });
   await expect(review).toContainText("2 harvests");
-  await expect(review).toContainText("Best streak: 0 days");
+  await expect(review).toContainText("Best streak so far: 0 days");
   await expectNoHorizontalScroll(page);
   await expectTouchTargets(page);
   await scene.getByRole("button", { name: "Next" }).click();

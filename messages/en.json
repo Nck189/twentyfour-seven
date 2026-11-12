@@ -1193,23 +1193,23 @@
     "review": {
       "title": "Your {year}",
       "harvests": "{n, plural, one {# harvest} other {# harvests}}",
-      "streak": "{n, plural, one {Best streak: # day} other {Best streak: # days}}",
+      "streak": "{n, plural, one {Best streak so far: # day} other {Best streak so far: # days}}",
       "mornings": "{n, plural, one {# morning on time} other {# mornings on time}}",
-      "loading": "Counting your year…"
+      "loading": "Counting your year…",
+      "error": "Couldn't count your year right now. It's still a good one."
     }
   },
   "cafe": {
     "title": "Som's café",
-    "hint": "Order anything, any time: one drink is one stamp. {n} stamps fill a card and Som gives you a gift.",
+    "hint": "Order anything, any time: one drink is one stamp. Your first full card of {n} gets a gift from Som.",
     "card": "Stamp card",
     "cards": "{n, plural, =0 {No full cards yet} one {# full card} other {# full cards}}",
     "stamps": "{n} of {total} stamps",
     "menu": "Menu",
     "ordered": "Som made you a {drink}. Stamp!",
     "rewardTable": "A full card! The café table is now on your farm.",
-    "rewardCoins": "A full card! +{n} coins.",
     "askTitle": "Did you have one in real life too?",
-    "askHint": "Only so Stats can show whether coffee changes your sleep. Asked once a day at most.",
+    "askHint": "Only so Stats can show whether coffee changes your sleep. Asked once a day at most, only after coffee or tea.",
     "answer": {
       "yes": "Yes",
       "later": "Later",
@@ -1222,7 +1222,7 @@
     },
     "error": "Couldn't reach the café. Try again.",
     "privacy": "Turn the question off any time: More → Som's café.",
-    "nightTitle": "Coffee today in real life?",
+    "nightTitle": "Coffee or tea today in real life? (your latest cup)",
     "nightThanks": "Thanks, noted.",
     "slot": {
       "none": "No coffee",
@@ -1243,6 +1243,9 @@
       "cocoa": "Cocoa",
       "jasmine_tea": "Jasmine tea",
       "water": "Water"
-    }
+    },
+    "rewardCard": "Card #{n} complete! Som stamps a little paw on it.",
+    "addCup": "I had another real one",
+    "addedCup": "Noted. Latest real cup: {slot}."
   }
 }

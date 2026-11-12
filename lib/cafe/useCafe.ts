@@ -11,10 +11,13 @@ export type CafeStatus = {
   /** The bedtime answer is in. */
   night: boolean;
   gameOnly: boolean;
+  /** A coffee/tea was ordered this wake-day (the bedtime question may follow). */
+  ordered: boolean;
 };
 export type OrderResult = {
   stamps: number;
-  reward: { decor: string } | { coins: number } | null;
+  /** The first full card: the café table. Later cards: a celebration only (never currency). */
+  reward: { decor: string } | { card: number } | null;
   /** Ask "in real life too?" now (server: once a wake-day, never when game-only). */
   ask: boolean;
 };
@@ -35,12 +38,19 @@ export function useCafe(enabled = true) {
     void (async () => {
       const r = await client.rpc("cafe_status");
       if (cancelled || r.error || !r.data) return;
-      const d = r.data as { stamps: number; answer: unknown; night: boolean; game_only: boolean };
+      const d = r.data as {
+        stamps: number;
+        answer: unknown;
+        night: boolean;
+        game_only: boolean;
+        ordered?: boolean;
+      };
       setStatus({
         stamps: d.stamps,
         answer: isAnswer(d.answer) ? d.answer : null,
         night: !!d.night,
         gameOnly: !!d.game_only,
+        ordered: !!d.ordered,
       });
     })();
     return () => {
@@ -69,6 +79,12 @@ export function useCafe(enabled = true) {
     [client, reload],
   );
 
+  /** "I had another real one" on a "yes" day: the server keeps the latest time of day. */
+  const addRealCup = useCallback(async (): Promise<CoffeeSlot | null> => {
+    const r = await client.rpc("add_real_cup");
+    return r.error ? null : (r.data as CoffeeSlot);
+  }, [client]);
+
   const answerNight = useCallback(
     async (slot: CoffeeSlot): Promise<boolean> => {
       const r = await client.rpc("answer_coffee_night", { p_slot: slot });
@@ -89,5 +105,5 @@ export function useCafe(enabled = true) {
     [client],
   );
 
-  return { status, order, answer, answerNight, setGameOnly, reload };
+  return { status, order, answer, addRealCup, answerNight, setGameOnly, reload };
 }
