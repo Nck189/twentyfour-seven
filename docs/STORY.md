@@ -45,3 +45,36 @@ Pure logic in `lib/game/director.ts`; the server records what was seen.
 1. The cat's art (6 poses) and the `story_seen` table + RPCs.
 2. The director (unit tests: one a day, calm moments only, no repeats, condition checks) and the cutscene player (reduced-motion and skip E2E).
 3. Chapters 0–2, then the rest one at a time.
+
+## Seasonal crops and their story beats (Minnie OK 2026-11-12)
+There is one seasonal crop a month, but something new happens every two weeks:
+- **Days 1–14, planting season:** the crop's seed is sold in the seed shop and can drop from capsules.
+- **Days 15–end, seasonal market:** the crop sells at ×1.5 and has a special order.
+- **No FOMO:** a crop missed this year comes back next year. The Seed-dex gets a 12-slot "crop calendar" that says when each one returns.
+
+Each month has **3 beats**, all directed by the same rules as above (one a day, calm moments, skippable). Gifts are granted by the server.
+1. **Opening (day 1):** Som introduces the crop.
+2. **Market (day 15):** the seasonal market opens.
+3. **Use:** the first time you sell, deliver or "use" the crop, something special happens, different every month.
+
+| Month | Crop | Opening (day 1) | Market (day 15) | Using it → what you get |
+|---|---|---|---|---|
+| Jan | **ดอกพลุ** Firework Bloom | Som chases sparks out of a seed packet. | A night market with string lights. | **Fireworks night**: the farm sky shows small fireworks for 3 nights, +1 ticket. |
+| Feb | **ส้มมงคล** Lucky Mandarin | Som rolls a golden mandarin to your door. | Red lanterns on the stall; neighbours ask for pairs. | **อั่งเปา**: deliver a pair to get a red envelope with a server-rolled 20–88 coins. |
+| Mar | **ลูกท้อชมพู** Blossom Peach | The tree flowers before it fruits; Som sneezes at petals. | A picnic market under the blossoms. | **Blossom blessing**: petals fall on the farm for a week, and one chosen plot's next harvest gets +1 quality step. |
+| Apr | **มะม่วงทอง** Golden Mango | Som naps in a mango's shade. | A Songkran splash market. | **ข้าวเหนียวมะม่วง party**: every animal is fed for a day, +1 love each, with a Som-and-animals splash scene. |
+| May | **เห็ดฝนแรก** First-rain Mushroom | The first rain; mushrooms pop up overnight. | A rainy-day market under umbrellas. | **Rain soup**: a warm bowl for Som; your next day's growth is guaranteed "dew" weather (×1.5). |
+| Jun | **บัวสายฝน** Rain Lily | Som watches lilies open in the puddles. | A floating market on the pond. | **Lotus pond**: your pond decor blooms for good (a decor variant). |
+| Jul | **ข้าวหอมเรืองแสง** Glow Rice | Rice glows softly at dusk; Som is mesmerised. | A night-rice market lit by the rice itself. | **Firefly path**: fireflies live in the night farm scene for good. |
+| Aug | **ชามะลิ** Jasmine Tea | Som carries jasmine sprigs in its mouth. | A Mother's Day tea stall. | **A cup for someone you love**: an optional private note goes in your reward jar ("โทรหาแม่"), the Night ritual's phone timer gets a calm jasmine chime, +1 ticket. |
+| Sep | **ฝักบัว** Moon Lotus Seed | Lotus pods under a huge moon. | A lantern market. | **Moon lantern** decor. In M13 it is the mooncake recipe's key ingredient. |
+| Oct | **ฝ้ายสายไหม** Candy-floss Cotton | The first cool wind; Som shivers. | A cosy wool market. | **Som's scarf**: Som wears a pink scarf from then on (a Som outfit). |
+| Nov | **บัวหลวงแสงเทียน** Candle Lotus | Som finds a lotus with a tiny flame in it. | A krathong market on the water. | **Float a wish**: write a private wish (optional, own row) and float it. At next year's Loy Krathong, Som brings the wish back to you. |
+| Dec | **สตรอว์เบอร์รีหิมะ** Snow Strawberry | Mist on the hills; white strawberries. | A winter-lights market. | **Year-end cake + your year in review**: a short montage from your own data (harvests, best streak, mornings on time), saved as a page in the collection book. |
+
+**Build order:**
+1. The seasonal crop system: calendar, shop/capsule/market hooks, and orders.
+2. Nov (Candle Lotus) and Dec (Snow Strawberry), since they're the next two months, with their 3 beats.
+3. Each other crop, with its art and beats, ahead of its month.
+
+Each "use" reward is server-side and checked once per crop per year.
