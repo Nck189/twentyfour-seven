@@ -285,6 +285,9 @@ begin
   if p_qty is null or p_qty < 1 or p_qty > 999 then
     raise exception 'bad quantity' using errcode = '22023';
   end if;
+  -- One stock change at a time per user: selling and delivering race for the same produce
+  -- (G7 ECON E1).
+  perform 1 from public.game_state where user_id = uid for update;
   price := public._sell_price(p_item, public._upgrade_level(uid, 'stall'));
   if price is null then
     raise exception 'not for sale' using errcode = '22023';
@@ -424,6 +427,9 @@ begin
   if uid is null then
     raise exception 'not authenticated' using errcode = '42501';
   end if;
+  -- Serialise with sells and other deliveries (G7 ECON E1): the stock read below must not change
+  -- under us, and every unit is taken before the order pays.
+  perform 1 from public.game_state where user_id = uid for update;
   today := public._wake_day(uid);
   select * into o from public._orders(uid, today) x where x.slot = p_slot;
   if not found then
@@ -444,7 +450,10 @@ begin
   for inv in
     select item_id, qty from public.inventory
     where user_id = uid and qty > 0 and (item_id = 'crop:' || o.crop_id or item_id like 'crop:' || o.crop_id || ':%')
-    order by public._sell_price(item_id, 0), item_id
+    -- Lowest quality first (then weather, then the item id), as ECONOMY.md says.
+    order by array_position(array['normal', 'silver', 'gold', 'prismatic'],
+                            coalesce(split_part(item_id, ':', 3), '') ) nulls first,
+             public._sell_price(item_id, 0), item_id
     for update
   loop
     exit when need = 0;
@@ -452,6 +461,9 @@ begin
     update public.inventory set qty = qty - take, updated_at = now() where user_id = uid and item_id = inv.item_id;
     need := need - take;
   end loop;
+  if need > 0 then
+    raise exception 'not enough produce' using errcode = 'P0001';
+  end if;
   update public.game_state set coins = coins + o.coins where user_id = uid returning coins into left_coins;
   insert into public.events (user_id, type, payload)
   values (uid, 'order_delivered', jsonb_build_object('slot', p_slot, 'crop', o.crop_id, 'qty', o.qty, 'coins', o.coins));

@@ -159,3 +159,47 @@ describe("market actions (server)", () => {
     ]);
   });
 });
+
+describe("G7 ECON E1 (S1): one stock can't be paid twice", () => {
+  it("delivering and selling the same produce at once: only one is paid, stock never goes below 0", async () => {
+    for (let round = 0; round < 6; round++) {
+      const u = await newUser(`mk-race-${round}`);
+      await setCoins(u.id, 0);
+      const o = (await u.client.rpc("market_status")).data.orders[0] as {
+        crop: string;
+        qty: number;
+        coins: number;
+      };
+      const item = `crop:${o.crop}:normal:100`;
+      await give(u.id, item, o.qty); // exactly enough for the order
+      const price = (await admin().rpc("_sell_price", { p_item: item, p_stall: 0 })).data as number;
+      const [d, s] = await Promise.all([
+        u.client.rpc("deliver_order", { p_slot: 0 }),
+        u.client.rpc("sell_produce", { p_item: item, p_qty: o.qty }),
+      ]);
+      const paid = [d.error ? 0 : o.coins, s.error ? 0 : price * o.qty];
+      expect(paid.filter((p) => p > 0)).toHaveLength(1);
+      expect((await coins(u.id)).coins).toBe(paid[0]! + paid[1]!);
+      const left = (
+        await admin().from("inventory").select("qty").eq("user_id", u.id).eq("item_id", item).single()
+      ).data as { qty: number };
+      expect(left.qty).toBe(0);
+    }
+  });
+});
+
+describe("G7 ECON E6: an order takes the lowest quality first, not the lowest value", () => {
+  it("normal with ×3 weather goes before gold with none", async () => {
+    const u = await newUser("mk-quality-first");
+    const o = (await u.client.rpc("market_status")).data.orders[0] as { crop: string; qty: number };
+    await give(u.id, `crop:${o.crop}:normal:300`, o.qty);
+    await give(u.id, `crop:${o.crop}:gold:100`, o.qty);
+    expect((await u.client.rpc("deliver_order", { p_slot: 0 })).error).toBeNull();
+    const inv = (
+      await admin().from("inventory").select("item_id, qty").eq("user_id", u.id).like("item_id", "crop:%")
+    ).data as { item_id: string; qty: number }[];
+    const left = Object.fromEntries(inv.map((r) => [r.item_id, r.qty]));
+    expect(left[`crop:${o.crop}:normal:300`]).toBe(0);
+    expect(left[`crop:${o.crop}:gold:100`]).toBe(o.qty);
+  });
+});
