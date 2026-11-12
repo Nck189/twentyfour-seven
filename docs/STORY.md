@@ -88,3 +88,36 @@ Approved to add on 2026-11-12 ("ถ้ามีทำได้เลย"). Each 
    - The day after the exam: a short "you did it" scene.
 
 Later, if the orders feel flat: a **hornbill postman** NPC who brings the daily orders, as a one-line scene per order.
+
+## Som's café (Minnie OK 2026-11-12)
+Most students and office workers drink coffee in the morning or afternoon, so the café ties the app to real life. Nothing about it is daily or required.
+
+- **Two kinds of order:**
+  - **For fun:** order in the game and Som brews it. Every order gets the cup art and a stamp; at 10 stamps you get a café decor item. Stamps never expire and don't need to be consecutive.
+  - **I really drank it ☕:** a small switch on the order, remembered per user. Only these real orders feed the sleep insight.
+  - A player who only plays can turn the real-life part off in Settings ("ใช้ร้านกาแฟแค่ในเกม"). That hides the switch and the ritual question.
+- **Menu:** Americano, latte, Thai iced coffee, Thai tea, matcha, cocoa, jasmine tea, water. Decaf and no-caffeine drinks earn the same stamps, so nothing nudges anyone towards more caffeine.
+- **Accuracy:**
+  - A real order uses the tap time by default; a quick "now / 1 h ago / this morning" picker covers a forgotten tap.
+  - The Night ritual asks one optional line ("กินกาแฟวันนี้ไหม? ไม่ได้กิน / เช้า / บ่าย / เย็น") when nothing real was logged that day.
+- **Sleep insight (Stats):** "วันที่กินกาแฟหลังบ่าย 2 คุณเข้านอนช้าลงเฉลี่ย ~35 นาที (จาก 9 กับ 11 วัน)".
+  - It is shown only with about 8 or more days on each side.
+  - It is worded as "ดูเหมือนว่า…" and never claims cause.
+  - Bedtimes come from Goodnight.
+  - After 14:00, a real coffee gets one gentle line from Som about tonight's sleep, at most once a day.
+- **Farm link (M13):** brew menu items from your own produce (coffee beans + cow's milk → latte, strawberries + milk → strawberry latte) and sell or deliver them.
+- **Story:** the café opens with a short scene at Farmhouse level 2, and a barista outfit for Som later joins the wardrobe.
+
+## Sound (Minnie OK 2026-11-12)
+The game already has: tick/untick, the first-10 pop, harvest, capsule shake/crack/jingle (pitch rises with rarity), animal sounds, and the phone-timer chime.
+
+Five signature sounds to add, all short, all under the global mute:
+1. "I'm up": a bright sunrise chime.
+2. Goodnight: a 2-second lullaby.
+3. Coins earned: a coin clink, separate from the harvest sound.
+4. A streak milestone or welcome back: a soft celebration.
+5. Som: a meow in cutscenes and when petted.
+
+**Auto-quiet:** sounds turn themselves off during the Focus and Work blocks (class, office) and come back after. The planner side stays quiet.
+
+**Build order:** the five sounds and auto-quiet ship with the Som story work. The real-life café comes after the story; brewing from produce comes with M13.

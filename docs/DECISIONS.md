@@ -179,3 +179,5 @@ Format: date · decision · why · how to change it
   - Nothing paid is random (no loot boxes), and every gameplay item stays free to earn.
   - What's sold is cosmetics and comfort: a seasonal Farm Pass whose paid track progresses by minimum days, Som's wardrobe, themes, decor sets, sound packs, a supporter subscription and gifts.
   - Timing: after the closed beta shows people stay.
+- 2026-11-12 · Minnie OK: **Som's café**. Orders are either for fun (cup art and a stamp card) or marked "I really drank it". Only real orders feed a sleep insight, which needs about 8 or more days on each side and makes no causal claim. The real-life part can be switched off. Decaf earns the same stamps. Brewing from your own produce comes in M13.
+- 2026-11-12 · Minnie OK: **sound**. Five signature sounds (sunrise "I'm up", Goodnight lullaby, coin clink, milestone/welcome-back celebration, Som's meow). Sounds auto-mute during the Focus and Work blocks. They ship with the Som story work. Details are in `docs/STORY.md`.
