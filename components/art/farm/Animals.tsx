@@ -24,6 +24,13 @@ const PEACH: Tone = {
   light: "var(--art-peach-light)",
 };
 const TAN: Tone = { base: "var(--art-wood-light)", dark: "var(--art-wood)", light: "var(--art-cream)" };
+/** Minnie round 5: wool and the goat's coat in a cream that still reads on a white pen tile. */
+const WOOL: Tone = { base: "var(--art-wool)", dark: "var(--art-wool-dark)", light: "var(--art-wool-light)" };
+/** Minnie round 5: a pale sky-blue alpaca (face and legs) under a soft sky-blue fleece. */
+const ICE: Tone = { base: "var(--art-ice)", dark: "var(--art-ice-dark)", light: "var(--art-ice-light)" };
+const SKY: Tone = { base: "var(--art-blue-light)", dark: "var(--art-blue)", light: "var(--art-ice-light)" };
+/** A soft rim in a white animal's own darker shade, so it never melts into a white tile. */
+const RIM = "var(--art-stone-dark)";
 
 type Ears = "round" | "pointy" | "floppy" | "long" | "small" | "banana" | "tipped" | "pig" | "side" | "none";
 type Extra =
@@ -55,22 +62,27 @@ type Beast = {
   cheek?: string;
   /** The wool / fleece / shaggy coat, in its own tones so it never blends into the skin. */
   coat?: Tone;
+  /** A white head and body get a thin rim in their own darker shade (readable on a white tile). */
+  rim?: boolean;
 };
 type Bird = {
   plan: "bird";
   body: Tone;
   comb?: boolean;
-  long?: boolean;
   sparkle?: boolean;
-  /** A duck's flat bill instead of a chick's pointed beak. */
-  bill?: "flat";
+  /** A duck's flat bill, or a goose's wedge bill with a knob (its own long-necked body plan). */
+  bill?: "flat" | "goose";
+  /** A white bird gets a thin rim in its own darker shade (readable on a white tile). */
+  rim?: boolean;
 };
 type Spec = Beast | Bird;
 
 const SPECS: Record<AnimalId, Spec> = {
-  chicken: { plan: "bird", body: WHITE, comb: true },
+  chicken: { plan: "bird", body: WHITE, comb: true, rim: true },
   duck: { plan: "bird", body: TONES.yellow, bill: "flat" },
-  golden_goose: { plan: "bird", body: TONES.yellow, long: true, sparkle: true, bill: "flat" },
+  // Minnie round 5: a white goose (not a big duck): a long S neck, a stately upright pose, an
+  // orange wedge bill with a knob at its base; the golden sparkles keep it special.
+  golden_goose: { plan: "bird", body: WHITE, sparkle: true, bill: "goose", rim: true },
   bunny: { plan: "beast", body: BLUSH, ears: "long", tail: "puff", cheek: "var(--art-pink)" },
   cow: {
     plan: "beast",
@@ -87,21 +99,22 @@ const SPECS: Record<AnimalId, Spec> = {
     ears: "side",
     tail: "wool",
     extras: ["wool"],
-    coat: CREAM,
+    coat: WOOL,
   },
   pig: { plan: "beast", body: PEACH, ears: "pig", snout: PEACH, tail: "curl" },
   cat: { plan: "beast", body: TONES.silver, ears: "pointy", tail: "up" }, // grey, so it never looks like Som (Minnie)
   // A chocolate border collie (Minnie 2026-11-12; no black in our palette): white blaze, muzzle,
   // ruff and tail tip, ears that stand and fold at the tip.
   dog: { plan: "beast", body: TAN, ears: "tipped", tail: "brush", extras: ["collie"] },
-  // A white goat in a shaggy caramel coat (Minnie: the coat must not blend into the body).
+  // A white goat in a shaggy cream coat with a darker cream shade (Minnie round 5), tiny horns.
   goat: {
     plan: "beast",
-    body: WHITE,
+    body: { base: "var(--art-white)", dark: "var(--art-stone)", light: "var(--art-white)" },
     ears: "side",
     tail: "flick",
     extras: ["goatHorns", "beard", "shaggy"],
-    coat: TAN,
+    coat: WOOL,
+    rim: true,
   },
   capybara: {
     plan: "beast",
@@ -111,14 +124,14 @@ const SPECS: Record<AnimalId, Spec> = {
     // A bread-loaf head, a big blunt muzzle, tiny ears up top and calm half-closed eyes.
     extras: ["yuzu", "capy"],
   },
-  // A caramel face and legs under a cream fleece that covers the body and the whole neck.
+  // A pale sky-blue face and legs under a sky-blue fleece that covers the body and the whole neck.
   alpaca: {
     plan: "beast",
-    body: TAN,
+    body: ICE,
     ears: "banana",
     tail: "wool",
     extras: ["neck", "topknot", "fleece"],
-    coat: CREAM,
+    coat: SKY,
   },
   red_panda: {
     plan: "beast",
@@ -161,16 +174,27 @@ type Lobe = readonly [number, number, number, number?, number?];
  * lower-right, then every lobe in the base tone on top, so the lobes merge into a single shape with
  * one shaded rim (never a chain of separate beads).
  */
-function Fluff({ lobes, tone, d = 0.7 }: { lobes: readonly Lobe[]; tone: Tone; d?: number }) {
-  const draw = (fill: string, o: number) => (
+function Fluff({
+  lobes,
+  tone,
+  d = 0.7,
+  rim = 0,
+}: {
+  lobes: readonly Lobe[];
+  tone: Tone;
+  d?: number;
+  /** Grow the shade copy so a thin same-hue rim shows all round (white/cream on a white tile). */
+  rim?: number;
+}) {
+  const draw = (fill: string, o: number, g = 0) => (
     <g fill={fill}>
       {lobes.map(([x, y, rx, ry = rx, rot = 0], i) => (
         <ellipse
           key={i}
           cx={x + o}
           cy={y + o}
-          rx={rx}
-          ry={ry}
+          rx={rx + g}
+          ry={ry + g}
           transform={rot ? `rotate(${rot} ${x + o} ${y + o})` : undefined}
         />
       ))}
@@ -178,6 +202,7 @@ function Fluff({ lobes, tone, d = 0.7 }: { lobes: readonly Lobe[]; tone: Tone; d
   );
   return (
     <g>
+      {rim > 0 && draw(tone.dark, 0, rim)}
       {draw(tone.dark, d)}
       {draw(tone.base, 0)}
     </g>
@@ -228,6 +253,7 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
         <g>
           <Fluff
             tone={coat}
+            rim={0.35}
             lobes={[
               [38.6, 28.4, 2.3],
               [39.8, 30.2, 1.8],
@@ -257,6 +283,7 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
       {/* body: darker shape lower-right, base, top-left highlight */}
       {!has("fleece") && (
         <g>
+          {s.rim && <ellipse cx={28.2} cy={31.2} rx={9.85} ry={6.45} fill={RIM} />}
           <ellipse cx={28.6} cy={31.6} rx={9.8} ry={6.4} fill={s.body.dark} />
           <ellipse cx={28} cy={31} rx={9.4} ry={6} fill={s.body.base} />
           <ellipse cx={27} cy={27} rx={3.6} ry={1.4} fill={s.body.light} transform="rotate(-10 27 27)" />
@@ -273,6 +300,7 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
         <g>
           <Fluff
             tone={coat}
+            rim={0.35}
             lobes={[
               [22.4, 28.4, 2.9],
               [25.8, 25.9, 3],
@@ -296,6 +324,7 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
           <Fluff
             tone={coat}
             d={0.6}
+            rim={0.35}
             lobes={[
               [29.8, 29, 8.4, 4.6],
               [22.8, 31.8, 1.9, 3.2, 12],
@@ -329,6 +358,9 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
               [hx - 1.6, hy + 12.4, 2.6, 3.4],
               [hx + 2.4, hy + 11.6, 2.6, 3.4],
               [hx - 0.2, hy + 16.6, 3.8, 3.6],
+              // the bridge: the neck flows into the back without a crease
+              [hx + 3.6, hy + 13.6, 2.8, 3.2],
+              [hx + 5.2, hy + 15.2, 3, 3],
               [24.6, 30.4, 3.2],
               [28.6, 28.2, 3.4],
               [33.2, 28.4, 3.4],
@@ -433,10 +465,19 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
           </g>
         )}
         {s.ears === "tipped" && (
-          // Border collie ears: wide roots sunk into the head, leaning outward, a pale inner ear.
+          // Border collie ears: leaning outward, a pale inner ear, and a filled root so each ear
+          // grows out of the skull (no notch where ear meets head).
           <g>
             {[-1, 1].map((d) => (
-              <g key={d} transform={`rotate(${-24 * d} ${hx + 4.4 * d} ${hy - 4})`}>
+              // the fillet: the ear's outer edge runs on down into the side of the head
+              <path
+                key={`root${d}`}
+                d={`M${hx + 7.62 * d} ${hy - 5} Q${hx + 7.25 * d} ${hy - 2.8} ${hx + 7.55 * d} ${hy - 0.9} L${hx + 6 * d} ${hy - 1.5} L${hx + 6.2 * d} ${hy - 5.2}Z`}
+                fill={head.dark}
+              />
+            ))}
+            {[-1, 1].map((d) => (
+              <g key={d} transform={`rotate(${16 * d} ${hx + 4.4 * d} ${hy - 4})`}>
                 <path
                   d={`M${hx + 1.6 * d} ${hy - 3} Q${hx + 1.8 * d} ${hy - 8} ${hx + 2.8 * d} ${hy - 9.8} Q${hx + 4.4 * d} ${hy - 11.6} ${hx + 6 * d} ${hy - 9.8} Q${hx + 7.2 * d} ${hy - 8} ${hx + 7.2 * d} ${hy - 3}Z`}
                   fill={head.dark}
@@ -504,13 +545,24 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
           </g>
         )}
         {has("goatHorns") && (
+          // Tiny upright horns: small triangles with softly rounded tips, standing straight up
+          // (a lighter left face, the darker same-hue right face).
           <g>
-            {[-1, 1].map((d) => (
-              <g key={d} transform={`rotate(${28 * d} ${hx + 2.6 * d} ${hy - 8})`}>
-                <ellipse cx={hx + 2.6 * d} cy={hy - 8} rx={1.2} ry={3.4} fill="var(--art-stone-dark)" />
-                <ellipse cx={hx + 2.6 * d - 0.4} cy={hy - 8.6} rx={0.4} ry={2.2} fill="var(--art-stone)" />
-              </g>
-            ))}
+            {[-1, 1].map((d) => {
+              const c = hx + 2.7 * d;
+              return (
+                <g key={d}>
+                  <path
+                    d={`M${c - 1.35} ${hy - 5.2} L${c - 0.38} ${hy - 9} Q${c} ${hy - 9.7} ${c + 0.38} ${hy - 9} L${c + 1.35} ${hy - 5.2}Z`}
+                    fill="var(--art-wood)"
+                  />
+                  <path
+                    d={`M${c - 1.35} ${hy - 5.2} L${c - 0.38} ${hy - 9} Q${c - 0.1} ${hy - 9.55} ${c + 0.1} ${hy - 9.2} L${c + 0.15} ${hy - 5.2}Z`}
+                    fill="var(--art-wood-light)"
+                  />
+                </g>
+              );
+            })}
           </g>
         )}
         {has("beard") && (
@@ -554,6 +606,7 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
           </g>
         ) : (
           <g>
+            {s.rim && <ellipse cx={hx - 0.2} cy={hy - 0.2} rx={7.75} ry={6.95} fill={RIM} />}
             <ellipse cx={hx} cy={hy} rx={7.6} ry={6.8} fill={head.dark} />
             <ellipse cx={hx - 0.5} cy={hy - 0.5} rx={7.1} ry={6.3} fill={head.base} />
           </g>
@@ -579,7 +632,7 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
             {[-1, 1].map((d) => (
               <path
                 key={d}
-                transform={`rotate(${-24 * d} ${hx + 4.4 * d} ${hy - 4})`}
+                transform={`rotate(${16 * d} ${hx + 4.4 * d} ${hy - 4})`}
                 d={`M${hx + 2.75 * d} ${hy - 9.8} Q${hx + 4.4 * d} ${hy - 11.7} ${hx + 6.05 * d} ${hy - 9.8} Q${hx + 6.5 * d} ${hy - 8.2} ${hx + 5.6 * d} ${hy - 7.1} Q${hx + 4.9 * d} ${hy - 6.4} ${hx + 4.3 * d} ${hy - 7.3} Q${hx + 3 * d} ${hy - 8.4} ${hx + 2.75 * d} ${hy - 9.8}Z`}
               />
             ))}
@@ -609,6 +662,7 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
             <Fluff
               tone={coat}
               d={0.5}
+              rim={0.25}
               lobes={[
                 [hx - 6.2, hy - 1.6, 2],
                 [hx - 5.2, hy - 4.6, 2.3],
@@ -657,10 +711,11 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
         )}
         {has("spots") && <ellipse cx={hx + 3.4} cy={hy - 3.6} rx={2.4} ry={1.8} fill="var(--art-wood)" />}
         {has("shaggy") && (
-          // A little caramel forelock between the horns, tying the face to the coat.
+          // A little cream forelock between the horns, tying the face to the coat.
           <Fluff
             tone={coat}
             d={0.4}
+            rim={0.25}
             lobes={[
               [hx - 0.2, hy - 5.9, 1.7, 0.9, -14],
               [hx + 1.1, hy - 5.4, 0.9, 1.2, 28],
@@ -756,18 +811,15 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
   );
 }
 
-function BirdArt({ s, sleepy }: { s: Bird; sleepy: boolean }) {
-  const hx = s.long ? 19.5 : 18.5;
-  const hy = (s.long ? 14 : 21.5) + (sleepy ? 1.5 : 0);
-  const K = s.long ? 1.3 : 1.5;
+/** Short legs and feet: a duck's or goose's webbed paddles, or a chicken's rounded toes. */
+function BirdFeet({ webbed, xs = [24.3, 29.8] }: { webbed: boolean; xs?: readonly number[] }) {
   const legs = "var(--art-orange-dark)";
   return (
     <g>
-      <Shadow cx={25} rx={10} />
-      {[24.3, 29.8].map((x) => (
+      {xs.map((x) => (
         <g key={x}>
           <rect x={x - 0.8} y={35.5} width={1.6} height={4} rx={0.8} fill={legs} />
-          {s.bill === "flat" ? (
+          {webbed ? (
             // A duck's webbed paddle foot: one soft rounded fan pointing forward.
             <g>
               {[
@@ -797,7 +849,25 @@ function BirdArt({ s, sleepy }: { s: Bird; sleepy: boolean }) {
           )}
         </g>
       ))}
-      {/* body */}
+    </g>
+  );
+}
+
+function BirdArt({ s, sleepy }: { s: Bird; sleepy: boolean }) {
+  const hx = 18.5;
+  const hy = 21.5 + (sleepy ? 1.5 : 0);
+  const K = 1.5;
+  return (
+    <g>
+      <Shadow cx={25} rx={10} />
+      <BirdFeet webbed={s.bill === "flat"} />
+      {/* body (a white bird gets a thin rim in its own darker shade first) */}
+      {s.rim && (
+        <g fill={RIM}>
+          <ellipse cx={37.6} cy={27.4} rx={3.75} ry={2.05} transform="rotate(-36 37.6 27.4)" />
+          <ellipse cx={27.3} cy={31.1} rx={9.75} ry={7.15} />
+        </g>
+      )}
       <ellipse cx={27.6} cy={31.4} rx={9.6} ry={7} fill={s.body.dark} />
       <ellipse cx={27} cy={30.8} rx={9.1} ry={6.5} fill={s.body.base} />
       <ellipse cx={26} cy={26.6} rx={3} ry={1.3} fill={s.body.light} transform="rotate(-15 26 26.6)" />
@@ -806,7 +876,6 @@ function BirdArt({ s, sleepy }: { s: Bird; sleepy: boolean }) {
       <ellipse cx={37.8} cy={27.2} rx={3.4} ry={1.7} fill={s.body.dark} transform="rotate(-38 37.8 27.2)" />
       <ellipse cx={36.8} cy={28.6} rx={2.8} ry={1.5} fill={s.body.base} transform="rotate(-24 36.8 28.6)" />
       <ellipse cx={30} cy={31.6} rx={4.6} ry={3} fill={s.body.dark} transform="rotate(-15 30 31.6)" />
-      {s.long && <rect x={hx - 2.6} y={hy} width={5.2} height={32 - hy} rx={2.6} fill={s.body.base} />}
       {/* head */}
       <g transform={`translate(${hx} ${hy}) scale(${K}) translate(${-hx} ${-hy})`}>
         {s.comb && (
@@ -816,6 +885,7 @@ function BirdArt({ s, sleepy }: { s: Bird; sleepy: boolean }) {
             <circle cx={hx + 2.4} cy={hy - 5.8} r={1.5} />
           </g>
         )}
+        {s.rim && <circle cx={hx - 0.2} cy={hy - 0.2} r={6} fill={RIM} />}
         <circle cx={hx} cy={hy} r={5.8} fill={s.body.dark} />
         <circle cx={hx - 0.4} cy={hy - 0.4} r={5.4} fill={s.body.base} />
         <ellipse
@@ -862,13 +932,115 @@ function BirdArt({ s, sleepy }: { s: Bird; sleepy: boolean }) {
         <Eyes x={hx - 1.6} y={hy - 0.6} sleepy={sleepy} />
         {!sleepy && <ellipse cx={hx + 1.2} cy={hy + 2} rx={1.3} ry={0.7} fill={CHEEK} />}
       </g>
-      {s.sparkle && (
+      {sleepy && <Zz x={hx + 9} y={Math.max(hy - 8, 9)} />}
+    </g>
+  );
+}
+
+/**
+ * The golden goose (Minnie round 5): a white goose, not a big duck. A long S-curved neck rising
+ * from a level body, a small head held high, an orange wedge bill with a rounded tip and the knob
+ * at its base; webbed feet and the golden sparkles that make it special.
+ */
+function GooseArt({ s, sleepy }: { s: Bird; sleepy: boolean }) {
+  const dy = sleepy ? 1.6 : 0;
+  const hx = 16.8;
+  const hy = 11.8 + dy;
+  // The neck's S-curve (two cubic Béziers), drawn as a filled tube: soft discs sampled along it.
+  const top = 17 + dy * 0.5;
+  const curves: [number, number][][] = [
+    [
+      [23, 29],
+      [17.2, 26],
+      [16.6, 20.6],
+      [19.2, top],
+    ],
+    [
+      [19.2, top],
+      [20.8, 14.8 + dy],
+      [20.4, 12.8 + dy],
+      [hx + 1, hy],
+    ],
+  ];
+  const neck = curves.flatMap(([a, b, c, d]) =>
+    Array.from({ length: 16 }, (_, i) => {
+      const t = i / 15;
+      const u = 1 - t;
+      const at = (k: 0 | 1) =>
+        u * u * u * a[k] + 3 * u * u * t * b[k] + 3 * u * t * t * c[k] + t * t * t * d[k];
+      return [Math.round(at(0) * 100) / 100, Math.round(at(1) * 100) / 100] as const;
+    }),
+  );
+  const tube = (fill: string, r: number, ox = 0, oy = 0) => (
+    <g fill={fill}>
+      {neck.map(([x, y], i) => (
+        <circle key={i} cx={x + ox} cy={y + oy} r={r} />
+      ))}
+    </g>
+  );
+  return (
+    <g>
+      <Shadow cx={26} rx={11} />
+      <BirdFeet webbed xs={[25, 30.6]} />
+      {/* tail: a soft upturned point at the back */}
+      <ellipse cx={38.4} cy={26.6} rx={3.9} ry={2} fill={RIM} transform="rotate(-30 38.4 26.6)" />
+      <ellipse cx={38.6} cy={26.9} rx={3.6} ry={1.7} fill={s.body.dark} transform="rotate(-30 38.6 26.9)" />
+      <ellipse cx={38} cy={27.2} rx={3.2} ry={1.5} fill={s.body.base} transform="rotate(-26 38 27.2)" />
+      {/* neck: rim, the shade nudged lower-right, then white (behind the body's chest) */}
+      {tube(RIM, 2.45)}
+      {tube(s.body.dark, 2.15, 0.45, 0.35)}
+      {tube(s.body.base, 2.15)}
+      {/* body: level and full, a little longer than the duck's */}
+      <ellipse cx={28.3} cy={31.2} rx={10.3} ry={6.7} fill={RIM} transform="rotate(-6 28.3 31.2)" />
+      <ellipse cx={28.7} cy={31.6} rx={10.1} ry={6.5} fill={s.body.dark} transform="rotate(-6 28.7 31.6)" />
+      <ellipse cx={28.1} cy={31} rx={9.6} ry={6} fill={s.body.base} transform="rotate(-6 28.1 31)" />
+      {/* the chest flows into the neck */}
+      <ellipse cx={21.6} cy={28.4} rx={2.6} ry={3.2} fill={s.body.base} transform="rotate(30 21.6 28.4)" />
+      {/* folded wing with a rounded tip */}
+      <ellipse cx={30.6} cy={30.4} rx={6.2} ry={3.3} fill={s.body.dark} transform="rotate(-12 30.6 30.4)" />
+      <ellipse cx={35.6} cy={28.8} rx={2.6} ry={1.5} fill={s.body.dark} transform="rotate(-28 35.6 28.8)" />
+      {/* head */}
+      <circle cx={hx + 0.1} cy={hy + 0.1} r={4.25} fill={RIM} />
+      <circle cx={hx + 0.4} cy={hy + 0.4} r={4.1} fill={s.body.dark} />
+      {/* bill: over the rim but under the white face, so it grows straight out of the head;
+          a darker lower half and a wedge upper half with a rounded tip */}
+      <path
+        d={`M${hx - 1.2} ${hy + 1} L${hx - 6.6} ${hy + 1.8} Q${hx - 7.5} ${hy + 2.1} ${hx - 6.6} ${hy + 2.6} L${hx - 1.2} ${hy + 3.2}Z`}
+        fill="var(--art-orange-dark)"
+      />
+      <path
+        d={`M${hx - 1.2} ${hy - 1.5} L${hx - 6.8} ${hy + 0.8} Q${hx - 8.1} ${hy + 1.5} ${hx - 6.8} ${hy + 1.95} L${hx - 1.2} ${hy + 1.8}Z`}
+        fill="var(--art-orange)"
+      />
+      <ellipse
+        cx={hx - 5.2}
+        cy={hy + 0.55}
+        rx={1.5}
+        ry={0.32}
+        fill="var(--art-orange-light)"
+        transform={`rotate(-22 ${hx - 5.2} ${hy + 0.55})`}
+      />
+      <circle cx={hx} cy={hy} r={3.8} fill={s.body.base} />
+      {/* the knob at the bill's base */}
+      <ellipse cx={hx - 3.15} cy={hy - 1.35} rx={1.4} ry={1.2} fill="var(--art-orange-dark)" />
+      <ellipse cx={hx - 3.35} cy={hy - 1.55} rx={1.2} ry={1.02} fill="var(--art-orange)" />
+      <ellipse cx={hx - 3.65} cy={hy - 1.95} rx={0.45} ry={0.25} fill="var(--art-orange-light)" />
+      {sleepy ? (
+        <ellipse cx={hx - 0.5} cy={hy + 0.2} rx={1.2} ry={0.38} fill={EYE} />
+      ) : (
         <g>
-          <Sparkle cx={36} cy={14} r={2.4} fill="var(--art-yellow-dark)" />
-          <Sparkle cx={8} cy={30} r={1.8} fill="var(--art-yellow-dark)" />
+          <Eyes x={hx - 0.5} y={hy - 0.3} sleepy={false} r={0.95} />
+          <ellipse cx={hx + 1.5} cy={hy + 1.8} rx={1} ry={0.55} fill={CHEEK} />
         </g>
       )}
-      {sleepy && <Zz x={hx + 9} y={Math.max(hy - 8, 9)} />}
+      {s.sparkle && (
+        <g>
+          <Sparkle cx={37} cy={15} r={2.4} fill="var(--art-yellow-dark)" />
+          <Sparkle cx={8} cy={30} r={1.8} fill="var(--art-yellow-dark)" />
+          <Sparkle cx={41.5} cy={21} r={1.2} fill="var(--art-yellow)" />
+        </g>
+      )}
+      {sleepy && <Zz x={hx + 7} y={9} />}
     </g>
   );
 }
@@ -891,7 +1063,15 @@ export function AnimalArt({
   return (
     <Art className={className} label={label}>
       <g className={idle && !sleepy ? "animal-bob" : undefined}>
-        {s.plan === "bird" ? <BirdArt s={s} sleepy={sleepy} /> : <BeastArt s={s} sleepy={sleepy} />}
+        {s.plan === "bird" ? (
+          s.bill === "goose" ? (
+            <GooseArt s={s} sleepy={sleepy} />
+          ) : (
+            <BirdArt s={s} sleepy={sleepy} />
+          )
+        ) : (
+          <BeastArt s={s} sleepy={sleepy} />
+        )}
       </g>
     </Art>
   );

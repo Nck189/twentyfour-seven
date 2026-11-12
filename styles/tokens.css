@@ -63,6 +63,15 @@
   --art-stone: #ddd6c7;
   --art-stone-light: #ece7dc;
   --art-stone-dark: #c3baa7;
+  /* Wool (sheep, goat coat): a warm cream with a clearly darker same-hue shade, so it still
+     reads on a white pen tile (#ffffff) and on the dark one (#2d2a25). */
+  --art-wool: #f7eedc;
+  --art-wool-light: #fffaf1;
+  --art-wool-dark: #dccaa5;
+  /* Ice: the pale sky-blue alpaca's face and legs (its fleece is --art-blue-light). */
+  --art-ice: #e4f1fb;
+  --art-ice-light: #f6fbfe;
+  --art-ice-dark: #b4d3ea;
   --art-wilt: #dccb8e; /* dry, yellowed leaf spots */
   --art-wilt-dark: #c2ad6f;
 
