@@ -31,7 +31,8 @@ type Extra =
   | "beard"
   | "topknot"
   | "collie"
-  | "wideSnout";
+  | "wideSnout"
+  | "fleece";
 type Beast = {
   plan: "beast";
   body: Tone;
@@ -89,7 +90,7 @@ const SPECS: Record<AnimalId, Spec> = {
     body: { base: "var(--art-stone)", dark: "var(--art-stone-dark)", light: "var(--art-cream)" },
     ears: "banana",
     tail: "puff",
-    extras: ["neck", "topknot"],
+    extras: ["neck", "topknot", "fleece"],
   },
   red_panda: {
     plan: "beast",
@@ -181,7 +182,7 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
           <ellipse cx={34.6} cy={33} rx={2} ry={1.5} />
         </g>
       )}
-      {has("wool") && (
+      {(has("wool") || has("fleece")) && (
         // Shaded wool puffs (a darker copy lower-right), kept inside the body.
         <g>
           {(
@@ -209,6 +210,14 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
         <g>
           <rect x={hx - 0.6} y={hy} width={5.2} height={33 - hy} rx={2.6} fill={s.body.dark} />
           <rect x={hx - 2.2} y={hy} width={5.2} height={33 - hy} rx={2.6} fill={s.body.base} />
+          {has("fleece") &&
+            // A fluffy neck: puffs down both sides, shaded like the body's wool.
+            [hy + 8.4, hy + 11.4, hy + 14.2].map((y, i) => (
+              <g key={y}>
+                <circle cx={hx + (i % 2 ? 1.8 : -1) + 0.5} cy={y + 0.5} r={2.4} fill={s.body.dark} />
+                <circle cx={hx + (i % 2 ? 1.8 : -1)} cy={y} r={2.4} fill={s.body.base} />
+              </g>
+            ))}
         </g>
       )}
       <g transform={`translate(${hx} ${hy}) scale(${K}) translate(${-hx} ${-hy})`}>
