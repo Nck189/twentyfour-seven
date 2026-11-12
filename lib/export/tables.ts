@@ -22,6 +22,12 @@ export const EXPORT_TABLES = [
   "wake_snapshots",
   "day_results",
   "weekly_reviews",
+  "upgrades",
+  "order_deliveries",
+  "ticket_exchanges",
+  "rewards",
+  "reward_redemptions",
+  "story_seen",
 ] as const;
 export type ExportTable = (typeof EXPORT_TABLES)[number];
 
@@ -56,4 +62,10 @@ export const EXPORT_ORDER: Record<ExportTable, string[]> = {
   wake_snapshots: ["date"],
   day_results: ["date"],
   weekly_reviews: ["week_start"],
+  upgrades: ["track"],
+  order_deliveries: ["date", "slot"],
+  ticket_exchanges: ["id"],
+  rewards: ["id"],
+  reward_redemptions: ["id"],
+  story_seen: ["beat"],
 };
