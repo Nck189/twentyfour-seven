@@ -60,6 +60,7 @@ function sample(review: string | null): StatsData {
     wakes,
     sleep,
     review: review === "none" ? null : { week_start: addDays(START, 21), done: review === "done" },
+    coffee: { ready: true, late: 9, other: 11, diff: 35 },
   };
 }
 

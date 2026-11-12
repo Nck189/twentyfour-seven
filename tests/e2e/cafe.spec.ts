@@ -1,8 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
-import { rest, setWakeMinutesAgo, userIdFor } from "../helpers/db";
+import { rest, setAllTemplates, setWakeMinutesAgo, userIdFor } from "../helpers/db";
 import { IS_PROD_RUN } from "../helpers/env";
+import { wakeDay } from "../helpers/day";
+import { addDays, zonedInstant } from "@/lib/time";
 
 /**
  * Som's café (docs/STORY.md): with the Farmhouse at level 2, order a drink for a stamp; right after
@@ -107,4 +109,43 @@ test("CJ-CAFE-2 'Use the café in the game only' never asks; the café stays clo
   await page.goto("/farm");
   await expect(page.getByRole("heading", { name: "Today's weather" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Som's café/ })).toHaveCount(0);
+});
+
+test("CJ-CAFE-3 Stats → Sleep: coffee vs bedtime once 8+ answered days on each side, worded as a pattern", async ({
+  page,
+}) => {
+  const id = await setup(page, "cafe-stats");
+  await setAllTemplates(id, "10:00");
+  const today = wakeDay();
+  // 9 days with an evening coffee (Goodnight 23:05), 11 without (22:30), then 2 "just playing" days.
+  const days = Array.from({ length: 22 }, (_, i) => addDays(today, -22 + i));
+  const late = days.slice(0, 9);
+  const other = days.slice(9, 20);
+  await rest("coffee_answers", {
+    method: "POST",
+    body: JSON.stringify([
+      ...late.map((day) => ({ user_id: id, day, answer: "yes", slot: "evening" })),
+      ...other.map((day, i) => ({ user_id: id, day, answer: "later", slot: i % 2 ? "none" : "morning" })),
+      ...days.slice(20).map((day) => ({ user_id: id, day, answer: "play", slot: null })),
+    ]),
+  });
+  await rest("events", {
+    method: "POST",
+    body: JSON.stringify(
+      days.map((d, i) => ({
+        user_id: id,
+        type: "night_ritual_completed",
+        // Late nights count too (a late Goodnight is exactly what the insight looks for).
+        payload: { date: d, in_time: i >= 9 },
+        at: zonedInstant(d, i < 9 ? 23 * 60 + 5 : 22 * 60 + 30, "Asia/Bangkok").toISOString(),
+      })),
+    ),
+  });
+
+  await page.goto("/stats");
+  await page.getByRole("radiogroup", { name: "Stats view" }).getByRole("radio", { name: "Sleep" }).click();
+  const card = page.getByRole("region", { name: "Coffee and bedtime" });
+  await expect(card).toContainText("you say Goodnight about 35 min later");
+  await expect(card).toContainText("From 9 days with afternoon/evening coffee and 11 days without.");
+  await expectNoSeriousA11y(page);
 });

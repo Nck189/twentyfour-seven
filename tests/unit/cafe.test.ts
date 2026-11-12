@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { askAfterOrder, askAtBedtime, cardProgress, coffeeDay, slotOf } from "@/lib/game/cafe";
+import { askAfterOrder, askAtBedtime, cardProgress, coffeeDay, coffeeSleep, slotOf } from "@/lib/game/cafe";
 
 describe("Som's café (docs/STORY.md, Minnie's popup flow)", () => {
   it("a stamp card fills at 10, then starts again; stamps never expire", () => {
@@ -37,5 +37,39 @@ describe("Som's café (docs/STORY.md, Minnie's popup flow)", () => {
     expect(coffeeDay({ answer: "later", slot: "none" })).toBe("none");
     expect(coffeeDay({ answer: "later", slot: null })).toBeNull();
     expect(coffeeDay({ answer: "play", slot: null })).toBeNull();
+  });
+});
+
+describe("coffee → bedtime insight (docs/STORY.md)", () => {
+  const days = (n: number, start: number) =>
+    Array.from({ length: n }, (_, i) => `2026-10-${String(start + i).padStart(2, "0")}`);
+  it("hidden with no answers; counts answered days with a Goodnight until 8 on each side", () => {
+    expect(coffeeSleep([], new Map())).toBeNull();
+    expect(coffeeSleep([{ day: "2026-10-01", answer: "play", slot: null }], new Map())).toBeNull();
+    const rows = [
+      { day: "2026-10-01", answer: "yes" as const, slot: "afternoon" as const },
+      { day: "2026-10-02", answer: "later" as const, slot: "none" as const },
+      { day: "2026-10-03", answer: "later" as const, slot: "evening" as const }, // no Goodnight: left out
+      { day: "2026-10-04", answer: "later" as const, slot: null }, // never answered at bedtime: left out
+    ];
+    const beds = new Map([
+      ["2026-10-01", 600],
+      ["2026-10-02", 570],
+      ["2026-10-04", 560],
+    ]);
+    expect(coffeeSleep(rows, beds)).toEqual({ ready: false, late: 1, other: 1 });
+  });
+  it("with 8+ days each side: the mean Goodnight difference, rounded to 5 min", () => {
+    const late = days(9, 1).map((day) => ({ day, answer: "yes" as const, slot: "evening" as const }));
+    const other = days(11, 10).map((day, i) => ({
+      day,
+      answer: "later" as const,
+      slot: i % 2 ? ("none" as const) : ("morning" as const),
+    }));
+    const beds = new Map<string, number>([
+      ...late.map((r) => [r.day, 11 * 60 + 5] as [string, number]), // 23:05
+      ...other.map((r) => [r.day, 10 * 60 + 30] as [string, number]), // 22:30
+    ]);
+    expect(coffeeSleep([...late, ...other], beds)).toEqual({ ready: true, late: 9, other: 11, diff: 35 });
   });
 });

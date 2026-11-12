@@ -33,3 +33,49 @@ export function coffeeDay(row: { answer: CoffeeAnswer; slot: CoffeeSlot | null }
   if (row.answer === "play") return null;
   return row.slot ?? null;
 }
+
+/** Answered days needed on each side before the sleep insight shows (docs/STORY.md). */
+export const COFFEE_MIN_DAYS = 8;
+
+export type CoffeeSleep =
+  | { ready: false; late: number; other: number }
+  | {
+      ready: true;
+      late: number;
+      other: number;
+      /** Mean Goodnight on afternoon/evening-coffee days minus the rest, rounded to 5 min (+ = later). */
+      diff: number;
+    };
+
+/**
+ * The coffee → bedtime insight: days with a real afternoon/evening coffee vs days with none or only
+ * a morning one. Only answered days with a Goodnight count (unanswered / "just playing" are left
+ * out, never read as "no coffee"). `beds` = Goodnight per wake-day, minutes after local noon.
+ * Null when there's nothing answered at all (the card stays hidden). Never claims cause.
+ */
+export function coffeeSleep(
+  rows: readonly { day: string; answer: CoffeeAnswer; slot: CoffeeSlot | null }[],
+  beds: ReadonlyMap<string, number>,
+): CoffeeSleep | null {
+  const late: number[] = [];
+  const other: number[] = [];
+  let answered = 0;
+  for (const r of rows) {
+    const s = coffeeDay(r);
+    if (s === null) continue;
+    answered++;
+    const bed = beds.get(r.day);
+    if (bed === undefined) continue;
+    (s === "afternoon" || s === "evening" ? late : other).push(bed);
+  }
+  if (answered === 0) return null;
+  if (late.length < COFFEE_MIN_DAYS || other.length < COFFEE_MIN_DAYS)
+    return { ready: false, late: late.length, other: other.length };
+  const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+  return {
+    ready: true,
+    late: late.length,
+    other: other.length,
+    diff: Math.round((mean(late) - mean(other)) / 5) * 5,
+  };
+}

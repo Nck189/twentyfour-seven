@@ -456,6 +456,15 @@
       "best": "Going well",
       "worst": "Needs love",
       "reason": "Missed most because"
+    },
+    "coffee": {
+      "title": "Coffee and bedtime",
+      "later": "It looks like on days with an afternoon or evening coffee, you say Goodnight about {n} min later.",
+      "earlier": "It looks like on days with an afternoon or evening coffee, you say Goodnight about {n} min earlier.",
+      "same": "It looks like afternoon or evening coffee doesn't change your bedtime much.",
+      "from": "From {late} days with afternoon/evening coffee and {other} days without.",
+      "collecting": "Still collecting: {late} days with afternoon/evening coffee, {other} without (needs {need} each).",
+      "help": "Only days you answered in Som's café count. A pattern, not a cause."
     }
   },
   "more": {
