@@ -1,8 +1,8 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Coin } from "@/components/art/Coin";
 import { TicketArt } from "@/components/art/Ticket";
 import { CropArt } from "@/components/art/farm/CropArt";
@@ -52,6 +52,7 @@ export function Shop({
   const [failed, setFailed] = useState<"refused" | "network" | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const s = m.status;
+  const clearNotice = useCallback(() => setNotice(null), []);
 
   const run: Run = async (key, action, payoff) => {
     setBusy(key);
@@ -98,7 +99,7 @@ export function Shop({
           { value: "rewards", label: t("tab.rewardsShort") },
         ]}
       />
-      <Payoff notice={notice} />
+      <Payoff notice={notice} onDone={clearNotice} />
       {m.error && !s && (
         <p role="alert" className="rounded-xl bg-accent-soft p-3 text-sm font-bold">
           {t("loadError")}{" "}
@@ -139,37 +140,43 @@ type TabProps = {
   m: ReturnType<typeof useMarket>;
 };
 
-/** The payoff of the last action: a coin pop and one line (still with reduced motion). */
-function Payoff({ notice }: { notice: Notice | null }) {
+/**
+ * The payoff of the last action: a coin pop and one line (still with reduced motion). It floats
+ * over the page: an in-flow line that appears and leaves shifts the rows under a finger, so a
+ * quick next tap lands on the wrong button (CI, iPhone WebKit).
+ */
+function Payoff({ notice, onDone }: { notice: Notice | null; onDone: () => void }) {
+  useEffect(() => {
+    if (!notice) return;
+    const id = setTimeout(onDone, 2600);
+    return () => clearTimeout(id);
+  }, [notice, onDone]);
   const reduce = useReducedMotion();
   const skip = usePrefs((p) => p.skipAnimations) || Boolean(reduce);
+  // Only the latest payoff exists (no exit animation that would leave old ones around).
+  if (!notice) return null;
   return (
-    <AnimatePresence>
-      {notice && (
-        <motion.p
-          key={notice.text}
-          role="status"
-          className="sticky top-2 z-10 flex items-center gap-2 rounded-xl bg-primary-soft p-3 font-bold text-primary"
-          initial={skip ? false : { opacity: 0, y: -6, scale: 0.97 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+    <motion.p
+      key={notice.text}
+      role="status"
+      className="pointer-events-none fixed inset-x-4 top-[max(1rem,env(safe-area-inset-top))] z-50 mx-auto flex max-w-md items-center gap-2 rounded-xl bg-primary-soft p-3 font-bold text-primary"
+      initial={skip ? false : { opacity: 0, y: -6, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.2 }}
+    >
+      {notice.coins !== undefined && (
+        <motion.span
+          aria-hidden="true"
+          className="inline-flex"
+          initial={skip ? false : { scale: 0.3, rotate: -40 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: "spring", stiffness: 420, damping: 12 }}
         >
-          {notice.coins !== undefined && (
-            <motion.span
-              aria-hidden="true"
-              className="inline-flex"
-              initial={skip ? false : { scale: 0.3, rotate: -40 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: "spring", stiffness: 420, damping: 12 }}
-            >
-              <Coin className="h-6 w-6" />
-            </motion.span>
-          )}
-          <span className="min-w-0 flex-1 break-words">{notice.text}</span>
-        </motion.p>
+          <Coin className="h-6 w-6" />
+        </motion.span>
       )}
-    </AnimatePresence>
+      <span className="min-w-0 flex-1 break-words">{notice.text}</span>
+    </motion.p>
   );
 }
 
