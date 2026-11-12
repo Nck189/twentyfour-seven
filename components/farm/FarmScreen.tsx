@@ -22,7 +22,7 @@ import { SeasonBanner } from "./SeasonBanner";
 import { CollectionBook, UnlockNotice } from "./CollectionBook";
 import { useUnlocks } from "@/lib/unlocks/useUnlocks";
 import { seasonOf } from "@/content/seasons";
-import { CROP_IDS } from "@/content/crops";
+import { GACHA_CROP_IDS } from "@/content/crops";
 import { Capsule, CapsuleMachine } from "@/components/art/farm/Capsule";
 import { CapsuleSheet } from "./CapsuleSheet";
 import { Tip } from "@/components/tips/Tip";
@@ -32,6 +32,7 @@ import { HarvestPop } from "./HarvestPop";
 import { DECOR_ART } from "./DecorShop";
 import { Shop } from "./Shop";
 import { parseItem, sellPrice } from "@/lib/game/market";
+import { seasonPriceMult } from "@/lib/game/seasonal";
 import { Farmhouse } from "@/components/art/farm/Farmhouse";
 import { RewardJarHint } from "./RewardJarHint";
 import { PlotSheet } from "./PlotSheet";
@@ -289,7 +290,7 @@ export function FarmView({
             <span className="min-w-0">
               <span className="block truncate font-extrabold">{tg("dexTitle")}</span>
               <span className="block text-sm text-muted">
-                {tg("dexShort", { have: Object.keys(gacha.state.dex).length, total: CROP_IDS.length })}
+                {tg("dexShort", { have: Object.keys(gacha.state.dex).length, total: GACHA_CROP_IDS.length })}
               </span>
             </span>
           </button>
@@ -311,7 +312,7 @@ export function FarmView({
         />
       )}
       {sheet === "dex" && gacha?.state && (
-        <SeedDexSheet state={gacha.state} starUp={gacha.starUp} onClose={() => setSheet(null)} />
+        <SeedDexSheet state={gacha.state} starUp={gacha.starUp} today={data.today} onClose={() => setSheet(null)} />
       )}
 
       {unlocks && <CollectionBook state={unlocks} />}
@@ -360,7 +361,7 @@ export function FarmView({
               setPop({
                 cropId: p.cropId,
                 quality: it?.kind === "crop" ? it.quality : p.quality,
-                value: sellPrice(item, data.stall) ?? undefined,
+                value: sellPrice(item, data.stall, seasonPriceMult(item, data.today)) ?? undefined,
               });
             }
             return item !== null;

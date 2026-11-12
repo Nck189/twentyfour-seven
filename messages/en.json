@@ -333,7 +333,7 @@
       "hint": "One seasonal crop a month. Missed one? It comes back the same month next year.",
       "planting": "Seeds in the shop until the {day}th",
       "market": "Seasonal market now",
-      "returns": "Back {when}",
+      "returns": "Next in {when}",
       "soon": "Coming soon",
       "unknown": "not announced yet"
     }
