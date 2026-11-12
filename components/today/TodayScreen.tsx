@@ -1,13 +1,15 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { formatDayLong, formatTime } from "@/lib/format";
 import { showBedCard } from "@/lib/today/bedtime";
 import { useNow } from "@/lib/hooks/useNow";
 import { currentBlock, type TimelineBlock } from "@/lib/today/day";
+import { setQuietUntil } from "@/lib/sound/sfx";
+import { quietUntilFor } from "@/lib/sound/quiet";
 import { useToday } from "@/lib/today/useToday";
 import { NightRitual } from "@/components/night/NightRitual";
 import { WelcomeCard } from "@/components/onboarding/WelcomeCard";
@@ -92,6 +94,12 @@ export function TodayScreen() {
   // Today renders its content only on the client (it waits for the clock), so storage is safe here.
   const [dayOpen, setDayOpen] = useState(() => readDayOpen());
   const [allWarnings, setAllWarnings] = useState(false);
+
+  // Auto-quiet: sounds rest while the current block is Focus or Work (docs/STORY.md).
+  const quietUntil = today.timeline && clock ? quietUntilFor(currentBlock(today.timeline, now)) : 0;
+  useEffect(() => {
+    setQuietUntil(quietUntil);
+  }, [quietUntil]);
 
   if (!clock || today.status === "loading") {
     return (

@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { STORY_BEATS } from "@/content/story";
 import { IS_PROD_RUN, PROD_SMOKE_EMAIL, SB_SERVICE_KEY, SB_URL } from "./env";
 
 export function uniqueEmail(tag = "e2e") {
@@ -13,7 +14,7 @@ export function uniqueEmail(tag = "e2e") {
 export async function signIn(
   page: Page,
   email = IS_PROD_RUN ? PROD_SMOKE_EMAIL : uniqueEmail(),
-  { onboarded = true, tips = false }: { onboarded?: boolean; tips?: boolean } = {},
+  { onboarded = true, tips = false, story = false }: { onboarded?: boolean; tips?: boolean; story?: boolean } = {},
 ) {
   const res = await fetch(`${SB_URL}/auth/v1/admin/generate_link`, {
     method: "POST",
@@ -56,6 +57,20 @@ export async function signIn(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ tips_off: true }),
+    });
+  }
+  // Story beats with Som are marked seen unless a test is about them (a cutscene would cover the
+  // Farm). Also on prod: the shared smoke account opens the Farm.
+  if (!story && body.id) {
+    await fetch(`${SB_URL}/rest/v1/story_seen`, {
+      method: "POST",
+      headers: {
+        apikey: SB_SERVICE_KEY,
+        Authorization: `Bearer ${SB_SERVICE_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=ignore-duplicates",
+      },
+      body: JSON.stringify(STORY_BEATS.map((beat) => ({ user_id: body.id, beat, day: "2000-01-01" }))),
     });
   }
   if (IS_PROD_RUN) {

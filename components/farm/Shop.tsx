@@ -62,7 +62,7 @@ export function Shop({
     setBusy(null);
     if (r.ok) {
       const n = payoff?.(r);
-      if (n?.coins && n.coins > 0) sfx.harvest();
+      if (n?.coins && n.coins > 0) sfx.coin();
       else sfx.tick();
       setNotice(n ?? null);
       onChanged();

@@ -335,7 +335,7 @@ export function NightRitual({
               if (sleep && bed) void goToBed(sleep, at, bed.first10);
               setBedLater(!!sleep && !bed && !logFor(sleep).started_at && !logFor(sleep).miss_reason);
               setResult(r.ticket_granted ? "ticket" : r.in_time === false ? "late" : "already");
-              sfx.sunrise();
+              sfx.lullaby();
             } catch {
               setResult("error");
             } finally {

@@ -2,6 +2,7 @@
 
 import { useDraggable } from "@dnd-kit/core";
 import { motion, useReducedMotion } from "framer-motion";
+import { sfx } from "@/lib/sound/sfx";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Coin } from "@/components/art/Coin";
@@ -139,7 +140,10 @@ export function TaskRow({
         disabled={done}
         onClick={async () => {
           const coins = await onComplete(item.id);
-          if (coins) setPop(coins);
+          if (coins) {
+            setPop(coins);
+            sfx.coin();
+          }
         }}
         className="tap flex h-11 w-11 shrink-0 items-center justify-center"
       >

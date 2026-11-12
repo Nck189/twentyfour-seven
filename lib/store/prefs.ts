@@ -11,6 +11,8 @@ type PrefsState = {
   theme: ThemePref;
   soundOn: boolean;
   skipAnimations: boolean;
+  /** Sounds go quiet by themselves during Focus and Work blocks (lib/sound/quiet.ts). */
+  autoQuiet: boolean;
   /** True while a language change made on this device hasn't been saved to the profile yet. */
   localeDirty: boolean;
   /** User action: changes the language and marks it unsaved. */
@@ -25,6 +27,7 @@ type PrefsState = {
   setTheme: (theme: ThemePref) => void;
   setSoundOn: (on: boolean) => void;
   setSkipAnimations: (skip: boolean) => void;
+  setAutoQuiet: (on: boolean) => void;
 };
 
 /** The first visit's language: the device's first preference if it's Thai, else English (R1 P8). */
@@ -43,6 +46,7 @@ export const usePrefs = create<PrefsState>()(
       theme: "system",
       soundOn: true,
       skipAnimations: false,
+      autoQuiet: true,
       localeDirty: false,
       setLocale: (locale) => set({ locale, localeDirty: true }),
       applyLocale: (locale) => set({ locale, localeDirty: false }),
@@ -50,6 +54,7 @@ export const usePrefs = create<PrefsState>()(
       setTheme: (theme) => set({ theme }),
       setSoundOn: (soundOn) => set({ soundOn }),
       setSkipAnimations: (skipAnimations) => set({ skipAnimations }),
+      setAutoQuiet: (autoQuiet) => set({ autoQuiet }),
     }),
     {
       name: "247-prefs",

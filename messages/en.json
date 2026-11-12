@@ -455,7 +455,13 @@
     "setupTitle": "Setup",
     "setupSleep": "Your week",
     "setupFirst10": "First 10 minutes",
-    "installDone": "Added to your Home Screen."
+    "installDone": "Added to your Home Screen.",
+    "soundTitle": "Sound & motion",
+    "soundOn": "Sounds",
+    "autoQuiet": "Quiet during Focus and Work",
+    "autoQuietHint": "Sounds rest in class or at work and come back after. Timers you set still ring.",
+    "skipAnimations": "Skip animations",
+    "skipAnimationsHint": "Capsules, hatching and story scenes show at once."
   },
   "blocks": {
     "name": {
@@ -1023,5 +1029,33 @@
     "confirmRedeem": "Spend {n} coins",
     "cancel": "Cancel",
     "levelOf": "Level {n} of {max}"
+  },
+  "story": {
+    "next": "Next",
+    "skip": "Skip",
+    "done": "Done",
+    "gift": {
+      "seed": "Gift: {n, plural, one {# {crop} seed} other {# {crop} seeds}}",
+      "tickets": "Gift: {n, plural, one {+# ticket} other {+# tickets}}"
+    },
+    "ch0_gate": {
+      "title": "Som",
+      "l1": "An orange cat is napping by the old gate.",
+      "l2": "It stretches, yawns, and looks right at you.",
+      "l3": "“Mrrp?” It seems to have been waiting for someone.",
+      "l4": "Som follows you in. The farm has a cat now."
+    },
+    "ch1_first_harvest": {
+      "title": "First harvest",
+      "l1": "Som sniffs your first harvest, very seriously.",
+      "l2": "It decides one radish leaf belongs to Som.",
+      "l3": "In return, Som brings you a seed it found. Fair trade."
+    },
+    "ch2_watering_can": {
+      "title": "Three good days",
+      "l1": "Som has been rummaging in the old shed.",
+      "l2": "It drags out a dusty watering can. Your three good days earned it.",
+      "l3": "The farm feels a little more like home."
+    }
   }
 }

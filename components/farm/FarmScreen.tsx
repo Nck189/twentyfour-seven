@@ -1,5 +1,7 @@
 "use client";
 
+import { Cutscene } from "@/components/story/Cutscene";
+import { useStory } from "@/lib/story/useStory";
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { FarmSky } from "@/components/art/farm/FarmSky";
@@ -46,8 +48,12 @@ export function FarmScreen({ compact = false }: { compact?: boolean }) {
   const gacha = useGacha();
   const animals = useAnimals();
   const unlocks = useUnlocks();
+  // Story beats with Som play on the Farm tab only (a calm moment), not in the iPad side panel.
+  const story = useStory(compact ? "other" : "farm");
   return (
-    <FarmView
+    <>
+      {story.playing && <Cutscene beat={story.playing.beat} gift={story.playing.gift} onDone={story.done} />}
+      <FarmView
       unlocks={compact ? undefined : (unlocks ?? undefined)}
       gacha={compact ? undefined : gacha}
       animals={compact ? undefined : animals}
@@ -58,7 +64,8 @@ export function FarmScreen({ compact = false }: { compact?: boolean }) {
       harvest={harvest}
       buyDecor={buyDecor}
       reload={reload}
-    />
+      />
+    </>
   );
 }
 
