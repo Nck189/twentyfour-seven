@@ -92,11 +92,20 @@ Later, if the orders feel flat: a **hornbill postman** NPC who brings the daily 
 ## Som's café (Minnie OK 2026-11-12)
 Most students and office workers drink coffee in the morning or afternoon, so the café ties the app to real life. Nothing about it is daily or required.
 
-- **The café is only a game. Real life comes from one separate question.** Minnie noted that people will mark some orders real and some not, so orders never feed any data.
+- **Orders are a game first. Real life is a short question right after the order** (Minnie, 2026-11-12).
   - **Café (game):** order anything, any time. Som brews it, and every order gets the cup art and a stamp. At 10 stamps you get a café decor item. Stamps never expire and don't need to be consecutive.
-  - **Real coffee (data):** the Night ritual's close step has one optional line, "วันนี้กินกาแฟจริงไหม? ไม่ได้กิน / เช้า / บ่าย / เย็น". It's one tap at a moment when the whole day is known, and it's the only source for the insight. It can be turned off in Settings.
+  - **Right after an order, a small popup asks:** "ในชีวิตจริงกินด้วยไหม?" with three answers:
+    - **ใช่** records a real coffee at the order's time.
+    - **ทีหลัง** asks again once in the Night ritual: "วันนี้กินกาแฟจริงไหม? ไม่ได้กิน / เช้า / บ่าย / เย็น".
+    - **เล่นเฉยๆ** records nothing and asks nothing tonight.
+    - Closing the popup counts as ทีหลัง.
+  - **Asked at most once a day.** After any answer, later orders that day don't ask again (a second real cup can be added from the cup's sheet).
+  - **"ใช้ร้านกาแฟแค่ในเกม"** in Settings turns the question off completely.
 - **Menu:** Americano, latte, Thai iced coffee, Thai tea, matcha, cocoa, jasmine tea, water. Decaf and no-caffeine drinks earn the same stamps, so nothing nudges anyone towards more caffeine.
-- **Data quality:** a day with no answer is *left out*; it is never counted as "no coffee". The insight uses only answered days.
+- **Data quality:**
+  - Real coffee comes only from these explicit answers.
+  - A day with no answer, or only "เล่นเฉยๆ", is *left out*; it is never counted as "no coffee" unless the bedtime answer says ไม่ได้กิน.
+  - The insight uses only answered days.
 - **Sleep insight (Stats):** "วันที่กินกาแฟบ่าย/เย็น คุณเข้านอนช้าลงเฉลี่ย ~35 นาที (จาก 9 กับ 11 วัน)".
   - It is shown only with about 8 or more answered days on each side.
   - It is worded as "ดูเหมือนว่า…" and never claims cause.
