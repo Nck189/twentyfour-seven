@@ -1,10 +1,12 @@
 # PROGRESS — 24/7
 
-## Now (2026-11-13, ~04:15 Bangkok; Minnie asleep, "merge 16 when done, keep going until 08:00")
+## Now (2026-11-13, ~04:30 Bangkok; Minnie asleep, "merge 16 when done, keep going until 08:00")
 - ✅ PR #14, #15 and **#16** (story with Som, seasonal crops + Candle Lotus, chibi animals, sound & motion settings) merged.
   **Minnie, on the Mac:** `git checkout main && git pull && npx supabase db push --remote` (3 migrations: story, seasonal, seasonal_story), then `npm run qc:prod`.
-- 🔄 **PR #17** (draft): Snow Strawberry beats + year in review, G7 STORY-R6/R8 (block clock: auto-quiet and Som's busy rule on every screen), **Som's café** (stamps, card gifts, the optional real-life coffee answer, game-only toggle). 2 migrations: snow_story, cafe. G7 review running.
-- Next: the coffee → sleep insight on Stats (needs ~2 weeks of answers), M11 push notifications, closed beta.
+- 🔄 **PR #17** (draft): Snow Strawberry beats + year in review, story chapters 3–6 + the café opening, **Som's café** (stamps, café table, the optional real-life coffee/tea answer, another real cup, game-only toggle), Stats "Coffee and bedtime", block clock (G7 STORY-R6/R8). 3 migrations: snow_story, cafe, story_chapters.
+  G7 round 1 FAIL (S1: later café cards minted coins) → all fixed → round 2 running. Local: unit 344, integration 246, E2E 113 (Chrome) all green.
+  Needs Minnie's OK to merge; after merge, `db push` (3 migrations) + `qc:prod`.
+- Next: M11 push notifications, closed beta. Deferred: Som's barista outfit (wardrobe), the "R" back-after-a-lapse beat, brewing from produce (M13).
 - Waiting on Minnie: G7 STORY-R7 (should seasonal seeds plant only in their month and plants wilt after it?).
 - Known: Farm/Thai visual baselines (G3, Mac) need re-recording once; the prod sign-out E2E wait.
 
