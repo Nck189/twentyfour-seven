@@ -860,10 +860,10 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
         )}
         {/* face */}
         {has("capy") ? (
-          // Capybara: small calm eyes set high and wide, a big dark nose low on the loaf, a tiny smile.
+          // Capybara: calm eyes close above the big dark nose (Minnie: not out at the edges), a tiny smile.
           <g>
-            <Eyes x={hx - 3.9} y={hy - 1.4} sleepy={sleepy} r={0.95} />
-            <Eyes x={hx + 3.9} y={hy - 1.4} sleepy={sleepy} r={0.95} />
+            <Eyes x={hx - 3.1} y={hy - 0.7} sleepy={sleepy} r={1.15} />
+            <Eyes x={hx + 3.1} y={hy - 0.7} sleepy={sleepy} r={1.15} />
             <ellipse cx={hx - 5} cy={hy + 1.6} rx={1.4} ry={0.8} fill={CHEEK} />
             <ellipse cx={hx + 5} cy={hy + 1.6} rx={1.4} ry={0.8} fill={CHEEK} />
             <ellipse cx={hx} cy={hy + 2.2} rx={2.5} ry={1.5} fill={EYE} />
