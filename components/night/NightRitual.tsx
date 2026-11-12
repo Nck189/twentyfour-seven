@@ -27,6 +27,8 @@ import { addDays } from "@/lib/time";
 import { hasExam } from "@/lib/game/exam";
 import { SomArt } from "@/components/art/Som";
 import { goodnightSleep } from "@/lib/today/bedtime";
+import { CoffeeNightAsk } from "@/components/cafe/CoffeeNightAsk";
+import { useCafe } from "@/lib/cafe/useCafe";
 import type { Timeline, TimelineBlock } from "@/lib/today/day";
 import type { BlockLog } from "@/lib/today/useToday";
 
@@ -77,6 +79,7 @@ export function NightRitual({
   const tb = useTranslations("backlog");
   const tp = useTranslations("plan");
   const plan = usePlan();
+  const cafe = useCafe();
   const backlog = useBacklog(plan.userId);
   const [step, setStep] = useState(0);
   const [phoneEnds, setPhoneEnds] = useState<number | null>(null);
@@ -325,6 +328,7 @@ export function NightRitual({
     <div key="night" className="flex flex-col gap-3">
       <h3 className="text-lg font-bold">{t("goodnightTitle")}</h3>
       <p className="text-muted">{t("goodnightHint")}</p>
+      <CoffeeNightAsk cafe={cafe} />
       <CheckRow
         checked={alarmSet}
         label={sleepFirst10 ?? t("alarmSet")}
