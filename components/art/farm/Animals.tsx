@@ -993,6 +993,12 @@ function GooseArt({ s, sleepy }: { s: Bird; sleepy: boolean }) {
       <ellipse cx={38.4} cy={26.6} rx={3.9} ry={2} fill={RIM} transform="rotate(-30 38.4 26.6)" />
       <ellipse cx={38.6} cy={26.9} rx={3.6} ry={1.7} fill={s.body.dark} transform="rotate(-30 38.6 26.9)" />
       <ellipse cx={38} cy={27.2} rx={3.2} ry={1.5} fill={s.body.base} transform="rotate(-26 38 27.2)" />
+      {/* the breast's soft rim (the body covers its inside edge) */}
+      <path
+        d="M15.3 22.6 Q15.2 29.8 19.8 33.6 L24.6 30.4 L19.4 20.8Z"
+        fill={RIM}
+        transform="translate(-0.35 0.3)"
+      />
       {/* neck: rim, the shade nudged lower-right, then white (behind the body's chest) */}
       {tube(RIM, 2.45)}
       {tube(s.body.dark, 2.15, 0.45, 0.35)}
@@ -1002,7 +1008,9 @@ function GooseArt({ s, sleepy }: { s: Bird; sleepy: boolean }) {
       <ellipse cx={28.7} cy={31.6} rx={10.1} ry={6.5} fill={s.body.dark} transform="rotate(-6 28.7 31.6)" />
       <ellipse cx={28.1} cy={31} rx={9.6} ry={6} fill={s.body.base} transform="rotate(-6 28.1 31)" />
       {/* the chest flows into the neck */}
-      <ellipse cx={21.6} cy={28.4} rx={2.6} ry={3.2} fill={s.body.base} transform="rotate(30 21.6 28.4)" />
+      {/* a full, convex breast from the front of the neck to the front of the body: no notch, no
+          seam (Minnie: so the goose stands proud) */}
+      <path d="M15.3 22.6 Q15.2 29.8 19.8 33.6 L24.6 30.4 L19.4 20.8Z" fill={s.body.base} />
       {/* folded wing with a rounded tip */}
       <ellipse cx={30.6} cy={30.4} rx={6.2} ry={3.3} fill={s.body.dark} transform="rotate(-12 30.6 30.4)" />
       <ellipse cx={35.6} cy={28.8} rx={2.6} ry={1.5} fill={s.body.dark} transform="rotate(-28 35.6 28.8)" />
