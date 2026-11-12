@@ -242,16 +242,17 @@ function BeastArt({ s, sleepy }: { s: Beast; sleepy: boolean }) {
       ).map(([x, y, rx, ry = rx]) => [hx + x * K, hy + y * K, rx * K, ry * K] as const)
     : [];
   // Banana ears curving in at the tips, with a pale inner ear (behind the alpaca's hood).
+  // The alpaca's ears grow out of the top of its fleece hood (Minnie: they looked stuck on).
   const bananaEars = (
     <g transform={`translate(${hx} ${hy}) scale(${K}) translate(${-hx} ${-hy})`}>
       {[-1, 1].map((d) => (
         <g key={d}>
           <path
-            d={`M${hx + 4.6 * d} ${hy - 5.4} Q${hx + 5.4 * d} ${hy - 9.8} ${hx + 6.8 * d} ${hy - 10.9} Q${hx + 7.8 * d} ${hy - 9.6} ${hx + 8.4 * d} ${hy - 4.6}Z`}
+            d={`M${hx + 3.6 * d} ${hy - 4.4} Q${hx + 4.2 * d} ${hy - 9.9} ${hx + 5.8 * d} ${hy - 11.1} Q${hx + 7 * d} ${hy - 9.7} ${hx + 7.2 * d} ${hy - 3.8}Z`}
             fill={head.dark}
           />
           <path
-            d={`M${hx + 5.6 * d} ${hy - 6.2} Q${hx + 6.1 * d} ${hy - 8.9} ${hx + 6.8 * d} ${hy - 9.5} Q${hx + 7.3 * d} ${hy - 8.3} ${hx + 7.5 * d} ${hy - 5.8}Z`}
+            d={`M${hx + 4.6 * d} ${hy - 6.4} Q${hx + 5 * d} ${hy - 9.1} ${hx + 5.8 * d} ${hy - 9.9} Q${hx + 6.4 * d} ${hy - 8.7} ${hx + 6.4 * d} ${hy - 6}Z`}
             fill={TONES.pink.light}
           />
         </g>
