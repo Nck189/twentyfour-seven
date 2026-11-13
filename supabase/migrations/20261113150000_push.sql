@@ -121,6 +121,13 @@ begin
     raise exception 'reminders must be within the next 36 hours' using errcode = '22023';
   end if;
   delete from public.push_schedule where user_id = uid and sent_at is null and fire_at > now();
+  -- Housekeeping and a daily cap, so one account can't flood the shared queue (G7 R2-1): a normal
+  -- day plans about a dozen; uploads that would pass 60 in a day are refused.
+  delete from public.push_schedule where user_id = uid and fire_at < now() - interval '2 days';
+  if (select count(*) from public.push_schedule s where s.user_id = uid and s.fire_at > now() - interval '24 hours')
+     + (select count(*) from jsonb_array_elements(p_items) i where (i ->> 'fire_at')::timestamptz > now()) > 60 then
+    raise exception 'too many reminders today' using errcode = '22023';
+  end if;
   insert into public.push_schedule (user_id, ref, kind, day, block, fire_at, title, body)
   select uid, i ->> 'ref', i ->> 'kind', (i ->> 'day')::date, i ->> 'block',
          (i ->> 'fire_at')::timestamptz, i ->> 'title', coalesce(i ->> 'body', '')
@@ -194,11 +201,19 @@ volatile
 security definer
 set search_path = ''
 as $$
-  with picked as (
-    select s.user_id, s.ref
+  -- Fair: at most 30 per user per run, oldest first, only users with a device (G7 R2-1).
+  with candidates as (
+    select s.user_id, s.ref,
+           row_number() over (partition by s.user_id order by s.fire_at) as rn
     from public.push_schedule s
     where s.sent_at is null
       and s.fire_at <= now() and s.fire_at > now() - interval '15 minutes'
+      and exists (select 1 from public.push_subscriptions d where d.user_id = s.user_id)
+  ), picked as (
+    select s.user_id, s.ref
+    from public.push_schedule s
+    join candidates c on c.user_id = s.user_id and c.ref = s.ref and c.rn <= 30
+    where s.sent_at is null
     order by s.fire_at
     limit p_limit
     for update of s skip locked

@@ -209,6 +209,32 @@ describe("push notifications (server)", () => {
     expect((await u.client.rpc("push_claim", { p_limit: 10 })).error).not.toBeNull();
   });
 
+  it("G7 R2-1: one account can't flood the shared queue (a daily cap, fair claims, device-less users skipped)", async () => {
+    const u = await newUser("push-flood");
+    const day = new Date().toISOString().slice(0, 10);
+    // Uploads whose items fall due at once (a script looping set_push_schedule): capped per day.
+    let refused = 0;
+    for (let k = 0; k < 4; k++) {
+      const r = await u.client.rpc("set_push_schedule", {
+        p_items: Array.from({ length: 24 }, (_, i) =>
+          item(`f${k}-${i}`, "night", new Date(Date.now() + 1500).toISOString(), day),
+        ),
+      });
+      if (r.error) refused++;
+      await new Promise((res) => setTimeout(res, 1600));
+    }
+    expect(refused).toBeGreaterThan(0);
+    const rows = await admin().from("push_schedule").select("ref").eq("user_id", u.id);
+    expect(rows.data!.length).toBeLessThanOrEqual(60);
+    // No device: the sender never picks this user's rows.
+    const claimed = ((await admin().rpc("push_claim", { p_limit: 500 })).data ?? []) as { user_id: string }[];
+    expect(claimed.filter((r) => r.user_id === u.id)).toEqual([]);
+    // With a device, one run takes at most 30 of one user's reminders (others still get their turn).
+    await u.client.rpc("save_push_subscription", sub(`flood-${u.id}`));
+    const fair = ((await admin().rpc("push_claim", { p_limit: 500 })).data ?? []) as { user_id: string }[];
+    expect(fair.filter((r) => r.user_id === u.id).length).toBeLessThanOrEqual(30);
+  }, 30_000);
+
   it("G7 R-M11-3: an item that just became due is dropped, not the whole upload", async () => {
     const u = await newUser("push-late");
     const day = new Date().toISOString().slice(0, 10);

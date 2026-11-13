@@ -103,8 +103,15 @@ export function NotificationsCard() {
                     })
                   }
                   onBlur={(e) => {
-                    const v = e.target.value || null;
-                    if (v !== prefs.quietStart) void update({ ...prefs, quietStart: v });
+                    // Save both from the local edit, so a quick From→To never writes back an old value (G7 R2-3).
+                    const edited = {
+                      ...prefs,
+                      quietStart: (quiet?.start ?? prefs.quietStart) || null,
+                      quietEnd: (quiet?.end ?? prefs.quietEnd) || null,
+                    };
+                    const next = { ...edited, quietStart: e.target.value || null };
+                    if (next.quietStart !== prefs.quietStart || next.quietEnd !== prefs.quietEnd)
+                      void update(next);
                   }}
                 />
               </label>
@@ -124,8 +131,15 @@ export function NotificationsCard() {
                     })
                   }
                   onBlur={(e) => {
-                    const v = e.target.value || null;
-                    if (v !== prefs.quietEnd) void update({ ...prefs, quietEnd: v });
+                    // Save both from the local edit, so a quick From→To never writes back an old value (G7 R2-3).
+                    const edited = {
+                      ...prefs,
+                      quietStart: (quiet?.start ?? prefs.quietStart) || null,
+                      quietEnd: (quiet?.end ?? prefs.quietEnd) || null,
+                    };
+                    const next = { ...edited, quietEnd: e.target.value || null };
+                    if (next.quietStart !== prefs.quietStart || next.quietEnd !== prefs.quietEnd)
+                      void update(next);
                   }}
                 />
               </label>

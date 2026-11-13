@@ -10,6 +10,7 @@ import { DECOR_ART } from "@/components/farm/DecorShop";
 import { EggArt, FeedArt } from "@/components/art/farm/Animals";
 import { ChevronIcon } from "@/components/ui/Icons";
 import { SETUP_HREF, SETUP_REWARD, SETUP_STEPS, type Reward, type SetupStep } from "@/content/unlocks";
+import type { SetupRewards } from "@/lib/setup/useSetupRewards";
 
 /**
  * Steps this build can offer: "turn on notifications" only once push is configured (a VAPID key in
@@ -18,7 +19,6 @@ import { SETUP_HREF, SETUP_REWARD, SETUP_STEPS, type Reward, type SetupStep } fr
 const OFFERED_STEPS: readonly SetupStep[] = SETUP_STEPS.filter(
   (s) => s !== "notifications" || !!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
 );
-import type { SetupRewards } from "@/lib/setup/useSetupRewards";
 
 /** The reward as a picture (no emoji). */
 export function RewardArt({ reward, className = "h-10 w-10" }: { reward: Reward; className?: string }) {

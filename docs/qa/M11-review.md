@@ -82,3 +82,87 @@ E2E (Playwright) was not run here.
 | R-M11-14 | Fixed: push bodies are in Som's voice (EN/TH). |
 | R-M11-15 | Partly: planner rollover, claim and .ics context covered; an E2E of the "on" screen needs a VAPID build (deferred). |
 | S4s | Accepted. |
+
+## Round 2 (2026-11-13, `git diff 6094675..3fab63a`)
+
+### What I ran
+| Check | Result |
+|---|---|
+| Unit tests | 355/355 pass |
+| Integration: push, ics, rls, setup-rewards | 97/97 pass |
+| `tsc`, ESLint + Prettier on changed files, `i18n:check` (1060 keys) | clean |
+| Endpoint CHECK, probed in psql as `authenticated` | see table below |
+| 10-device cap | 12 saves leave 10, the newest kept |
+| `push_claim`, two sessions in parallel | A claims 5 rows and holds them uncommitted; B gets 0 (`skip locked`); a third claim after commit gets 0. All 5 marked sent. `authenticated` gets "permission denied". |
+| `/ics` route handler run directly on the new `ics_context` (checklists stripped) | 200, normal events |
+| Flood probe | see R2-1 |
+
+Endpoint CHECK probe results:
+
+| Endpoint | Result |
+|---|---|
+| FCM, Mozilla, `web.push.apple.com`, `wns2-…notify.windows.com` | accepted |
+| `fcm.googleapis.com@evil.com` | rejected |
+| `evil.com@fcm.googleapis.com` | rejected |
+| `:8443` port | rejected |
+| `FCM.` (upper case) | rejected |
+| trailing dot `fcm.googleapis.com.` | rejected |
+| `fcm.googleapis.com.evil.com` | rejected |
+| `evil.com/fcm.googleapis.com/` | rejected |
+| `fcm.googleapis.com\@evil.com` | rejected |
+| `a.b.push.apple.com` | rejected |
+| `https://10.0.0.1/` | rejected |
+| `xn--….push.apple.com` | accepted, but still Apple's domain |
+| `fcm…/x\nhttps://evil.com/` and `fcm…/x#@evil.com` | accepted, but the host still parses as FCM |
+
+The `[a-z]` ranges are ASCII-only and case-sensitive (checked).
+
+### Round-1 findings re-checked
+| ID | Round 2 |
+|---|---|
+| R-M11-1 (S1) | **SSRF part fixed and verified:** host allowlist, 10-device cap, claim-before-send with `skip locked`, batches of 20, 10 s per-request timeout. **The queue-DoS part is still open → R2-1.** |
+| R-M11-2 (S2) | **Fixed.** `wake:<day>` is planned from the Wake block. Same ref as the night-before plan, so `on conflict` updates it; once past, it isn't re-planned or deleted (the delete only touches `fire_at > now()`). Unit-tested. |
+| R-M11-3 | Server part fixed (a late item is dropped, tested). The client still sets `last.current` before the RPC and ignores errors, so an offline upload isn't retried until the blocks or switches change. S3, Known issue. |
+| R-M11-4 | Fixed. The test now expects `\;`. |
+| R-M11-5 | Partly fixed (error message on a failed save). The server check of "On" and `pushsubscriptionchange` are deferred. S3, Known issue. |
+| R-M11-6 | Accepted as S3. |
+| R-M11-7 | Fixed. Checklists are stripped from settings, templates and overrides; tested; the route still renders. |
+| R-M11-8 | Fixed. Mode is passed and is part of the signature; tested. |
+| R-M11-9 | Fixed via `_push_wanted`; tested. |
+| R-M11-10 | Fixed. `ics_link_made` is server-only (added to the deny list; a client insert is refused, tested). `push_prefs_changed` and `push_turned_off` are client-written; that is fine, since no reward or `_setup_done` reads them. |
+| R-M11-11 | Fixed. `OFFERED_STEPS` hides the step without a VAPID key; it is the only consumer of `SETUP_STEPS` in the UI. |
+| R-M11-12 | Narrowed to a 02:30–10:00 skip (~31%). S3, Known issue. |
+| R-M11-13 | Fixed: local state, save on blur, inputs are never disabled. |
+| R-M11-14 | Fixed: Som's voice in EN and TH. |
+| R-M11-15 | Partly fixed (E2E of the "on" screen deferred). S3, Known issue. |
+
+### The coordinator's questions
+- **Claimed-but-unwanted rows silently marked sent: OK.** That is the intended "skip, never resend" behavior, the same as before, and it is evaluated at fire time. The one trade-off is at-most-once delivery: a claimed send that times out or gets 429/5xx is never retried (R2-2).
+- **Events:** OK (see R-M11-10 above).
+- **`_ics_blocks`:** correct.
+  - A non-object returns unchanged.
+  - JSON `null` stays JSON `null`, so `jsonb_set` never gets SQL NULL; `templates.blocks` is NOT NULL.
+  - It is revoked from clients and runs only inside `ics_context`.
+  - Sub-slot labels (e.g. "gym") still go out. They're part of the plan; acceptable.
+
+### New / remaining findings
+| ID | Sev | Where | Failure scenario | Fix |
+|---|---|---|---|---|
+| R2-1 (R-M11-1 residual) | **S2** | `push.sql` `set_push_schedule` (no per-user volume limit), `push_claim` (global `order by fire_at limit 200`, no per-user fairness, picks rows of users with no devices) | **One signed-up account, with no devices at all, can still block reminders for everyone.**<br><br>Repro: `set_push_schedule` with 24 fresh refs at `now()+1s`, repeated. Rows that have become due are never deleted by the next upload. 5 calls 1.2 s apart left **120 due, unsent rows**, so a 1 call/s loop makes about 1,440 rows/min.<br><br>`push_claim` drains only 200/min, oldest first, across all users. Everyone else's reminders sit behind the backlog and fire up to ~15 min late, or drop out of the window unsent. Sent rows are never cleaned up, so the table also grows by about 2 M rows/day. | 1. **Cap per user in `set_push_schedule`:** e.g. raise if, after insert, the user has more than ~60 rows with `fire_at > now() - 24 h` (real use is about 12 a day).<br>2. **Fairness in `push_claim`:** `row_number() over (partition by user_id order by fire_at) <= 30` before the global limit, and pick only users who have a device.<br>3. **Housekeeping:** delete the user's sent or expired rows older than 2 days in `set_push_schedule`.<br><br>Test first: an integration test where a looped `set_push_schedule` is refused past the cap, and a test where a flood from user A doesn't keep user B's due reminder out of one `push_claim`. |
+| R2-2 | S4 | `push_claim` + `deliver.ts` | At-most-once delivery: a timed-out or 5xx send, or a crash after the claim, loses that reminder. This is a fair trade for never double-sending. | Log as a Known issue. |
+| R2-3 | S4 | `NotificationsCard.tsx` `onBlur` | Both blur handlers build the update from the `prefs` closure. If "To" is committed before the "From" save resolves (fast keyboard tabbing), the second save writes back the old `quietStart`. | Save `{start, end}` from the local `quiet` state together. |
+| R2-4 | S4 | `app/ics/[token]/route.ts` | Malformed settings (a block missing; seen with a test user's one-block settings) make the engine throw (`invalid duration for down`), so the feed returns a bare 500. Pre-existing, but now reachable through a public URL. | Wrap the planning in try/catch and return 503. |
+| R2-5 | S4 | `SetupCard.tsx:14-21` | `const OFFERED_STEPS` sits between import statements. | Move it below the imports. |
+
+### Round 2 verdict
+**FAIL**, with one open **S2: R2-1** (one account can still flood the shared push queue). R-M11-1's SSRF part and R-M11-2 are fixed and verified. The other round-1 items are fixed or accepted as S3/S4 Known issues. Fix R2-1 test-first, then a short re-check of `set_push_schedule` / `push_claim` is enough.
+
+
+## Fixes after round 2 (2026-11-13)
+| ID | Status |
+|---|---|
+| R2-1 (S2) | Fixed test-first: `set_push_schedule` refuses uploads past 60 reminders in 24 h and deletes the user's rows older than 2 days; `push_claim` picks only users with a device and at most 30 per user per run (`row_number()` in a CTE, then `for update skip locked` with the due checks re-applied). Integration test: a looping uploader is refused, a device-less user is never picked, one user gets ≤ 30 per run. |
+| R2-2 (S4) | Accepted: at-most-once delivery (a timed-out send isn't retried); logged. |
+| R2-3 (S4) | Fixed: leaving either quiet-hours field saves both from the local edit. |
+| R2-4 (S4) | Fixed: a malformed plan gives `/ics` a 503, not a bare 500. |
+| R2-5 (S4) | Fixed: the const moved below the imports. |

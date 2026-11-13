@@ -31,6 +31,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   const c = data as Ctx | null;
   if (!c || !c.settings) return new Response("Not found", { status: 404 });
 
+  // A malformed saved plan never surfaces as a bare 500 on a public URL (G7 R2-4).
+  try {
+    return feed({ ...c, settings: c.settings });
+  } catch {
+    return new Response("Unavailable", { status: 503 });
+  }
+}
+
+function feed(c: Ctx & { settings: NonNullable<Ctx["settings"]> }): Response {
   const ctx: DayContext = {
     timezone: c.timezone,
     blocks: c.settings.blocks,
