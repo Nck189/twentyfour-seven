@@ -27,8 +27,10 @@ let listening = false;
 
 /**
  * The signed-in user, verified once per page and shared: Today's hooks each asked the auth server
- * (`/auth/v1/user` 7× per load, task #41). Any auth change (sign in/out, token refresh, user update)
- * starts fresh; a signed-out or failed answer is never cached. Same shape as `auth.getUser()`.
+ * (`/auth/v1/user` 7× per load, task #41). Any auth change (sign in/out, token refresh, user update),
+ * including one in another tab (supabase-js broadcasts them), starts fresh; a signed-out or failed
+ * answer is never cached. Same shape as `auth.getUser()`. No `getSession()` per call: it takes the
+ * auth lock, and dozens of them queued ahead of `signOut()` on WebKit (CI 2026-11-13, G7 PERF P-3).
  */
 export async function getUserCached(): Promise<{ data: { user: User | null } }> {
   const c = getSupabase();
@@ -37,20 +39,6 @@ export async function getUserCached(): Promise<{ data: { user: User | null } }> 
     c.auth.onAuthStateChange(() => {
       userPromise = null;
     });
-  }
-  // The local session (no network) says who is signed in on this device right now; a cached user
-  // for anyone else is dropped, even if no auth event reached this tab (G7 PERF P-3).
-  const {
-    data: { session },
-  } = await c.auth.getSession();
-  const localId = session?.user?.id ?? null;
-  if (!localId) {
-    userPromise = null;
-    return { data: { user: null } };
-  }
-  if (userPromise) {
-    const cached = await userPromise;
-    if (cached && cached.id !== localId) userPromise = null;
   }
   if (!userPromise) {
     const p = c.auth

@@ -52,5 +52,5 @@
 |---|---|
 | P-1 (S3) | Fixed: any write passing through the wrapper clears the in-flight reads, so a read after a write never joins one from before it (unit test). |
 | P-2 (S3) | Added: `getUserCached` unit tests (shared call, auth event resets, signed out not cached, failures not cached, another account in the local session); `dedupeGets` tests for 5 callers, HEAD counts, `Request` inputs, write-then-read. |
-| P-3 (S3) | Fixed: each call compares the cached user with the local session (no network); another account drops the cache, no session returns no user. |
+| P-3 (S3) | Tried, then reverted: comparing with `getSession()` on every call queued dozens of auth-lock waits ahead of `signOut()`, and Sign out hung on WebKit in CI. Accepted instead: supabase-js broadcasts auth changes to other tabs, which reset the cache (tested); RLS still guards every query. |
 | P-4 … P-7 (S4) | Accepted: a late joiner shares the first caller's timeout (its quiet retry starts fresh); export bodies held twice briefly; `loadDayContext` uses the shared client for the user; ~2 user calls per page. |

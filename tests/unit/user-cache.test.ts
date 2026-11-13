@@ -46,17 +46,18 @@ describe("getUserCached", () => {
     state.onChange?.();
     await getUserCached();
     expect(state.getUser).toBe(2);
-    state.sessionId = null;
+    state.serverUser = null;
+    state.onChange?.();
     expect((await getUserCached()).data.user).toBeNull();
-    state.sessionId = "u1";
+    state.serverUser = { id: "u1" };
     await getUserCached();
-    expect(state.getUser).toBe(3);
+    expect(state.getUser).toBe(4);
   });
 
-  it("G7 PERF P-3: another account in the local session (no event reached this tab) drops the cached user", async () => {
+  it("G7 PERF P-3: a sign-in as another account (an auth event, also broadcast from other tabs) drops the cached user", async () => {
     await getUserCached();
-    state.sessionId = "u2";
     state.serverUser = { id: "u2" };
+    state.onChange?.();
     expect((await getUserCached()).data.user?.id).toBe("u2");
   });
 
