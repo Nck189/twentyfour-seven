@@ -46,32 +46,51 @@ export function ShareCard() {
   useEffect(() => {
     let cancelled = false;
     const db = getSupabase();
+    // Each part on its own: a slow or failed part never holds up the others, and the link button
+    // only waits for the link (it'd otherwise overwrite a link made meanwhile; CI R2-4).
     void (async () => {
-      const [link, open, done, ctx] = await Promise.all([
-        db.from("share_links").select("token").maybeSingle(),
-        // Every pending request (spam can't push a real one out of view; R-M12-8).
-        db
-          .from("booking_requests")
-          .select("id, day, start_at, end_at, name, note, status")
-          .eq("status", "pending")
-          .order("start_at"),
-        db
-          .from("booking_requests")
-          .select("id, day, start_at, end_at, name, note, status")
-          .neq("status", "pending")
-          .order("answered_at", { ascending: false })
-          .limit(5),
-        loadDayContext(db, -2, 15).catch(() => null),
-      ]);
-      if (cancelled) return;
-      setNow(Date.now());
-      setLoaded(true);
-      if (!link.error) setUrl(link.data ? `${window.location.origin}/share/${link.data.token}` : null);
-      if (!open.error) setPending(open.data as Request[]);
-      if (!done.error) setAnswered(done.data as Request[]);
-      if (ctx) {
-        setTz(ctx.ctx.timezone);
-        setDays(freeDaysFromContext(ctx.ctx, new Date()));
+      try {
+        const link = await db.from("share_links").select("token").maybeSingle();
+        if (!cancelled && !link.error)
+          setUrl(link.data ? `${window.location.origin}/share/${link.data.token}` : null);
+      } catch {
+        // offline: the button still works
+      } finally {
+        if (!cancelled) setLoaded(true);
+      }
+    })();
+    void (async () => {
+      try {
+        const [open, done] = await Promise.all([
+          // Every pending request (spam can't push a real one out of view; R-M12-8).
+          db
+            .from("booking_requests")
+            .select("id, day, start_at, end_at, name, note, status")
+            .eq("status", "pending")
+            .order("start_at"),
+          db
+            .from("booking_requests")
+            .select("id, day, start_at, end_at, name, note, status")
+            .neq("status", "pending")
+            .order("answered_at", { ascending: false })
+            .limit(5),
+        ]);
+        if (cancelled) return;
+        setNow(Date.now());
+        if (!open.error) setPending(open.data as Request[]);
+        if (!done.error) setAnswered(done.data as Request[]);
+      } catch {
+        // shown as empty; reload by coming back
+      }
+    })();
+    void (async () => {
+      try {
+        const { ctx } = await loadDayContext(db, -2, 15);
+        if (cancelled) return;
+        setTz(ctx.timezone);
+        setDays(freeDaysFromContext(ctx, new Date()));
+      } catch {
+        // Copy / Picture stay disabled; Accept stays hidden (R2-2)
       }
     })();
     return () => {

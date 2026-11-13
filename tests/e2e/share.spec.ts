@@ -134,3 +134,19 @@ test("CJ-SHARE-3 switching between two free times on one day sends the one picke
     ),
   ).toBe("21:00");
 });
+
+test("CJ-SHARE-4 the link works even when the inbox and plan are slow to load (CI R2-4)", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await setPrefs(page, { locale: "en", theme: "light" });
+  await signIn(page, uniqueEmail("share-slow"));
+  // The inbox and the plan never answer (a stalled connection on a phone).
+  await page.route(/\/rest\/v1\/(booking_requests|day_plans)/, () => undefined);
+  await page.goto("/more");
+  const card = page.locator("#share");
+  await card.getByRole("button", { name: "Get my link" }).click({ timeout: 10_000 });
+  await expect(card.getByRole("textbox", { name: "Share link" })).toHaveValue(/\/share\/[0-9a-f]{48}$/);
+  // Accept never shows without the plan; Copy free times waits for it.
+  await expect(card.getByRole("button", { name: "Copy free times" })).toBeDisabled();
+});
