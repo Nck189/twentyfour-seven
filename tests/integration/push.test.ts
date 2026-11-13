@@ -148,7 +148,11 @@ describe("push notifications (server)", () => {
     await u.client.rpc("save_push_subscription", sub(`setup-${u.id}`));
     expect((await u.client.rpc("claim_setup_rewards")).data.granted).toContain("notifications");
     expect((await u.client.rpc("claim_setup_rewards")).data.granted).toEqual([]);
-    const chime = await admin().from("decor").select("item_id").eq("user_id", u.id).eq("item_id", "wind_chime");
+    const chime = await admin()
+      .from("decor")
+      .select("item_id")
+      .eq("user_id", u.id)
+      .eq("item_id", "wind_chime");
     expect(chime.data).toHaveLength(1);
   });
 
