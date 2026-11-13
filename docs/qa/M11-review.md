@@ -166,3 +166,38 @@ The `[a-z]` ranges are ASCII-only and case-sensitive (checked).
 | R2-3 (S4) | Fixed: leaving either quiet-hours field saves both from the local edit. |
 | R2-4 (S4) | Fixed: a malformed plan gives `/ics` a 503, not a bare 500. |
 | R2-5 (S4) | Fixed: the const moved below the imports. |
+
+## Round 3 (2026-11-13, `git diff 3fab63a..6a763d0`)
+
+### What I ran
+- **Tests and checks:** unit 355/355, integration (push, ics, rls, setup-rewards) 98/98. `tsc`, ESLint and Prettier on the changed files are clean.
+- **Flood probe** (the same one as round 2): one account with a device, 24 reminders due in 1 s, uploaded every 1.2 s.
+  - Calls 1–2 were accepted. Calls 3–5 were refused ("too many reminders today", 22023, since 48 + 24 > 60).
+  - The account was left with **48** rows, against 120 and climbing in round 2.
+- **Parallel-claim probe:**
+  - Run A claimed and held its claim uncommitted. It got **30** rows: the per-user fairness cap.
+  - Run B, at the same time, got **0** (`skip locked`).
+  - After A committed, C got the remaining **18** and D got **0**.
+  - All 48 rows ended up sent exactly once, with no duplicate refs.
+  - The `sent_at is null` re-check in `picked` is also re-evaluated on rows a concurrent run committed in the meantime (EvalPlanQual), so a row is never claimed twice.
+- **Device-less users:** never picked (covered by the new integration test, which passes).
+- **Normal day vs the cap:** I simulated re-plans every 10 min over a whole day with every block having a first-10.
+  - The largest single plan is **11** reminders: 4 block starts, 4 first-10 nudges, Night ritual, today's and tomorrow's "I'm up".
+  - Re-plans never add up: unsent future rows are deleted before the count, and `wake:<day>` from the night before and from the Wake block is one ref, so one row.
+  - In any 24 h window the count is at most about one day's fired reminders plus the current plan, about 22 even in the worst case, which is well under 60.
+  - A refused upload rolls back as a whole, delete included, so it never wipes the existing plan.
+
+### R2-1 and the S4s
+| ID | Round 3 |
+|---|---|
+| R2-1 (S2) | **Fixed and verified.** Daily cap of 60 per account, cleanup after 2 days, fair claims (≤ 30 per user per run, users with a device only). Storage is now bounded at about 60 rows/day × 2 days per account. |
+| R2-3 | Fixed: both blur handlers save From and To together from the local edit. |
+| R2-4 | Fixed: planning is wrapped, and bad data returns 503. |
+| R2-5 | Fixed: imports are back together. |
+
+### Residual (S4, Known issue)
+- **Many-account burst:** with fairness at 30 per user and a limit of 200 per run, 7 or more accounts timing 30 reminders each into the same minute could delay others by a minute or two.
+- **Why it stays S4:** the daily cap means each account can do this about twice a day, and every account needs its own sign-up and a real push-service subscription.
+
+### Round 3 verdict
+**PASS.** There are no open S1 or S2 findings. The remaining S3s and S4s are listed as Known issues in round 2 and here (R-M11-3 client retry, R-M11-5 server check of "On", R-M11-6, R-M11-12 CJ-10 02:30–10:00 skip, R-M11-15 E2E of the "on" screen, R2-2 at-most-once, the many-account burst).
