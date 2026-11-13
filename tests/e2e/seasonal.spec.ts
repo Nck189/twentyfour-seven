@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import { gameState, rest, setAllTemplates, userIdFor } from "../helpers/db";
-import { leaveAfterSignIn } from "../helpers/day";
+import { calmBlockClock, leaveAfterSignIn } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
 
 /**
@@ -13,6 +13,8 @@ import { IS_PROD_RUN } from "../helpers/env";
 test.skip(IS_PROD_RUN, "creates dedicated users and sets the server's test clock");
 
 async function setup(page: Page, tag: string) {
+  // Som's scenes wait in the wake window / Down Time: keep these tests independent of the hour.
+  await calmBlockClock(page);
   const email = uniqueEmail(tag);
   await setPrefs(page, { locale: "en", theme: "light" });
   await signIn(page, email);

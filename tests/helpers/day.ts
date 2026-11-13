@@ -37,3 +37,33 @@ export async function leaveAfterSignIn(page: Page) {
   await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
   await page.goto("about:blank");
 }
+
+/**
+ * Som's director waits during the wake window and Down Time, read from the day's blocks Today saved
+ * on the device (lib/today/blockClock, G7 STORY-R6). Story tests run at any hour, so they start
+ * every page with no saved day ("unknown" = calm) unless a test sets one itself.
+ */
+export async function calmBlockClock(page: Page) {
+  await page.addInitScript(() => {
+    try {
+      localStorage.removeItem("247-block-clock");
+    } catch {
+      /* storage blocked: nothing saved either */
+    }
+  });
+}
+
+/** Saves a day on the device whose current block is `key` (from 10 min ago to 50 min from now). */
+export async function setBlockNow(page: Page, key: "wake" | "focus" | "down") {
+  await page.evaluate((k) => {
+    const now = Date.now();
+    const blocks = [
+      {
+        key: k,
+        start: new Date(now - 10 * 60_000).toISOString(),
+        end: new Date(now + 50 * 60_000).toISOString(),
+      },
+    ];
+    localStorage.setItem("247-block-clock", JSON.stringify({ state: { blocks }, version: 0 }));
+  }, key);
+}

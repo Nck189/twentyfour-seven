@@ -2,13 +2,15 @@ import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import { rest, setAllTemplates, userIdFor } from "../helpers/db";
-import { gotoToday, leaveAfterSignIn, wakeDay } from "../helpers/day";
+import { calmBlockClock, gotoToday, leaveAfterSignIn, setBlockNow, wakeDay } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
 
 /** Story beats with Som (docs/STORY.md): a calm moment, skippable, once, recorded by the server. */
 test.skip(IS_PROD_RUN, "creates dedicated users");
 
-async function setup(page: Page) {
+async function setup(page: Page, { calm = true }: { calm?: boolean } = {}) {
+  // Independent of the hour the suite runs (the wake window / Down Time make Som wait).
+  if (calm) await calmBlockClock(page);
   const email = uniqueEmail("story");
   await setPrefs(page, { locale: "en", theme: "light" });
   await signIn(page, email, { story: true });
@@ -126,4 +128,23 @@ test("G7 STORY-R1: leaving the Farm while a beat's claim is in flight doesn't lo
   await page.unroute("**/rest/v1/rpc/claim_story_beat");
   await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Farm" }).click();
   await expect(page.getByRole("dialog", { name: "Som" })).toBeVisible();
+});
+
+test("G7 STORY-R6: Som waits during the wake window and Down Time, and comes at a calm block", async ({
+  page,
+}) => {
+  const id = await setup(page, { calm: false });
+  const scene = page.getByRole("dialog", { name: "Som" });
+  await page.goto("/more"); // on the app's origin (More doesn't save a day)
+  for (const busy of ["wake", "down"] as const) {
+    await setBlockNow(page, busy);
+    await page.goto("/farm");
+    await expect(page.getByRole("heading", { name: "Farm", level: 1 })).toBeVisible();
+    await page.waitForTimeout(1500);
+    await expect(scene).toHaveCount(0);
+  }
+  expect(await rest(`story_seen?user_id=eq.${id}&select=beat`)).toEqual([]);
+  await setBlockNow(page, "focus");
+  await page.goto("/farm");
+  await expect(scene).toBeVisible();
 });
