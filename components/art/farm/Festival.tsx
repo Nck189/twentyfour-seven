@@ -238,3 +238,30 @@ export function FarmSign({ className = "h-12 w-12" }: { className?: string }) {
     </Art>
   );
 }
+
+/** Reward decor (setup: notifications on): a little wind chime on a post. */
+export function WindChime({ className = "h-12 w-12" }: { className?: string }) {
+  return (
+    <Art className={className}>
+      <Shadow rx={7} />
+      <rect x={22.6} y={12} width={2.8} height={28} rx={1.4} fill="var(--art-wood-dark)" />
+      <rect x={14} y={10} width={20} height={3} rx={1.5} fill="var(--art-wood)" />
+      {[17, 22, 27, 31].map((x, i) => (
+        <g key={x}>
+          <rect x={x - 0.3} y={13} width={0.6} height={4 + i * 1.6} fill="var(--art-stone-dark)" />
+          <rect
+            x={x - 1.2}
+            y={16 + i * 1.6}
+            width={2.4}
+            height={7 - i}
+            rx={1.2}
+            fill="var(--art-blue-light)"
+          />
+          <rect x={x - 1.2} y={16 + i * 1.6} width={1} height={7 - i} rx={0.5} fill="var(--art-ice-light)" />
+        </g>
+      ))}
+      <circle cx={24} cy={27} r={1.6} fill="var(--art-yellow)" />
+      <path d="M24 28.6 L22.4 33 L25.6 33 Z" fill="var(--art-pink)" />
+    </Art>
+  );
+}

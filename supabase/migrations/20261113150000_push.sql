@@ -1,0 +1,344 @@
+-- M11 push notifications (SPEC §9). Web Push with VAPID; permission only after a user tap.
+-- Today plans the day's reminders (lib/push/schedule.ts, with text in the user's language) and
+-- uploads them with set_push_schedule. Every minute pg_cron asks the sender (an Edge Function)
+-- to deliver what push_due() returns: due now, still wanted, and still relevant (a block that
+-- already started, an "I'm up" already pressed, a Night ritual already done are skipped).
+
+-- Per-type switches and quiet hours (More → Notifications). Column grants like the rest of profiles.
+alter table public.profiles
+  add column if not exists push_block_start boolean not null default true,
+  add column if not exists push_first10 boolean not null default true,
+  add column if not exists push_wake boolean not null default true,
+  add column if not exists push_night boolean not null default true,
+  add column if not exists push_quiet_start text check (push_quiet_start ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'),
+  add column if not exists push_quiet_end text check (push_quiet_end ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$');
+grant update (push_block_start, push_first10, push_wake, push_night, push_quiet_start, push_quiet_end)
+  on public.profiles to authenticated;
+
+create table public.push_subscriptions (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  -- Only the browsers' real push services (G7 R-M11-1: never let the sender call arbitrary hosts).
+  endpoint text not null unique check (
+    char_length(endpoint) <= 1000
+    and endpoint ~ '^https://(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|([a-z0-9-]+\.)?push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)/'
+  ),
+  p256dh text not null check (char_length(p256dh) <= 200),
+  auth text not null check (char_length(auth) <= 100),
+  created_at timestamptz not null default now()
+);
+alter table public.push_subscriptions enable row level security;
+alter table public.push_subscriptions force row level security;
+create policy "own rows: select" on public.push_subscriptions for select to authenticated
+  using (user_id = (select auth.uid()));
+create policy "own rows: delete" on public.push_subscriptions for delete to authenticated
+  using (user_id = (select auth.uid()));
+revoke all on public.push_subscriptions from anon, authenticated;
+grant select, delete on public.push_subscriptions to authenticated;
+
+create table public.push_schedule (
+  user_id uuid not null references auth.users (id) on delete cascade,
+  ref text not null check (char_length(ref) <= 80),
+  kind text not null check (kind in ('block_start', 'first10', 'wake', 'night')),
+  day date not null,
+  block text check (block in ('down', 'sleep', 'wake', 'focus', 'work', 'gradation', 'free')),
+  fire_at timestamptz not null,
+  title text not null check (char_length(title) between 1 and 80),
+  body text not null check (char_length(body) <= 200),
+  sent_at timestamptz,
+  primary key (user_id, ref)
+);
+create index push_schedule_due on public.push_schedule (fire_at) where sent_at is null;
+alter table public.push_schedule enable row level security;
+alter table public.push_schedule force row level security;
+create policy "own rows: select" on public.push_schedule for select to authenticated
+  using (user_id = (select auth.uid()));
+revoke all on public.push_schedule from anon, authenticated;
+grant select on public.push_schedule to authenticated;
+
+-- Server-written events only (adds push_subscribed, and ics_link_made for the calendar link).
+drop policy if exists "own rows: insert" on public.events;
+create policy "own rows: insert" on public.events for insert to authenticated
+  with check (
+    user_id = (select auth.uid())
+    and type not in ('ticket_granted', 'wake_pressed', 'wake_backfilled', 'night_ritual_completed',
+                     'gacha_pull', 'coins_granted', 'essence_granted', 'egg_hatched', 'harvest',
+                     'seed_planted', 'decor_bought', 'star_up', 'unlock_granted',
+                     'exercise_logged', 'animal_petted', 'produce_collected', 'animal_fed',
+                     'days_settled', 'weekly_review_done',
+                     'produce_sold', 'seed_bought', 'ticket_exchanged', 'upgrade_bought',
+                     'order_delivered', 'reward_redeemed',
+                     'seasonal_order_delivered', 'wish_floated', 'story_seen',
+                     'cafe_order', 'cafe_card', 'coffee_answered', 'coffee_cup_added',
+                     'push_subscribed', 'ics_link_made')
+  );
+
+-- Save this device's subscription (after the user tapped "Turn on"). One endpoint belongs to one
+-- account: signing in as someone else on the same device moves it.
+create or replace function public.save_push_subscription(p_endpoint text, p_p256dh text, p_auth text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  uid uuid := auth.uid();
+begin
+  if uid is null then
+    raise exception 'not authenticated' using errcode = '42501';
+  end if;
+  delete from public.push_subscriptions where endpoint = p_endpoint and user_id <> uid;
+  insert into public.push_subscriptions (user_id, endpoint, p256dh, auth)
+  values (uid, p_endpoint, p_p256dh, p_auth)
+  on conflict (endpoint) do update set p256dh = excluded.p256dh, auth = excluded.auth;
+  -- At most 10 devices per account: the oldest go first (G7 R-M11-1).
+  delete from public.push_subscriptions d
+  where d.user_id = uid
+    and d.id not in (select k.id from public.push_subscriptions k where k.user_id = uid order by k.id desc limit 10);
+  insert into public.events (user_id, type, payload) values (uid, 'push_subscribed', '{}'::jsonb);
+end $$;
+
+-- Replace this user's upcoming (unsent) reminders with the plan from Today. Validated: at most 24,
+-- known kinds, within the next 36 h.
+create or replace function public.set_push_schedule(p_items jsonb)
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  uid uuid := auth.uid();
+  n integer;
+begin
+  if uid is null then
+    raise exception 'not authenticated' using errcode = '42501';
+  end if;
+  if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) > 24 then
+    raise exception 'at most 24 reminders' using errcode = '22023';
+  end if;
+  if exists (select 1 from jsonb_array_elements(p_items) i
+             where (i ->> 'fire_at')::timestamptz > now() + interval '36 hours') then
+    raise exception 'reminders must be within the next 36 hours' using errcode = '22023';
+  end if;
+  delete from public.push_schedule where user_id = uid and sent_at is null and fire_at > now();
+  -- Housekeeping and a daily cap, so one account can't flood the shared queue (G7 R2-1): a normal
+  -- day plans about a dozen; uploads that would pass 60 in a day are refused.
+  delete from public.push_schedule where user_id = uid and fire_at < now() - interval '2 days';
+  if (select count(*) from public.push_schedule s where s.user_id = uid and s.fire_at > now() - interval '24 hours')
+     + (select count(*) from jsonb_array_elements(p_items) i where (i ->> 'fire_at')::timestamptz > now()) > 60 then
+    raise exception 'too many reminders today' using errcode = '22023';
+  end if;
+  insert into public.push_schedule (user_id, ref, kind, day, block, fire_at, title, body)
+  select uid, i ->> 'ref', i ->> 'kind', (i ->> 'day')::date, i ->> 'block',
+         (i ->> 'fire_at')::timestamptz, i ->> 'title', coalesce(i ->> 'body', '')
+  from jsonb_array_elements(p_items) i
+  -- One that became due while uploading is dropped, not the whole plan (G7 R-M11-3).
+  where (i ->> 'fire_at')::timestamptz > now()
+  on conflict (user_id, ref) do update
+    set kind = excluded.kind, day = excluded.day, block = excluded.block, fire_at = excluded.fire_at,
+        title = excluded.title, body = excluded.body
+    where public.push_schedule.sent_at is null;
+  get diagnostics n = row_count;
+  return n;
+end $$;
+
+-- Still wanted and still relevant: the kind is switched on, and a block that already started, an
+-- "I'm up" already pressed or a Night ritual already done make their reminder moot.
+create or replace function public._push_wanted(uid uuid, p_kind text, p_day date, p_block text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce((
+    select case p_kind
+      when 'block_start' then p.push_block_start
+                              and not exists (select 1 from public.block_logs l
+                                              where l.user_id = uid and l.date = p_day
+                                                and l.block = p_block and l.started_at is not null)
+      when 'first10' then p.push_first10
+                          and not exists (select 1 from public.block_logs l
+                                          where l.user_id = uid and l.date = p_day
+                                            and l.block = p_block and l.started_at is not null)
+      when 'wake' then p.push_wake
+                       and not exists (select 1 from public.wake_events w
+                                       where w.user_id = uid and w.date = p_day)
+      when 'night' then p.push_night
+                        and not exists (select 1 from public.events e
+                                        where e.user_id = uid and e.type = 'night_ritual_completed'
+                                          and e.payload ->> 'date' = p_day::text)
+      else false
+    end
+    from public.profiles p where p.user_id = uid), false)
+$$;
+
+-- What's due now (read-only, for checks and tests): due in the last 15 min, unsent, still wanted.
+create or replace function public.push_due(p_limit integer default 500)
+returns table (user_id uuid, ref text, title text, body text, endpoint text, p256dh text, auth text)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select s.user_id, s.ref, s.title, s.body, d.endpoint, d.p256dh, d.auth
+  from public.push_schedule s
+  join public.push_subscriptions d on d.user_id = s.user_id
+  where s.sent_at is null
+    and s.fire_at <= now() and s.fire_at > now() - interval '15 minutes'
+    and public._push_wanted(s.user_id, s.kind, s.day, s.block)
+  order by s.fire_at
+  limit p_limit
+$$;
+
+-- For the sender (service role only): claims due reminders (marks them sent before sending, so a
+-- slow device or a parallel run never sends twice or blocks the queue, G7 R-M11-1), one row per
+-- device. Ones no longer wanted are claimed too, silently.
+create or replace function public.push_claim(p_limit integer default 200)
+returns table (user_id uuid, ref text, title text, body text, endpoint text, p256dh text, auth text)
+language sql
+volatile
+security definer
+set search_path = ''
+as $$
+  -- Fair: at most 30 per user per run, oldest first, only users with a device (G7 R2-1).
+  with candidates as (
+    select s.user_id, s.ref,
+           row_number() over (partition by s.user_id order by s.fire_at) as rn
+    from public.push_schedule s
+    where s.sent_at is null
+      and s.fire_at <= now() and s.fire_at > now() - interval '15 minutes'
+      and exists (select 1 from public.push_subscriptions d where d.user_id = s.user_id)
+  ), picked as (
+    select s.user_id, s.ref
+    from public.push_schedule s
+    join candidates c on c.user_id = s.user_id and c.ref = s.ref and c.rn <= 30
+    where s.sent_at is null
+    order by s.fire_at
+    limit p_limit
+    for update of s skip locked
+  ), claimed as (
+    update public.push_schedule s set sent_at = now()
+    from picked
+    where s.user_id = picked.user_id and s.ref = picked.ref
+    returning s.user_id, s.ref, s.kind, s.day, s.block, s.title, s.body
+  )
+  select c.user_id, c.ref, c.title, c.body, d.endpoint, d.p256dh, d.auth
+  from claimed c
+  join public.push_subscriptions d on d.user_id = c.user_id
+  where public._push_wanted(c.user_id, c.kind, c.day, c.block)
+$$;
+
+-- Mark one sent by hand (service role only; the sender claims instead).
+create or replace function public.push_mark_sent(p_user uuid, p_ref text)
+returns void
+language sql
+security definer
+set search_path = ''
+as $$
+  update public.push_schedule set sent_at = now() where user_id = p_user and ref = p_ref
+$$;
+
+-- A push service said the device is gone (404/410): drop it (service role only).
+create or replace function public.push_drop_endpoint(p_endpoint text)
+returns void
+language sql
+security definer
+set search_path = ''
+as $$
+  delete from public.push_subscriptions where endpoint = p_endpoint
+$$;
+
+revoke all on function public.save_push_subscription(text, text, text) from public, anon;
+revoke all on function public.set_push_schedule(jsonb) from public, anon;
+grant execute on function public.save_push_subscription(text, text, text) to authenticated;
+grant execute on function public.set_push_schedule(jsonb) to authenticated;
+revoke all on function public.push_due(integer) from public, anon, authenticated;
+revoke all on function public.push_claim(integer) from public, anon, authenticated;
+revoke all on function public._push_wanted(uuid, text, date, text) from public, anon, authenticated;
+grant execute on function public.push_claim(integer) to service_role;
+revoke all on function public.push_mark_sent(uuid, text) from public, anon, authenticated;
+revoke all on function public.push_drop_endpoint(text) from public, anon, authenticated;
+grant execute on function public.push_due(integer) to service_role;
+grant execute on function public.push_mark_sent(uuid, text) to service_role;
+grant execute on function public.push_drop_endpoint(text) to service_role;
+
+-- Setup reward (SPEC §8.8c): turning on notifications on a device → a wind chime for the farm.
+-- The latest _setup_reward (M9: setup steps + the unlock ladder) and _setup_done (M8), plus the
+-- notifications step (content/unlocks.ts mirrors it).
+create or replace function public._setup_reward(p_id text)
+returns jsonb
+language sql
+immutable
+set search_path = ''
+as $$
+  select case p_id
+    when 'sleep_times' then '{"seed": {"crop": "strawberry", "n": 2}}'::jsonb
+    when 'first10' then '{"tickets": 1}'::jsonb
+    when 'checklist' then '{"coins": 20}'::jsonb
+    when 'backlog_estimate' then '{"coins": 15}'::jsonb
+    when 'language' then '{"coins": 5}'::jsonb
+    when 'home_screen' then '{"decor": "flowers"}'::jsonb
+    when 'exercise' then '{"feed": 3}'::jsonb
+    when 'notifications' then '{"decor": "wind_chime"}'::jsonb
+    -- unlock ladder (SPEC §8.8b, content/unlocks.ts UNLOCKS)
+    when 'first_night' then '{"decor": "garden_lantern"}'::jsonb
+    when 'first_backlog' then '{"decor": "mailbox"}'::jsonb
+    when 'all_first10_day' then '{"seed": {"crop": "sunflower", "n": 1}}'::jsonb
+    when 'first10_20' then '{"tickets": 2}'::jsonb
+    when 'must_10' then '{"coins": 50}'::jsonb
+    when 'streak_7' then '{"egg": 1}'::jsonb
+    when 'streak_30' then '{"decor": "pond"}'::jsonb
+    when 'blocks_100' then '{"coins": 150}'::jsonb
+  end
+$$;
+
+create or replace function public._setup_done(uid uuid)
+returns text[]
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select array_remove(array[
+    case when exists (
+      select 1 from public.profiles p where p.user_id = uid and (p.onboarding ->> 'done') = 'true'
+    ) or exists (
+      select 1 from public.templates t where t.user_id = uid and t.updated_at > t.created_at + interval '1 second'
+    ) then 'sleep_times' end,
+    case when exists (
+      select 1 from public.settings s, jsonb_array_elements(case when jsonb_typeof(s.blocks) = 'array' then s.blocks else '[]'::jsonb end) b
+      where s.user_id = uid and jsonb_typeof(b -> 'first10') = 'string' and length(b ->> 'first10') > 0
+    ) then 'first10' end,
+    case when exists (
+      select 1 from public.settings s, jsonb_array_elements(case when jsonb_typeof(s.blocks) = 'array' then s.blocks else '[]'::jsonb end) b
+      where s.user_id = uid and jsonb_typeof(b -> 'checklist') = 'array' and jsonb_array_length(b -> 'checklist') > 0
+    ) or exists (
+      select 1 from public.templates t, jsonb_each(case when jsonb_typeof(t.blocks) = 'object' then t.blocks else '{}'::jsonb end) o
+      where t.user_id = uid and jsonb_typeof(o.value) = 'object'
+        and jsonb_typeof(o.value -> 'checklist') = 'array' and jsonb_array_length(o.value -> 'checklist') > 0
+    ) or exists (
+      select 1 from public.day_plans d, jsonb_each(case when jsonb_typeof(d.overrides -> 'blocks') = 'object'
+                                                        then d.overrides -> 'blocks' else '{}'::jsonb end) o
+      where d.user_id = uid and jsonb_typeof(o.value) = 'object'
+        and jsonb_typeof(o.value -> 'checklist') = 'array' and jsonb_array_length(o.value -> 'checklist') > 0
+    ) then 'checklist' end,
+    case when exists (
+      select 1 from public.backlog_items i where i.user_id = uid and coalesce(i.estimate_min, 0) > 0
+    ) then 'backlog_estimate' end,
+    case when exists (
+      select 1 from public.events e where e.user_id = uid and e.type = 'locale_changed'
+    ) then 'language' end,
+    case when exists (
+      select 1 from public.events e where e.user_id = uid and e.type = 'exercise_settings_saved'
+    ) or exists (
+      select 1 from public.settings s
+      where s.user_id = uid and (s.weekly_exercise_goal <> 3 or s.gym_close_time <> time '22:00')
+    ) then 'exercise' end,
+    case when exists (
+      select 1 from public.push_subscriptions d where d.user_id = uid
+    ) or exists (
+      select 1 from public.events e where e.user_id = uid and e.type = 'push_subscribed'
+    ) then 'notifications' end
+  ], null)
+$$;

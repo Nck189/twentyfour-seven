@@ -9,6 +9,7 @@ import { showBedCard } from "@/lib/today/bedtime";
 import { useNow } from "@/lib/hooks/useNow";
 import { currentBlock, type TimelineBlock } from "@/lib/today/day";
 import { useBlockClock } from "@/lib/today/blockClock";
+import { PushPlanner } from "@/components/push/PushPlanner";
 import { useToday } from "@/lib/today/useToday";
 import { NightRitual } from "@/components/night/NightRitual";
 import { WelcomeCard } from "@/components/onboarding/WelcomeCard";
@@ -194,6 +195,8 @@ export function TodayScreen() {
 
   return (
     <>
+      {/* M11: upload today's reminders when this device has notifications on (renders nothing). */}
+      <PushPlanner day={tl.date} blocks={tl.blocks} timezone={today.timezone} mode={tl.mode} />
       <ScreenHeader
         title={t("title")}
         subtitle={formatDayLong(tl.date, locale, today.timezone)}

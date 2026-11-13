@@ -302,7 +302,8 @@
     "garden_lantern": "Garden lantern",
     "mailbox": "Mailbox",
     "cafe_table": "Café table",
-    "farm_sign": "Farm sign"
+    "farm_sign": "Farm sign",
+    "wind_chime": "Wind chime"
   },
   "gacha": {
     "title": "Capsule machine",
@@ -788,7 +789,8 @@
       "backlog_estimate": "Add a task with a time estimate",
       "language": "Choose your language",
       "home_screen": "Add 24/7 to your Home Screen",
-      "exercise": "Set your weekly exercise goal"
+      "exercise": "Set your weekly exercise goal",
+      "notifications": "Turn on notifications"
     },
     "rewardTitle": "Setup reward",
     "ok": "OK",
@@ -1249,5 +1251,58 @@
     "rewardCard": "Card #{n} complete! Som stamps a little paw on it.",
     "addCup": "I had another real one",
     "addedCup": "Noted. Latest real cup: {slot}."
+  },
+  "push": {
+    "settingsTitle": "Notifications",
+    "askHint": "A nudge when a block starts, a first-10 reminder, \"I'm up\" and the Night ritual. You choose which, and quiet hours.",
+    "turnOn": "Turn on notifications",
+    "turnOff": "Turn off on this device",
+    "on": "On for this device",
+    "state": {
+      "unsupported": "This browser can't show notifications.",
+      "install": "On iPhone and iPad, add 24/7 to your Home Screen first (Share → Add to Home Screen), then open it from there to turn on notifications.",
+      "off": "Notifications are coming soon.",
+      "blocked": "Notifications are blocked for 24/7. Turn them on in your phone's Settings, then come back."
+    },
+    "kind": {
+      "block_start": "Block starts",
+      "first10": "First-10 nudge",
+      "wake": "\"I'm up\" reminder",
+      "night": "Night ritual"
+    },
+    "kindHint": {
+      "block_start": "When each block begins, with its first 10 minutes",
+      "first10": "10 min in, only if the block hasn't started",
+      "wake": "10 min after your wake time, only if you haven't pressed it",
+      "night": "At Down Time, only if it isn't done yet"
+    },
+    "quiet": "Quiet hours",
+    "quietHint": "No notifications between these times.",
+    "quietFrom": "From",
+    "quietTo": "To",
+    "saveError": "Couldn't save. Try again.",
+    "title": {
+      "block_start": "{block} starts now",
+      "first10": "First 10 min of {block}?",
+      "wake": "Good morning",
+      "night": "Night ritual time"
+    },
+    "body": {
+      "block_start": "Som is ready when you are. Tap to start.",
+      "first10": "Som says: just the first 10 minutes. Tap to start.",
+      "wake": "Som is up and waiting. Tap \"I'm up\" when you're out of bed.",
+      "night": "Som is getting sleepy. Close today and plan tomorrow, about 5 minutes."
+    },
+    "icsName": "24/7 plan",
+    "calTitle": "Calendar",
+    "calHint": "Add your plan (blocks and fixed events, the next 2 weeks) to iPhone, iPad or Mac Calendar. Anyone with the link can see it, so keep it private.",
+    "calShow": "Get my calendar link",
+    "calCopy": "Copy link",
+    "calCopied": "Copied",
+    "calOpen": "Add to Calendar",
+    "calRotate": "Make a new link",
+    "calRotateHint": "The old link stops working.",
+    "calError": "Couldn't get the link. Try again.",
+    "turnOnError": "Notifications are allowed, but this device couldn't be saved. Try again."
   }
 }

@@ -24,6 +24,7 @@ export const SETUP_STEPS = [
   "language",
   "home_screen",
   "exercise",
+  "notifications",
 ] as const;
 export type SetupStep = (typeof SETUP_STEPS)[number];
 
@@ -35,6 +36,7 @@ export const SETUP_REWARD: Record<SetupStep, Reward> = {
   language: { coins: 5 },
   home_screen: { decor: "flowers" },
   exercise: { feed: 3 },
+  notifications: { decor: "wind_chime" },
 };
 
 /** Where each step is set up in the app. */
@@ -46,6 +48,7 @@ export const SETUP_HREF: Record<SetupStep, string> = {
   language: "/more#language",
   home_screen: "/more#install",
   exercise: "/more#exercise",
+  notifications: "/more#notifications",
 };
 
 export const isSetupStep = (v: unknown): v is SetupStep =>

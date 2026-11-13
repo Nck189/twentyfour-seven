@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from "./env";
 
 /** Paths reachable without a session. */
-export const PUBLIC_PATHS = ["/login", "/auth", "/api/keepalive", "/share", "/dev", "/offline.html"];
+export const PUBLIC_PATHS = ["/login", "/auth", "/api/keepalive", "/share", "/dev", "/offline.html", "/ics"];
 
 export function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
