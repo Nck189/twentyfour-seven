@@ -33,9 +33,12 @@ export function dedupeGets(base: typeof fetch): typeof fetch {
   const inflight = new Map<string, Promise<Response>>();
   return async (input, init) => {
     const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
-    if ((method !== "GET" && method !== "HEAD") || init?.signal || input instanceof Request) {
+    if (method !== "GET" && method !== "HEAD") {
+      // A write: reads that start after it must see it, never join a read from before (P-1).
+      inflight.clear();
       return base(input, init);
     }
+    if (init?.signal || input instanceof Request) return base(input, init);
     const headers = [...new Headers(init?.headers).entries()].sort().map(([k, v]) => `${k}:${v}`);
     const key = `${method} ${String(input)} ${headers.join("|")}`;
     let shared = inflight.get(key);

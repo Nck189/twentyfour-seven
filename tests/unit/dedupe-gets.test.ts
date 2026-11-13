@@ -50,4 +50,31 @@ describe("dedupeGets", () => {
     expect(r.map((x) => x.status)).toEqual(["rejected", "rejected"]);
     expect(await (await f("https://x/a")).text()).toBe("ok");
   });
+
+  it("G7 PERF P-1: a read that starts after a write never joins a read from before it", async () => {
+    const base = fakeFetch();
+    const f = dedupeGets(base as unknown as typeof fetch);
+    const u = "https://x/rest/v1/game_state";
+    const before = f(u);
+    await f("https://x/rest/v1/rpc/pull_gacha", { method: "POST", body: "{}" });
+    const after = f(u);
+    await Promise.all([before, after]);
+    expect(base).toHaveBeenCalledTimes(3);
+  });
+
+  it("many callers each read the body; Request inputs and HEAD counts keep their own key", async () => {
+    const base = vi.fn(async () => new Response("[1]", { headers: { "content-range": "0-0/42" } }));
+    const f = dedupeGets(base as unknown as typeof fetch);
+    const rs = await Promise.all(Array.from({ length: 5 }, () => f("https://x/a")));
+    expect(base).toHaveBeenCalledTimes(1);
+    for (const r of rs) expect(await r.text()).toBe("[1]");
+    const heads = await Promise.all([
+      f("https://x/a", { method: "HEAD", headers: { Prefer: "count=exact" } }),
+      f("https://x/a", { method: "HEAD", headers: { Prefer: "count=exact" } }),
+    ]);
+    expect(base).toHaveBeenCalledTimes(2);
+    expect(heads.map((h) => h.headers.get("content-range"))).toEqual(["0-0/42", "0-0/42"]);
+    await Promise.all([f(new Request("https://x/a")), f(new Request("https://x/a"))]);
+    expect(base).toHaveBeenCalledTimes(4);
+  });
 });

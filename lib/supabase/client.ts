@@ -38,6 +38,20 @@ export async function getUserCached(): Promise<{ data: { user: User | null } }> 
       userPromise = null;
     });
   }
+  // The local session (no network) says who is signed in on this device right now; a cached user
+  // for anyone else is dropped, even if no auth event reached this tab (G7 PERF P-3).
+  const {
+    data: { session },
+  } = await c.auth.getSession();
+  const localId = session?.user?.id ?? null;
+  if (!localId) {
+    userPromise = null;
+    return { data: { user: null } };
+  }
+  if (userPromise) {
+    const cached = await userPromise;
+    if (cached && cached.id !== localId) userPromise = null;
+  }
   if (!userPromise) {
     const p = c.auth
       .getUser()
