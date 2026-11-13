@@ -120,8 +120,16 @@ test("CJ-SHARE-3 switching between two free times on one day sends the one picke
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const friend = await ctx.newPage();
   await friend.goto(url);
-  await friend.getByRole("button", { name: "Ask for 19:30–20:30" }).click();
-  await friend.getByRole("button", { name: "Ask for 21:00–22:00" }).click();
+  // Only that day's card: today's free time can carry the same label (e.g. 21:00–22:00 after 21:00).
+  const heading = new Intl.DateTimeFormat("en", {
+    timeZone: "UTC",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(new Date(`${date}T00:00:00Z`));
+  const day = friend.getByRole("listitem").filter({ has: friend.getByRole("heading", { name: heading }) });
+  await day.getByRole("button", { name: "Ask for 19:30–20:30" }).click();
+  await day.getByRole("button", { name: "Ask for 21:00–22:00" }).click();
   await friend.getByLabel("Your name").fill("Mew");
   await friend.getByRole("button", { name: "Send request" }).click();
   await expect(friend.getByRole("status")).toContainText("Sent!");
