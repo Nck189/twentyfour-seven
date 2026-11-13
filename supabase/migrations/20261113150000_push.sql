@@ -191,3 +191,73 @@ revoke all on function public.push_drop_endpoint(text) from public, anon, authen
 grant execute on function public.push_due(integer) to service_role;
 grant execute on function public.push_mark_sent(uuid, text) to service_role;
 grant execute on function public.push_drop_endpoint(text) to service_role;
+
+-- Setup reward (SPEC §8.8c): turning on notifications on a device → a wind chime for the farm.
+-- Same functions as the M8 setup row, plus the notifications step (content/unlocks.ts mirrors it).
+create or replace function public._setup_reward(p_id text)
+returns jsonb
+language sql
+immutable
+set search_path = ''
+as $$
+  select case p_id
+    when 'sleep_times' then '{"seed": {"crop": "strawberry", "n": 2}}'::jsonb
+    when 'first10' then '{"tickets": 1}'::jsonb
+    when 'checklist' then '{"coins": 20}'::jsonb
+    when 'backlog_estimate' then '{"coins": 15}'::jsonb
+    when 'language' then '{"coins": 5}'::jsonb
+    when 'home_screen' then '{"decor": "flowers"}'::jsonb
+    when 'exercise' then '{"feed": 3}'::jsonb
+    when 'notifications' then '{"decor": "wind_chime"}'::jsonb
+  end
+$$;
+
+create or replace function public._setup_done(uid uuid)
+returns text[]
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select array_remove(array[
+    case when exists (
+      select 1 from public.profiles p where p.user_id = uid and (p.onboarding ->> 'done') = 'true'
+    ) or exists (
+      select 1 from public.templates t where t.user_id = uid and t.updated_at > t.created_at + interval '1 second'
+    ) then 'sleep_times' end,
+    case when exists (
+      select 1 from public.settings s, jsonb_array_elements(case when jsonb_typeof(s.blocks) = 'array' then s.blocks else '[]'::jsonb end) b
+      where s.user_id = uid and jsonb_typeof(b -> 'first10') = 'string' and length(b ->> 'first10') > 0
+    ) then 'first10' end,
+    case when exists (
+      select 1 from public.settings s, jsonb_array_elements(case when jsonb_typeof(s.blocks) = 'array' then s.blocks else '[]'::jsonb end) b
+      where s.user_id = uid and jsonb_typeof(b -> 'checklist') = 'array' and jsonb_array_length(b -> 'checklist') > 0
+    ) or exists (
+      select 1 from public.templates t, jsonb_each(case when jsonb_typeof(t.blocks) = 'object' then t.blocks else '{}'::jsonb end) o
+      where t.user_id = uid and jsonb_typeof(o.value) = 'object'
+        and jsonb_typeof(o.value -> 'checklist') = 'array' and jsonb_array_length(o.value -> 'checklist') > 0
+    ) or exists (
+      select 1 from public.day_plans d, jsonb_each(case when jsonb_typeof(d.overrides -> 'blocks') = 'object'
+                                                        then d.overrides -> 'blocks' else '{}'::jsonb end) o
+      where d.user_id = uid and jsonb_typeof(o.value) = 'object'
+        and jsonb_typeof(o.value -> 'checklist') = 'array' and jsonb_array_length(o.value -> 'checklist') > 0
+    ) then 'checklist' end,
+    case when exists (
+      select 1 from public.backlog_items i where i.user_id = uid and coalesce(i.estimate_min, 0) > 0
+    ) then 'backlog_estimate' end,
+    case when exists (
+      select 1 from public.events e where e.user_id = uid and e.type = 'locale_changed'
+    ) then 'language' end,
+    case when exists (
+      select 1 from public.events e where e.user_id = uid and e.type = 'exercise_settings_saved'
+    ) or exists (
+      select 1 from public.settings s
+      where s.user_id = uid and (s.weekly_exercise_goal <> 3 or s.gym_close_time <> time '22:00')
+    ) then 'exercise' end,
+    case when exists (
+      select 1 from public.push_subscriptions d where d.user_id = uid
+    ) or exists (
+      select 1 from public.events e where e.user_id = uid and e.type = 'push_subscribed'
+    ) then 'notifications' end
+  ], null)
+$$;
