@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { logEvent } from "@/lib/db/events";
 import { isLocale } from "@/lib/i18n/config";
 import { usePrefs } from "@/lib/store/prefs";
-import { getSupabase } from "@/lib/supabase/client";
+import { getSupabase, getUserCached } from "@/lib/supabase/client";
 import { reportHomeScreenOnce } from "@/lib/setup/useSetupRewards";
 
 /**
@@ -17,7 +17,7 @@ export function ProfileSync() {
     const client = getSupabase();
     let cancelled = false;
     (async () => {
-      const { data } = await client.auth.getUser();
+      const { data } = await getUserCached();
       if (!data.user || cancelled) return;
       void reportHomeScreenOnce();
       const { data: profile } = await client

@@ -10,7 +10,7 @@ import {
 } from "@/content/animals";
 import type { Rarity } from "@/content/crops";
 import { notifyWalletChange } from "@/lib/market/changes";
-import { getSupabase } from "@/lib/supabase/client";
+import { getSupabase, getUserCached } from "@/lib/supabase/client";
 import { addDays, DEFAULT_TZ, isoWeekday, localDate, zonedInstant } from "@/lib/time";
 
 export type Animal = {
@@ -74,7 +74,7 @@ export function useAnimals() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const { data: auth } = await client.auth.getUser();
+      const { data: auth } = await getUserCached();
       if (!auth.user) return;
       const [profile, settings, gs, animals, inv] = await Promise.all([
         client.from("profiles").select("timezone").eq("user_id", auth.user.id).maybeSingle(),

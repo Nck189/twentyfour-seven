@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getUserCached } from "@/lib/supabase/client";
 import type { BlockSetting } from "@/content/blocks";
 import { addDays, DEFAULT_TZ, localDate } from "@/lib/time";
 import type { DayContext, DayPlanRow, TemplateRow } from "./day";
@@ -11,7 +12,7 @@ export async function loadDayContext(
   fromOffset = -2,
   toOffset = 3,
 ): Promise<{ ctx: DayContext; userId: string; today: string }> {
-  const { data: auth } = await client.auth.getUser();
+  const { data: auth } = await getUserCached();
   if (!auth.user) throw new Error("signed out");
   const [profile, settings, templates] = await Promise.all([
     client.from("profiles").select("timezone").eq("user_id", auth.user.id).maybeSingle(),

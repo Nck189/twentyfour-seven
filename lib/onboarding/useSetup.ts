@@ -5,7 +5,7 @@ import type { BlockKey, BlockSetting } from "@/content/blocks";
 import type { FixedEvent } from "@/content/defaults";
 import type { Starter } from "@/content/starters";
 import { logEvent } from "@/lib/db/events";
-import { getSupabase } from "@/lib/supabase/client";
+import { getSupabase, getUserCached } from "@/lib/supabase/client";
 import { DEFAULT_TZ } from "@/lib/time";
 import type { TemplateRow } from "@/lib/today/day";
 import { NONE, type OnboardingState } from "./index";
@@ -35,7 +35,7 @@ export function useSetup() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data: auth } = await client.auth.getUser();
+      const { data: auth } = await getUserCached();
       if (!auth.user) return;
       const [profile, settings, tpls] = await Promise.all([
         client.from("profiles").select("onboarding, timezone").eq("user_id", auth.user.id).maybeSingle(),

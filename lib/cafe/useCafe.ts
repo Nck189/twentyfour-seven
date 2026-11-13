@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { COFFEE_ANSWERS, type CoffeeAnswer, type CoffeeSlot, type DrinkId } from "@/content/cafe";
-import { getSupabase } from "@/lib/supabase/client";
+import { getSupabase, getUserCached } from "@/lib/supabase/client";
 
 export type CafeStatus = {
   stamps: number;
@@ -97,7 +97,7 @@ export function useCafe(enabled = true) {
 
   const setGameOnly = useCallback(
     async (on: boolean): Promise<boolean> => {
-      const { data: auth } = await client.auth.getUser();
+      const { data: auth } = await getUserCached();
       if (!auth.user) return false;
       const r = await client.from("profiles").update({ cafe_game_only: on }).eq("user_id", auth.user.id);
       if (!r.error) setStatus((s) => (s ? { ...s, gameOnly: on } : s));

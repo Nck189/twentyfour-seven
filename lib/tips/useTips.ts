@@ -4,7 +4,7 @@ import { useCallback, useEffect } from "react";
 import { create } from "zustand";
 import { isTipId, type TipId } from "@/content/tips";
 import { logEvent } from "@/lib/db/events";
-import { getSupabase } from "@/lib/supabase/client";
+import { getSupabase, getUserCached } from "@/lib/supabase/client";
 import { activeTip } from "./tips";
 
 type TipsState = {
@@ -27,7 +27,7 @@ let loading: Promise<void> | null = null;
 
 async function save(patch: { tips_seen?: TipId[]; tips_off?: boolean }) {
   const client = getSupabase();
-  const { data: auth } = await client.auth.getUser();
+  const { data: auth } = await getUserCached();
   if (!auth.user) return;
   await client.from("profiles").update(patch).eq("user_id", auth.user.id);
 }
@@ -45,7 +45,7 @@ export const useTipsStore = create<TipsState>()((set, get) => ({
   load: () => {
     loading ??= (async () => {
       const client = getSupabase();
-      const { data: auth } = await client.auth.getUser();
+      const { data: auth } = await getUserCached();
       if (!auth.user) {
         loading = null; // not signed in yet: ask again on the next screen
         return;

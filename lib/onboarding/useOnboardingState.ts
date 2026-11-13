@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { logEvent } from "@/lib/db/events";
-import { getSupabase } from "@/lib/supabase/client";
+import { getSupabase, getUserCached } from "@/lib/supabase/client";
 import { needsOnboarding, type OnboardingState } from "./index";
 
 /** Whether to offer the first-run setup on Today, and "Later" (counts as skipped). */
@@ -14,7 +14,7 @@ export function useOnboardingState() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await client.auth.getUser();
+      const { data } = await getUserCached();
       if (!data.user || cancelled) return;
       const { data: prof } = await client
         .from("profiles")
