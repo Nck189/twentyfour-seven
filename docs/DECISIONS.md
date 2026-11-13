@@ -224,3 +224,9 @@ Format: date · decision · why · how to change it
   - **iOS:** the permission prompt only after the "Turn on" tap; Safari tabs on iPhone/iPad get the Home Screen hint (iOS 16.4+); every push shows a notification.
   - **.ics feed:** `/ics/<48-hex secret>.ics`, served by a Next route that reads only the engine inputs through the token-checked `ics_context` RPC and plans the next 14 days. Sleep is left out; times are UTC. "Make a new link" stops the old one.
 
+- 2026-11-13 · M12 share availability + booking (SPEC §9), my calls:
+  - **What "free" means:** the day's Free block minus fixed events (appointments), from now on, cut at local midnight, gaps of 30 min or more. Every other block (work, focus, sleep, rituals) shows only as busy. Pending requests don't block the slot; the owner decides.
+  - **Privacy:** the public page `/share/<48-hex secret>` computes free/busy on the server from `share_context` (no block names, tasks, first-10s, event titles or checklists) and sends the browser only the intervals. "Make a new link" stops the old one. `noindex`.
+  - **Not-found status:** the page streams (cacheComponents needs `Suspense` + `connection()` to read the clock at request time), so an unknown link renders the not-found screen with `noindex` and HTTP 200, not 404. Nothing about the owner is sent either way.
+  - **Booking:** a visitor sends name (1–60), an optional note (≤ 300) and a 15 min–4 h slot within the next 15 days and one local day. Rate limit 5/hour and 20/day per owner (server-side, advisory lock). Accept → a fixed appointment titled with the visitor's name on that day's plan (`booking-<id>`, hosted by Free); Decline → nothing changes. The visitor isn't notified (no contact details are collected); the owner replies through their usual channel.
+  - **Copy free times** (text) and **free times as a picture** (canvas, shared with the iOS share sheet or downloaded) come from the same free/busy computation on the device.

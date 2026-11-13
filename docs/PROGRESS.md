@@ -1,12 +1,10 @@
 # PROGRESS — 24/7
 
-## Now (2026-11-13, midday Bangkok)
-- ✅ PR #16 and **#17** merged and on prod (Minnie ran `db push` + `qc:prod`: 22 passed, Lighthouse OK). Story with Som (chapters 0–6 + R, seasonal beats), Som's café + the coffee/tea and bedtime insight, block clock.
-- 🔄 **M11 PR** (draft): Web Push (subscriptions, per-type switches, quiet hours, the day's plan uploaded by Today, `push_due` relevance checks, the `push-send` Edge Function) + the private `.ics` calendar link + the notifications setup reward (wind chime). 2 migrations: push, ics.
-  Notifications stay "coming soon" until Minnie sets the VAPID keys and the cron once (`docs/M11-push-setup.md`).
-- CI hygiene: story/seasonal specs no longer depend on the hour; CJ-10 skips the midnight→wake window where its 03:30 return is already over (correct server rule).
-- Open: M3-F5 / CJ-M10-1 failed once in CI at 04:45 Bangkok ("Couldn't load today" / Stats loading), not reproduced since; watching.
-- Next: M12 share availability + booking, M13 factory, M14, closed beta.
+## Now (2026-11-13, afternoon Bangkok)
+- ✅ PR #17 (story + café), #18 (M11 push + .ics) and #19 (perf: fewer duplicate loads) merged.
+  After #18 Minnie runs `db push` (push, ics) and the one-time VAPID + cron setup (`docs/M11-push-setup.md`).
+- 🔄 **M12 PR** (draft): share free times by private link (`/share/<secret>`, free/busy only), copy free times as text or a picture, booking requests with an inbox in More (accept → appointment on that day's plan). 1 migration: share.
+- Next: M13 factory, M14, closed beta.
 - Waiting on Minnie: G7 STORY-R7 (should seasonal seeds plant only in their month and plants wilt after it?).
 
 ## ➡️ HANDOFF — read this first (any session: cloud or Minnie's Mac terminal)

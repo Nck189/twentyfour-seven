@@ -1,0 +1,50 @@
+/**
+ * Free time for the next SHARE_DAYS days from the engine inputs (server page and the owner's card).
+ * Each wake-day's Free block minus that day's fixed events (classes, appointments, accepted
+ * bookings); see freebusy.ts for the rules.
+ */
+import type { BlockSetting } from "@/content/blocks";
+import { addDays } from "@/lib/time";
+import { timelineFor, type DayContext, type DayPlanRow, type TemplateRow } from "@/lib/today/day";
+import { freeForDay, SHARE_DAYS, type DayFree } from "./freebusy";
+
+export type ShareContext = {
+  timezone: string;
+  locale: "en" | "th";
+  name: string | null;
+  settings: { blocks: BlockSetting[]; gym_close_time: string } | null;
+  templates: TemplateRow[];
+  day_plans: DayPlanRow[];
+};
+
+export function contextFrom(
+  c: ShareContext & { settings: NonNullable<ShareContext["settings"]> },
+): DayContext {
+  return {
+    timezone: c.timezone,
+    blocks: c.settings.blocks,
+    templates: c.templates,
+    dayPlans: Object.fromEntries(c.day_plans.map((p) => [p.date, p])),
+    gymClose: c.settings.gym_close_time.slice(0, 5),
+  };
+}
+
+export function freeDaysFromContext(ctx: DayContext, now: Date, days = SHARE_DAYS): DayFree[] {
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: ctx.timezone }).format(now);
+  const out: DayFree[] = [];
+  // Yesterday's wake-day too: before the wake, "now" can still be inside it.
+  for (let i = -1; i < days; i++) {
+    const date = addDays(today, i);
+    const tl = timelineFor(ctx, date);
+    const free = tl.blocks.find((b) => b.key === "free");
+    const day = freeForDay({
+      date,
+      free: free ? { start: free.start, end: free.end } : null,
+      fixed: tl.fixedEvents.map((e) => ({ start: e.start, end: e.end })),
+      now,
+      tz: ctx.timezone,
+    });
+    if (i >= 0 || day.free.length > 0) out.push(day);
+  }
+  return out;
+}

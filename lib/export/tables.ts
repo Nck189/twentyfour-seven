@@ -35,6 +35,8 @@ export const EXPORT_TABLES = [
   "coffee_answers",
   "push_subscriptions",
   "push_schedule",
+  "share_links",
+  "booking_requests",
 ] as const;
 export type ExportTable = (typeof EXPORT_TABLES)[number];
 
@@ -82,4 +84,6 @@ export const EXPORT_ORDER: Record<ExportTable, string[]> = {
   coffee_answers: ["day"],
   push_subscriptions: ["id"],
   push_schedule: ["ref"],
+  share_links: ["user_id"],
+  booking_requests: ["id"],
 };
