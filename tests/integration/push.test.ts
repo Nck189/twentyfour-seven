@@ -142,6 +142,16 @@ describe("push notifications (server)", () => {
     expect((await u.client.from("push_subscriptions").select("id")).data).toEqual([]);
   });
 
+  it("setup reward: turning on notifications on a device pays the wind chime once (SPEC §8.8c)", async () => {
+    const u = await newUser("push-setup");
+    expect((await u.client.rpc("claim_setup_rewards")).data.granted).not.toContain("notifications");
+    await u.client.rpc("save_push_subscription", sub(`setup-${u.id}`));
+    expect((await u.client.rpc("claim_setup_rewards")).data.granted).toContain("notifications");
+    expect((await u.client.rpc("claim_setup_rewards")).data.granted).toEqual([]);
+    const chime = await admin().from("decor").select("item_id").eq("user_id", u.id).eq("item_id", "wind_chime");
+    expect(chime.data).toHaveLength(1);
+  });
+
   it("prefs: switches and quiet hours are the user's own columns, validated", async () => {
     const u = await newUser("push-prefs");
     expect(

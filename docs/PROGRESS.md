@@ -1,14 +1,13 @@
 # PROGRESS — 24/7
 
-## Now (2026-11-13, ~04:30 Bangkok; Minnie asleep, "merge 16 when done, keep going until 08:00")
-- ✅ PR #14, #15 and **#16** (story with Som, seasonal crops + Candle Lotus, chibi animals, sound & motion settings) merged.
-  **Minnie, on the Mac:** `git checkout main && git pull && npx supabase db push --remote` (3 migrations: story, seasonal, seasonal_story), then `npm run qc:prod`.
-- 🔄 **PR #17** (draft): Snow Strawberry beats + year in review, story chapters 3–6 + the café opening, **Som's café** (stamps, café table, the optional real-life coffee/tea answer, another real cup, game-only toggle), Stats "Coffee and bedtime", block clock (G7 STORY-R6/R8). 3 migrations: snow_story, cafe, story_chapters.
-  G7 round 1 FAIL (S1: later café cards minted coins) → all fixed → round 2 running. Local: unit 344, integration 246, E2E 113 (Chrome) all green.
-  Needs Minnie's OK to merge; after merge, `db push` (3 migrations) + `qc:prod`.
-- Next: M11 push notifications, closed beta. Deferred: Som's barista outfit (wardrobe), the "R" back-after-a-lapse beat, brewing from produce (M13).
+## Now (2026-11-13, midday Bangkok)
+- ✅ PR #16 and **#17** merged and on prod (Minnie ran `db push` + `qc:prod`: 22 passed, Lighthouse OK). Story with Som (chapters 0–6 + R, seasonal beats), Som's café + the coffee/tea and bedtime insight, block clock.
+- 🔄 **M11 PR** (draft): Web Push (subscriptions, per-type switches, quiet hours, the day's plan uploaded by Today, `push_due` relevance checks, the `push-send` Edge Function) + the private `.ics` calendar link + the notifications setup reward (wind chime). 2 migrations: push, ics.
+  Notifications stay "coming soon" until Minnie sets the VAPID keys and the cron once (`docs/M11-push-setup.md`).
+- CI hygiene: story/seasonal specs no longer depend on the hour; CJ-10 skips the midnight→wake window where its 03:30 return is already over (correct server rule).
+- Open: M3-F5 / CJ-M10-1 failed once in CI at 04:45 Bangkok ("Couldn't load today" / Stats loading), not reproduced since; watching.
+- Next: M12 share availability + booking, M13 factory, M14, closed beta.
 - Waiting on Minnie: G7 STORY-R7 (should seasonal seeds plant only in their month and plants wilt after it?).
-- Known: Farm/Thai visual baselines (G3, Mac) need re-recording once; the prod sign-out E2E wait.
 
 ## ➡️ HANDOFF — read this first (any session: cloud or Minnie's Mac terminal)
 Minnie is asleep (from 2026-11-03 ~02:00 Bangkok). The build moved between a cloud session and her Mac; whichever session runs now continues from here.

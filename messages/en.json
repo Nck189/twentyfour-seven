@@ -302,7 +302,8 @@
     "garden_lantern": "Garden lantern",
     "mailbox": "Mailbox",
     "cafe_table": "Café table",
-    "farm_sign": "Farm sign"
+    "farm_sign": "Farm sign",
+    "wind_chime": "Wind chime"
   },
   "gacha": {
     "title": "Capsule machine",
@@ -788,7 +789,8 @@
       "backlog_estimate": "Add a task with a time estimate",
       "language": "Choose your language",
       "home_screen": "Add 24/7 to your Home Screen",
-      "exercise": "Set your weekly exercise goal"
+      "exercise": "Set your weekly exercise goal",
+      "notifications": "Turn on notifications"
     },
     "rewardTitle": "Setup reward",
     "ok": "OK",

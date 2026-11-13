@@ -193,7 +193,8 @@ grant execute on function public.push_mark_sent(uuid, text) to service_role;
 grant execute on function public.push_drop_endpoint(text) to service_role;
 
 -- Setup reward (SPEC §8.8c): turning on notifications on a device → a wind chime for the farm.
--- Same functions as the M8 setup row, plus the notifications step (content/unlocks.ts mirrors it).
+-- The latest _setup_reward (M9: setup steps + the unlock ladder) and _setup_done (M8), plus the
+-- notifications step (content/unlocks.ts mirrors it).
 create or replace function public._setup_reward(p_id text)
 returns jsonb
 language sql
@@ -209,6 +210,15 @@ as $$
     when 'home_screen' then '{"decor": "flowers"}'::jsonb
     when 'exercise' then '{"feed": 3}'::jsonb
     when 'notifications' then '{"decor": "wind_chime"}'::jsonb
+    -- unlock ladder (SPEC §8.8b, content/unlocks.ts UNLOCKS)
+    when 'first_night' then '{"decor": "garden_lantern"}'::jsonb
+    when 'first_backlog' then '{"decor": "mailbox"}'::jsonb
+    when 'all_first10_day' then '{"seed": {"crop": "sunflower", "n": 1}}'::jsonb
+    when 'first10_20' then '{"tickets": 2}'::jsonb
+    when 'must_10' then '{"coins": 50}'::jsonb
+    when 'streak_7' then '{"egg": 1}'::jsonb
+    when 'streak_30' then '{"decor": "pond"}'::jsonb
+    when 'blocks_100' then '{"coins": 150}'::jsonb
   end
 $$;
 

@@ -14,7 +14,7 @@ export const FESTIVAL_DECOR = [
   "star_tree",
 ] as const;
 /** Earned only (unlock ladder, SPEC §8.8b): never in the shop. */
-export const REWARD_DECOR = ["garden_lantern", "mailbox", "cafe_table", "farm_sign"] as const;
+export const REWARD_DECOR = ["garden_lantern", "mailbox", "cafe_table", "farm_sign", "wind_chime"] as const;
 export const SHOP_DECOR = [...BASIC_DECOR, ...FESTIVAL_DECOR] as const;
 export const DECOR_IDS = [...SHOP_DECOR, ...REWARD_DECOR] as const;
 export type DecorId = (typeof DECOR_IDS)[number];
