@@ -38,6 +38,8 @@ export function ShareCard() {
   const [image, setImage] = useState<File | null>(null);
   /** When the inbox was loaded (whether a request's time has passed). */
   const [now, setNow] = useState(0);
+  /** The first load finished (even if part of it failed). */
+  const [loaded, setLoaded] = useState(false);
 
   const [tick, setTick] = useState(0);
   const reload = useCallback(() => setTick((n) => n + 1), []);
@@ -63,6 +65,7 @@ export function ShareCard() {
       ]);
       if (cancelled) return;
       setNow(Date.now());
+      setLoaded(true);
       if (!link.error) setUrl(link.data ? `${window.location.origin}/share/${link.data.token}` : null);
       if (!open.error) setPending(open.data as Request[]);
       if (!done.error) setAnswered(done.data as Request[]);
@@ -154,7 +157,7 @@ export function ShareCard() {
     const s = new Date(r.start_at);
     const e = new Date(r.end_at);
     if (e.getTime() <= now) return "past";
-    if (days && s.getTime() > now && !slotFits(days, s, e)) return "notFree";
+    if (s.getTime() > now && days && !slotFits(days, s, e)) return "notFree";
     return null;
   };
 
@@ -165,7 +168,7 @@ export function ShareCard() {
 
       {!url ? (
         // Waits for the first load, which would otherwise overwrite a link made meanwhile.
-        <Button variant="secondary" disabled={busy || pending === null} onClick={() => link(false)}>
+        <Button variant="secondary" disabled={busy || !loaded} onClick={() => link(false)}>
           {t("getLink")}
         </Button>
       ) : (
@@ -178,7 +181,7 @@ export function ShareCard() {
             className="mb-2 min-h-11 w-full rounded-xl bg-surface-2 px-3 text-sm"
           />
           <div className="mb-2 flex flex-wrap gap-2">
-            <Button onClick={() => report(navigator.clipboard.writeText(url), t("copied"), t("copyFailed"))}>
+            <Button onClick={() => report(copyText(url), t("copied"), t("copyFailed"))}>
               {t("copyLink")}
             </Button>
             <Button variant="ghost" disabled={busy} onClick={() => link(true)}>
@@ -206,9 +209,7 @@ export function ShareCard() {
         <Button
           variant="secondary"
           disabled={!text}
-          onClick={() =>
-            text && report(navigator.clipboard.writeText(text), t("copiedSlots"), t("copyFailed"))
-          }
+          onClick={() => text && report(copyText(text), t("copiedSlots"), t("copyFailed"))}
         >
           {t("copySlots")}
         </Button>
@@ -257,7 +258,8 @@ export function ShareCard() {
                 <p className="text-sm font-bold text-accent">{t(why === "past" ? "past" : "noLongerFree")}</p>
               )}
               <div className="mt-2 flex gap-2">
-                {!why && (
+                {/* Accept only once the plan is loaded, so a stale request can't re-flow the day (R2-2). */}
+                {!why && days && (
                   <Button
                     disabled={busy}
                     aria-label={t("acceptName", { name: r.name })}
@@ -291,6 +293,13 @@ export function ShareCard() {
       )}
     </section>
   );
+}
+
+/** Clipboard write started inside the tap; a browser without the API rejects (shown as an error). */
+function copyText(s: string): Promise<void> {
+  return navigator.clipboard?.writeText
+    ? navigator.clipboard.writeText(s)
+    : Promise.reject(new Error("no clipboard"));
 }
 
 /** The free times as a small PNG for LINE: the app's own colors, rounded, no black. */

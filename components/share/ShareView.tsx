@@ -214,7 +214,7 @@ function RequestForm({
         </p>
       )}
       <div className="flex gap-2">
-        <Button type="submit" disabled={busy || !name.trim()}>
+        <Button type="submit" disabled={busy || !name.trim() || lengths.length === 0}>
           {t("send")}
         </Button>
         <Button type="button" variant="ghost" onClick={onCancel}>

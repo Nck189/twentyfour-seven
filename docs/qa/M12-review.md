@@ -65,3 +65,62 @@ E2E (Playwright) was not run here.
 
 ## Verdict
 **FAIL.** There is 1 S1 (R-M12-1, a privacy leak through `share_context`) and 4 S2s (R-M12-2 after-midnight slots / wrong-day accept, R-M12-3 a stale chip start, R-M12-4 no server free check plus a hard-coded `host: 'free'`, R-M12-5 copy/share after await on iOS). Fix them test-first, then re-review.
+
+---
+
+## Round 2 (re-review of the fixes)
+
+- **Scope:** `git diff 7502eed..fdece3e` on `m12-local` at `fdece3e`, plus the DECISIONS entry "G7 M12 review" and `docs/M12-share-setup.md`.
+- **Date:** 2026-11-13.
+
+### What I ran
+| Check | Result |
+|---|---|
+| `tsc --noEmit`, ESLint and Prettier on the changed files | clean |
+| `i18n:check` / `secrets:check` | 1110 keys, EN = TH / OK |
+| `npx vitest run tests/unit` | 58 files, 372/372 pass |
+| `vitest` integration: `share` + `rls` | 93/93 pass |
+| `pg_proc` grants (local DB) | `share_context` and `request_slot`: `service_role` only. `share_link_off` and `answer_booking`: `authenticated` only. |
+| `next build` in a scratch copy of `fdece3e`, then grep for the service-role key **value** and for `SUPABASE_SERVICE_ROLE_KEY`, `service_role`, `share_context`, `request_slot` | 0 hits in `.next/static`, and the value isn't inlined in `.next/server` either (read at runtime). `admin.ts` and `server.ts` import `server-only`. `/share/[token]` builds as a partial prerender. |
+| `next start` + HTTP probes of `/share/<token>` (owner with a sick day, a Free sub-slot labelled `SECRET_SUBSLOT`, an event `relatives_dinner` titled `SECRET_TITLE`) | The HTML/RSC contains none of: the sub-slot label, the event id/key/title, `sick`, `first10`, the user id. Only the display name, timezone and intervals. |
+| The server action as a raw POST (`Next-Action` header) | The checks hold (details below). |
+
+**Server action probe results:**
+- A free 22:30 slot → `ok`.
+- 04:00 (Sleep) and 14:00 (Work) → `notFree`.
+- An unknown token, an object token, a `null` argument, or a non-string name → `invalid`.
+- A numeric `start` → `notFree`.
+- The 4th–6th rapid requests → `tooMany`: the per-owner limit still holds through the action.
+- A cross-origin POST (`Origin: https://evil.example`) → 500, refused by Next's origin check.
+
+E2E: not run here (WebKit isn't installed locally). I read the new CJ-SHARE-3 and the CJ-SHARE-1 additions.
+
+### Status of round-1 findings
+| ID | Status | Evidence |
+|---|---|---|
+| R-M12-1 (S1) | **Fixed** | `share_context` and `request_slot` are service-role only. Anon and authenticated get 42501 (integration test plus `pg_proc`). The page and the action get only name, timezone and intervals from `loadShare`. No key in the client bundle. The HTML probe shows no private fields. |
+| R-M12-2 (S2) | **Fixed** (with the trade-off in R2-1) | Free is cut at `zonedInstant(date+1, 0)`. `request_slot` requires `p_day` = the start's local date (integration test). The unit test covers 07:00 to 13:00 wakes. An accepted booking keeps the wake (unit test). |
+| R-M12-3 (S2) | **Fixed** | `key={open.start}`; E2E CJ-SHARE-3 asserts the stored start is 21:00. |
+| R-M12-4 (S2) | **Fixed** | `askForSlot` recomputes free days and calls `slotFits` before the service-role RPC. My probe got `notFree` for Sleep and Work. The browser can't reach `request_slot`. See R2-2 for the remaining client-only part. |
+| R-M12-5 (S2, iPhone) | **Fixed in code**; device or CI-WebKit confirmation still pending | The data and picture load on mount. `clipboard.writeText` and `navigator.share` are now called synchronously inside the tap; this is the pattern WebKit accepts. |
+| R-M12-6 | Fixed | Control, zero-width, bidi and punctuation-only names are refused, and Thai is accepted (integration). `icsText` escapes a lone CR (unit). |
+| R-M12-7 | Fixed | The server refuses accepting a past request (integration). Overlaps: the card offers Decline only once the slot is no longer free. |
+| R-M12-8 / -9 / -10 / -12 / -13 | Fixed | All pending requests are listed. The timezone comes from the loaded context. `share_link_off` + "Stop sharing" (integration + E2E). The fallback start is ≥ now + 1 min. "Sent" shows in place. |
+| R-M12-11 | Deferred (logged in DECISIONS) | OK as a known issue |
+| R-M12-14 | Asked Minnie (logged) | Still true: my probe's sick day and its Free sub-slot both show as free. |
+| R-M12-15 | Mostly addressed | Added: `share-compute.test.ts`, the chip E2E, the accept-placement unit test. Still missing: TH/dark/axe on `/share`. |
+| R-M12-16 | Partly | Fixed: the copy error string, a11y names, the timezone in the copied text. The rest is logged. |
+
+### New / remaining findings
+
+| ID | Sev | Where | Failure scenario | Fix |
+|---|---|---|---|---|
+| R2-1 | S3 | `lib/share/freebusy.ts:46-49`, DECISIONS (G7 M12) | **Late risers lose most of their shareable free time.**<br><br>The R-M12-2 fix (correct for the engine) drops every minute of Free after local midnight. Probe with default blocks, 14 days from 08:00 Bangkok:<br>- wake 10:00 → 14 days with free time (2160 min)<br>- wake 11:30, 12:00 or 13:00 → only 6 days (1440 min)<br><br>The other days show nothing, because the whole Free block sits after 00:00. The DECISIONS entry records the cut but not this consequence. Minnie's 10:00 templates are fine. | Tell Minnie, and log it as a known issue for late chronotypes. The real fix is engine support for an after-midnight fixed event on wake-day D (e.g. `"24:30"` or a `+1` day flag in `FixedEventInput`); then the clip can move to the end of Free. |
+| R2-2 | S3 | `components/settings/ShareCard.tsx:151-157` (`blocked`), `share.sql` `answer_booking` | **The "no longer free" guard is client-only and fails open.**<br>- `blocked()` checks free only when `days` is loaded. If `loadDayContext` fails (offline, timeout), `days` stays `null`, and a stale pending request offers **Accept**. That inserts `host: 'free'` at a time that may now be in Work and re-flows the day (the R-M12-4 effect).<br>- The server still accepts any non-past pending request.<br><br>Exposure is low: the owner only, and a stale request is needed. | Treat `days === null` as unknown and hide or disable Accept until the plan has loaded. Optionally pass the client's `slotFits` result, or the containing block, as `host`. |
+| R2-3 | S4 | `components/share/ShareView.tsx:120-137` | When the remaining gap after `now + 1 min` (rounded up to 5) is under 30 min, `starts` and `lengths` are both empty. The selects are blank but Send stays enabled, and it gets "That time isn't free anymore". This happens only for a 30–35 min gap that starts now. | Disable Send (or show a "pick another time" hint) when `lengths` is empty. |
+| R2-4 | S4 | `ShareCard.tsx` | - "Get my link" stays disabled forever if the pending-requests query errors (`pending === null`).<br>- The copied text and picture are computed at mount; if More stays open for hours, past slots are copied.<br>- `navigator.clipboard` missing (non-secure context) throws synchronously, outside `report`. | Log only. Optionally: re-derive `days` at tap time from the loaded ctx (it's synchronous), and guard `navigator.clipboard?.`. |
+| R2-5 | S4 | `app/share/[token]/actions.ts` | **The action is a public endpoint.**<br>- Every POST with a valid token runs a service-role `share_context` plus the 14-day engine **before** the per-owner rate limit. That costs the same as a page view, with no per-IP throttle.<br>- `notFree` vs `invalid` tells a valid token from an invalid one, which is moot at 192 bits.<br>- Starts with seconds (e.g. `22:30:59`) are accepted and truncated to `HH:MM` on accept (harmless).<br><br>Input typing, the origin check and the free check all hold (probes above). | Log only. Optionally round start and end to the minute in the action and cap name/note length before `loadShare`. |
+| R2-6 | S4 | `lib/supabase/admin.ts`, `docs/M12-share-setup.md` | If `SUPABASE_SERVICE_ROLE_KEY` isn't set on Vercel, every share link silently shows "not found", while More still hands out links. It is documented as a one-time setup step. | Make sure the env var is set before the PR is promoted, and add it to the `qc:prod` smoke (open a share link). |
+
+### Verdict
+**PASS.** There are no open S1/S2 findings: R-M12-1 to -5 are fixed and verified (R-M12-5 still needs a CI WebKit or device confirmation of the copy tap). New items are 2 × S3 (R2-1 late-riser free time, R2-2 client-only accept guard) and 4 × S4; log them as known issues or fix them if quick.
