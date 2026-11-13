@@ -16,7 +16,7 @@ import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { Segmented } from "@/components/ui/Segmented";
 import type { Locale } from "@/lib/i18n/config";
 import { usePrefs, type ThemePref } from "@/lib/store/prefs";
-import { getSupabase } from "@/lib/supabase/client";
+import { getSupabase, getUserCached } from "@/lib/supabase/client";
 import { logEvent } from "@/lib/db/events";
 import { SetupCard, SetupRewardNotice } from "@/components/setup/SetupCard";
 import { isStandalone, useSetupRewards } from "@/lib/setup/useSetupRewards";
@@ -42,14 +42,12 @@ export function MoreScreen() {
   const installed = useSyncExternalStore(noop, isStandalone, () => false);
 
   useEffect(() => {
-    getSupabase()
-      .auth.getUser()
-      .then(({ data }) => setEmail(data.user?.email ?? null));
+    void getUserCached().then(({ data }) => setEmail(data.user?.email ?? null));
   }, []);
 
   async function changeLocale(next: Locale) {
     setLocale(next);
-    const { data } = await getSupabase().auth.getUser();
+    const { data } = await getUserCached();
     if (data.user) {
       // Synced across devices (CJ-14).
       const { data: prof } = await getSupabase()

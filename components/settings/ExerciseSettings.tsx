@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { logEvent } from "@/lib/db/events";
-import { getSupabase } from "@/lib/supabase/client";
+import { getSupabase, getUserCached } from "@/lib/supabase/client";
 
 /**
  * Weekly exercise goal + gym close time (SPEC §6). Saves at once; the first save also sets up
@@ -22,7 +22,7 @@ export function ExerciseSettings({ onSaved }: { onSaved?: () => void }) {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const { data } = await client.auth.getUser();
+      const { data } = await getUserCached();
       if (!data.user || cancelled) return;
       const { data: s } = await client
         .from("settings")

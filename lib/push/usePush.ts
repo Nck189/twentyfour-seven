@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getSupabase } from "@/lib/supabase/client";
+import { getSupabase, getUserCached } from "@/lib/supabase/client";
 import { DEFAULT_PUSH_PREFS, type PushPrefs } from "./schedule";
 
 /**
@@ -126,7 +126,7 @@ export function usePush() {
       await sub.unsubscribe().catch(() => false);
     }
     // Every meaningful action leaves an events row (CLAUDE.md; G7 R-M11-10).
-    const { data: auth } = await client.auth.getUser();
+    const { data: auth } = await getUserCached();
     if (auth.user)
       await client.from("events").insert({ user_id: auth.user.id, type: "push_turned_off", payload: {} });
     setState("ask");
@@ -134,7 +134,7 @@ export function usePush() {
 
   const savePrefs = useCallback(
     async (next: PushPrefs): Promise<boolean> => {
-      const { data: auth } = await client.auth.getUser();
+      const { data: auth } = await getUserCached();
       if (!auth.user) return false;
       const r = await client
         .from("profiles")

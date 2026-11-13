@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { usePrefs } from "@/lib/store/prefs";
-import { getSupabase } from "@/lib/supabase/client";
+import { getSupabase, getUserCached } from "@/lib/supabase/client";
 
 export function Toggle({
   label,
@@ -54,7 +54,7 @@ export function SoundCard() {
     setSoundOn(on);
     void (async () => {
       const client = getSupabase();
-      const { data } = await client.auth.getUser();
+      const { data } = await getUserCached();
       if (data.user) await client.from("profiles").update({ sound_on: on }).eq("user_id", data.user.id);
     })();
   };
