@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deliver, type DueRow } from "../../supabase/functions/push-send/deliver";
+import { BATCH, deliver, type DueRow } from "../../supabase/functions/push-send/deliver";
 
 const row = (user: string, ref: string, endpoint: string): DueRow => ({
   user_id: user,
@@ -10,12 +10,12 @@ const row = (user: string, ref: string, endpoint: string): DueRow => ({
   p256dh: "k",
   auth: "a",
 });
+const noDrop = async () => {};
 
 describe("push sender core (M11)", () => {
-  it("sends to every device, drops gone devices, marks each reminder sent once", async () => {
+  it("sends to every claimed device, drops gone devices, counts failures", async () => {
     const sent: string[] = [];
     const dropped: string[] = [];
-    const marked: string[] = [];
     const r = await deliver(
       [
         row("u1", "night:d", "https://p/1"),
@@ -30,21 +30,38 @@ describe("push sender core (M11)", () => {
           sent.push(`${sub.endpoint} ${JSON.parse(payload).title}`);
         },
         dropEndpoint: async (e) => void dropped.push(e),
-        markSent: async (u, ref) => void marked.push(`${u}|${ref}`),
       },
     );
-    expect(sent).toEqual(["https://p/1 Focus starts now", "https://p/3 Focus starts now"]);
+    expect(sent.sort()).toEqual(["https://p/1 Focus starts now", "https://p/3 Focus starts now"]);
     expect(dropped).toEqual(["https://p/2"]);
-    expect(marked).toEqual(["u1|night:d", "u2|wake:d", "u3|wake:d"]);
-    expect(r).toEqual({ sent: 2, gone: 1, failed: 1, reminders: 3 });
+    expect(r).toEqual({ sent: 2, gone: 1, failed: 1 });
+  });
+
+  it("G7 R-M11-1: a hanging device doesn't hold up the rest of its batch or the next batches", async () => {
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const rows = Array.from({ length: BATCH * 2 + 3 }, (_, i) => row(`u${i}`, "night:d", `https://p/${i}`));
+    const r = await deliver(rows, {
+      send: async (sub) => {
+        inFlight++;
+        maxInFlight = Math.max(maxInFlight, inFlight);
+        // The real send has a timeout; a slow one rejects like this instead of hanging forever.
+        await new Promise((res) => setTimeout(res, 5));
+        inFlight--;
+        if (sub.endpoint.endsWith("/0")) throw Object.assign(new Error("timeout"), { code: "ETIMEDOUT" });
+      },
+      dropEndpoint: noDrop,
+    });
+    expect(maxInFlight).toBeGreaterThan(1);
+    expect(maxInFlight).toBeLessThanOrEqual(BATCH);
+    expect(r).toEqual({ sent: rows.length - 1, gone: 0, failed: 1 });
   });
 
   it("the payload opens Today and is tagged by reminder (a repeat replaces, never stacks)", async () => {
     let payload = "";
     await deliver([row("u", "block_start:d:focus", "https://p/x")], {
       send: async (_s, p) => void (payload = p),
-      dropEndpoint: async () => {},
-      markSent: async () => {},
+      dropEndpoint: noDrop,
     });
     expect(JSON.parse(payload)).toEqual({
       title: "Focus starts now",

@@ -196,7 +196,7 @@ export function TodayScreen() {
   return (
     <>
       {/* M11: upload today's reminders when this device has notifications on (renders nothing). */}
-      <PushPlanner day={tl.date} blocks={tl.blocks} timezone={today.timezone} />
+      <PushPlanner day={tl.date} blocks={tl.blocks} timezone={today.timezone} mode={tl.mode} />
       <ScreenHeader
         title={t("title")}
         subtitle={formatDayLong(tl.date, locale, today.timezone)}

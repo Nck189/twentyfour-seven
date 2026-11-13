@@ -134,13 +134,12 @@ test("CJ-09 bedtime +2h before a class day: class unmoved, 'only Xh sleep' warni
 });
 
 test("CJ-10 out late tonight: planned, Down starts at return, no short-sleep warning", async ({ page }) => {
-  // Between midnight and the 10:00 wake, Plan's "Tomorrow" is today's calendar date, so "home at
-  // 03:30" is already over and the server rightly refuses it (day_plans_past_guard). CI at 04:45
-  // Bangkok hit this; the rule itself is covered in tests/integration/streak.test.ts.
-  test.skip(
-    localParts(new Date(), "Asia/Bangkok").hour < 10,
-    "before the wake, tonight's 03:30 return is already in the past",
-  );
+  // From 02:30 until the 10:00 wake, Plan's "Tomorrow" is today's calendar date and "home at 03:30"
+  // is (within an hour of being) over, so the server rightly refuses it (day_plans_past_guard; the
+  // rule is covered in tests/integration/streak.test.ts). CI at 04:45 Bangkok hit this.
+  const bkk = localParts(new Date(), "Asia/Bangkok");
+  const m = bkk.hour * 60 + bkk.minute;
+  test.skip(m >= 150 && m < 600, "02:30–10:00: tonight's 03:30 return is already (nearly) over");
   const id = await newUserOn(page);
   await setAllTemplates(id, "10:00");
   await page.goto("/plan");

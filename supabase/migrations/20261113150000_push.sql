@@ -18,7 +18,11 @@ grant update (push_block_start, push_first10, push_wake, push_night, push_quiet_
 create table public.push_subscriptions (
   id bigint generated always as identity primary key,
   user_id uuid not null references auth.users (id) on delete cascade,
-  endpoint text not null unique check (endpoint ~ '^https://' and char_length(endpoint) <= 1000),
+  -- Only the browsers' real push services (G7 R-M11-1: never let the sender call arbitrary hosts).
+  endpoint text not null unique check (
+    char_length(endpoint) <= 1000
+    and endpoint ~ '^https://(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|([a-z0-9-]+\.)?push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)/'
+  ),
   p256dh text not null check (char_length(p256dh) <= 200),
   auth text not null check (char_length(auth) <= 100),
   created_at timestamptz not null default now()
@@ -52,7 +56,7 @@ create policy "own rows: select" on public.push_schedule for select to authentic
 revoke all on public.push_schedule from anon, authenticated;
 grant select on public.push_schedule to authenticated;
 
--- Server-written events only (adds push_subscribed).
+-- Server-written events only (adds push_subscribed, and ics_link_made for the calendar link).
 drop policy if exists "own rows: insert" on public.events;
 create policy "own rows: insert" on public.events for insert to authenticated
   with check (
@@ -66,7 +70,7 @@ create policy "own rows: insert" on public.events for insert to authenticated
                      'order_delivered', 'reward_redeemed',
                      'seasonal_order_delivered', 'wish_floated', 'story_seen',
                      'cafe_order', 'cafe_card', 'coffee_answered', 'coffee_cup_added',
-                     'push_subscribed')
+                     'push_subscribed', 'ics_link_made')
   );
 
 -- Save this device's subscription (after the user tapped "Turn on"). One endpoint belongs to one
@@ -87,6 +91,10 @@ begin
   insert into public.push_subscriptions (user_id, endpoint, p256dh, auth)
   values (uid, p_endpoint, p_p256dh, p_auth)
   on conflict (endpoint) do update set p256dh = excluded.p256dh, auth = excluded.auth;
+  -- At most 10 devices per account: the oldest go first (G7 R-M11-1).
+  delete from public.push_subscriptions d
+  where d.user_id = uid
+    and d.id not in (select k.id from public.push_subscriptions k where k.user_id = uid order by k.id desc limit 10);
   insert into public.events (user_id, type, payload) values (uid, 'push_subscribed', '{}'::jsonb);
 end $$;
 
@@ -109,8 +117,7 @@ begin
     raise exception 'at most 24 reminders' using errcode = '22023';
   end if;
   if exists (select 1 from jsonb_array_elements(p_items) i
-             where (i ->> 'fire_at')::timestamptz <= now()
-                or (i ->> 'fire_at')::timestamptz > now() + interval '36 hours') then
+             where (i ->> 'fire_at')::timestamptz > now() + interval '36 hours') then
     raise exception 'reminders must be within the next 36 hours' using errcode = '22023';
   end if;
   delete from public.push_schedule where user_id = uid and sent_at is null and fire_at > now();
@@ -118,6 +125,8 @@ begin
   select uid, i ->> 'ref', i ->> 'kind', (i ->> 'day')::date, i ->> 'block',
          (i ->> 'fire_at')::timestamptz, i ->> 'title', coalesce(i ->> 'body', '')
   from jsonb_array_elements(p_items) i
+  -- One that became due while uploading is dropped, not the whole plan (G7 R-M11-3).
+  where (i ->> 'fire_at')::timestamptz > now()
   on conflict (user_id, ref) do update
     set kind = excluded.kind, day = excluded.day, block = excluded.block, fire_at = excluded.fire_at,
         title = excluded.title, body = excluded.body
@@ -126,8 +135,38 @@ begin
   return n;
 end $$;
 
--- For the sender (service role only): reminders due in the last 15 min that are still wanted and
--- still relevant, one row per device.
+-- Still wanted and still relevant: the kind is switched on, and a block that already started, an
+-- "I'm up" already pressed or a Night ritual already done make their reminder moot.
+create or replace function public._push_wanted(uid uuid, p_kind text, p_day date, p_block text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce((
+    select case p_kind
+      when 'block_start' then p.push_block_start
+                              and not exists (select 1 from public.block_logs l
+                                              where l.user_id = uid and l.date = p_day
+                                                and l.block = p_block and l.started_at is not null)
+      when 'first10' then p.push_first10
+                          and not exists (select 1 from public.block_logs l
+                                          where l.user_id = uid and l.date = p_day
+                                            and l.block = p_block and l.started_at is not null)
+      when 'wake' then p.push_wake
+                       and not exists (select 1 from public.wake_events w
+                                       where w.user_id = uid and w.date = p_day)
+      when 'night' then p.push_night
+                        and not exists (select 1 from public.events e
+                                        where e.user_id = uid and e.type = 'night_ritual_completed'
+                                          and e.payload ->> 'date' = p_day::text)
+      else false
+    end
+    from public.profiles p where p.user_id = uid), false)
+$$;
+
+-- What's due now (read-only, for checks and tests): due in the last 15 min, unsent, still wanted.
 create or replace function public.push_due(p_limit integer default 500)
 returns table (user_id uuid, ref text, title text, body text, endpoint text, p256dh text, auth text)
 language sql
@@ -137,31 +176,45 @@ set search_path = ''
 as $$
   select s.user_id, s.ref, s.title, s.body, d.endpoint, d.p256dh, d.auth
   from public.push_schedule s
-  join public.profiles p on p.user_id = s.user_id
   join public.push_subscriptions d on d.user_id = s.user_id
   where s.sent_at is null
     and s.fire_at <= now() and s.fire_at > now() - interval '15 minutes'
-    and case s.kind
-          when 'block_start' then p.push_block_start
-          when 'first10' then p.push_first10
-                              and not exists (select 1 from public.block_logs l
-                                              where l.user_id = s.user_id and l.date = s.day
-                                                and l.block = s.block and l.started_at is not null)
-          when 'wake' then p.push_wake
-                           and not exists (select 1 from public.wake_events w
-                                           where w.user_id = s.user_id and w.date = s.day)
-          when 'night' then p.push_night
-                            and not exists (select 1 from public.events e
-                                            where e.user_id = s.user_id
-                                              and e.type = 'night_ritual_completed'
-                                              and e.payload ->> 'date' = s.day::text)
-          else false
-        end
+    and public._push_wanted(s.user_id, s.kind, s.day, s.block)
   order by s.fire_at
   limit p_limit
 $$;
 
--- After sending (service role only). Missed or skipped ones are marked too, so they never resend.
+-- For the sender (service role only): claims due reminders (marks them sent before sending, so a
+-- slow device or a parallel run never sends twice or blocks the queue, G7 R-M11-1), one row per
+-- device. Ones no longer wanted are claimed too, silently.
+create or replace function public.push_claim(p_limit integer default 200)
+returns table (user_id uuid, ref text, title text, body text, endpoint text, p256dh text, auth text)
+language sql
+volatile
+security definer
+set search_path = ''
+as $$
+  with picked as (
+    select s.user_id, s.ref
+    from public.push_schedule s
+    where s.sent_at is null
+      and s.fire_at <= now() and s.fire_at > now() - interval '15 minutes'
+    order by s.fire_at
+    limit p_limit
+    for update of s skip locked
+  ), claimed as (
+    update public.push_schedule s set sent_at = now()
+    from picked
+    where s.user_id = picked.user_id and s.ref = picked.ref
+    returning s.user_id, s.ref, s.kind, s.day, s.block, s.title, s.body
+  )
+  select c.user_id, c.ref, c.title, c.body, d.endpoint, d.p256dh, d.auth
+  from claimed c
+  join public.push_subscriptions d on d.user_id = c.user_id
+  where public._push_wanted(c.user_id, c.kind, c.day, c.block)
+$$;
+
+-- Mark one sent by hand (service role only; the sender claims instead).
 create or replace function public.push_mark_sent(p_user uuid, p_ref text)
 returns void
 language sql
@@ -186,6 +239,9 @@ revoke all on function public.set_push_schedule(jsonb) from public, anon;
 grant execute on function public.save_push_subscription(text, text, text) to authenticated;
 grant execute on function public.set_push_schedule(jsonb) to authenticated;
 revoke all on function public.push_due(integer) from public, anon, authenticated;
+revoke all on function public.push_claim(integer) from public, anon, authenticated;
+revoke all on function public._push_wanted(uuid, text, date, text) from public, anon, authenticated;
+grant execute on function public.push_claim(integer) to service_role;
 revoke all on function public.push_mark_sent(uuid, text) from public, anon, authenticated;
 revoke all on function public.push_drop_endpoint(text) from public, anon, authenticated;
 grant execute on function public.push_due(integer) to service_role;

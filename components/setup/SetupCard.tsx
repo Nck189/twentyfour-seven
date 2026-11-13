@@ -10,6 +10,14 @@ import { DECOR_ART } from "@/components/farm/DecorShop";
 import { EggArt, FeedArt } from "@/components/art/farm/Animals";
 import { ChevronIcon } from "@/components/ui/Icons";
 import { SETUP_HREF, SETUP_REWARD, SETUP_STEPS, type Reward, type SetupStep } from "@/content/unlocks";
+
+/**
+ * Steps this build can offer: "turn on notifications" only once push is configured (a VAPID key in
+ * the build), so the card never points at a "coming soon" switch (G7 R-M11-11).
+ */
+const OFFERED_STEPS: readonly SetupStep[] = SETUP_STEPS.filter(
+  (s) => s !== "notifications" || !!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+);
 import type { SetupRewards } from "@/lib/setup/useSetupRewards";
 
 /** The reward as a picture (no emoji). */
@@ -80,8 +88,8 @@ export function SetupCard({
   const label = useRewardLabel();
   const [showDone, setShowDone] = useState(false);
   const done = new Set(state.done);
-  const todo = SETUP_STEPS.filter((s) => !done.has(s));
-  const total = SETUP_STEPS.length;
+  const todo = OFFERED_STEPS.filter((s) => !done.has(s));
+  const total = OFFERED_STEPS.length;
   if (todo.length === 0 && compact) return null;
 
   if (compact) {
@@ -162,7 +170,7 @@ export function SetupCard({
           </button>
           {showDone && (
             <ul className="flex flex-col gap-2">
-              {SETUP_STEPS.filter((s) => done.has(s)).map((s) => row(s, true))}
+              {OFFERED_STEPS.filter((s) => done.has(s)).map((s) => row(s, true))}
             </ul>
           )}
         </>

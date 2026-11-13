@@ -23,9 +23,24 @@ begin
   if tok is null or p_rotate then
     tok := encode(extensions.gen_random_bytes(24), 'hex');
     update public.profiles set ics_token = tok where user_id = uid;
+    insert into public.events (user_id, type, payload)
+    values (uid, 'ics_link_made', jsonb_build_object('rotated', p_rotate));
   end if;
   return tok;
 end $$;
+
+-- A blocks map without checklists (the feed never shows them; G7 R-M11-7: read only what's needed).
+create or replace function public._ics_blocks(p jsonb)
+returns jsonb
+language sql
+immutable
+set search_path = ''
+as $$
+  select case when jsonb_typeof(p) = 'object' then
+    coalesce((select jsonb_object_agg(k, case when jsonb_typeof(v) = 'object' then v - 'checklist' else v end)
+              from jsonb_each(p) e(k, v)), '{}'::jsonb)
+  else p end
+$$;
 
 -- What the engine needs to plan the next two weeks, for a valid link only (null otherwise).
 create or replace function public.ics_context(p_token text)
@@ -52,19 +67,27 @@ begin
   return jsonb_build_object(
     'timezone', coalesce(tz, 'Asia/Bangkok'),
     'locale', loc,
-    'settings', (select jsonb_build_object('blocks', s.blocks, 'gym_close_time', s.gym_close_time)
+    'settings', (select jsonb_build_object(
+                   'blocks', (select coalesce(jsonb_agg(case when jsonb_typeof(b) = 'object' then b - 'checklist' else b end), '[]'::jsonb)
+                              from jsonb_array_elements(case when jsonb_typeof(s.blocks) = 'array' then s.blocks else '[]'::jsonb end) b),
+                   'gym_close_time', s.gym_close_time)
                  from public.settings s where s.user_id = uid),
-    'templates', coalesce((select jsonb_agg(to_jsonb(t) - 'user_id' order by t.sort)
+    'templates', coalesce((select jsonb_agg(jsonb_set(to_jsonb(t) - 'user_id', '{blocks}', public._ics_blocks(t.blocks))
+                                            order by t.sort)
                            from public.templates t where t.user_id = uid), '[]'::jsonb),
     'day_plans', coalesce((select jsonb_agg(jsonb_build_object(
                              'date', d.date, 'template_id', d.template_id, 'attending', d.attending,
                              'bedtime_override', d.bedtime_override, 'late_night', d.late_night,
-                             'mode', d.mode, 'overrides', d.overrides))
+                             'mode', d.mode,
+                             'overrides', case when jsonb_typeof(d.overrides -> 'blocks') = 'object'
+                                               then jsonb_set(d.overrides, '{blocks}', public._ics_blocks(d.overrides -> 'blocks'))
+                                               else d.overrides end))
                            from public.day_plans d
                            where d.user_id = uid and d.date between today - 2 and today + 15), '[]'::jsonb)
   );
 end $$;
 
+revoke all on function public._ics_blocks(jsonb) from public, anon, authenticated;
 revoke all on function public.ics_link(boolean) from public, anon;
 grant execute on function public.ics_link(boolean) to authenticated;
 revoke all on function public.ics_context(text) from public;

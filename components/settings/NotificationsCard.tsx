@@ -16,6 +16,10 @@ export function NotificationsCard() {
   const { state, prefs, turnOn, turnOff, savePrefs } = usePush();
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState<"ok" | "error" | null>(null);
+  const [turnOnFailed, setTurnOnFailed] = useState(false);
+  // Quiet hours are edited locally and saved when the field is left: the iOS wheel fires a change
+  // per scroll step, and saving (and disabling) on each one closed the picker (G7 R-M11-13).
+  const [quiet, setQuiet] = useState<{ start: string; end: string } | null>(null);
   const update = async (next: PushPrefs) => {
     setBusy(true);
     setSaved(null);
@@ -36,7 +40,12 @@ export function NotificationsCard() {
             onClick={async () => {
               setBusy(true);
               try {
-                await turnOn();
+                // G7 R-M11-5: say so when the browser allowed it but saving the device failed.
+                setTurnOnFailed(
+                  (await turnOn()) === "ask" &&
+                    typeof Notification !== "undefined" &&
+                    Notification.permission === "granted",
+                );
               } finally {
                 setBusy(false);
               }
@@ -44,6 +53,11 @@ export function NotificationsCard() {
           >
             {t("turnOn")}
           </Button>
+          {turnOnFailed && (
+            <p role="alert" className="mt-2 text-sm font-bold text-accent">
+              {t("turnOnError")}
+            </p>
+          )}
         </>
       ) : state === "on" ? (
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -78,9 +92,20 @@ export function NotificationsCard() {
                 <input
                   type="time"
                   className="min-h-11 rounded-xl bg-surface-2 px-3"
-                  value={prefs.quietStart ?? ""}
-                  disabled={busy}
-                  onChange={(e) => void update({ ...prefs, quietStart: e.target.value || null })}
+                  value={quiet?.start ?? prefs.quietStart ?? ""}
+                  onChange={(e) =>
+                    setQuiet({
+                      ...{
+                        start: quiet?.start ?? prefs.quietStart ?? "",
+                        end: quiet?.end ?? prefs.quietEnd ?? "",
+                      },
+                      start: e.target.value,
+                    })
+                  }
+                  onBlur={(e) => {
+                    const v = e.target.value || null;
+                    if (v !== prefs.quietStart) void update({ ...prefs, quietStart: v });
+                  }}
                 />
               </label>
               <label className="flex min-h-11 items-center gap-2">
@@ -88,9 +113,20 @@ export function NotificationsCard() {
                 <input
                   type="time"
                   className="min-h-11 rounded-xl bg-surface-2 px-3"
-                  value={prefs.quietEnd ?? ""}
-                  disabled={busy}
-                  onChange={(e) => void update({ ...prefs, quietEnd: e.target.value || null })}
+                  value={quiet?.end ?? prefs.quietEnd ?? ""}
+                  onChange={(e) =>
+                    setQuiet({
+                      ...{
+                        start: quiet?.start ?? prefs.quietStart ?? "",
+                        end: quiet?.end ?? prefs.quietEnd ?? "",
+                      },
+                      end: e.target.value,
+                    })
+                  }
+                  onBlur={(e) => {
+                    const v = e.target.value || null;
+                    if (v !== prefs.quietEnd) void update({ ...prefs, quietEnd: v });
+                  }}
                 />
               </label>
             </div>

@@ -15,10 +15,13 @@ export function PushPlanner({
   day,
   blocks,
   timezone,
+  mode = "normal",
 }: {
   day: string;
   blocks: readonly PushBlock[];
   timezone: string;
+  /** Vacation/Sick days get no block nudges (G7 R-M11-8). */
+  mode?: "normal" | "vacation" | "sick";
 }) {
   const t = useTranslations("push");
   const names = useTranslations("blocks");
@@ -30,10 +33,18 @@ export function PushPlanner({
 
   useEffect(() => {
     if (state !== "on" || !prefs) return;
-    const sig = `${day}|${key}|${JSON.stringify(prefs)}`;
+    const sig = `${day}|${mode}|${key}|${JSON.stringify(prefs)}`;
     if (sig === last.current) return;
     last.current = sig;
-    const plan = planPushes({ day, nextDay: addDays(day, 1), blocks, prefs, tz: timezone, now: new Date() });
+    const plan = planPushes({
+      day,
+      nextDay: addDays(day, 1),
+      blocks,
+      prefs,
+      tz: timezone,
+      now: new Date(),
+      mode,
+    });
     const items = plan.map((p) => {
       const block = p.block ? names(`name.${p.block}`) : "";
       const first10 = blocks.find((b) => b.key === p.block)?.first10 ?? "";
@@ -52,7 +63,7 @@ export function PushPlanner({
     });
     void getSupabase().rpc("set_push_schedule", { p_items: items });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- key captures the blocks
-  }, [state, prefs, day, key, timezone]);
+  }, [state, prefs, day, key, timezone, mode]);
 
   return null;
 }

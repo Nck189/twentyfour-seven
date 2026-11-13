@@ -20,18 +20,17 @@ Deno.serve(async (req) => {
   webpush.setVapidDetails(subject, pub, priv);
 
   const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
-  const { data, error } = await admin.rpc("push_due", { p_limit: 500 });
+  // Claimed (marked sent) before sending: a parallel run or a slow device never sends twice.
+  const { data, error } = await admin.rpc("push_claim", { p_limit: 200 });
   if (error) return new Response(error.message, { status: 500 });
 
   const result = await deliver((data ?? []) as DueRow[], {
     send: async (sub, payload) => {
-      await webpush.sendNotification(sub, payload, { TTL: 600, urgency: "high" });
+      // Bounded: a slow or hanging push service can't stall the run (G7 R-M11-1).
+      await webpush.sendNotification(sub, payload, { TTL: 600, urgency: "high", timeout: 10_000 });
     },
     dropEndpoint: async (endpoint) => {
       await admin.rpc("push_drop_endpoint", { p_endpoint: endpoint });
-    },
-    markSent: async (user, ref) => {
-      await admin.rpc("push_mark_sent", { p_user: user, p_ref: ref });
     },
   });
   return Response.json(result);

@@ -13,7 +13,7 @@ const item = (ref: string, kind: string, fireAt: string, day: string, block: str
   body: "Open the thesis doc",
 });
 const sub = (n: string) => ({
-  p_endpoint: `https://push.example.com/${n}`,
+  p_endpoint: `https://fcm.googleapis.com/fcm/send/${n}`,
   p_p256dh: "BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM",
   p_auth: "tBHItJI5svbpez7KI4CCXg",
 });
@@ -57,15 +57,14 @@ describe("push notifications (server)", () => {
     expect((await u.client.from("push_schedule").select("ref")).data).toEqual([
       { ref: "block_start:x:focus" },
     ]);
-    // Too far ahead, in the past, too many, unknown kind: refused.
+    // Too far ahead, too many, unknown kind: refused. (A past item is dropped, G7 R-M11-3.)
     expect(
       (await u.client.rpc("set_push_schedule", { p_items: [item("a", "night", inMin(60 * 40), day)] })).error
         ?.code,
     ).toBe("22023");
     expect(
-      (await u.client.rpc("set_push_schedule", { p_items: [item("a", "night", inMin(-5), day)] })).error
-        ?.code,
-    ).toBe("22023");
+      (await u.client.rpc("set_push_schedule", { p_items: [item("a", "night", inMin(-5), day)] })).data,
+    ).toBe(0);
     expect(
       (
         await u.client.rpc("set_push_schedule", {
@@ -138,8 +137,113 @@ describe("push notifications (server)", () => {
     await admin().rpc("push_mark_sent", { p_user: u.id, p_ref: "first10:d:work" });
     expect(await mine()).toEqual([]);
     // A gone device is dropped.
-    await admin().rpc("push_drop_endpoint", { p_endpoint: `https://push.example.com/due-${u.id}` });
+    await admin().rpc("push_drop_endpoint", {
+      p_endpoint: `https://fcm.googleapis.com/fcm/send/due-${u.id}`,
+    });
     expect((await u.client.from("push_subscriptions").select("id")).data).toEqual([]);
+  });
+
+  it("G7 R-M11-1 (S1): only real push-service hosts, at most 10 devices per account", async () => {
+    const u = await newUser("push-ssrf");
+    for (const endpoint of [
+      "https://10.0.0.1:8443/x",
+      "https://evil.example.com/fcm/send/x",
+      "https://fcm.googleapis.com.evil.com/fcm/send/x",
+      "https://localhost/x",
+    ])
+      expect(
+        (await u.client.rpc("save_push_subscription", { ...sub("x"), p_endpoint: endpoint })).error,
+      ).not.toBeNull();
+    for (const endpoint of [
+      "https://fcm.googleapis.com/fcm/send/abc",
+      "https://updates.push.services.mozilla.com/wpush/v2/abc",
+      "https://web.push.apple.com/QGabc",
+      "https://wns2-par02p.notify.windows.com/w/?token=abc",
+    ])
+      expect(
+        (await u.client.rpc("save_push_subscription", { ...sub("x"), p_endpoint: endpoint })).error,
+      ).toBeNull();
+    for (let i = 0; i < 12; i++) await u.client.rpc("save_push_subscription", sub(`cap-${u.id}-${i}`));
+    const mine = (await u.client.from("push_subscriptions").select("endpoint")).data as {
+      endpoint: string;
+    }[];
+    expect(mine).toHaveLength(10);
+    // The newest devices stay.
+    expect(mine.map((m) => m.endpoint)).toContain(`https://fcm.googleapis.com/fcm/send/cap-${u.id}-11`);
+  });
+
+  it("G7 R-M11-1 (S1): the sender claims each due reminder once, even with parallel runs", async () => {
+    const u = await newUser("push-claim");
+    await u.client.rpc("save_push_subscription", sub(`claim-a-${u.id}`));
+    await u.client.rpc("save_push_subscription", sub(`claim-b-${u.id}`));
+    const day = "2026-11-12";
+    await admin()
+      .from("push_schedule")
+      .insert(
+        ["night:c1", "block_start:c:work"].map((ref) => ({
+          user_id: u.id,
+          ref,
+          kind: ref.startsWith("night") ? "night" : "block_start",
+          day,
+          block: ref.startsWith("night") ? null : "work",
+          fire_at: inMin(-1),
+          title: "t",
+          body: "",
+        })),
+      );
+    const claim = () => admin().rpc("push_claim", { p_limit: 500 });
+    const [a, b] = await Promise.all([claim(), claim()]);
+    const rows = [...(a.data ?? []), ...(b.data ?? [])].filter(
+      (r: { user_id: string }) => r.user_id === u.id,
+    );
+    // 2 reminders × 2 devices, each exactly once across both runs; marked sent at claim time.
+    expect(rows.map((r: { ref: string; endpoint: string }) => `${r.ref} ${r.endpoint}`).sort()).toHaveLength(
+      4,
+    );
+    expect(new Set(rows.map((r: { ref: string; endpoint: string }) => `${r.ref} ${r.endpoint}`)).size).toBe(
+      4,
+    );
+    expect(((await claim()).data ?? []).filter((r: { user_id: string }) => r.user_id === u.id)).toEqual([]);
+    const sched = await admin().from("push_schedule").select("sent_at").eq("user_id", u.id);
+    expect(sched.data?.every((r) => r.sent_at !== null)).toBe(true);
+    expect((await u.client.rpc("push_claim", { p_limit: 10 })).error).not.toBeNull();
+  });
+
+  it("G7 R-M11-3: an item that just became due is dropped, not the whole upload", async () => {
+    const u = await newUser("push-late");
+    const day = new Date().toISOString().slice(0, 10);
+    const r = await u.client.rpc("set_push_schedule", {
+      p_items: [
+        item("night:late", "night", inMin(-1), day),
+        item("block_start:ok:work", "block_start", inMin(20), day, "work"),
+      ],
+    });
+    expect(r.error).toBeNull();
+    expect((await u.client.from("push_schedule").select("ref")).data).toEqual([
+      { ref: "block_start:ok:work" },
+    ]);
+  });
+
+  it("G7 R-M11-9: a block-start push is skipped once the block was started early", async () => {
+    const u = await newUser("push-early");
+    await u.client.rpc("save_push_subscription", sub(`early-${u.id}`));
+    const day = "2026-11-12";
+    await admin()
+      .from("push_schedule")
+      .insert({
+        user_id: u.id,
+        ref: "block_start:e:focus",
+        kind: "block_start",
+        day,
+        block: "focus",
+        fire_at: inMin(-1),
+        title: "t",
+        body: "",
+      });
+    await admin()
+      .from("block_logs")
+      .insert({ user_id: u.id, date: day, block: "focus", started_at: inMin(-3) });
+    expect((await due()).filter((r) => r.user_id === u.id)).toEqual([]);
   });
 
   it("setup reward: turning on notifications on a device pays the wind chime once (SPEC §8.8c)", async () => {

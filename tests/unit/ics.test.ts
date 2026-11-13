@@ -32,12 +32,12 @@ describe("calendar feed (.ics, M11)", () => {
     expect(ics.endsWith("END:VCALENDAR\r\n")).toBe(true);
     const starts = [...ics.matchAll(/DTSTART:(\S+)/g)].map((m) => m[1]);
     expect(starts).toEqual(["20261112T010000Z", "20261112T020000Z"]);
-    expect(ics).toContain("DESCRIPTION:First 10: open the doc\\, then read\; take notes");
+    expect(ics).toContain("DESCRIPTION:First 10: open the doc\\, then read\\; take notes");
     expect(ics).not.toContain("bad@247");
   });
 
   it("text escaping and line folding at 75 octets (never inside a Thai character)", () => {
-    expect(icsText("a,b;c\\d\ne")).toBe("a\\,b\;c\\\\d\\ne");
+    expect(icsText("a,b;c\\d\ne")).toBe("a\\,b\\;c\\\\d\\ne");
     const thai = "SUMMARY:" + "โฟกัส".repeat(20);
     const folded = foldLine(thai);
     for (const part of folded.split("\r\n "))

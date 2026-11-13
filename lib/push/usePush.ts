@@ -125,6 +125,10 @@ export function usePush() {
       await client.from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
       await sub.unsubscribe().catch(() => false);
     }
+    // Every meaningful action leaves an events row (CLAUDE.md; G7 R-M11-10).
+    const { data: auth } = await client.auth.getUser();
+    if (auth.user)
+      await client.from("events").insert({ user_id: auth.user.id, type: "push_turned_off", payload: {} });
     setState("ask");
   }, [client]);
 
@@ -143,7 +147,14 @@ export function usePush() {
           push_quiet_end: next.quietEnd,
         })
         .eq("user_id", auth.user.id);
-      if (!r.error) setPrefs(next);
+      if (!r.error) {
+        setPrefs(next);
+        await client.from("events").insert({
+          user_id: auth.user.id,
+          type: "push_prefs_changed",
+          payload: { ...next },
+        });
+      }
       return !r.error;
     },
     [client],

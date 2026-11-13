@@ -76,8 +76,11 @@ export function planPushes(input: {
   prefs: PushPrefs;
   tz: string;
   now: Date;
+  /** Vacation/Sick: no block nudges (G7 R-M11-8). */
+  mode?: "normal" | "vacation" | "sick";
 }): PlannedPush[] {
   const { day, nextDay, blocks, prefs, tz, now } = input;
+  const nudges = (input.mode ?? "normal") === "normal";
   const out: PlannedPush[] = [];
   for (const b of blocks) {
     if (b.key === "down") {
@@ -95,7 +98,20 @@ export function planPushes(input: {
         });
       continue;
     }
-    if (b.key === "wake") continue;
+    if (b.key === "wake") {
+      // Today flips to the new day at the wake target, so this day's own "I'm up" reminder must be
+      // planned from its Wake block too, or a re-plan in the first minutes deletes it (G7 R-M11-2).
+      if (prefs.wake)
+        out.push({
+          kind: "wake",
+          ref: `wake:${day}`,
+          fireAt: new Date(b.start.getTime() + WAKE_REMIND_MIN * 60_000),
+          block: null,
+          day,
+        });
+      continue;
+    }
+    if (!nudges) continue;
     if (prefs.block_start)
       out.push({
         kind: "block_start",

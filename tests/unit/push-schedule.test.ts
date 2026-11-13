@@ -18,6 +18,7 @@ const plan = (now: Date, prefs = DEFAULT_PUSH_PREFS) =>
 describe("push schedule (M11, SPEC §9)", () => {
   it("block starts (not Wake/Sleep), a first-10 nudge, the Night ritual at Down, tomorrow's 'I'm up'", () => {
     expect(plan(bkk(6)).map((p) => [p.kind, p.ref, p.fireAt.toISOString()])).toEqual([
+      ["wake", "wake:2026-11-12", bkk(7, 10).toISOString()],
       ["block_start", "block_start:2026-11-12:focus", bkk(8).toISOString()],
       ["first10", "first10:2026-11-12:focus", bkk(8, 10).toISOString()],
       ["block_start", "block_start:2026-11-12:work", bkk(9, 30).toISOString()],
@@ -31,7 +32,7 @@ describe("push schedule (M11, SPEC §9)", () => {
     expect(plan(bkk(20)).map((p) => p.kind)).toEqual(["night", "wake"]);
     expect(
       plan(bkk(6), { ...DEFAULT_PUSH_PREFS, block_start: false, first10: false }).map((p) => p.kind),
-    ).toEqual(["night", "wake"]);
+    ).toEqual(["wake", "night", "wake"]);
   });
 
   it("quiet hours (may wrap midnight) drop pushes inside them", () => {
@@ -47,6 +48,29 @@ describe("push schedule (M11, SPEC §9)", () => {
       "block_start",
       "block_start",
     ]);
+  });
+
+  it("G7 R-M11-2: re-planned after the wake target (Today flips there), today's 'I'm up' reminder stays", () => {
+    // 07:05: the wake target passed, "I'm up" not pressed; the reminder at 07:10 must still be planned.
+    const refs = plan(bkk(7, 5)).map((p) => p.ref);
+    expect(refs).toContain("wake:2026-11-12");
+    expect(refs).toContain("wake:2026-11-13");
+    // Once it's past, it isn't planned again.
+    expect(plan(bkk(7, 15)).map((p) => p.ref)).not.toContain("wake:2026-11-12");
+  });
+
+  it("G7 R-M11-8: Vacation/Sick days get no block nudges (wake and Night ritual still follow the plan)", () => {
+    const kinds = planPushes({
+      day: "2026-11-12",
+      nextDay: "2026-11-13",
+      blocks,
+      prefs: DEFAULT_PUSH_PREFS,
+      tz: TZ,
+      now: bkk(6),
+      mode: "vacation",
+    }).map((p) => p.kind);
+    expect(kinds).not.toContain("block_start");
+    expect(kinds).not.toContain("first10");
   });
 
   it("no first-10 nudge when the block is shorter than the nudge delay", () => {
