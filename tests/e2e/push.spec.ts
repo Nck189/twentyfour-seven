@@ -24,7 +24,9 @@ test("CJ-PUSH-1 More shows Notifications; nothing is asked without a tap", async
   await page.goto("/more");
   const card = page.locator("#notifications");
   await expect(card.getByRole("heading", { name: "Notifications" })).toBeVisible();
-  await expect(card).toContainText(/coming soon|Turn on notifications|blocked|can't show/);
+  // Every state is a plain sentence: coming soon (no VAPID key), Turn on, blocked, unsupported, or
+  // (iPhone/iPad Safari tab) add to the Home Screen first.
+  await expect(card).toContainText(/coming soon|Turn on notifications|blocked|can't show|Home Screen/);
   await expectNoSeriousA11y(page);
   await expectTouchTargets(page);
   await page.goto("/today");
