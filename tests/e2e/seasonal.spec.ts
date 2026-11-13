@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import { gameState, rest, setAllTemplates, userIdFor } from "../helpers/db";
-import { leaveAfterSignIn } from "../helpers/day";
+import { calmBlockClock, leaveAfterSignIn } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
 
 /**
@@ -13,6 +13,8 @@ import { IS_PROD_RUN } from "../helpers/env";
 test.skip(IS_PROD_RUN, "creates dedicated users and sets the server's test clock");
 
 async function setup(page: Page, tag: string) {
+  // Som's scenes wait in the wake window / Down Time: keep these tests independent of the hour.
+  await calmBlockClock(page);
   const email = uniqueEmail(tag);
   await setPrefs(page, { locale: "en", theme: "light" });
   await signIn(page, email);
@@ -146,4 +148,37 @@ test("G7 STORY-R22: after a wish floats, leaving before Done doesn't replay the 
   await page.reload(); // left before tapping Done
   await expect(page.getByRole("heading", { name: "Farm", level: 1 })).toBeVisible();
   await expect(page.getByRole("dialog", { name: "Float a wish" })).toHaveCount(0);
+});
+
+test("CJ-SEASON-3 Snow Strawberry: the year-end cake shows the user's own year in review", async ({
+  page,
+}) => {
+  const id = await setup(page, "season-snow");
+  await setClock(id, "2026-12-20");
+  await rest(`story_seen?user_id=eq.${id}&beat=eq.snow_use:2026`, { method: "DELETE" });
+  await rest("events", {
+    method: "POST",
+    body: JSON.stringify([
+      { user_id: id, type: "harvest", payload: {}, at: "2026-06-01T03:00:00Z" },
+      { user_id: id, type: "harvest", payload: {}, at: "2026-09-01T03:00:00Z" },
+      {
+        user_id: id,
+        type: "produce_sold",
+        payload: { item: "crop:snow_strawberry:normal:100", qty: 1, coins: 24 },
+        at: "2026-12-20T03:00:00Z",
+      },
+    ]),
+  });
+  await page.goto("/farm");
+  const scene = page.getByRole("dialog", { name: "The year-end cake" });
+  await expect(scene).toBeVisible();
+  for (let i = 0; i < 2; i++) await scene.getByRole("button", { name: "Next" }).click();
+  const review = scene.getByRole("region", { name: "Your 2026" });
+  await expect(review).toContainText("2 harvests");
+  await expect(review).toContainText("Best streak so far: 0 days");
+  await expectNoHorizontalScroll(page);
+  await expectTouchTargets(page);
+  await scene.getByRole("button", { name: "Next" }).click();
+  await scene.getByRole("button", { name: "Done" }).click();
+  await expect(scene).toHaveCount(0);
 });

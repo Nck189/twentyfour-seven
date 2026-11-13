@@ -183,3 +183,58 @@ export function Mailbox({ className = "h-12 w-12" }: { className?: string }) {
     </Art>
   );
 }
+
+/** Reward decor: Som's café table, for the first full stamp card (a round table, a cup, a stool). */
+export function CafeTable({ className = "h-12 w-12" }: { className?: string }) {
+  return (
+    <Art className={className}>
+      <Shadow rx={11} />
+      {/* stool */}
+      <rect x={33.4} y={30} width={2.4} height={10} rx={1.2} fill="var(--art-wood-dark)" />
+      <ellipse cx={34.6} cy={30} rx={5} ry={2.2} fill="var(--art-wood)" />
+      {/* table */}
+      <rect x={20.8} y={22} width={3.4} height={18} rx={1.5} fill="var(--art-wood-dark)" />
+      <ellipse cx={22.5} cy={39.2} rx={5} ry={1.4} fill="var(--art-wood-dark)" />
+      <ellipse cx={22.5} cy={22.4} rx={12} ry={3.6} fill="var(--art-wood-dark)" />
+      <ellipse cx={22.5} cy={21.4} rx={12} ry={3.4} fill="var(--art-wood)" />
+      <ellipse cx={18} cy={20.6} rx={4} ry={1} fill="var(--art-cream)" opacity={0.45} />
+      {/* cup on a saucer */}
+      <ellipse cx={25} cy={20.4} rx={4.2} ry={1.2} fill="var(--art-stone-dark)" />
+      <path d="M21.8 13.6 L28.2 13.6 L27.4 19.4 Q25 20.6 22.6 19.4 Z" fill="var(--art-cream)" />
+      <path
+        d="M27.8 15 Q30.6 15 30.2 17.2 Q29.8 18.6 27.6 18.2"
+        fill="none"
+        stroke="var(--art-stone-dark)"
+        strokeWidth={1.2}
+        strokeLinecap="round"
+      />
+      <ellipse cx={25} cy={13.8} rx={3.2} ry={0.9} fill="var(--art-wood)" />
+      <path
+        d="M24 11.6 Q23 9.8 24.4 8.2"
+        fill="none"
+        stroke="var(--art-cream)"
+        strokeWidth={1}
+        strokeLinecap="round"
+        opacity={0.8}
+      />
+    </Art>
+  );
+}
+
+/** Reward decor (story chapter 4, a 7-day streak): the farm sign Som had repainted. */
+export function FarmSign({ className = "h-12 w-12" }: { className?: string }) {
+  return (
+    <Art className={className}>
+      <Shadow rx={12} />
+      <rect x={12} y={22} width={3.4} height={18} rx={1.7} fill="var(--art-wood-dark)" />
+      <rect x={32.6} y={22} width={3.4} height={18} rx={1.7} fill="var(--art-wood-dark)" />
+      <rect x={7} y={13} width={35} height={15} rx={4} fill="var(--art-wood-dark)" />
+      <rect x={6} y={12} width={34} height={14} rx={4} fill="var(--art-wood)" />
+      <rect x={9} y={14} width={12} height={2} rx={1} fill="var(--art-wood-light)" />
+      <ellipse cx={18} cy={20} rx={2.2} ry={3.6} fill="var(--art-leaf-3)" transform="rotate(-30 18 20)" />
+      <ellipse cx={22.6} cy={20} rx={2.2} ry={3.6} fill="var(--art-leaf-2)" transform="rotate(30 22.6 20)" />
+      <rect x={19.6} y={20} width={1.3} height={4.6} rx={0.65} fill="var(--art-leaf-4)" />
+      <circle cx={33} cy={18} r={2.8} fill="var(--art-sun)" />
+    </Art>
+  );
+}

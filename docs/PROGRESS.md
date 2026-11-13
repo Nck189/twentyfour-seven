@@ -1,16 +1,14 @@
 # PROGRESS — 24/7
 
-## Now (2026-11-12, ~16:00 Bangkok)
-- ✅ **PR #14** (R1 fixes) merged; G6 on prod passed.
-- ✅ **PR #15** (Economy v2) merged 2026-11-12. Minnie runs `npx supabase db push --remote` (2 migrations: harvest_value, market), then `npm run qc:prod`.
-- 🔄 **Next: Story with Som** (`docs/STORY.md`), before M11. Plan:
-  1. Som art (6 poses) + `story_seen` table + `claim_story_beat` RPC (gifts server-side).
-  2. `lib/game/director.ts` (pure: one beat a day, calm moments only, no repeats) + unit tests.
-  3. Cutscene player (skippable, reduced-motion = still panels, muted with the global mute) + E2E.
-  4. Chapters 0–2, then the 5 signature sounds + auto-quiet in Focus/Work blocks.
-  5. G1–G7, report `docs/qa/STORY-report.md`, PR.
-- After that: seasonal crops (Nov Candle Lotus, Dec Snow Strawberry), Som's café, then M11.
-- Known: the Farm/Thai visual baselines (G3, Mac) need re-recording once. The prod sign-out E2E needs a longer wait (prod cold start).
+## Now (2026-11-13, ~04:30 Bangkok; Minnie asleep, "merge 16 when done, keep going until 08:00")
+- ✅ PR #14, #15 and **#16** (story with Som, seasonal crops + Candle Lotus, chibi animals, sound & motion settings) merged.
+  **Minnie, on the Mac:** `git checkout main && git pull && npx supabase db push --remote` (3 migrations: story, seasonal, seasonal_story), then `npm run qc:prod`.
+- 🔄 **PR #17** (draft): Snow Strawberry beats + year in review, story chapters 3–6 + the café opening, **Som's café** (stamps, café table, the optional real-life coffee/tea answer, another real cup, game-only toggle), Stats "Coffee and bedtime", block clock (G7 STORY-R6/R8). 3 migrations: snow_story, cafe, story_chapters.
+  G7 round 1 FAIL (S1: later café cards minted coins) → all fixed → round 2 running. Local: unit 344, integration 246, E2E 113 (Chrome) all green.
+  Needs Minnie's OK to merge; after merge, `db push` (3 migrations) + `qc:prod`.
+- Next: M11 push notifications, closed beta. Deferred: Som's barista outfit (wardrobe), the "R" back-after-a-lapse beat, brewing from produce (M13).
+- Waiting on Minnie: G7 STORY-R7 (should seasonal seeds plant only in their month and plants wilt after it?).
+- Known: Farm/Thai visual baselines (G3, Mac) need re-recording once; the prod sign-out E2E wait.
 
 ## ➡️ HANDOFF — read this first (any session: cloud or Minnie's Mac terminal)
 Minnie is asleep (from 2026-11-03 ~02:00 Bangkok). The build moved between a cloud session and her Mac; whichever session runs now continues from here.

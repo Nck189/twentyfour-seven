@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { COFFEE_MIN_DAYS } from "@/lib/game/cafe";
 import { useMemo, useRef, useState } from "react";
 import { Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { SomArt } from "@/components/art/Som";
@@ -314,6 +315,34 @@ function Regularity({ data }: { data: StatsData }) {
   );
 }
 
+/** Som's café (docs/STORY.md): coffee vs bedtime from explicit answers only; never claims cause. */
+function Coffee({ data }: { data: StatsData }) {
+  const t = useTranslations("stats");
+  const c = data.coffee;
+  if (!c) return null;
+  return (
+    <Card title={t("coffee.title")}>
+      {c.ready ? (
+        <>
+          <Takeaway>
+            {Math.abs(c.diff) < 10
+              ? t("coffee.same")
+              : c.diff > 0
+                ? t("coffee.later", { n: c.diff })
+                : t("coffee.earlier", { n: -c.diff })}
+          </Takeaway>
+          <p className="text-sm text-muted">{t("coffee.from", { late: c.late, other: c.other })}</p>
+        </>
+      ) : (
+        <p className="text-sm text-muted">
+          {t("coffee.collecting", { late: c.late, other: c.other, need: COFFEE_MIN_DAYS })}
+        </p>
+      )}
+      <p className="mt-1 text-xs text-muted">{t("coffee.help")}</p>
+    </Card>
+  );
+}
+
 function Heat({ data }: { data: StatsData }) {
   const t = useTranslations("stats");
   const blocks = useTranslations("blocks");
@@ -592,6 +621,7 @@ export function StatsBody({
         <>
           <WakeChart data={data} />
           <Regularity data={data} />
+          <Coffee data={data} />
         </>
       )}
       {tab === "days" && (

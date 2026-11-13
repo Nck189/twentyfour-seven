@@ -12,7 +12,16 @@ type Status = {
   seen: string[];
   today: boolean;
   /** `day` = the seasonal calendar's date; `season_uses` = `<crop>:<season-year>` keys. */
-  facts: { harvests: number; good_days: number; day?: string; season_uses?: string[] };
+  facts: {
+    harvests: number;
+    good_days: number;
+    day?: string;
+    season_uses?: string[];
+    hatched?: number;
+    best_streak?: number;
+    days_used?: number;
+    house?: number;
+  };
 };
 
 /**
@@ -77,6 +86,10 @@ export function useStory(moment: StoryMoment, busy = false) {
           goodDays: s.facts?.good_days ?? 0,
           today: s.facts?.day,
           seasonUses: s.facts?.season_uses ?? [],
+          hatched: s.facts?.hatched ?? 0,
+          bestStreak: s.facts?.best_streak ?? 0,
+          daysUsed: s.facts?.days_used ?? 0,
+          house: s.facts?.house ?? 0,
         },
       });
       if (!beat || cancelled) return;

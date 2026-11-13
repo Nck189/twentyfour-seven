@@ -300,7 +300,9 @@
     "krathong": "Krathong",
     "star_tree": "Star tree",
     "garden_lantern": "Garden lantern",
-    "mailbox": "Mailbox"
+    "mailbox": "Mailbox",
+    "cafe_table": "Café table",
+    "farm_sign": "Farm sign"
   },
   "gacha": {
     "title": "Capsule machine",
@@ -455,6 +457,15 @@
       "best": "Going well",
       "worst": "Needs love",
       "reason": "Missed most because"
+    },
+    "coffee": {
+      "title": "Coffee, tea and bedtime",
+      "later": "It looks like on days with an afternoon or evening coffee or tea, you say Goodnight about {n} min later.",
+      "earlier": "It looks like on days with an afternoon or evening coffee or tea, you say Goodnight about {n} min earlier.",
+      "same": "It looks like afternoon or evening coffee or tea doesn't change your bedtime much.",
+      "from": "From {late} days with afternoon/evening coffee or tea and {other} other days (none, or only in the morning).",
+      "collecting": "Still collecting: {late} days with afternoon/evening coffee or tea, {other} other days (needs {need} each).",
+      "help": "Only days you answered in Som's café count. A pattern, not a cause."
     }
   },
   "more": {
@@ -990,6 +1001,7 @@
   },
   "welcomeBack": {
     "title": "Welcome back",
+    "som": "Som wakes up from a long nap, stretches, and is so glad to see you.",
     "body": "Your farm waited for you: no plant wilted or died while you were away. Pick up from today.",
     "start": "Start today",
     "gift": "+1 ticket, a welcome-back gift",
@@ -1081,7 +1093,8 @@
     "done": "Done",
     "gift": {
       "seed": "Gift: {n, plural, one {# {crop} seed} other {# {crop} seeds}}",
-      "tickets": "Gift: {n, plural, one {+# ticket} other {+# tickets}}"
+      "tickets": "Gift: {n, plural, one {+# ticket} other {+# tickets}}",
+      "decor": "Gift for your farm: {item}"
     },
     "ch0_gate": {
       "title": "Som",
@@ -1101,6 +1114,36 @@
       "l1": "Som has been rummaging in the old shed.",
       "l2": "It drags out a dusty watering can. Your three good days earned it.",
       "l3": "The farm feels a little more like home."
+    },
+    "ch3_new_friend": {
+      "title": "A new friend",
+      "l1": "Som stares at the new arrival. Who said anyone else could live here?",
+      "l2": "It pretends not to care. It cares a lot.",
+      "l3": "By afternoon they're napping in the same sunny spot."
+    },
+    "ch4_sunset": {
+      "title": "Seven days",
+      "l1": "Seven days in a row. Som wants a walk at sunset.",
+      "l2": "The old farm sign has faded. Som sits beside it, meaningfully.",
+      "l3": "Freshly painted. Now everyone knows whose farm this is."
+    },
+    "ch5_house": {
+      "title": "Moving in",
+      "l1": "The farmhouse is ready. Som inspects every corner.",
+      "l2": "Som tries every cushion and picks the best one.",
+      "l3": "That cushion is Som's now. You may visit."
+    },
+    "ch6_album": {
+      "title": "Thirty days",
+      "l1": "Thirty days on the farm. Not in a row, and that's fine.",
+      "l2": "Som has been collecting moments on the wall: mornings, harvests, rainy days.",
+      "l3": "A whole month of you. Som is proud."
+    },
+    "cafe_open": {
+      "title": "Som's café",
+      "l1": "The farmhouse has a new room, and it smells like coffee.",
+      "l2": "Som has opened a tiny café. The menu is short and the barista is fluffy.",
+      "l3": "Order anything, any time. Every cup gets a stamp."
     },
     "wish": {
       "label": "Your wish (optional, only you can see it)",
@@ -1128,6 +1171,83 @@
       "l2": "It's Loy Krathong season. People float their wishes away on the water.",
       "l3": "Want to float one too? It's just for you, and you can skip.",
       "l4": "Your wish drifts away with its tiny flame. Som will keep it safe until next Loy Krathong."
+    },
+    "snow_open": {
+      "title": "Snow Strawberry",
+      "l1": "Mist rolls over the hills. Som's whiskers are cold.",
+      "l2": "Between the leaves: strawberries, white as the mist.",
+      "l3": "Som brings you a seed. Snow Strawberry seeds are in the shop until the 14th."
+    },
+    "snow_market": {
+      "title": "The winter-lights market",
+      "l1": "Little lights on a string: the winter market is open.",
+      "l2": "Snow Strawberries sell for more until the end of the month.",
+      "l3": "Som warms its paws by a stall and waits for you."
+    },
+    "snow_use": {
+      "title": "The year-end cake",
+      "l1": "Som carries your Snow Strawberry to the kitchen.",
+      "l2": "A year-end cake, with white strawberries on top.",
+      "l3": "Som looks back at your year with you.",
+      "l4": "Here's to next year. Som will be right here."
+    },
+    "review": {
+      "title": "Your {year}",
+      "harvests": "{n, plural, one {# harvest} other {# harvests}}",
+      "streak": "{n, plural, one {Best streak so far: # day} other {Best streak so far: # days}}",
+      "mornings": "{n, plural, one {# morning on time} other {# mornings on time}}",
+      "loading": "Counting your year…",
+      "error": "Couldn't count your year right now. It's still a good one."
     }
+  },
+  "cafe": {
+    "title": "Som's café",
+    "hint": "Order anything, any time: one drink is one stamp. Your first full card of {n} gets a gift from Som.",
+    "card": "Stamp card",
+    "cards": "{n, plural, =0 {No full cards yet} one {# full card} other {# full cards}}",
+    "stamps": "{n} of {total} stamps",
+    "menu": "Menu",
+    "ordered": "Som made you a {drink}. Stamp!",
+    "rewardTable": "A full card! The café table is now on your farm.",
+    "askTitle": "Did you have one in real life too?",
+    "askHint": "Only so Stats can show whether coffee changes your sleep. Asked once a day at most, only after coffee or tea.",
+    "answer": {
+      "yes": "Yes",
+      "later": "Later",
+      "play": "Just playing"
+    },
+    "answered": {
+      "yes": "Noted. Enjoy!",
+      "later": "OK, I'll ask once at bedtime.",
+      "play": "Just for fun. Noted.",
+      "already": "You already answered today. That answer stays."
+    },
+    "error": "Couldn't reach the café. Try again.",
+    "privacy": "Turn the question off any time: More → Som's café.",
+    "nightTitle": "Coffee or tea today in real life? (your latest cup)",
+    "nightThanks": "Thanks, noted.",
+    "slot": {
+      "none": "No coffee",
+      "morning": "Morning",
+      "afternoon": "Afternoon",
+      "evening": "Evening"
+    },
+    "gameOnly": "Use the café in the game only",
+    "gameOnlyHint": "Never ask whether I had coffee in real life.",
+    "open": "Som's café",
+    "openHint": "{n} of {total} stamps",
+    "drink": {
+      "americano": "Americano",
+      "latte": "Latte",
+      "thai_iced_coffee": "Thai iced coffee",
+      "thai_tea": "Thai tea",
+      "matcha": "Matcha",
+      "cocoa": "Cocoa",
+      "jasmine_tea": "Jasmine tea",
+      "water": "Water"
+    },
+    "rewardCard": "Card #{n} complete! Som stamps a little paw on it.",
+    "addCup": "I had another real one",
+    "addedCup": "Noted. Latest real cup: {slot}."
   }
 }

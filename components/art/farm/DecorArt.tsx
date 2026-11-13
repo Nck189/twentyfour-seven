@@ -3,6 +3,8 @@ import type { ComponentType } from "react";
 import type { DecorId } from "@/content/decor";
 import { Fence, Flowers, PathTile, Pond } from "./Plot";
 import {
+  CafeTable,
+  FarmSign,
   Fireworks,
   GardenLantern,
   Jasmine,
@@ -26,4 +28,6 @@ export const DECOR_ART: Record<DecorId, ComponentType<{ className?: string }>> =
   star_tree: StarTree,
   garden_lantern: GardenLantern,
   mailbox: Mailbox,
+  cafe_table: CafeTable,
+  farm_sign: FarmSign,
 };

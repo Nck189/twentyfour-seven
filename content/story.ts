@@ -10,17 +10,41 @@ export const STORY_BEATS = [
   "ch0_gate",
   "ch1_first_harvest",
   "ch2_watering_can",
+  "ch3_new_friend",
+  "ch4_sunset",
+  "ch5_house",
+  "ch6_album",
+  // Som's café opens with the Farmhouse at level 2 (docs/STORY.md "Som's café").
+  "cafe_open",
   // Seasonal crop beats (docs/STORY.md "Seasonal crops"): November, Candle Lotus.
   "lotus_open",
   "lotus_market",
   "lotus_use",
+  // December, Snow Strawberry.
+  "snow_open",
+  "snow_market",
+  "snow_use",
 ] as const;
 export type StoryBeatId = (typeof STORY_BEATS)[number];
 
 export const SOM_POSES = ["sit", "sleep", "stretch", "happy", "lookUp", "carrySeed"] as const;
 export type SomPose = (typeof SOM_POSES)[number];
 
-export type StoryScene = "gate" | "field" | "shed" | "lotus_pond" | "water_market" | "krathong";
+export type StoryScene =
+  | "gate"
+  | "field"
+  | "shed"
+  | "lotus_pond"
+  | "water_market"
+  | "krathong"
+  | "snow_hill"
+  | "winter_market"
+  | "cake"
+  | "pen"
+  | "sunset"
+  | "house"
+  | "album"
+  | "cafe";
 /** Soft motion only: a slow pan, a small hop, or sparkles. With reduced motion, every panel is still. */
 export type StoryMotion = "none" | "pan" | "hop" | "sparkle";
 
@@ -37,17 +61,28 @@ export type StoryTrigger =
    */
   | { kind: "season"; crop: CropId; from: number }
   /** The first sale or delivery of a seasonal crop in its season-year. */
-  | { kind: "season_use"; crop: CropId };
+  | { kind: "season_use"; crop: CropId }
+  /** Animals ever hatched. */
+  | { kind: "hatched"; need: number }
+  /** The best streak ever (game_state.best_streak). */
+  | { kind: "best_streak"; need: number }
+  /** Wake-days with an "I'm up" (days used, not a streak). */
+  | { kind: "days_used"; need: number }
+  /** The Farmhouse level. */
+  | { kind: "house"; need: number };
 
-export type StoryGift = { seed: { crop: CropId; n: number } } | { tickets: number };
+export type StoryGift = { seed: { crop: CropId; n: number } } | { tickets: number } | { decor: "farm_sign" };
 
 export type StoryPanel = {
   scene: StoryScene;
   pose: SomPose;
   line: string;
   motion: StoryMotion;
-  /** An optional, skippable form on this panel ("wish": float a private wish, ≤ WISH_MAX). */
-  form?: "wish";
+  /**
+   * An optional, skippable form on this panel ("wish": float a private wish, ≤ WISH_MAX), or the
+   * year in review from the user's own data ("review": the year-end cake, Snow Strawberry).
+   */
+  form?: "wish" | "review";
 };
 
 export type StoryBeat = {
@@ -90,6 +125,56 @@ export const STORY: Record<StoryBeatId, StoryBeat> = {
     ],
     gift: { tickets: 1 },
   },
+  ch3_new_friend: {
+    chapter: 3,
+    trigger: { kind: "hatched", need: 1 },
+    panels: [
+      { scene: "pen", pose: "lookUp", line: "l1", motion: "pan" },
+      { scene: "pen", pose: "sit", line: "l2", motion: "none" },
+      { scene: "pen", pose: "sleep", line: "l3", motion: "sparkle" },
+    ],
+    gift: null,
+  },
+  ch4_sunset: {
+    chapter: 4,
+    trigger: { kind: "best_streak", need: 7 },
+    panels: [
+      { scene: "sunset", pose: "stretch", line: "l1", motion: "pan" },
+      { scene: "sunset", pose: "sit", line: "l2", motion: "none" },
+      { scene: "sunset", pose: "happy", line: "l3", motion: "sparkle" },
+    ],
+    gift: { decor: "farm_sign" },
+  },
+  ch5_house: {
+    chapter: 5,
+    trigger: { kind: "house", need: 1 },
+    panels: [
+      { scene: "house", pose: "lookUp", line: "l1", motion: "pan" },
+      { scene: "house", pose: "stretch", line: "l2", motion: "hop" },
+      { scene: "house", pose: "sleep", line: "l3", motion: "none" },
+    ],
+    gift: null,
+  },
+  ch6_album: {
+    chapter: 6,
+    trigger: { kind: "days_used", need: 30 },
+    panels: [
+      { scene: "album", pose: "sit", line: "l1", motion: "pan" },
+      { scene: "album", pose: "lookUp", line: "l2", motion: "sparkle" },
+      { scene: "album", pose: "happy", line: "l3", motion: "none" },
+    ],
+    gift: { tickets: 2 },
+  },
+  cafe_open: {
+    chapter: 9,
+    trigger: { kind: "house", need: 2 },
+    panels: [
+      { scene: "cafe", pose: "carrySeed", line: "l1", motion: "pan" },
+      { scene: "cafe", pose: "happy", line: "l2", motion: "sparkle" },
+      { scene: "cafe", pose: "sit", line: "l3", motion: "none" },
+    ],
+    gift: null,
+  },
   lotus_open: {
     chapter: 70,
     trigger: { kind: "season", crop: "candle_lotus", from: 1 },
@@ -118,6 +203,37 @@ export const STORY: Record<StoryBeatId, StoryBeat> = {
       { scene: "krathong", pose: "sit", line: "l2", motion: "none" },
       { scene: "krathong", pose: "lookUp", line: "l3", motion: "none", form: "wish" },
       { scene: "krathong", pose: "happy", line: "l4", motion: "pan" },
+    ],
+    gift: null,
+  },
+  snow_open: {
+    chapter: 80,
+    trigger: { kind: "season", crop: "snow_strawberry", from: 1 },
+    panels: [
+      { scene: "snow_hill", pose: "lookUp", line: "l1", motion: "pan" },
+      { scene: "snow_hill", pose: "sit", line: "l2", motion: "sparkle" },
+      { scene: "snow_hill", pose: "carrySeed", line: "l3", motion: "hop" },
+    ],
+    gift: { seed: { crop: "snow_strawberry", n: 1 } },
+  },
+  snow_market: {
+    chapter: 81,
+    trigger: { kind: "season", crop: "snow_strawberry", from: 15 },
+    panels: [
+      { scene: "winter_market", pose: "happy", line: "l1", motion: "pan" },
+      { scene: "winter_market", pose: "lookUp", line: "l2", motion: "sparkle" },
+      { scene: "winter_market", pose: "sit", line: "l3", motion: "none" },
+    ],
+    gift: null,
+  },
+  snow_use: {
+    chapter: 82,
+    trigger: { kind: "season_use", crop: "snow_strawberry" },
+    panels: [
+      { scene: "cake", pose: "carrySeed", line: "l1", motion: "pan" },
+      { scene: "cake", pose: "happy", line: "l2", motion: "sparkle" },
+      { scene: "cake", pose: "sit", line: "l3", motion: "none", form: "review" },
+      { scene: "winter_market", pose: "happy", line: "l4", motion: "sparkle" },
     ],
     gift: null,
   },

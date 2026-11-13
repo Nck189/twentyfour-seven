@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { usePrefs } from "@/lib/store/prefs";
 import { getSupabase } from "@/lib/supabase/client";
 
-function Toggle({
+export function Toggle({
   label,
   hint,
   on,

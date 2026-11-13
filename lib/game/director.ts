@@ -20,6 +20,10 @@ export type StoryFacts = {
   today?: string;
   /** Seasonal crops sold or delivered, as `<crop>:<season-year>`. */
   seasonUses?: readonly string[];
+  hatched?: number;
+  bestStreak?: number;
+  daysUsed?: number;
+  house?: number;
 };
 export type StoryMoment = "farm" | "goodnight" | "other";
 
@@ -41,6 +45,14 @@ export function triggerMet(t: StoryTrigger, f: StoryFacts): boolean {
       return (
         f.today !== undefined && (f.seasonUses ?? []).includes(`${t.crop}:${seasonYear(t.crop, f.today)}`)
       );
+    case "hatched":
+      return (f.hatched ?? 0) >= t.need;
+    case "best_streak":
+      return (f.bestStreak ?? 0) >= t.need;
+    case "days_used":
+      return (f.daysUsed ?? 0) >= t.need;
+    case "house":
+      return (f.house ?? 0) >= t.need;
   }
 }
 
@@ -60,7 +72,10 @@ export function nextBeat(input: {
   facts: StoryFacts;
 }): StoryBeatId | null {
   if (input.moment === "other" || input.busy || input.seenToday) return null;
-  const order = [...STORY_BEATS].sort((a, b) => STORY[a].chapter - STORY[b].chapter);
+  // The first-week chapters (0–2) first, then month-only seasonal beats (G7 R2-2): a queue of later
+  // chapters must never push a month's opening or market past its month; they wait a day, losing nothing.
+  const rank = (b: StoryBeatId) => (STORY[b].chapter <= 2 ? 0 : STORY[b].trigger.kind === "season" ? 1 : 2);
+  const order = [...STORY_BEATS].sort((a, b) => rank(a) - rank(b) || STORY[a].chapter - STORY[b].chapter);
   return (
     order.find((b) => {
       const key = beatKey(b, input.facts.today);

@@ -5,12 +5,16 @@ import type { DayFacts, DayMode } from "@/lib/game";
 import { buildDayFacts, type LogRow } from "@/lib/game/facts";
 import { statsFrom, type ImrPoint, type SleepDay } from "@/lib/stats/stats";
 import { getSupabase } from "@/lib/supabase/client";
+import { coffeeSleep, type CoffeeSleep } from "@/lib/game/cafe";
+import type { CoffeeAnswer, CoffeeSlot } from "@/content/cafe";
 import { addDays, localDate, localParts } from "@/lib/time";
 import { currentDayDate } from "@/lib/today/day";
 import { loadDayContext } from "@/lib/today/loadContext";
 
 /** How far back Stats look (finished wake-days only). */
 export const STATS_DAYS = 28;
+/** The coffee → bedtime insight looks further back: it needs 8+ answered days on each side. */
+export const COFFEE_DAYS = 60;
 
 export type ReviewStatus = { week_start: string | null; done: boolean };
 export type StatsData = {
@@ -23,6 +27,8 @@ export type StatsData = {
   sleep: SleepDay[];
   /** Null before the M10 migration is on the server. */
   review: ReviewStatus | null;
+  /** Som's café: coffee vs bedtime; null when nothing is answered (or before the café migration). */
+  coffee: CoffeeSleep | null;
 };
 
 const minutes = (iso: string, tz: string) => {
@@ -45,7 +51,8 @@ export function useStats() {
         const today = currentDayDate(ctx, new Date());
         const from = addDays(today, -STATS_DAYS);
         const last = addDays(today, -1);
-        const [logs, plans, wakes, nights, review, profile, rituals] = await Promise.all([
+        const coffeeFrom = addDays(today, -COFFEE_DAYS);
+        const [logs, plans, wakes, nights, review, profile, rituals, coffee] = await Promise.all([
           client.from("block_logs").select("*").gte("date", from).lte("date", last),
           // Up to today: today's plan may hold last night's Out late (it excuses yesterday's Free).
           client.from("day_plans").select("date, mode, late_night").gte("date", from).lte("date", today),
@@ -63,8 +70,9 @@ export function useStats() {
             .from("events")
             .select("payload, at")
             .eq("type", "night_ritual_completed")
-            .gte("at", `${addDays(from, -1)}T00:00:00Z`)
+            .gte("at", `${addDays(coffeeFrom, -1)}T00:00:00Z`)
             .order("at"),
+          client.from("coffee_answers").select("day, answer, slot").gte("day", coffeeFrom).lte("day", last),
         ]);
         // A failed profile read would silently bring back the pre-sign-up days (R-M10-R7).
         const err =
@@ -99,10 +107,14 @@ export function useStats() {
         );
         const wakeBy = new Map(liveWakes.map((w) => [w.date, minutes(w.pressed_at, tz)]));
         const bedBy = new Map<string, number>();
+        // Any first Goodnight of the night, late ones too (a late night is exactly what coffee may cause).
+        const goodnight = new Map<string, number>();
         for (const r of rituals.data as { payload: { date?: string; in_time?: boolean }; at: string }[]) {
           // The first in-time ritual of each night (the one that earned the Night ticket).
           const d = r.payload?.date;
-          if (d && r.payload.in_time && !bedBy.has(d)) bedBy.set(d, (minutes(r.at, tz) - 720 + 1440) % 1440);
+          const m = (minutes(r.at, tz) - 720 + 1440) % 1440;
+          if (d && !goodnight.has(d)) goodnight.set(d, m);
+          if (d && r.payload.in_time && !bedBy.has(d)) bedBy.set(d, m);
         }
         const sleep: SleepDay[] = shown.map((d) => ({
           date: d.date,
@@ -119,6 +131,12 @@ export function useStats() {
             .map((w) => ({ date: w.date, value: wakeBy.get(w.date)! })),
           sleep,
           review: review.error ? null : (review.data as ReviewStatus),
+          coffee: coffee.error
+            ? null
+            : coffeeSleep(
+                coffee.data as { day: string; answer: CoffeeAnswer; slot: CoffeeSlot | null }[],
+                goodnight,
+              ),
         });
         setStatus("ready");
       } catch {

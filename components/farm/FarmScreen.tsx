@@ -1,5 +1,7 @@
 "use client";
 
+import { useNow } from "@/lib/hooks/useNow";
+import { storyBusyAt, useBlockClock } from "@/lib/today/blockClock";
 import { Cutscene } from "@/components/story/Cutscene";
 import { useStory } from "@/lib/story/useStory";
 import { useTranslations } from "next-intl";
@@ -36,6 +38,11 @@ import { seasonPriceMult } from "@/lib/game/seasonal";
 import { Farmhouse } from "@/components/art/farm/Farmhouse";
 import { RewardJarHint } from "./RewardJarHint";
 import { PlotSheet } from "./PlotSheet";
+import { CafeSheet } from "./CafeSheet";
+import { Cup } from "@/components/art/farm/Cup";
+import { CAFE_HOUSE_LEVEL, CARD_SIZE } from "@/content/cafe";
+import { cardProgress } from "@/lib/game/cafe";
+import { useCafe } from "@/lib/cafe/useCafe";
 
 const LOCKED_FIELDS = 3;
 
@@ -49,8 +56,13 @@ export function FarmScreen({ compact = false }: { compact?: boolean }) {
   const gacha = useGacha();
   const animals = useAnimals();
   const unlocks = useUnlocks();
+  const cafe = useCafe(!compact);
   // Story beats with Som play on the Farm tab only (a calm moment), not in the iPad side panel.
-  const story = useStory(compact ? "other" : "farm");
+  // Not during the wake window or Down Time (G7 STORY-R6), from the day's saved block times.
+  const clock = useNow(60_000);
+  const blocks = useBlockClock((s) => s.blocks);
+  const busy = clock ? storyBusyAt(blocks, clock) : false;
+  const story = useStory(compact ? "other" : "farm", busy);
   return (
     <>
       {story.playing && (
@@ -65,6 +77,7 @@ export function FarmScreen({ compact = false }: { compact?: boolean }) {
         unlocks={compact ? undefined : (unlocks ?? undefined)}
         gacha={compact ? undefined : gacha}
         animals={compact ? undefined : animals}
+        cafe={compact ? undefined : cafe}
         compact={compact}
         data={data}
         status={status}
@@ -89,6 +102,7 @@ export function FarmView({
   gacha,
   animals,
   unlocks,
+  cafe,
 }: {
   compact?: boolean;
   data: FarmData | null;
@@ -101,6 +115,8 @@ export function FarmView({
   gacha?: ReturnType<typeof useGacha>;
   /** Egg incubator + animal pen (absent in the compact side panel and the preview). */
   animals?: ReturnType<typeof useAnimals>;
+  /** Som's café (absent in the compact side panel and the preview); opens with the Farmhouse at level 2. */
+  cafe?: ReturnType<typeof useCafe>;
   /** The unlock ladder (absent in the compact side panel). */
   unlocks?: NonNullable<ReturnType<typeof useUnlocks>>;
 }) {
@@ -110,9 +126,10 @@ export function FarmView({
   const tg = useTranslations("gacha");
   const blocks = useTranslations("blocks");
   const decorNames = useTranslations("decor");
+  const tcafe = useTranslations("cafe");
   const [open, setOpen] = useState<BlockKey | null>(null);
   const [pop, setPop] = useState<{ cropId: CropId; quality: Quality; value?: number } | null>(null);
-  const [sheet, setSheet] = useState<"capsules" | "dex" | null>(null);
+  const [sheet, setSheet] = useState<"capsules" | "dex" | "cafe" | null>(null);
   const endPop = useCallback(() => setPop(null), []);
 
   const header = <ScreenHeader title={t("title")} level={compact ? 2 : 1} />;
@@ -324,6 +341,35 @@ export function FarmView({
           starUp={gacha.starUp}
           today={data.today}
           onClose={() => setSheet(null)}
+        />
+      )}
+
+      {/* Som's café (docs/STORY.md) opens with the Farmhouse at level 2. */}
+      {cafe?.status && data.house >= CAFE_HOUSE_LEVEL && (
+        <section aria-label={tcafe("title")} className="mx-4 mt-4 lg:mx-6">
+          <button
+            type="button"
+            onClick={() => setSheet("cafe")}
+            className="tap flex min-h-11 w-full items-center gap-2 rounded-[var(--radius-lg)] bg-surface p-2 text-left"
+          >
+            <Cup drink="latte" className="h-12 w-12 shrink-0" />
+            <span className="min-w-0">
+              <span className="block truncate font-extrabold">{tcafe("open")}</span>
+              <span className="block text-sm text-muted">
+                {tcafe("openHint", { n: cardProgress(cafe.status.stamps).onCard, total: CARD_SIZE })}
+              </span>
+            </span>
+          </button>
+        </section>
+      )}
+      {sheet === "cafe" && cafe && (
+        <CafeSheet
+          cafe={cafe}
+          onClose={() => {
+            setSheet(null);
+            cafe.reload();
+            reload();
+          }}
         />
       )}
 
