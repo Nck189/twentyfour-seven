@@ -1346,6 +1346,17 @@
       "pending": "waiting",
       "accepted": "accepted",
       "declined": "declined"
-    }
+    },
+    "notFree": "That time isn't free anymore. Pick another one.",
+    "invalid": "Check your name and note, and pick a time from the list.",
+    "copyTitleTz": "My free times ({tz})",
+    "failed": "Something went wrong. Try again.",
+    "copyFailed": "Couldn't copy. Try again, or select the text and copy it.",
+    "stop": "Stop sharing",
+    "stopped": "Sharing is off. The link doesn't work anymore.",
+    "past": "This time has passed.",
+    "noLongerFree": "This time isn't free anymore in your plan.",
+    "acceptName": "Accept {name}'s request",
+    "declineName": "Decline {name}'s request"
   }
 }

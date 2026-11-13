@@ -32,29 +32,59 @@ describe("share links + booking (server)", () => {
     const a = (await u.client.rpc("share_link", { p_rotate: false })).data as string;
     expect(a).toMatch(/^[0-9a-f]{48}$/);
     expect((await u.client.rpc("share_link", { p_rotate: false })).data).toBe(a);
-    const ctx = (await anon().rpc("share_context", { p_token: a })).data;
+    const ctx = (await admin().rpc("share_context", { p_token: a })).data;
     const text = JSON.stringify(ctx);
     for (const secret of ["secret item", "secret first", "Secret doctor", u.id])
       expect(text).not.toContain(secret);
     expect(text).toContain("10:00"); // busy stays busy
-    expect((await anon().rpc("share_context", { p_token: "0".repeat(48) })).data).toBeNull();
+    expect((await admin().rpc("share_context", { p_token: "0".repeat(48) })).data).toBeNull();
     const b = (await u.client.rpc("share_link", { p_rotate: true })).data as string;
-    expect((await anon().rpc("share_context", { p_token: a })).data).toBeNull();
-    expect((await anon().rpc("share_context", { p_token: b })).data).not.toBeNull();
+    expect((await admin().rpc("share_context", { p_token: a })).data).toBeNull();
+    expect((await admin().rpc("share_context", { p_token: b })).data).not.toBeNull();
     expect((await anon().rpc("share_link", { p_rotate: false })).error).not.toBeNull();
+  });
+
+  it("the engine inputs and the request RPC are server-only: no browser can call them (G7 R-M12-1)", async () => {
+    const u = await newUser("share-priv");
+    const tok = (await u.client.rpc("share_link", { p_rotate: false })).data as string;
+    for (const c of [anon(), u.client]) {
+      expect((await c.rpc("share_context", { p_token: tok })).error?.code).toBe("42501");
+      expect(
+        (await c.rpc("request_slot", { p_token: tok, ...slot(3), p_name: "Ploy", p_note: "" })).error?.code,
+      ).toBe("42501");
+    }
+  });
+
+  it("sharing can be turned off; the old link stops working (G7 R-M12-10)", async () => {
+    const u = await newUser("share-off");
+    const tok = (await u.client.rpc("share_link", { p_rotate: false })).data as string;
+    expect((await u.client.rpc("share_link_off")).error).toBeNull();
+    expect((await admin().rpc("share_context", { p_token: tok })).data).toBeNull();
+    expect((await u.client.from("share_links").select("token")).data).toEqual([]);
+    const ev = await u.client.from("events").select("type").eq("type", "share_link_off");
+    expect(ev.data).toHaveLength(1);
+    expect((await anon().rpc("share_link_off")).error).not.toBeNull();
   });
 
   it("anyone with the link can ask for a slot; checked and rate-limited; the owner sees only theirs", async () => {
     const u = await newUser("book");
     const tok = (await u.client.rpc("share_link", { p_rotate: false })).data as string;
     const ask = (s: ReturnType<typeof slot>, name = "Ploy", note = "coffee?") =>
-      anon().rpc("request_slot", { p_token: tok, ...s, p_name: name, p_note: note });
-    expect((await ask(slot(3))).error).toBeNull();
+      admin().rpc("request_slot", { p_token: tok, ...s, p_name: name, p_note: note });
+    expect((await ask(slot(3), "ปลาย จ.")).error).toBeNull();
     // Bad link, empty name, too long, in the past, too far, too short: refused.
     expect(
-      (await anon().rpc("request_slot", { p_token: "0".repeat(48), ...slot(3), p_name: "x" })).error?.code,
+      (await admin().rpc("request_slot", { p_token: "0".repeat(48), ...slot(3), p_name: "x" })).error?.code,
     ).toBe("P0002");
     expect((await ask(slot(4), "  ")).error?.code).toBe("22023");
+    // Invisible / control characters (G7 R-M12-6); a newline is fine in the note only.
+    for (const bad of ["\u200b", "\t", "Ploy\r\nBEGIN:VEVENT", "\u202eyolP", "..."])
+      expect((await ask(slot(4), bad)).error?.code).toBe("22023");
+    expect((await ask(slot(4), "Ploy", "a\u0007b")).error?.code).toBe("22023");
+    // The slot sits on its own calendar date (G7 R-M12-2).
+    const s4 = slot(4);
+    const prev = new Date(Date.parse(s4.p_day + "T00:00:00Z") - 86_400_000).toISOString().slice(0, 10);
+    expect((await ask({ ...s4, p_day: prev })).error?.code).toBe("22023");
     expect((await ask(slot(4), "x".repeat(61))).error?.code).toBe("22023");
     expect(
       (await ask({ ...slot(4), p_start: inH(-2).toISOString(), p_end: inH(-1.5).toISOString() })).error?.code,
@@ -89,9 +119,9 @@ describe("share links + booking (server)", () => {
     const tok = (await u.client.rpc("share_link", { p_rotate: false })).data as string;
     const s1 = slot(3);
     const s2 = slot(4);
-    const id1 = (await anon().rpc("request_slot", { p_token: tok, ...s1, p_name: "Ploy", p_note: "" }))
+    const id1 = (await admin().rpc("request_slot", { p_token: tok, ...s1, p_name: "Ploy", p_note: "" }))
       .data as string;
-    const id2 = (await anon().rpc("request_slot", { p_token: tok, ...s2, p_name: "Mew", p_note: "" }))
+    const id2 = (await admin().rpc("request_slot", { p_token: tok, ...s2, p_name: "Mew", p_note: "" }))
       .data as string;
     const other = await newUser("answer-other");
     expect((await other.client.rpc("answer_booking", { p_id: id1, p_accept: true })).error?.code).toBe(
@@ -116,6 +146,24 @@ describe("share links + booking (server)", () => {
       { name: "Mew", status: "declined" },
       { name: "Ploy", status: "accepted" },
     ]);
+    // A request whose time has passed can't be accepted, only declined (G7 R-M12-7).
+    const past = (
+      await admin()
+        .from("booking_requests")
+        .insert({
+          user_id: u.id,
+          day: localDay(inH(-3)),
+          start_at: inH(-3).toISOString(),
+          end_at: inH(-2.5).toISOString(),
+          name: "Late",
+        })
+        .select("id")
+        .single()
+    ).data as { id: string };
+    expect((await u.client.rpc("answer_booking", { p_id: past.id, p_accept: true })).error?.code).toBe(
+      "22023",
+    );
+    expect((await u.client.rpc("answer_booking", { p_id: past.id, p_accept: false })).error).toBeNull();
     // Server-written events only.
     expect(
       (await u.client.from("events").insert({ user_id: u.id, type: "booking_answered", payload: {} })).error,

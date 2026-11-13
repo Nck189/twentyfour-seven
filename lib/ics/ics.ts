@@ -13,7 +13,11 @@ const stamp = (d: Date) =>
 
 /** RFC 5545 TEXT escaping. */
 export const icsText = (s: string) =>
-  s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+  s
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\r\n|\r|\n/g, "\\n");
 
 /** Lines longer than 75 octets are folded (CRLF + space), never inside a UTF-8 character. */
 export function foldLine(line: string): string {

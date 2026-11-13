@@ -4,7 +4,7 @@
  * midnight (a slot stays inside one day's plan); everything else is busy. Only times leave the
  * server: no block names, titles or tasks.
  */
-import { localDate } from "@/lib/time";
+import { addDays, zonedInstant } from "@/lib/time";
 
 export type Interval = { start: Date; end: Date };
 export type DayFree = { date: string; free: Interval[] };
@@ -31,18 +31,6 @@ export function subtract(base: Interval, cuts: readonly Interval[]): Interval[] 
   return out;
 }
 
-/** Local midnight after `d` in `tz` (the end of that calendar day). */
-function nextMidnight(d: Date, tz: string): Date {
-  const day = localDate(d, tz);
-  // Step forward by hours until the local date changes (no DST in most zones, safe in all).
-  const t = new Date(d.getTime());
-  t.setUTCMinutes(0, 0, 0);
-  while (localDate(t, tz) === day) t.setTime(t.getTime() + 60 * 60_000);
-  // Back off to the exact minute the date flips.
-  while (localDate(new Date(t.getTime() - 60_000), tz) !== day) t.setTime(t.getTime() - 60_000);
-  return t;
-}
-
 export function freeForDay(input: {
   date: string;
   /** The day's Free block (null if the day has none). */
@@ -55,13 +43,21 @@ export function freeForDay(input: {
   const { date, free, fixed, now, tz } = input;
   if (!free) return { date, free: [] };
   const start = free.start > now ? free.start : now;
-  const midnight = nextMidnight(free.start, tz);
+  // The midnight that ends the wake-day's calendar date: a fixed event's HH:MM is read on that
+  // date, so time after it can't become a booking on this day (G7 R-M12-2).
+  const midnight = zonedInstant(addDays(date, 1), 0, tz);
   const end = free.end < midnight ? free.end : midnight;
   if (end <= start) return { date, free: [] };
   const gaps = subtract({ start, end }, fixed).filter(
     (i) => i.end.getTime() - i.start.getTime() >= MIN_FREE_MIN * 60_000,
   );
   return { date, free: gaps };
+}
+
+/** The wake-day whose free time holds the whole slot, or null (the server checks every request). */
+export function slotFits(days: readonly DayFree[], start: Date, end: Date): string | null {
+  for (const d of days) for (const i of d.free) if (start >= i.start && end <= i.end) return d.date;
+  return null;
 }
 
 /** "Copy free slots" as plain text for LINE: one line per day with its free times. */

@@ -32,8 +32,8 @@ export function contextFrom(
 export function freeDaysFromContext(ctx: DayContext, now: Date, days = SHARE_DAYS): DayFree[] {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: ctx.timezone }).format(now);
   const out: DayFree[] = [];
-  // Yesterday's wake-day too: before the wake, "now" can still be inside it.
-  for (let i = -1; i < days; i++) {
+  // Free time stays on its wake-day's calendar date (freebusy.ts), so yesterday's is always over.
+  for (let i = 0; i < days; i++) {
     const date = addDays(today, i);
     const tl = timelineFor(ctx, date);
     const free = tl.blocks.find((b) => b.key === "free");
@@ -44,7 +44,7 @@ export function freeDaysFromContext(ctx: DayContext, now: Date, days = SHARE_DAY
       now,
       tz: ctx.timezone,
     });
-    if (i >= 0 || day.free.length > 0) out.push(day);
+    out.push(day);
   }
   return out;
 }

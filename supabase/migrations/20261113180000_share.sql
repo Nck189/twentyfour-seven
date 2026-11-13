@@ -2,8 +2,9 @@
 -- next 14 days (computed on the server from the engine inputs `share_context` returns: no titles,
 -- tasks, first-10s or checklists). Anyone with the link can ask for a slot (name + note) through a
 -- rate-limited RPC; the owner accepts or declines, and an accepted request becomes a fixed event
--- in that day's plan (the engine re-flows the day). Anonymous access only through these
--- token-checked RPCs.
+-- in that day's plan. The engine inputs (`share_context`) and the request RPC are server-only
+-- (service_role): the Next server computes free/busy, checks a request lies inside it, and only
+-- the free intervals ever reach a browser (G7 R-M12-1/-4).
 
 create table public.share_links (
   user_id uuid primary key references auth.users (id) on delete cascade,
@@ -54,7 +55,7 @@ create policy "own rows: insert" on public.events for insert to authenticated
                      'seasonal_order_delivered', 'wish_floated', 'story_seen',
                      'cafe_order', 'cafe_card', 'coffee_answered', 'coffee_cup_added',
                      'push_subscribed', 'ics_link_made',
-                     'share_link_made', 'booking_requested', 'booking_answered')
+                     'share_link_made', 'share_link_off', 'booking_requested', 'booking_answered')
   );
 
 -- The user's own link (made on first use; p_rotate = a new one, the old one stops working).
@@ -163,7 +164,26 @@ begin
   );
 end $$;
 
--- Ask for a slot through a link (no account). Validated and rate-limited per link owner: at most 5
+-- Stop sharing: the link stops working (G7 R-M12-10). "Get my link" makes a new one.
+create or replace function public.share_link_off()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  uid uuid := auth.uid();
+begin
+  if uid is null then
+    raise exception 'not authenticated' using errcode = '42501';
+  end if;
+  delete from public.share_links s where s.user_id = uid;
+  if found then
+    insert into public.events (user_id, type, payload) values (uid, 'share_link_off', '{}'::jsonb);
+  end if;
+end $$;
+
+-- Ask for a slot through a link (no account; called by the server after it checked the slot is free). Validated and rate-limited per link owner: at most 5
 -- an hour and 20 a day; 15 min to 4 h, from now to 15 days ahead, inside one local calendar day.
 create or replace function public.request_slot(
   p_token text, p_day date, p_start timestamptz, p_end timestamptz, p_name text, p_note text default ''
@@ -176,8 +196,10 @@ as $$
 declare
   uid uuid;
   tz text;
-  nm text := btrim(coalesce(p_name, ''));
-  nt text := btrim(coalesce(p_note, ''));
+  nm text := regexp_replace(coalesce(p_name, ''), '^[[:space:]]+|[[:space:]]+$', '', 'g');
+  nt text := regexp_replace(coalesce(p_note, ''), '^[[:space:]]+|[[:space:]]+$', '', 'g');
+  -- Control, zero-width and bidi characters (blank-looking or spoofed names; G7 R-M12-6).
+  bad text := '[[:cntrl:]\u00AD\u200B-\u200F\u2028-\u202E\u2060-\u2069\uFEFF]';
   rid uuid;
 begin
   if p_token is null or p_token !~ '^[0-9a-f]{48}$' then
@@ -188,14 +210,15 @@ begin
     raise exception 'link not found' using errcode = 'P0002';
   end if;
   tz := coalesce((select p.timezone from public.profiles p where p.user_id = uid), 'Asia/Bangkok');
-  if char_length(nm) < 1 or char_length(nm) > 60 or char_length(nt) > 300 then
+  if char_length(nm) < 1 or char_length(nm) > 60 or char_length(nt) > 300
+     or nm ~ bad or nm !~ '[^[:space:][:punct:]]' or replace(nt, E'\n', '') ~ bad then
     raise exception 'a name (up to 60) and a short note (up to 300)' using errcode = '22023';
   end if;
   if p_start is null or p_end is null or p_end <= p_start
      or p_end - p_start < interval '15 minutes' or p_end - p_start > interval '4 hours'
      or p_start < now() or p_end > now() + interval '15 days'
      or (p_start at time zone tz)::date <> ((p_end - interval '1 second') at time zone tz)::date
-     or p_day not between (p_start at time zone tz)::date - 1 and (p_start at time zone tz)::date then
+     or p_day is distinct from (p_start at time zone tz)::date then
     raise exception 'pick a time from the free slots' using errcode = '22023';
   end if;
   perform pg_advisory_xact_lock(hashtextextended('booking:' || uid::text, 0));
@@ -234,6 +257,9 @@ begin
   if r.status <> 'pending' then
     raise exception 'already answered' using errcode = 'P0001';
   end if;
+  if p_accept and r.end_at <= now() then
+    raise exception 'that time has passed' using errcode = '22023';
+  end if;
   update public.booking_requests set status = case when p_accept then 'accepted' else 'declined' end,
          answered_at = now()
   where id = p_id;
@@ -255,9 +281,11 @@ revoke all on function public.share_link(boolean) from public, anon;
 grant execute on function public.share_link(boolean) to authenticated;
 revoke all on function public._share_blocks(jsonb) from public, anon, authenticated;
 revoke all on function public._share_events(jsonb) from public, anon, authenticated;
-revoke all on function public.share_context(text) from public;
-grant execute on function public.share_context(text) to anon, authenticated;
-revoke all on function public.request_slot(text, date, timestamptz, timestamptz, text, text) from public;
-grant execute on function public.request_slot(text, date, timestamptz, timestamptz, text, text) to anon, authenticated;
+revoke all on function public.share_link_off() from public, anon;
+grant execute on function public.share_link_off() to authenticated;
+revoke all on function public.share_context(text) from public, anon, authenticated;
+grant execute on function public.share_context(text) to service_role;
+revoke all on function public.request_slot(text, date, timestamptz, timestamptz, text, text) from public, anon, authenticated;
+grant execute on function public.request_slot(text, date, timestamptz, timestamptz, text, text) to service_role;
 revoke all on function public.answer_booking(uuid, boolean) from public, anon;
 grant execute on function public.answer_booking(uuid, boolean) to authenticated;

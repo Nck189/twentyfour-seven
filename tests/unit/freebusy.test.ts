@@ -70,3 +70,16 @@ describe("free/busy for share links (M12)", () => {
     expect(slotsText([], fmt)).toBe("Free times\nNo free time in the next 2 weeks");
   });
 });
+
+describe("free/busy stays on its wake-day's date (G7 R-M12-2)", () => {
+  it("a Free block that starts after midnight offers nothing for that day", () => {
+    const day = freeForDay({
+      date: "2026-11-12",
+      free: { start: bkk(0, 30, 13), end: bkk(2, 0, 13) },
+      fixed: [],
+      now: bkk(9),
+      tz: TZ,
+    });
+    expect(day.free).toEqual([]);
+  });
+});

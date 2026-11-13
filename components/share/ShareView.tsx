@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { getSupabase } from "@/lib/supabase/client";
+import { askForSlot } from "@/app/share/[token]/actions";
 
 type Day = { date: string; free: { start: string; end: string }[] };
 
@@ -25,7 +25,7 @@ export function ShareView({
   const t = useTranslations("share");
   const locale = useLocale();
   const [open, setOpen] = useState<{ date: string; start: string; end: string } | null>(null);
-  const [sent, setSent] = useState<string | null>(null);
+  const [sent, setSent] = useState<{ date: string; label: string } | null>(null);
   const time = useMemo(
     () =>
       new Intl.DateTimeFormat(locale, {
@@ -46,11 +46,6 @@ export function ShareView({
     <main className="mx-auto max-w-xl px-4 py-6">
       <h1 className="text-2xl font-extrabold">{name ? t("titleName", { name }) : t("title")}</h1>
       <p className="mb-4 text-sm text-muted">{t("subtitle", { tz: timezone })}</p>
-      {sent && (
-        <p role="status" className="mb-4 rounded-xl bg-primary-soft p-3 font-bold text-primary">
-          {t("sent", { time: sent })}
-        </p>
-      )}
       {!anyFree && <p className="rounded-xl bg-surface p-4 text-muted">{t("none")}</p>}
       <ul className="flex flex-col gap-3">
         {days
@@ -77,16 +72,23 @@ export function ShareView({
                   </button>
                 ))}
               </div>
+              {sent?.date === d.date && (
+                <p role="status" className="mt-3 rounded-xl bg-primary-soft p-3 font-bold text-primary">
+                  {t("sent", { time: sent.label })}
+                </p>
+              )}
               {open?.date === d.date && (
                 <RequestForm
+                  // A new form per free time: its start/length state never carries over (G7 R-M12-3).
+                  key={open.start}
                   token={token}
-                  day={d.date}
                   start={open.start}
                   end={open.end}
                   time={time}
                   onSent={(label) => {
                     setOpen(null);
-                    setSent(label);
+                    // Shown where the form was, so it's on screen (G7 R-M12-13).
+                    setSent({ date: d.date, label });
                   }}
                   onCancel={() => setOpen(null)}
                 />
@@ -101,7 +103,6 @@ export function ShareView({
 
 function RequestForm({
   token,
-  day,
   start,
   end,
   time,
@@ -109,7 +110,6 @@ function RequestForm({
   onCancel,
 }: {
   token: string;
-  day: string;
   start: string;
   end: string;
   time: Intl.DateTimeFormat;
@@ -117,8 +117,13 @@ function RequestForm({
   onCancel: () => void;
 }) {
   const t = useTranslations("share");
-  const from = new Date(start).getTime();
   const to = new Date(end).getTime();
+  // From the opening of this form, not the page load; a gap with no :00/:30 start offers the next
+  // 5-minute mark instead (never a time already past when Send is tapped; G7 R-M12-12).
+  const [from] = useState(() => {
+    const f = Math.max(new Date(start).getTime(), Date.now() + 60_000);
+    return Math.ceil(f / (5 * 60_000)) * 5 * 60_000;
+  });
   const starts: number[] = [];
   for (
     let s = Math.ceil(from / (STEP_MIN * 60_000)) * STEP_MIN * 60_000;
@@ -144,17 +149,15 @@ function RequestForm({
         setError(null);
         const s = new Date(at);
         const en = new Date(at + len2 * 60_000);
-        const r = await getSupabase().rpc("request_slot", {
-          p_token: token,
-          p_day: day,
-          p_start: s.toISOString(),
-          p_end: en.toISOString(),
-          p_name: name,
-          p_note: note,
-        });
+        let r: Awaited<ReturnType<typeof askForSlot>>;
+        try {
+          r = await askForSlot({ token, start: s.toISOString(), end: en.toISOString(), name, note });
+        } catch {
+          r = { ok: false, reason: "error" };
+        }
         setBusy(false);
-        if (r.error) setError(r.error.code === "P0001" ? t("tooMany") : t("error"));
-        else onSent(`${time.format(s)}–${time.format(en)}`);
+        if (r.ok) onSent(`${time.format(s)}–${time.format(en)}`);
+        else setError(t(r.reason));
       }}
     >
       <label className="flex flex-col gap-1">
