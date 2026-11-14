@@ -96,10 +96,15 @@ test("CJ-13b a hungry animal sleeps (never dies); a workout feeds it; petting co
   await pen.getByRole("button", { name: "Cow: sleepy" }).click();
   const sheet = page.getByRole("dialog", { name: "Cow" });
   await expect(sheet.getByText(/Sleepy and hungry/)).toBeVisible();
-  for (let i = 0; i < 4; i++) await sheet.getByRole("button", { name: "Pet" }).click();
-  await expect(sheet.getByRole("status")).toContainText("Pets count 3 times every 24 hours");
-  const [cow] = (await rest(`animals?user_id=eq.${id}&select=love`)) as { love: number }[];
-  expect(cow!.love).toBe(3);
+  for (let i = 0; i < 3; i++) await sheet.getByRole("button", { name: "Pet", exact: true }).click();
+  // Today's 3 pets used: the button greys out (Minnie 2026-11-14), and stays so after reopening.
+  await expect(sheet.getByRole("button", { name: "Petted today ♡" })).toBeDisabled();
+  await expect
+    .poll(async () => ((await rest(`animals?user_id=eq.${id}&select=love`)) as { love: number }[])[0]!.love)
+    .toBe(3);
+  await sheet.getByRole("button", { name: "Close" }).click();
+  await pen.getByRole("button", { name: "Cow: sleepy" }).click();
+  await expect(sheet.getByRole("button", { name: "Petted today ♡" })).toBeDisabled();
   await expectNoSeriousA11y(page);
   await sheet.getByRole("button", { name: "Close" }).click();
 

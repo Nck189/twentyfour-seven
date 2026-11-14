@@ -12,7 +12,7 @@ import { PlotArt } from "@/components/art/farm/PlotArt";
 import { CropArt } from "@/components/art/farm/CropArt";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { Button } from "@/components/ui/Button";
-import { BLOCK_KEYS, type BlockKey } from "@/content/blocks";
+import { DAY_ORDER, type BlockKey } from "@/content/blocks";
 import type { CropId } from "@/content/crops";
 import type { DecorId } from "@/content/decor";
 import type { Quality } from "@/content/game";
@@ -233,7 +233,7 @@ export function FarmView({
               night ? "bg-[var(--sky-night-bottom)]" : "bg-[var(--art-leaf-light)]"
             }`}
           >
-            {BLOCK_KEYS.map((slot) => (
+            {DAY_ORDER.map((slot) => (
               <li key={slot}>
                 {compact ? (
                   <div role="img" aria-label={label(slot)} className="flex flex-col items-center p-1">

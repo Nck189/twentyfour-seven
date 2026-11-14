@@ -1,6 +1,8 @@
 /** The 7 blocks in chain order (SPEC §2.1). Labels/first-10 defaults come from i18n `blocks.*`. */
 export const BLOCK_KEYS = ["down", "sleep", "wake", "focus", "work", "gradation", "free"] as const;
 export type BlockKey = (typeof BLOCK_KEYS)[number];
+/** The blocks in the order a day is lived: Wake first, Sleep last (Minnie 2026-11-14: the farm reads like the day). */
+export const DAY_ORDER: readonly BlockKey[] = ["wake", "focus", "work", "gradation", "free", "down", "sleep"];
 
 export type ChecklistItem = { id: string; label: string };
 

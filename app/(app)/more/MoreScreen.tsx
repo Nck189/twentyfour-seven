@@ -76,7 +76,8 @@ export function MoreScreen() {
   return (
     <>
       <ScreenHeader title={t("title")} />
-      {setup.state && <SetupRewardNotice granted={setup.state.granted} />}
+      {/* The exercise reward shows next to its setting (it's far down the page; Minnie 2026-11-14). */}
+      {setup.state && <SetupRewardNotice granted={setup.state.granted.filter((g) => g !== "exercise")} />}
       {setup.state && <SetupCard state={setup.state} />}
       <Card title={t("setupTitle")}>
         <ul className="flex flex-col gap-2">
@@ -109,6 +110,11 @@ export function MoreScreen() {
       </Card>
       <Card title={te("settingsTitle")} id="exercise">
         <ExerciseSettings onSaved={setup.reload} />
+        {setup.state?.granted.includes("exercise") && (
+          <div className="-mx-4 mt-3 lg:-mx-6">
+            <SetupRewardNotice granted={["exercise"]} />
+          </div>
+        )}
       </Card>
       <Card title={t("language")} id="language">
         <Segmented<Locale>

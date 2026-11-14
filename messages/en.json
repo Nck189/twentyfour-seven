@@ -908,7 +908,8 @@
       "capybara": "Som sits on the capybara. The capybara doesn't mind at all.",
       "alpaca": "Som disappears into the alpaca's fluff.",
       "red_panda": "Som and the red panda compare tails. It's a tie."
-    }
+    },
+    "petDone": "Petted today ♡"
   },
   "streak": {
     "title": "Streak",
