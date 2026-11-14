@@ -97,3 +97,21 @@ html[lang="th"] body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Factory: a slow puff over a working machine (M13). Stopped by the reduced-motion rule. */
+@keyframes machine-puff {
+  0% {
+    transform: translateY(1px);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-3px);
+    opacity: 0;
+  }
+}
+.machine-puff {
+  animation: machine-puff 2.4s ease-out infinite;
+}

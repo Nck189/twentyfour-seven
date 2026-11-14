@@ -856,6 +856,19 @@
     "truffle": "เห็ดทรัฟเฟิล",
     "gift": "ของขวัญชิ้นเล็ก"
   },
+  "products": {
+    "pickles": "ผักดอง",
+    "strawberry_jam": "แยมสตรอว์เบอร์รี",
+    "tomato_sauce": "ซอสมะเขือเทศ",
+    "butter": "เนย",
+    "cheese": "ชีส",
+    "yarn": "ไหมพรม",
+    "sweater": "เสื้อไหมพรม",
+    "lavender_sachet": "ถุงหอมลาเวนเดอร์",
+    "carrot_cake": "เค้กแครอท",
+    "cornbread": "ขนมปังข้าวโพด",
+    "pumpkin_pie": "พายฟักทอง"
+  },
   "pen": {
     "title": "สัตว์ในฟาร์ม",
     "incubator": "ไข่",

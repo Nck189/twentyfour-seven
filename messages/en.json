@@ -856,6 +856,19 @@
     "truffle": "Truffle",
     "gift": "Little gift"
   },
+  "products": {
+    "pickles": "Pickles",
+    "strawberry_jam": "Strawberry jam",
+    "tomato_sauce": "Tomato sauce",
+    "butter": "Butter",
+    "cheese": "Cheese",
+    "yarn": "Yarn",
+    "sweater": "Sweater",
+    "lavender_sachet": "Lavender sachet",
+    "carrot_cake": "Carrot cake",
+    "cornbread": "Cornbread",
+    "pumpkin_pie": "Pumpkin pie"
+  },
   "pen": {
     "title": "Animals",
     "incubator": "Egg",
