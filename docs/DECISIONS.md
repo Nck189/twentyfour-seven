@@ -260,3 +260,4 @@ Format: date · decision · why · how to change it
   - **Factory row reveal (R-M13-6):** it appears after any harvest or once you own an animal. It shows only when that's known, so it never flashes up and then disappears.
   - **Levels show from Lv 1.**
   - **The collected message uses the server's count.**
+- 2026-11-14 · **CI stability (Minnie: "แก้ CI ให้นิ่งก่อน")**: the E2E server runs with `compress: false` (`E2E_NO_COMPRESS=1`, set by Playwright's webServer). PR #21's runs failed differently each time, with "WebKit encountered an internal error" on `page.goto` and once with the gzip bytes rendered as the page text: Linux WebKit on the runner fails to decode some compressed responses under load. Uncompressed responses remove that path and the runner's gzip CPU. Production is unchanged, because Vercel compresses at its edge and the flag is unset there. It went into PR #21 rather than a separate PR because this session pushes only to its one branch.
