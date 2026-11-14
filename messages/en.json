@@ -467,6 +467,13 @@
       "from": "From {late} days with afternoon/evening coffee or tea and {other} other days (none, or only in the morning).",
       "collecting": "Still collecting: {late} days with afternoon/evening coffee or tea, {other} other days (needs {need} each).",
       "help": "Only days you answered in Som's café count. A pattern, not a cause."
+    },
+    "estimates": {
+      "title": "Your estimates vs real time",
+      "empty": "After you finish a task, tap how long it really took. After {n} tasks, this shows how far your estimates run.",
+      "ratio": "Tasks take about ×{x} your estimate",
+      "over": "{p} of {n} tasks ran over",
+      "tag": "{tag}: ×{x}"
     }
   },
   "more": {
@@ -648,7 +655,13 @@
     "titleLabel": "Task",
     "earlier": "From earlier days",
     "loadError": "Couldn't load your tasks.",
-    "markDone": "Mark task finished"
+    "markDone": "Mark task finished",
+    "actual": {
+      "title": "How long did “{title}” take?",
+      "planned": "You planned {n} min.",
+      "min": "{n} min",
+      "skip": "Skip"
+    }
   },
   "errors": {
     "notFoundTitle": "Page not found",

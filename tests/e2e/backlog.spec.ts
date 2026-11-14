@@ -268,3 +268,18 @@ test("R-M4-6: 'tomorrow' in Plan is the Night ritual's tomorrow (a day runs wake
   await box.press("Enter");
   await expect.poll(async () => (await backlogItems(id))[0]?.scheduled_date).toBe(addDays(wakeDay(), 1));
 });
+
+test("M14 estimate vs actual: finishing an estimated task asks how long it took; one tap saves it", async ({
+  page,
+}) => {
+  const id = await setup(page);
+  await addBacklogItem(id, { title: "Lab report", priority: "should", estimate_min: 30 });
+  await page.goto("/plan");
+  await page.getByRole("button", { name: "Finish Lab report" }).click();
+  const ask = page.getByRole("region", { name: "How long did “Lab report” take?" });
+  await expect(ask.getByText("You planned 30 min.")).toBeVisible();
+  await expectTouchTargets(page);
+  await ask.getByRole("button", { name: "45 min" }).click();
+  await expect(ask).toHaveCount(0);
+  await expect.poll(async () => ((await backlogItems(id))[0] as { actual_min?: number }).actual_min).toBe(45);
+});

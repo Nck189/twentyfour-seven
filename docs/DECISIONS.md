@@ -261,3 +261,12 @@ Format: date · decision · why · how to change it
   - **Levels show from Lv 1.**
   - **The collected message uses the server's count.**
 - 2026-11-14 · **CI stability (Minnie: "แก้ CI ให้นิ่งก่อน")**: the E2E server runs with `compress: false` (`E2E_NO_COMPRESS=1`, set by Playwright's webServer). PR #21's runs failed differently each time, with "WebKit encountered an internal error" on `page.goto` and once with the gzip bytes rendered as the page text: Linux WebKit on the runner fails to decode some compressed responses under load. Uncompressed responses remove that path and the runner's gzip CPU. Production is unchanged, because Vercel compresses at its edge and the flag is unset there. It went into PR #21 rather than a separate PR because this session pushes only to its one branch.
+- 2026-11-14 · M14 step 1 · **estimate vs actual** (SPEC §9 "planning-fallacy analytics"; Minnie: "ทำไปเลย")
+  - **When it asks:** right after a task with an estimate is finished in Plan, Plan asks "How long did it take?".
+  - **How it answers:** one-tap times of about ½, as planned, ×1.5, ×2 and ×3 the estimate, rounded to 5 minutes, or Skip.
+  - **Where it's stored:** `backlog_items.actual_min`, the user's own row. Nothing pays for it, so no RPC is needed.
+  - **On Stats → Overview:** after 5 answered tasks, it shows:
+    - the median actual ÷ estimate, as "Tasks take about ×1.4 your estimate";
+    - the share of tasks that ran over;
+    - the tags (3 or more tasks each) that run over most.
+  - **Deferred:** finishing a task from Today or the Night ritual doesn't ask yet.

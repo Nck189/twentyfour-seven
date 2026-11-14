@@ -9,10 +9,10 @@ import type { Capture } from "./parse";
 import { QUIET_RETRY_MS } from "@/lib/supabase/fetchWithTimeout";
 
 const COLUMNS =
-  "id, title, tag, estimate_min, priority, deadline, scheduled_date, block, status, carry_count, checklist, done_at, created_at";
+  "id, title, tag, estimate_min, priority, deadline, scheduled_date, block, status, carry_count, checklist, done_at, created_at, actual_min";
 
 export type ItemPatch = Partial<
-  Pick<BacklogItem, "title" | "tag" | "estimate_min" | "priority" | "deadline" | "checklist">
+  Pick<BacklogItem, "title" | "tag" | "estimate_min" | "priority" | "deadline" | "checklist" | "actual_min">
 >;
 
 /**

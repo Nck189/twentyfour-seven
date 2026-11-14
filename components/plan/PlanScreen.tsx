@@ -17,6 +17,7 @@ import {
 } from "@dnd-kit/core";
 import { useLocale, useTranslations } from "next-intl";
 import { useId, useState } from "react";
+import { ActualPrompt } from "@/components/backlog/ActualPrompt";
 import { BacklogList } from "@/components/backlog/BacklogList";
 import { DayCard } from "@/components/backlog/DayCard";
 import { ItemSheet } from "@/components/backlog/ItemSheet";
@@ -62,6 +63,15 @@ export function PlanScreen() {
   const text = useBlockText();
   const plan = usePlan();
   const backlog = useBacklog(plan.userId);
+  // M14 estimate vs actual: after finishing a task that had an estimate, ask how long it took.
+  const [asking, setAsking] = useState<string | null>(null);
+  const completeAndAsk = async (id: string) => {
+    const coins = await backlog.complete(id);
+    const it = backlog.items.find((i) => i.id === id);
+    if (coins !== null && (it?.estimate_min ?? 0) > 0) setAsking(id);
+    return coins;
+  };
+  const askItem = backlog.items.find((i) => i.id === asking);
   const [editing, setEditing] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [dragging, setDragging] = useState<string | null>(null);
@@ -240,7 +250,7 @@ export function PlanScreen() {
         onRemoveAppointment={(id) => void plan.removeAppointment(day, id)}
         onEdit={() => setEditing(day)}
         onOpen={setEditingItem}
-        onComplete={backlog.complete}
+        onComplete={completeAndAsk}
       />
 
       <BacklogList
@@ -259,7 +269,7 @@ export function PlanScreen() {
           return backlog.add(c);
         }}
         onOpen={setEditingItem}
-        onComplete={backlog.complete}
+        onComplete={completeAndAsk}
       />
 
       <DragOverlay>
@@ -302,6 +312,16 @@ export function PlanScreen() {
         </Sheet>
       )}
 
+      {askItem && (askItem.estimate_min ?? 0) > 0 && (
+        <ActualPrompt
+          item={askItem as typeof askItem & { estimate_min: number }}
+          onPick={(min) => {
+            setAsking(null);
+            void backlog.update(askItem.id, { actual_min: min });
+          }}
+          onSkip={() => setAsking(null)}
+        />
+      )}
       {item && (
         <Sheet title={item.title} onClose={() => setEditingItem(null)}>
           <ItemSheet
@@ -310,7 +330,7 @@ export function PlanScreen() {
             days={stripDays.map((d) => ({ date: d.date, label: d.label, weekday: d.weekday, num: d.num }))}
             onUpdate={(patch) => void backlog.update(item.id, patch)}
             onSchedule={(date, block) => void backlog.schedule(item.id, date, block)}
-            onComplete={() => backlog.complete(item.id)}
+            onComplete={() => completeAndAsk(item.id)}
             onReopen={() => void backlog.reopen(item.id)}
             onRemove={() => {
               void backlog.drop(item.id);
