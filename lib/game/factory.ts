@@ -144,7 +144,7 @@ export function factoryKpi(
       const m = machines.find((x) => x.machine_id === id)!;
       const from = Math.max(w0, t(m.bought_at));
       // At least an hour in the denominator: a machine built seconds ago isn't "74% busy".
-    const span = Math.max(60 * MIN, end - from);
+      const span = Math.max(60 * MIN, end - from);
       const mine = jobs.filter((j) => j.machine_id === id);
       const busy = mine.reduce((s, j) => s + overlap(t(j.start_at), t(j.ready_at), from, end), 0);
       return {
