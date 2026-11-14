@@ -13,7 +13,7 @@
 Known issues (S3/S4, deferred):
 - **R2-1:** Free time after local midnight isn't shared. A late wake (11:30–13:00) shares fewer days. Fixing it needs engine support for fixed events after midnight.
 - **R-M12-11:** there's no badge or push for new requests.
-- **R-M12-14:** sub-slots inside Free and sick/vacation days show as free. This is waiting on Minnie.
+- ~~**R-M12-14**~~ fixed after merge (2026-11-14): sub-slots inside Free and sick/vacation days are busy.
 - **R2-5:** the server action computes free time before the rate limit runs, and there's no per-IP limit.
 - **R2-6:** with no service-role key, links silently show not-found.
 - **S4s:**

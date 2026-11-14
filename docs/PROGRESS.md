@@ -50,8 +50,8 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 - **Judgment calls to confirm (DECISIONS 2026-11-03):** backlog coins: 150/day cap, a task finished < 10 min after being added (or its priority raised) pays 10 · Night ticket counts from 14 h to 3 h before the next wake (a short night, e.g. home 03:00 before a 07:00 class, still counts) · Sunrise target freezes 4 h before the wake · bedtime-drift warning compares with the same kind of day.
 - **Farm (M6), please confirm:** an "Out late" night excuses that evening's **Free** block only (no weeds). Should it also cover Gradation (if you leave early)? · Decor prices fence 40 / path 30 / flowers 50 / pond 300 coins? · Starter seeds = radish, turnip, lettuce, carrot (free) until the capsule machine (M7).
 - **Later (Minnie, 2026-11-03 — "ค่อยทำ โน้ตไว้ก่อน"):** (1) send sign-in emails from a dedicated Gmail (e.g. a new app-only address) instead of Minnie's own — re-run `scripts/setup-email.mjs` with it; later a real email service + own domain (`no-reply@…`) if many friends join. (2) Invite-only sign-up (only friends Minnie invites can create an account) — today anyone with the link can sign up.
-- **M12 share (G7 R-M12-14):** should gym/task slots inside Free, and sick/vacation days, show as busy on your share link? Today they show as free.
-- **M12 setup at merge:** add `SUPABASE_SERVICE_ROLE_KEY` on Vercel (`docs/M12-share-setup.md`), then `db push`.
+- ~~**M12 share (G7 R-M12-14)**~~ **Answered 2026-11-14 ("เอาที่เหมาะสม"):** sick/vacation days and slots inside Free show as busy.
+- **M12 (merged 2026-11-14, PR #20):** key on Vercel ✅; left: `db push` (share) + redeploy + a real-iPhone copy check + `qc:prod`.
 - Please test the offline page once on your real iPhone — link + steps sent in chat 2026-11-02; waiting for her result.
 
 ---
