@@ -23,6 +23,8 @@ export type BacklogItem = {
   checklist: ChecklistEntry[];
   done_at: string | null;
   created_at: string;
+  /** Real minutes, answered after finishing (M14 estimate vs actual). */
+  actual_min?: number | null;
 };
 
 /** A deadline this many days away (or less, or overdue) floats to the top. */
