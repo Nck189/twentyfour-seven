@@ -1,12 +1,10 @@
 # PROGRESS — 24/7
 
-## Now (2026-11-13, midday Bangkok)
-- ✅ PR #16 and **#17** merged and on prod (Minnie ran `db push` + `qc:prod`: 22 passed, Lighthouse OK). Story with Som (chapters 0–6 + R, seasonal beats), Som's café + the coffee/tea and bedtime insight, block clock.
-- 🔄 **M11 PR** (draft): Web Push (subscriptions, per-type switches, quiet hours, the day's plan uploaded by Today, `push_due` relevance checks, the `push-send` Edge Function) + the private `.ics` calendar link + the notifications setup reward (wind chime). 2 migrations: push, ics.
-  Notifications stay "coming soon" until Minnie sets the VAPID keys and the cron once (`docs/M11-push-setup.md`).
-- CI hygiene: story/seasonal specs no longer depend on the hour; CJ-10 skips the midnight→wake window where its 03:30 return is already over (correct server rule).
-- Open: M3-F5 / CJ-M10-1 failed once in CI at 04:45 Bangkok ("Couldn't load today" / Stats loading), not reproduced since; watching.
-- Next: M12 share availability + booking, M13 factory, M14, closed beta.
+## Now (2026-11-13, afternoon Bangkok)
+- ✅ PR #17 (story + café), #18 (M11 push + .ics) and #19 (perf: fewer duplicate loads) merged.
+  After #18 Minnie runs `db push` (push, ics) and the one-time VAPID + cron setup (`docs/M11-push-setup.md`).
+- 🔄 **M12 PR** (draft): share free times by private link (`/share/<secret>`, free/busy only), copy free times as text or a picture, booking requests with an inbox in More (accept → appointment on that day's plan). 1 migration: share. G7 round 1 FAIL (1 S1, 4 S2) → fixed test-first; re-review next. Needs `SUPABASE_SERVICE_ROLE_KEY` on Vercel (`docs/M12-share-setup.md`).
+- Next: M13 factory, M14, closed beta.
 - Waiting on Minnie: G7 STORY-R7 (should seasonal seeds plant only in their month and plants wilt after it?).
 
 ## ➡️ HANDOFF — read this first (any session: cloud or Minnie's Mac terminal)
@@ -52,6 +50,8 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 - **Judgment calls to confirm (DECISIONS 2026-11-03):** backlog coins: 150/day cap, a task finished < 10 min after being added (or its priority raised) pays 10 · Night ticket counts from 14 h to 3 h before the next wake (a short night, e.g. home 03:00 before a 07:00 class, still counts) · Sunrise target freezes 4 h before the wake · bedtime-drift warning compares with the same kind of day.
 - **Farm (M6), please confirm:** an "Out late" night excuses that evening's **Free** block only (no weeds). Should it also cover Gradation (if you leave early)? · Decor prices fence 40 / path 30 / flowers 50 / pond 300 coins? · Starter seeds = radish, turnip, lettuce, carrot (free) until the capsule machine (M7).
 - **Later (Minnie, 2026-11-03 — "ค่อยทำ โน้ตไว้ก่อน"):** (1) send sign-in emails from a dedicated Gmail (e.g. a new app-only address) instead of Minnie's own — re-run `scripts/setup-email.mjs` with it; later a real email service + own domain (`no-reply@…`) if many friends join. (2) Invite-only sign-up (only friends Minnie invites can create an account) — today anyone with the link can sign up.
+- **M12 share (G7 R-M12-14):** should gym/task slots inside Free, and sick/vacation days, show as busy on your share link? Today they show as free.
+- **M12 setup at merge:** add `SUPABASE_SERVICE_ROLE_KEY` on Vercel (`docs/M12-share-setup.md`), then `db push`.
 - Please test the offline page once on your real iPhone — link + steps sent in chat 2026-11-02; waiting for her result.
 
 ---

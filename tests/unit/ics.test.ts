@@ -38,6 +38,8 @@ describe("calendar feed (.ics, M11)", () => {
 
   it("text escaping and line folding at 75 octets (never inside a Thai character)", () => {
     expect(icsText("a,b;c\\d\ne")).toBe("a\\,b\\;c\\\\d\\ne");
+    // A lone CR (or CRLF) is a line break too, never a raw one (G7 R-M12-6).
+    expect(icsText("a\rb\r\nc")).toBe("a\\nb\\nc");
     const thai = "SUMMARY:" + "โฟกัส".repeat(20);
     const folded = foldLine(thai);
     for (const part of folded.split("\r\n "))
