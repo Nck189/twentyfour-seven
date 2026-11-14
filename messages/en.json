@@ -1371,5 +1371,84 @@
     "noLongerFree": "This time isn't free anymore in your plan.",
     "acceptName": "Accept {name}'s request",
     "declineName": "Decline {name}'s request"
+  },
+  "factory": {
+    "title": "Factory",
+    "entry": "Factory",
+    "entryHint": "Turn your harvest into goods that sell for more",
+    "hint": "Build a machine, give it a recipe, and collect the goods when they're ready. Sell them at the market.",
+    "tabs": {
+      "make": "Machines",
+      "kpi": "Numbers"
+    },
+    "machines": {
+      "jam_jar": "Jam jar",
+      "cheese_press": "Cheese press",
+      "loom": "Loom",
+      "bakery": "Bakery"
+    },
+    "blurb": {
+      "jam_jar": "Pickles, jam and sauce from your crops",
+      "cheese_press": "Butter and cheese from milk",
+      "loom": "Yarn and sweaters from wool",
+      "bakery": "Cakes, bread and pie"
+    },
+    "coins": "{n} coins",
+    "build": "Build · {n}",
+    "buildAria": "Build the {name} for {n} coins",
+    "built": "{name} built!",
+    "queue": "On the machine {n}/{cap}",
+    "queueLabel": "{name} queue",
+    "idle": "Nothing on the machine yet.",
+    "state": {
+      "waiting": "Waiting",
+      "ready": "Ready"
+    },
+    "left": "{m} min left",
+    "collect": "Collect {n}",
+    "collected": "Collected {n}. Sell them at the market.",
+    "recipes": "Recipes",
+    "input": "{name} {have}/{qty}",
+    "recipeLine": "{m} min · sells for {n}",
+    "make": "Make",
+    "makeAria": "Make {name}",
+    "started": "{name} is on the machine.",
+    "track": {
+      "speed": "Speed Lv {level}",
+      "capacity": "Space Lv {level}"
+    },
+    "upgrade": "Upgrade · {n}",
+    "max": "Top level",
+    "upgradeAria": {
+      "speed": "Upgrade the {name}'s speed to level {level}",
+      "capacity": "Give the {name} more space, level {level}"
+    },
+    "upgraded": {
+      "speed": "The {name} is faster (Lv {level}).",
+      "capacity": "The {name} holds more (Lv {level})."
+    },
+    "errors": {
+      "coins": "Not enough coins yet.",
+      "full": "The machine is full. Collect or add space.",
+      "inputs": "Not enough ingredients.",
+      "error": "Couldn't do that. Try again.",
+      "load": "Couldn't load the factory."
+    },
+    "retry": "Try again",
+    "loading": "Loading…",
+    "kpi": {
+      "window": "Last {n} days",
+      "throughput": "Made per day",
+      "wip": "In the works",
+      "ready": "Ready to collect",
+      "lead": "Wait + work (avg)",
+      "leadValue": "{lead} min ({work} working)",
+      "util": "How busy each machine is",
+      "utilAria": "{name} busy",
+      "bottleneck": "Bottleneck: {name}",
+      "bottleneckHint": "It has the most work. Speed it up or add space so it doesn't hold things back.",
+      "noData": "Make something to see your factory's numbers.",
+      "noMachines": "Build a machine to see your factory's numbers."
+    }
   }
 }

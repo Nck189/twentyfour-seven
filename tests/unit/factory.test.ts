@@ -170,6 +170,12 @@ describe("KPI panel (throughput, utilization, WIP, bottleneck)", () => {
     expect(factoryKpi([], [], now)).toMatchObject({ wip: 0, bottleneck: null, leadMin: null, machines: [] });
   });
 
+  it("a machine built seconds ago isn't shown as busy: at least an hour counts (no 74% after 3 s)", () => {
+    const k = factoryKpi([machine("jam_jar", -0.05)], [job("jam_jar", -0.05, 20)], now);
+    expect(k.machines[0].utilization).toBeLessThan(0.01);
+    expect(k.bottleneck).toBe("jam_jar"); // it still has the work
+  });
+
   it("a machine bought an hour ago isn't diluted by the whole week", () => {
     const k = factoryKpi([machine("loom", -60)], [job("loom", -60, -30)], now);
     expect(k.machines[0].utilization).toBeCloseTo(0.5, 5);

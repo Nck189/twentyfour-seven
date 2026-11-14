@@ -240,3 +240,18 @@ Format: date · decision · why · how to change it
   - **Needs Minnie (R-M12-14):** should gym/task sub-slots inside Free, and sick/vacation days, show as busy? Today they show as free.
 - 2026-11-13 · G7 M12 round 2 (PASS), my calls: **R2-1 accepted as a known issue**. Free time after local midnight isn't shared: an appointment's HH:MM is read on the wake-day's date, so a booking there would land 24 h early. A late wake (11:30–13:00) therefore shares fewer days. The real fix (fixed events after midnight in the engine) is a separate change. R2-2/-3/-4 fixed: Accept appears only once the plan has loaded; Send waits for a valid length; "Get my link" waits for the first load even if part of it failed; there's a guard for a missing clipboard.
 - 2026-11-14 · R-M12-14 (Minnie: "เอาที่เหมาะสม"): sick and vacation days share no free time (busy all day), and slots planned inside Free (gym, tasks, other) are cut out of it. Pending booking requests still don't block a slot.
+- 2026-11-14 · M13 factory (SPEC §9; Minnie: "เอาที่เหมาะสมเลย เริ่มเลย"), my calls:
+  - **Machines** (build once, coins): jam jar 150 · cheese press 250 · loom 300 · bakery 400. **Upgrades**, 2 levels each: speed (×1 → ×0.8 → ×0.65 time) and space (2 → 3 → 4 jobs). Prices are in `content/factory.ts`.
+  - **11 recipes** from crops and animal goods. A product sells for about 1.4× its inputs' normal market value (a unit test keeps it within 1.3–1.7×). Processing pays, but a gold or weather crop can be worth more sold as it is, so the player has a real make-or-sell choice. **Pickles** use the 4 free starter crops, so a new farm can use the factory on day 1.
+  - **Queue (server clock):** one job at a time per machine. A new job starts when the machine's last job ends, or now. Inputs are taken when it starts, lowest quality first, like orders. Jobs not yet collected, finished ones included, take a slot until collected. Products go to the inventory as `product:<id>` and sell at the market with the stall bonus. Products have no quality or season multiplier.
+  - **KPI panel** (last 7 days):
+    - throughput per day;
+    - WIP (running + waiting);
+    - ready to collect;
+    - average lead time vs. working time (the gap is queue wait);
+    - utilization per machine (busy ÷ time owned, at least 1 h in the denominator);
+    - **bottleneck** = the most-utilized machine (more WIP breaks a tie).
+
+    Plain words on screen ("How busy each machine is", "Bottleneck"), with no OEE jargon, as in the Stats redesign.
+  - **Reveal:** the Factory row shows once something has been harvested (the same rule as the locked fields).
+  - **Deferred:** brewing café drinks from produce (STORY.md) and the mooncake recipe (needs the Moon Lotus crop). Orders for products are deferred too.

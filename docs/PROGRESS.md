@@ -1,11 +1,10 @@
 # PROGRESS — 24/7
 
-## Now (2026-11-13, afternoon Bangkok)
-- ✅ PR #17 (story + café), #18 (M11 push + .ics) and #19 (perf: fewer duplicate loads) merged.
-  After #18 Minnie runs `db push` (push, ics) and the one-time VAPID + cron setup (`docs/M11-push-setup.md`).
-- 🔄 **M12 PR** (draft): share free times by private link (`/share/<secret>`, free/busy only), copy free times as text or a picture, booking requests with an inbox in More (accept → appointment on that day's plan). 1 migration: share. G7 round 1 FAIL (1 S1, 4 S2) → fixed test-first; re-review next. Needs `SUPABASE_SERVICE_ROLE_KEY` on Vercel (`docs/M12-share-setup.md`).
-- Next: M13 factory, M14, closed beta.
-- Waiting on Minnie: G7 STORY-R7 (should seasonal seeds plant only in their month and plants wilt after it?).
+## Now (2026-11-14 Bangkok)
+- ✅ PR #20 (M12 share + booking) merged. Minnie set `SUPABASE_SERVICE_ROLE_KEY` on Vercel; left: `db push` (share) + redeploy + a real-iPhone copy check.
+- ✅ R-M12-14 answered ("เอาที่เหมาะสม"): sick/vacation days and slots inside Free are busy on the share link.
+- 🔄 **M13 factory** (PR next): 4 machines, 11 recipes, server-clock queues, speed/space upgrades, products sold at the market, KPI panel (throughput, WIP, utilization, bottleneck, lead vs work). 1 migration: factory.
+- Next: M14 polish, then the playtest plan.
 
 ## ➡️ HANDOFF — read this first (any session: cloud or Minnie's Mac terminal)
 Minnie is asleep (from 2026-11-03 ~02:00 Bangkok). The build moved between a cloud session and her Mac; whichever session runs now continues from here.
