@@ -37,6 +37,8 @@ export const EXPORT_TABLES = [
   "push_schedule",
   "share_links",
   "booking_requests",
+  "machines",
+  "production_jobs",
 ] as const;
 export type ExportTable = (typeof EXPORT_TABLES)[number];
 
@@ -86,4 +88,6 @@ export const EXPORT_ORDER: Record<ExportTable, string[]> = {
   push_schedule: ["ref"],
   share_links: ["user_id"],
   booking_requests: ["id"],
+  machines: ["machine_id"],
+  production_jobs: ["id"],
 };

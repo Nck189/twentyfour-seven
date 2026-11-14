@@ -11,15 +11,19 @@ import {
   WEATHER_PRICE_CAP,
   type UpgradeTrack,
 } from "@/content/economy";
+import { isProductId, RECIPES, type ProductId } from "@/content/factory";
 import { QUALITIES, type Quality } from "@/content/game";
 
 /** What's on the market shelf (docs/ECONOMY.md). The server sets every price; this mirrors it. */
 export type MarketItem =
-  { kind: "crop"; cropId: CropId; quality: Quality; mult: number } | { kind: "produce"; id: ProduceId };
+  | { kind: "crop"; cropId: CropId; quality: Quality; mult: number }
+  | { kind: "produce"; id: ProduceId }
+  | { kind: "product"; id: ProductId };
 
-/** `crop:<id>:<quality>:<weather×100>` (v2), `crop:<id>` (older stock), `produce:<id>`. */
+/** `crop:<id>:<quality>:<weather×100>` (v2), `crop:<id>` (older stock), `produce:<id>`, `product:<id>` (M13). */
 export function parseItem(itemId: string): MarketItem | null {
   const [kind, id, q, m] = itemId.split(":");
+  if (kind === "product") return isProductId(id) && q === undefined ? { kind, id } : null;
   if (kind === "produce")
     return (PRODUCE_IDS as readonly string[]).includes(id ?? "") ? { kind, id: id as ProduceId } : null;
   if (kind !== "crop" || !isCropId(id)) return null;
@@ -37,6 +41,7 @@ export function sellPrice(itemId: string, stallLevel: number, season = 1): numbe
   if (!it) return null;
   const stall = 1 + STALL_BONUS * stallLevel;
   if (it.kind === "produce") return Math.round(PRODUCE_PRICE[it.id] * stall);
+  if (it.kind === "product") return Math.round(RECIPES[it.id].price * stall);
   const base = SELL_BASE[CROPS[it.cropId].rarity];
   return Math.round(base * QUALITY_PRICE[it.quality] * Math.min(it.mult, WEATHER_PRICE_CAP) * stall * season);
 }

@@ -20,6 +20,7 @@ import {
 import type { DecorId } from "@/content/decor";
 import type { Season } from "@/content/seasons";
 import { nextUpgradePrice, parseItem } from "@/lib/game/market";
+import { ProductArt } from "@/components/art/farm/Factory";
 import { notifyWalletChange } from "@/lib/market/changes";
 import { useMarket, type ActResult, type MarketStatus } from "@/lib/market/useMarket";
 import { sfx } from "@/lib/sound/sfx";
@@ -206,6 +207,7 @@ function MarketTab({ s, busy, run, m }: TabProps) {
   const tf = useTranslations("farm");
   const crops = useTranslations("crops");
   const produce = useTranslations("produce");
+  const products = useTranslations("products");
   const have = (crop: string) =>
     s.shelf
       .filter((x) => x.item === `crop:${crop}` || x.item.startsWith(`crop:${crop}:`))
@@ -306,7 +308,12 @@ function MarketTab({ s, busy, run, m }: TabProps) {
           {s.shelf.map((x) => {
             const it = parseItem(x.item);
             if (!it) return null;
-            const name = it.kind === "crop" ? crops(it.cropId) : produce(it.id);
+            const name =
+              it.kind === "crop"
+                ? crops(it.cropId)
+                : it.kind === "product"
+                  ? products(it.id)
+                  : produce(it.id);
             // The weather bonus as the market counts it (capped), so the label matches the price.
             const counted = it.kind === "crop" ? Math.min(it.mult, WEATHER_PRICE_CAP) : 1;
             return (
@@ -317,6 +324,8 @@ function MarketTab({ s, busy, run, m }: TabProps) {
                   <>
                     {it.kind === "crop" ? (
                       <CropArt cropId={it.cropId} stage={3} status="ready" className="h-11 w-11 shrink-0" />
+                    ) : it.kind === "product" ? (
+                      <ProductArt id={it.id} className="h-11 w-11 shrink-0" />
                     ) : (
                       <ProduceArt id={it.id} className="h-11 w-11 shrink-0" />
                     )}

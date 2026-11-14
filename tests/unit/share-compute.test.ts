@@ -83,3 +83,52 @@ describe("share free days from the engine", () => {
     expect(after.fixedEvents.map((e) => e.title)).toContain("Ploy");
   });
 });
+
+describe("planned time inside Free and away days are busy (G7 R-M12-14, Minnie 2026-11-14)", () => {
+  const plan = (date: string, over: Partial<DayPlanRow>): DayPlanRow => ({
+    date,
+    template_id: null,
+    attending: null,
+    bedtime_override: null,
+    late_night: null,
+    mode: "normal",
+    overrides: {},
+    ...over,
+  });
+
+  it("a sick or vacation day shares no free time", () => {
+    const base = freeDaysFromContext(ctx("07:00"), NOW);
+    const [a, b] = base.filter((d) => d.free.length > 0).map((d) => d.date);
+    const days = freeDaysFromContext(
+      ctx("07:00", { [a]: plan(a, { mode: "sick" }), [b]: plan(b, { mode: "vacation" }) }),
+      NOW,
+    );
+    expect(days.find((d) => d.date === a)?.free).toEqual([]);
+    expect(days.find((d) => d.date === b)?.free).toEqual([]);
+  });
+
+  it("a gym or task slot inside Free is cut out of the free time", () => {
+    const base = freeDaysFromContext(ctx("07:00"), NOW);
+    const d = base.find((x) => x.free.length > 0)!;
+    const free = d.free[0];
+    const days = freeDaysFromContext(
+      ctx("07:00", {
+        [d.date]: plan(d.date, {
+          overrides: {
+            blocks: {
+              free: {
+                sub_slots: [{ id: "g", label: "Gym", offsetMin: 30, durationMin: 60, kind: "gym" }],
+              },
+            },
+          },
+        }),
+      }),
+      NOW,
+    );
+    const got = days.find((x) => x.date === d.date)!.free;
+    const gymStart = new Date(free.start.getTime() + 30 * 60_000);
+    const gymEnd = new Date(gymStart.getTime() + 60 * 60_000);
+    for (const i of got) expect(i.end <= gymStart || i.start >= gymEnd).toBe(true);
+    expect(got.some((i) => i.start.getTime() === gymEnd.getTime())).toBe(true);
+  });
+});

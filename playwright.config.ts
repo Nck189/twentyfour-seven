@@ -91,5 +91,7 @@ export default defineConfig({
         url: `http://localhost:${PORT}/login`,
         reuseExistingServer: !process.env.CI,
         timeout: 240_000,
+        // Uncompressed responses for WebKit on the CI runner (next.config.ts `compress`).
+        env: { ...(process.env as Record<string, string>), E2E_NO_COMPRESS: "1" },
       },
 });

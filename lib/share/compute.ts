@@ -36,11 +36,16 @@ export function freeDaysFromContext(ctx: DayContext, now: Date, days = SHARE_DAY
   for (let i = 0; i < days; i++) {
     const date = addDays(today, i);
     const tl = timelineFor(ctx, date);
-    const free = tl.blocks.find((b) => b.key === "free");
+    // A sick or vacation day is busy all day; planned slots inside Free (gym, tasks) are busy too
+    // (G7 R-M12-14, Minnie 2026-11-14).
+    const free = tl.mode === "normal" ? tl.blocks.find((b) => b.key === "free") : undefined;
     const day = freeForDay({
       date,
       free: free ? { start: free.start, end: free.end } : null,
-      fixed: tl.fixedEvents.map((e) => ({ start: e.start, end: e.end })),
+      fixed: [
+        ...tl.fixedEvents.map((e) => ({ start: e.start, end: e.end })),
+        ...(free?.subSlots ?? []).map((s) => ({ start: s.start, end: s.end })),
+      ],
       now,
       tz: ctx.timezone,
     });

@@ -39,6 +39,9 @@ import { Farmhouse } from "@/components/art/farm/Farmhouse";
 import { RewardJarHint } from "./RewardJarHint";
 import { PlotSheet } from "./PlotSheet";
 import { CafeSheet } from "./CafeSheet";
+import { FactorySheet } from "./FactorySheet";
+import { MachineArt } from "@/components/art/farm/Factory";
+import { useFactory } from "@/lib/factory/useFactory";
 import { Cup } from "@/components/art/farm/Cup";
 import { CAFE_HOUSE_LEVEL, CARD_SIZE } from "@/content/cafe";
 import { cardProgress } from "@/lib/game/cafe";
@@ -129,7 +132,10 @@ export function FarmView({
   const tcafe = useTranslations("cafe");
   const [open, setOpen] = useState<BlockKey | null>(null);
   const [pop, setPop] = useState<{ cropId: CropId; quality: Quality; value?: number } | null>(null);
-  const [sheet, setSheet] = useState<"capsules" | "dex" | "cafe" | null>(null);
+  const [sheet, setSheet] = useState<"capsules" | "dex" | "cafe" | "factory" | null>(null);
+  const tfac = useTranslations("factory");
+  // Loads only while the sheet is open (opening it again reloads).
+  const factory = useFactory(sheet === "factory");
   const endPop = useCallback(() => setPop(null), []);
 
   const header = <ScreenHeader title={t("title")} level={compact ? 2 : 1} />;
@@ -368,6 +374,33 @@ export function FarmView({
           onClose={() => {
             setSheet(null);
             cafe.reload();
+            reload();
+          }}
+        />
+      )}
+
+      {/* The factory (M13): shows once there's something to process: a harvest or an animal (crops or
+          animal goods). Only once known, so it never flashes up and away on a new farm (R-M13-6). */}
+      {!compact && (gacha?.state?.harvested === true || (animals?.state?.animals.length ?? 0) > 0) && (
+        <section aria-label={tfac("title")} className="mx-4 mt-4 lg:mx-6">
+          <button
+            type="button"
+            onClick={() => setSheet("factory")}
+            className="tap flex min-h-11 w-full items-center gap-2 rounded-[var(--radius-lg)] bg-surface p-2 text-left"
+          >
+            <MachineArt id="jam_jar" className="h-12 w-12 shrink-0" />
+            <span className="min-w-0">
+              <span className="block truncate font-extrabold">{tfac("entry")}</span>
+              <span className="block text-sm text-muted">{tfac("entryHint")}</span>
+            </span>
+          </button>
+        </section>
+      )}
+      {sheet === "factory" && (
+        <FactorySheet
+          factory={factory}
+          onClose={() => {
+            setSheet(null);
             reload();
           }}
         />

@@ -40,7 +40,7 @@ Every number below lives in `content/economy.ts`. The server mirrors it in SQL, 
 | House | 400 | 1,000 | 2,000 | looks only (the farmhouse grows) |
 
 Later:
-- Tools and machines come in M13 (Factory).
+- ~~Tools and machines come in M13 (Factory).~~ Done: see "Factory (M13)" below.
 - Animal treats and themes come in M14.
 
 ## Daily orders
@@ -57,3 +57,15 @@ Later:
 - **Data:**
   - `rewards`: own rows, RLS, title ≤ 60 chars, cost 10–10,000.
   - `redeem_reward(id)` spends the coins and logs `reward_redeemed`.
+
+## Factory (M13, 2026-11-14)
+| Machine | Build | Speed Lv1 / Lv2 | Space Lv1 / Lv2 | Recipes (minutes → price) |
+|---|---|---|---|---|
+| Jam jar | 150 | 200 / 500 | 150 / 400 | pickles (2 radish + 2 turnip, 20 → 34), strawberry jam (3, 30 → 42), tomato sauce (3, 40 → 44) |
+| Cheese press | 250 | 250 / 600 | 200 / 450 | butter (2 milk, 30 → 18), cheese (3 milk, 60 → 28) |
+| Loom | 300 | 250 / 600 | 200 / 450 | yarn (2 wool, 30 → 18), sweater (4 wool, 120 → 40), lavender sachet (lavender + wool, 60 → 52) |
+| Bakery | 400 | 300 / 700 | 250 / 500 | carrot cake (2 carrot + 2 egg, 45 → 30), cornbread (3 corn + egg, 60 → 48), pumpkin pie (pumpkin + 2 egg + milk, 90 → 46) |
+
+- Speed ×1 / ×0.8 / ×0.65 time; space 2 / 3 / 4 jobs on the machine (until collected).
+- Products sell at the market (`product:<id>`), stall bonus applies.
+- Server: `supabase/migrations/20261114000000_factory.sql` (`buy_machine`, `upgrade_machine`, `start_job`, `collect_jobs`, `factory_catalog`).
