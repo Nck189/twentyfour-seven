@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { CropArt } from "@/components/art/farm/CropArt";
-import { BLOCK_KEYS, type BlockKey } from "@/content/blocks";
+import { DAY_ORDER, type BlockKey } from "@/content/blocks";
 import { STARTER_CROPS, type CropId } from "@/content/crops";
 import { getSupabase } from "@/lib/supabase/client";
 import { sfx } from "@/lib/sound/sfx";
@@ -25,7 +25,7 @@ export function PlantAll() {
     const { data, error: err } = await client.from("plots").select("slot, crop_id");
     if (err) return null;
     const taken = new Set((data ?? []).filter((p) => p.crop_id).map((p) => p.slot as string));
-    return BLOCK_KEYS.filter((b) => !taken.has(b));
+    return DAY_ORDER.filter((b) => !taken.has(b));
   }, [client]);
 
   useEffect(() => {

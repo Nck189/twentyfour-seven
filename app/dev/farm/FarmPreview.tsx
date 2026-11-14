@@ -104,6 +104,7 @@ function sampleAnimals() {
     createdAt: new Date(now - 72 * H),
   });
   const state: AnimalsState = {
+    pets: {},
     animals: [
       mk("chicken", 40, 64, null),
       mk("cow", 20, 22, 30),

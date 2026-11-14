@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  EXERCISE_RULES,
   isAnimalId,
   isExerciseType,
   type AnimalId,
@@ -26,6 +27,8 @@ export type Workout = { at: string; type: ExerciseType; minutes: number; counted
 
 export type AnimalsState = {
   animals: Animal[];
+  /** Counted pets per animal in the last 24 h (the server's rule): at petsPerDay, Pet is greyed. */
+  pets: Record<string, number>;
   /** Workouts toward the next egg (0–2). */
   eggProgress: number;
   /** Feed bags owned (setup reward). */
@@ -76,7 +79,7 @@ export function useAnimals() {
     void (async () => {
       const { data: auth } = await getUserCached();
       if (!auth.user) return;
-      const [profile, settings, gs, animals, inv] = await Promise.all([
+      const [profile, settings, gs, animals, inv, petted] = await Promise.all([
         client.from("profiles").select("timezone").eq("user_id", auth.user.id).maybeSingle(),
         client
           .from("settings")
@@ -89,7 +92,15 @@ export function useAnimals() {
           .select("id, species, love, fed_until, last_produced, created_at")
           .order("created_at"),
         client.from("inventory").select("qty").eq("item_id", "feed").maybeSingle(),
+        client
+          .from("events")
+          .select("payload")
+          .eq("type", "animal_petted")
+          .gte("at", new Date(Date.now() - 24 * 3_600_000).toISOString()),
       ]);
+      const pets: Record<string, number> = {};
+      for (const e of (petted.data ?? []) as { payload: { animal?: string } }[])
+        if (e.payload?.animal) pets[e.payload.animal] = (pets[e.payload.animal] ?? 0) + 1;
       const tz = (profile.data?.timezone as string | undefined) ?? DEFAULT_TZ;
       const today = localDate(new Date(), tz);
       const monday = addDays(today, 1 - isoWeekday(today));
@@ -107,6 +118,7 @@ export function useAnimals() {
         animals: (animals.data ?? [])
           .map((a) => row(a as Record<string, unknown>))
           .filter((a): a is Animal => !!a),
+        pets,
         // Before the M8 migration is on prod there's no egg_progress: 0.
         eggProgress: ((gs.data as { egg_progress?: number } | null)?.egg_progress as number | undefined) ?? 0,
         feed: (inv.data?.qty as number | undefined) ?? 0,
@@ -154,12 +166,18 @@ export function useAnimals() {
     async (id: string): Promise<boolean> => {
       const { data, error } = await client.rpc("pet_animal", { p_id: id });
       if (error) return false;
+      const counted = Boolean(data.counted);
       setState((s) =>
         s
-          ? { ...s, animals: s.animals.map((a) => (a.id === id ? { ...a, love: data.love as number } : a)) }
+          ? {
+              ...s,
+              animals: s.animals.map((a) => (a.id === id ? { ...a, love: data.love as number } : a)),
+              // Not counted = the server says today's pets are used up.
+              pets: { ...s.pets, [id]: counted ? (s.pets[id] ?? 0) + 1 : EXERCISE_RULES.petsPerDay },
+            }
           : s,
       );
-      return Boolean(data.counted);
+      return counted;
     },
     [client],
   );

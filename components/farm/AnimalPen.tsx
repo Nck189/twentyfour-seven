@@ -6,7 +6,7 @@ import { useRef, useState } from "react";
 import { AnimalArt, EggArt, FeedArt, Heart, ProduceArt } from "@/components/art/farm/Animals";
 import { Sheet } from "@/components/today/BlockSheet";
 import { Button } from "@/components/ui/Button";
-import { ANIMALS, type ProduceId } from "@/content/animals";
+import { ANIMALS, EXERCISE_RULES, type ProduceId } from "@/content/animals";
 import type { Animal, useAnimals } from "@/lib/animals/useAnimals";
 import { feedDaysLeft, isFed, loveHearts, produceReady } from "@/lib/game/animals";
 import { sfx } from "@/lib/sound/sfx";
@@ -37,6 +37,7 @@ function AnimalSheet({
   const [note, setNote] = useState<{ text: string; error?: boolean } | null>(null);
   const [hearts2, setHearts2] = useState(0);
   const [busy, setBusy] = useState(false);
+  const petsFull = (actions.state?.pets[animal.id] ?? 0) >= EXERCISE_RULES.petsPerDay;
   const busyRef = useRef(false);
 
   const run = async (fn: () => Promise<void>) => {
@@ -82,7 +83,8 @@ function AnimalSheet({
       </div>
       <div className="mt-4 grid gap-2">
         <Button
-          disabled={busy}
+          // Greyed once today's pets are used up (3 per animal in any 24 h, server rule).
+          disabled={busy || petsFull}
           onClick={() =>
             void run(async () => {
               sfx.animal(ANIMALS[animal.species].pitch, !fed);
@@ -92,7 +94,7 @@ function AnimalSheet({
             })
           }
         >
-          {t("pet")}
+          {petsFull ? t("petDone") : t("pet")}
         </Button>
         {ready ? (
           <Button
