@@ -12,6 +12,8 @@ import {
   missingInputs,
   nextStart,
   progress,
+  takesPremium,
+  wouldTake,
   type JobRow,
   type MachineRow,
 } from "@/lib/game/factory";
@@ -180,5 +182,33 @@ describe("KPI panel (throughput, utilization, WIP, bottleneck)", () => {
     const k = factoryKpi([machine("loom", -60)], [job("loom", -60, -30)], now);
     expect(k.machines[0].utilization).toBeCloseTo(0.5, 5);
     expect(k.throughputPerDay).toBe(1);
+  });
+});
+
+describe("which items a job takes (G7 R-M13-2: no silent use of a premium crop)", () => {
+  it("lowest quality first, then the lower price, like the server", () => {
+    const stock = [
+      { item_id: "crop:radish:gold:100", qty: 5 },
+      { item_id: "crop:radish:normal:300", qty: 1 },
+      { item_id: "crop:radish:normal:100", qty: 1 },
+      { item_id: "crop:turnip", qty: 2 },
+    ];
+    expect(wouldTake(RECIPES.pickles, stock)).toEqual([
+      { item_id: "crop:radish:normal:100", qty: 1 },
+      { item_id: "crop:radish:normal:300", qty: 1 },
+      { item_id: "crop:turnip", qty: 2 },
+    ]);
+  });
+
+  it("flags gold/silver/prismatic or a weather bonus; plain and animal goods are fine", () => {
+    expect(
+      takesPremium([
+        { item_id: "crop:radish:normal:100", qty: 2 },
+        { item_id: "crop:turnip", qty: 2 },
+      ]),
+    ).toBe(false);
+    expect(takesPremium([{ item_id: "produce:milk", qty: 3 }])).toBe(false);
+    expect(takesPremium([{ item_id: "crop:radish:gold:100", qty: 1 }])).toBe(true);
+    expect(takesPremium([{ item_id: "crop:radish:normal:300", qty: 1 }])).toBe(true);
   });
 });

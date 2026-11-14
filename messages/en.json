@@ -1449,6 +1449,10 @@
       "bottleneckHint": "It has the most work. Speed it up or add space so it doesn't hold things back.",
       "noData": "Make something to see your factory's numbers.",
       "noMachines": "Build a machine to see your factory's numbers."
-    }
+    },
+    "notYet": "Nothing is ready yet.",
+    "makeAnyway": "Make anyway",
+    "makeAnywayAria": "Make {name} anyway",
+    "premiumWarn": "This uses a gold or weather crop that's worth more sold on its own."
   }
 }

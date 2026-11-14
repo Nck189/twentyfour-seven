@@ -103,11 +103,13 @@ as $$
   }'::jsonb
 $$;
 
--- For the parity test and the client's sanity check (content only, nothing per user).
+-- For the parity test and the client's sanity check (content only, nothing per user). Security
+-- definer: it reads the private helper clients can't run (G7 R-M13-1).
 create or replace function public.factory_catalog()
 returns jsonb
 language sql
 stable
+security definer
 set search_path = ''
 as $$ select public._factory_catalog() $$;
 

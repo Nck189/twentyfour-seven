@@ -255,3 +255,8 @@ Format: date · decision · why · how to change it
     Plain words on screen ("How busy each machine is", "Bottleneck"), with no OEE jargon, as in the Stats redesign.
   - **Reveal:** the Factory row shows once something has been harvested (the same rule as the locked fields).
   - **Deferred:** brewing café drinks from produce (STORY.md) and the mooncake recipe (needs the Moon Lotus crop). Orders for products are deferred too.
+- 2026-11-14 · G7 M13 (PASS) follow-ups, my calls:
+  - **Premium inputs ask first (R-M13-2).** When a recipe would take a gold/silver/prismatic crop or one with a weather bonus, "Make" shows a warning first and "Make anyway" starts it. The client predicts the server's take order (`wouldTake`).
+  - **Factory row reveal (R-M13-6):** it appears after any harvest or once you own an animal. It shows only when that's known, so it never flashes up and then disappears.
+  - **Levels show from Lv 1.**
+  - **The collected message uses the server's count.**

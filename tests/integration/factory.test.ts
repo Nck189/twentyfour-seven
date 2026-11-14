@@ -81,6 +81,34 @@ describe("factory catalog: SQL = content/factory.ts", () => {
   });
 });
 
+describe("factory catalog for a signed-in user (G7 R-M13-1)", () => {
+  it("factory_catalog() works for a user and matches the server's own copy", async () => {
+    const u = await newUser("fx-cat");
+    const mine = await u.client.rpc("factory_catalog");
+    expect(mine.error).toBeNull();
+    expect(mine.data).toEqual((await admin().rpc("_factory_catalog")).data);
+    expect((await anon().rpc("factory_catalog")).error).not.toBeNull();
+  });
+});
+
+describe("speed upgrades don't touch jobs already queued (G7 R-M13-5)", () => {
+  it("queued jobs keep their times; only new jobs are faster", async () => {
+    const u = await newUser("fx-q");
+    await setCoins(u.id, 250 + 250);
+    await u.client.rpc("buy_machine", { p_machine: "cheese_press" });
+    await give(u.id, "produce:milk", 6);
+    await u.client.rpc("start_job", { p_machine: "cheese_press", p_recipe: "cheese" });
+    const before = await jobs(u.id);
+    expect(
+      (await u.client.rpc("upgrade_machine", { p_machine: "cheese_press", p_track: "speed" })).error,
+    ).toBeNull();
+    await u.client.rpc("start_job", { p_machine: "cheese_press", p_recipe: "cheese" });
+    const after = await jobs(u.id);
+    expect(after[0]).toEqual(before[0]);
+    expect(after.map(mins)).toEqual([60, 48]);
+  });
+});
+
 describe("factory actions (server)", () => {
   it("build: costs coins once; can't build without coins or twice", async () => {
     const u = await newUser("fx-buy");

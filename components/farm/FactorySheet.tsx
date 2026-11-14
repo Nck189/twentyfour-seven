@@ -24,6 +24,8 @@ import {
   missingInputs,
   progress,
   stockOf,
+  takesPremium,
+  wouldTake,
   type JobRow,
   type MachineRow,
 } from "@/lib/game/factory";
@@ -55,7 +57,8 @@ export function FactorySheet({ factory, onClose }: { factory: Factory; onClose: 
   const now = useNow();
   const d = factory.data;
 
-  const act = async (fn: () => Promise<FactoryError | null>, ok: string) => {
+  /** Runs one action at a time; `fn` returns an error, or null / its own success text. */
+  const act = async (fn: () => Promise<FactoryError | { text: string } | null>, ok: string) => {
     if (busy.current) return;
     busy.current = true;
     setPending(true);
@@ -63,7 +66,9 @@ export function FactorySheet({ factory, onClose }: { factory: Factory; onClose: 
     const e = await fn();
     busy.current = false;
     setPending(false);
-    setMsg(e ? { kind: "error", text: t(`errors.${e}`) } : { kind: "ok", text: ok });
+    setMsg(
+      typeof e === "string" ? { kind: "error", text: t(`errors.${e}`) } : { kind: "ok", text: e?.text ?? ok },
+    );
   };
 
   return (
@@ -138,7 +143,7 @@ function MachineCard({
   factory: Factory;
   now: Date;
   pending: boolean;
-  act: (fn: () => Promise<FactoryError | null>, ok: string) => Promise<void>;
+  act: (fn: () => Promise<FactoryError | { text: string } | null>, ok: string) => Promise<void>;
 }) {
   const t = useTranslations("factory");
   const products = useTranslations("products");
@@ -148,6 +153,8 @@ function MachineCard({
   const stock = factory.data?.stock ?? [];
   const working = jobs.some((j) => jobState(j, now) === "running");
   const ready = jobs.filter((j) => jobState(j, now) === "ready").length;
+  // A recipe waiting for a second tap because it would use a premium crop (R-M13-2).
+  const [confirm, setConfirm] = useState<string | null>(null);
 
   if (!machine)
     return (
@@ -191,15 +198,13 @@ function MachineCard({
           {ready > 0 && (
             <Button
               onClick={() =>
-                act(
-                  async () => {
-                    const n = await factory.collect(id);
-                    if (n === null) return "error";
-                    sfx.pop();
-                    return null;
-                  },
-                  t("collected", { n: ready }),
-                )
+                act(async () => {
+                  const n = await factory.collect(id);
+                  if (n === null) return "error";
+                  // The server's count (a phone clock running fast may show one too early; R-M13-3).
+                  if (n > 0) sfx.pop();
+                  return { text: n > 0 ? t("collected", { n }) : t("notYet") };
+                }, "")
               }
               disabled={pending}
             >
@@ -253,8 +258,10 @@ function MachineCard({
         <ul className="flex flex-col gap-2">
           {recipesFor(id).map((r) => {
             const missing = missingInputs(r, stock);
+            const premium = missing.length === 0 && takesPremium(wouldTake(r, stock));
+            const asking = confirm === r.id && premium;
             return (
-              <li key={r.id} className="flex items-center gap-2 rounded-xl bg-surface p-2">
+              <li key={r.id} className="flex flex-wrap items-center gap-2 rounded-xl bg-surface p-2">
                 <ProductArt id={r.id} className="h-10 w-10 shrink-0" />
                 <span className="min-w-0 flex-1">
                   <span className="block font-bold">{products(r.id)}</span>
@@ -268,13 +275,29 @@ function MachineCard({
                   </span>
                 </span>
                 <Button
-                  variant="secondary"
+                  variant={asking ? "primary" : "secondary"}
                   disabled={pending || full || missing.length > 0}
-                  aria-label={t("makeAria", { name: products(r.id) })}
-                  onClick={() => act(() => factory.start(id, r.id), t("started", { name: products(r.id) }))}
+                  aria-label={
+                    asking
+                      ? t("makeAnywayAria", { name: products(r.id) })
+                      : t("makeAria", { name: products(r.id) })
+                  }
+                  onClick={() => {
+                    if (premium && !asking) {
+                      setConfirm(r.id);
+                      return;
+                    }
+                    setConfirm(null);
+                    void act(() => factory.start(id, r.id), t("started", { name: products(r.id) }));
+                  }}
                 >
-                  {t("make")}
+                  {asking ? t("makeAnyway") : t("make")}
                 </Button>
+                {asking && (
+                  <p role="alert" className="w-full text-xs font-bold text-accent">
+                    {t("premiumWarn")}
+                  </p>
+                )}
               </li>
             );
           })}
@@ -297,7 +320,7 @@ function MachineCard({
                 }
                 className="flex-col !items-start text-left"
               >
-                <span className="text-xs text-muted">{t(`track.${track}`, { level: lvl })}</span>
+                <span className="text-xs text-muted">{t(`track.${track}`, { level: lvl + 1 })}</span>
                 <span className="text-sm">{price === undefined ? t("max") : t("upgrade", { n: price })}</span>
               </Button>
             );

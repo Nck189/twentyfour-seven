@@ -35,18 +35,20 @@ export function MachineArt({
           {/* wooden stand */}
           <rect x={10} y={35} width={28} height={5} rx={2} fill="var(--art-wood-dark)" />
           <rect x={10} y={35} width={27} height={4} rx={2} fill="var(--art-wood)" />
-          {/* glass jar with jam */}
+          {/* a big glass jar of three preserves (pickles, jam, sauce): the machine, not one product */}
           <rect x={13} y={14} width={22} height={22} rx={6} fill="var(--art-ice-dark)" />
           <rect x={13} y={14} width={21} height={21} rx={6} fill="var(--art-ice)" />
-          <rect x={15} y={22} width={17} height={12} rx={4} fill="var(--art-red-dark)" />
-          <rect x={15} y={22} width={16} height={11} rx={4} fill="var(--art-red)" />
+          <rect x={15} y={29} width={17} height={5} rx={2.5} fill="var(--art-leaf-3)" />
+          <rect x={15} y={25} width={17} height={4.5} fill="var(--art-red)" />
+          <rect x={15} y={21} width={17} height={4.5} rx={2} fill="var(--art-orange)" />
           <rect x={16} y={17} width={3} height={8} rx={1.5} fill="var(--art-ice-light)" />
-          {/* gingham lid */}
-          <rect x={12} y={9} width={24} height={7} rx={3} fill="var(--art-red-dark)" />
-          <rect x={12} y={9} width={23} height={6} rx={3} fill="var(--art-red-light)" />
-          <rect x={17} y={9} width={3} height={6} fill="var(--art-white)" />
-          <rect x={24} y={9} width={3} height={6} fill="var(--art-white)" />
-          {working && <Puff cx={31} cy={6} />}
+          {/* wooden lid with a crank */}
+          <rect x={12} y={9} width={24} height={7} rx={3} fill="var(--art-wood-dark)" />
+          <rect x={12} y={9} width={23} height={6} rx={3} fill="var(--art-wood)" />
+          <rect x={22.5} y={4} width={3} height={6} rx={1.2} fill="var(--art-silver-dark)" />
+          <rect x={22.5} y={3} width={9} height={2.8} rx={1.4} fill="var(--art-silver)" />
+          <circle cx={31} cy={4.4} r={1.9} fill="var(--art-red)" />
+          {working && <Puff cx={36} cy={9} />}
         </g>
       )}
       {id === "cheese_press" && (

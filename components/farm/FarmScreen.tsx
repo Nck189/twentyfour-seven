@@ -379,8 +379,9 @@ export function FarmView({
         />
       )}
 
-      {/* The factory (M13): shows once there's something to process (the first harvest). */}
-      {!compact && (gacha?.state?.harvested ?? true) && (
+      {/* The factory (M13): shows once there's something to process: a harvest or an animal (crops or
+          animal goods). Only once known, so it never flashes up and away on a new farm (R-M13-6). */}
+      {!compact && (gacha?.state?.harvested === true || (animals?.state?.animals.length ?? 0) > 0) && (
         <section aria-label={tfac("title")} className="mx-4 mt-4 lg:mx-6">
           <button
             type="button"

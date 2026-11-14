@@ -4,6 +4,7 @@
  */
 import { PRODUCE_PRICE, SELL_BASE } from "@/content/economy";
 import { CROPS } from "@/content/crops";
+import { parseItem, sellPrice } from "@/lib/game/market";
 import {
   KPI_WINDOW_DAYS,
   MACHINE_IDS,
@@ -90,6 +91,44 @@ export function missingInputs(recipe: Recipe, stock: Stock): { input: RecipeInpu
   return recipe.inputs
     .map((input) => ({ input, missing: Math.max(0, input.qty - stockOf(input, stock)) }))
     .filter((m) => m.missing > 0);
+}
+
+const QUALITY_ORDER = ["normal", "silver", "gold", "prismatic"];
+/** Server order (start_job): plain stock first, then quality, then the lower price, then the id. */
+function takeOrder(item: string): [number, number, string] {
+  const [, , q] = item.split(":");
+  return [q === undefined ? -1 : QUALITY_ORDER.indexOf(q), sellPrice(item, 0) ?? 0, item];
+}
+
+/** The stock items a job of this recipe would take, in the server's order (lowest quality first). */
+export function wouldTake(recipe: Recipe, stock: Stock): Stock {
+  const out: Stock = [];
+  for (const input of recipe.inputs) {
+    const key = inputKey(input);
+    let need = input.qty;
+    const rows = stock
+      .filter((s) => s.qty > 0 && (s.item_id === key || ("crop" in input && s.item_id.startsWith(`${key}:`))))
+      .sort((a, b) => {
+        const x = takeOrder(a.item_id);
+        const y = takeOrder(b.item_id);
+        return x[0] - y[0] || x[1] - y[1] || (x[2] < y[2] ? -1 : x[2] > y[2] ? 1 : 0);
+      });
+    for (const r of rows) {
+      if (need === 0) break;
+      const take = Math.min(need, r.qty);
+      out.push({ item_id: r.item_id, qty: take });
+      need -= take;
+    }
+  }
+  return out;
+}
+
+/** A gold/silver/prismatic crop or one with a weather bonus would go in: ask first (R-M13-2). */
+export function takesPremium(taken: Stock): boolean {
+  return taken.some((t) => {
+    const it = parseItem(t.item_id);
+    return it?.kind === "crop" && (it.quality !== "normal" || it.mult > 1);
+  });
 }
 
 /** The inputs' market value at normal quality, no bonuses (for the make-or-sell hint). */

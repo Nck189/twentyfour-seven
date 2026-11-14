@@ -86,3 +86,31 @@ test("CJ-FAC-1 build the jam jar, make pickles, collect them, read the numbers a
   await expect(shop.getByRole("status")).toContainText("+34 coins from the market");
   await expect.poll(async () => (await gameState(id)).coins).toBe(484);
 });
+
+test("CJ-FAC-2 a recipe that would use a gold crop asks first (G7 R-M13-2)", async ({ page }) => {
+  test.setTimeout(60_000);
+  const email = uniqueEmail("factory-gold");
+  await setPrefs(page, { locale: "en", theme: "light" });
+  await signIn(page, email);
+  await leaveAfterSignIn(page);
+  const id = await userIdFor(email);
+  await rest("machines", { method: "POST", body: JSON.stringify({ user_id: id, machine_id: "jam_jar" }) });
+  await rest("inventory", {
+    method: "POST",
+    body: JSON.stringify([
+      { user_id: id, item_id: "crop:radish:gold:150", qty: 2 },
+      { user_id: id, item_id: "crop:turnip:normal:100", qty: 2 },
+    ]),
+  });
+  await page.goto("/farm");
+  await page.getByRole("region", { name: "Factory" }).getByRole("button").click();
+  const sheet = page.getByRole("dialog", { name: "Factory" });
+  await sheet.getByRole("button", { name: "Make Pickles" }).click();
+  await expect(sheet.getByRole("alert")).toContainText("worth more sold on its own");
+  expect(await rest(`production_jobs?user_id=eq.${id}&select=id`)).toEqual([]);
+  await sheet.getByRole("button", { name: "Make Pickles anyway" }).click();
+  await expect(sheet.getByRole("status")).toContainText("Pickles is on the machine.");
+  await expect
+    .poll(async () => ((await rest(`production_jobs?user_id=eq.${id}&select=id`)) as unknown[]).length)
+    .toBe(1);
+});
