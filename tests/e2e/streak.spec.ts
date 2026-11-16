@@ -68,6 +68,11 @@ test("CJ-M9-1 seven good days: streak 7, +5 tickets, a scarecrow, and the 7-day 
   await expect(chip).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("status").filter({ hasText: "7 days in a row" })).toBeVisible();
   await expect(page.getByRole("status").filter({ hasText: "Unlocked!" })).toBeVisible();
+  // R-M9-10: the 7-day egg hatches with the same reveal as a workout egg.
+  const hatch = page.getByRole("dialog", { name: "It hatched!" });
+  await expect(hatch.getByRole("status")).toContainText(/^Meet your /);
+  await hatch.getByRole("button", { name: "Done" }).click();
+  await expect(hatch).toHaveCount(0);
   await chip.click();
   const sheet = page.getByRole("dialog", { name: "Streak" });
   await expect(sheet.getByText("7 days in a row")).toBeVisible();

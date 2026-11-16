@@ -282,3 +282,4 @@ Format: date · decision · why · how to change it
     - a save the server itself refuses (a Postgres error, not a network one), so the error never sticks;
     - anything older than 7 days.
   - **Not covered:** tasks, the Night ritual and farm actions aren't part of this queue (they already say when a save failed).
+- 2026-11-16 · **R-M9-10 done.** The unlock notice pops in, the icon springs, and the celebrate sound plays once per new unlock. There's no motion under reduced motion or "skip animations", and the sound follows the global mute. The 7-day streak egg now hatches with the same reveal as a workout egg: the species comes from the server's `egg_hatched` event for that unlock, and the client decides nothing.
