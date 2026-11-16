@@ -882,7 +882,8 @@
     "planAdd": "Add workout",
     "planRemove": "Remove workout",
     "slotLabel": "Workout {n} min",
-    "saveError": "Couldn't save. Check your connection and try again."
+    "saveError": "Couldn't save. Check your connection and try again.",
+    "loadError": "Couldn't load your weekly goal."
   },
   "animals": {
     "chicken": "Chicken",
@@ -1422,7 +1423,8 @@
     "past": "This time has passed.",
     "noLongerFree": "This time isn't free anymore in your plan.",
     "acceptName": "Accept {name}'s request",
-    "declineName": "Decline {name}'s request"
+    "declineName": "Decline {name}'s request",
+    "inboxError": "Couldn't load your requests."
   },
   "factory": {
     "title": "Factory",

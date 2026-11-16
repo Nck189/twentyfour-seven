@@ -11,6 +11,7 @@ import { getSupabase, getUserCached } from "@/lib/supabase/client";
  */
 export function ExerciseSettings({ onSaved }: { onSaved?: () => void }) {
   const t = useTranslations("exercise");
+  const tc = useTranslations("common");
   const client = getSupabase();
   const [userId, setUserId] = useState<string | null>(null);
   const [goal, setGoal] = useState(3);
@@ -19,26 +20,34 @@ export function ExerciseSettings({ onSaved }: { onSaved?: () => void }) {
   // What the server has, so a no-op blur never saves (or pays the setup reward) (R-M8-4).
   const [saved, setSaved] = useState<{ goal: number; gym: string } | null>(null);
 
+  // A failed load says so (never shows the default as the user's goal) and can be retried (M14).
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [tick, setTick] = useState(0);
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const { data } = await getUserCached();
-      if (!data.user || cancelled) return;
-      const { data: s } = await client
-        .from("settings")
-        .select("weekly_exercise_goal, gym_close_time")
-        .eq("user_id", data.user.id)
-        .single();
-      if (cancelled || !s) return;
-      setUserId(data.user.id);
-      setGoal(s.weekly_exercise_goal as number);
-      setGym((s.gym_close_time as string).slice(0, 5));
-      setSaved({ goal: s.weekly_exercise_goal as number, gym: (s.gym_close_time as string).slice(0, 5) });
+      try {
+        const { data } = await getUserCached();
+        if (!data.user || cancelled) return;
+        const { data: s, error } = await client
+          .from("settings")
+          .select("weekly_exercise_goal, gym_close_time")
+          .eq("user_id", data.user.id)
+          .single();
+        if (cancelled) return;
+        if (error || !s) throw error ?? new Error("no settings row");
+        setUserId(data.user.id);
+        setGoal(s.weekly_exercise_goal as number);
+        setGym((s.gym_close_time as string).slice(0, 5));
+        setSaved({ goal: s.weekly_exercise_goal as number, gym: (s.gym_close_time as string).slice(0, 5) });
+      } catch {
+        if (!cancelled) setLoadFailed(true);
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [client]);
+  }, [client, tick]);
 
   const save = async (patch: { weekly_exercise_goal?: number; gym_close_time?: string }) => {
     if (!userId || !saved) return;
@@ -79,7 +88,7 @@ export function ExerciseSettings({ onSaved }: { onSaved?: () => void }) {
             −
           </button>
           <span className="min-w-24 text-center" aria-live="polite">
-            {t("goalValue", { n: goal })}
+            {ready ? t("goalValue", { n: goal }) : "–"}
           </span>
           <button
             type="button"
@@ -105,6 +114,21 @@ export function ExerciseSettings({ onSaved }: { onSaved?: () => void }) {
           className="min-h-11 rounded-xl bg-surface-2 px-3"
         />
       </label>
+      {loadFailed && !ready && (
+        <div role="alert" className="flex flex-wrap items-center gap-2 rounded-xl bg-accent-soft p-3 text-sm">
+          <span className="flex-1 font-bold">{t("loadError")}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setLoadFailed(false);
+              setTick((n) => n + 1);
+            }}
+            className="tap min-h-11 rounded-full bg-surface px-4 font-bold"
+          >
+            {tc("retry")}
+          </button>
+        </div>
+      )}
       {state === "saved" && (
         <p role="status" className="text-sm text-muted">
           {t("saved")}

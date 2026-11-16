@@ -26,6 +26,7 @@ type Request = {
  */
 export function ShareCard() {
   const t = useTranslations("share");
+  const tc = useTranslations("common");
   const locale = useLocale();
   const [url, setUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -42,6 +43,7 @@ export function ShareCard() {
   /** The first load finished (even if part of it failed). */
   const [loaded, setLoaded] = useState(false);
 
+  const [inboxFailed, setInboxFailed] = useState(false);
   const [tick, setTick] = useState(0);
   const reload = useCallback(() => setTick((n) => n + 1), []);
   useEffect(() => {
@@ -78,10 +80,13 @@ export function ShareCard() {
         ]);
         if (cancelled) return;
         setNow(Date.now());
-        if (!open.error) setPending(open.data as Request[]);
+        if (open.error) throw open.error;
+        setPending(open.data as Request[]);
         if (!done.error) setAnswered(done.data as Request[]);
+        setInboxFailed(false);
       } catch {
-        // shown as empty; reload by coming back
+        // Said so, with Try again: never "Requests (0)" as if nobody asked (M14 states audit).
+        if (!cancelled) setInboxFailed(true);
       }
     })();
     void (async () => {
@@ -182,8 +187,14 @@ export function ShareCard() {
   };
 
   return (
-    <section id="share" className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
-      <h2 className="mb-1 text-lg font-bold">{t("cardTitle")}</h2>
+    <section
+      id="share"
+      aria-labelledby="share-title"
+      className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6"
+    >
+      <h2 id="share-title" className="mb-1 text-lg font-bold">
+        {t("cardTitle")}
+      </h2>
       <p className="mb-3 text-sm text-muted">{t("cardHint")}</p>
 
       {!url ? (
@@ -262,7 +273,26 @@ export function ShareCard() {
         </p>
       )}
 
-      <h3 className="mt-4 mb-2 font-bold">{t("inbox", { n: pending?.length ?? 0 })}</h3>
+      {inboxFailed && !pending ? (
+        <div
+          role="alert"
+          className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-accent-soft p-3 text-sm"
+        >
+          <span className="flex-1 font-bold">{t("inboxError")}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setInboxFailed(false);
+              reload();
+            }}
+            className="tap min-h-11 rounded-full bg-surface px-4 font-bold"
+          >
+            {tc("retry")}
+          </button>
+        </div>
+      ) : (
+        <h3 className="mt-4 mb-2 font-bold">{t("inbox", { n: pending ? pending.length : "…" })}</h3>
+      )}
       {pending && pending.length === 0 && <p className="text-sm text-muted">{t("inboxEmpty")}</p>}
       <ul className="flex flex-col gap-2">
         {(pending ?? []).map((r) => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useId, useState, useSyncExternalStore, type ReactNode } from "react";
 import Link from "next/link";
 import { ExportCard } from "@/components/settings/ExportCard";
 import { TipsCard } from "@/components/settings/TipsCard";
@@ -26,9 +26,16 @@ import { isStandalone, useSetupRewards } from "@/lib/setup/useSetupRewards";
 const noop = () => () => {};
 
 function Card({ title, children, id }: { title: string; children: ReactNode; id?: string }) {
+  const h = useId();
   return (
-    <section id={id} className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
-      <h2 className="mb-3 text-lg font-bold">{title}</h2>
+    <section
+      id={id}
+      aria-labelledby={h}
+      className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6"
+    >
+      <h2 id={h} className="mb-3 text-lg font-bold">
+        {title}
+      </h2>
       {children}
     </section>
   );
