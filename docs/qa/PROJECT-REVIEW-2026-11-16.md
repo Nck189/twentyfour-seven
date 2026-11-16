@@ -39,3 +39,26 @@ The app is rich and well made once you are inside. It is not viral yet because n
 3. First minute (#6, #7).
 4. Pilot with 10–20 friends and read `/admin/retention` before building more.
 5. Invite + wake buddy (#4), then More (#8).
+
+## As a game + app reviewer (Minnie: "act like a game+app reviewer too")
+Scores are opinion from the screens and the rules, not from player data.
+
+| | Score | Why |
+|---|---|---|
+| Idea | 8.5 | Real days grow a farm, and the game can't be cheated. Honest and easy to explain. |
+| Art and character | 8 | One hand, cozy, Som is likeable. |
+| First 5 minutes | 5 | Email code, then a screen of seven things and new words. No reward yet. |
+| Daily use | 6.5 | Check-ins are quick; settings and "add it in Plan" detours cost taps. |
+| Game depth | 7 | Crops, weather, capsules, animals, factory, café, market, seasons: plenty for weeks. |
+| Game feel | 6 | The reward happens on Farm, the action on Today. A session is a few taps; there is little to do on the farm itself. Not felt on a real phone. |
+| Social and viral | 2 | Single-player. Nothing to do with or for a friend. |
+| Trust and polish | 8 | Privacy, export, delete, error states, two languages. |
+
+**Overall: 7 / 10.** A lovely single-player habit farm that nobody can discover yet.
+
+Reviewer notes:
+- **Many systems, shown early.** A reviewer would call it "a lot to learn". The unlock ladder helps; the first Today screen undoes it.
+- **First reward comes late.** Similar apps give a win in the first minute. Here a new player has 0 tickets.
+- **The farm looks the same for everyone on day 1** (seven sprouts on flat green), so it is not yet worth a screenshot. Let the player place one decor or name the farm in setup.
+- **Loss can push people out.** Wilted and dead crops after a bad week feel like punishment. Welcome-back exists; keep the first two weeks loss-free.
+- **No reason to open the app for someone else.** The apps in this space that spread (friend streaks, planting together, sending a gift) all have one.
