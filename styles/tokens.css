@@ -51,6 +51,8 @@
   --art-rust-dark: #b9603e;
   --art-cream: #f3efe4;
   --art-white: #ffffff;
+  /* QR codes on shared pictures: dark brown on white in every theme (a camera needs dark on light). */
+  --art-qr: #3f3a33;
   --art-sun: #ffdb8e;
   --art-cloud: #ffffff;
   --art-shadow: #cdbfa6; /* soft flat ellipse under objects */

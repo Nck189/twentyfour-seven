@@ -484,9 +484,7 @@
       "days": "{n} of 7 days logged",
       "perfect": "{n} perfect days",
       "streak": "{n}-day streak",
-      "best": "Best block: {block}",
-      "ready": "Picture ready.",
-      "error": "Couldn't share. Try again."
+      "best": "Best block: {block}"
     }
   },
   "more": {
@@ -1426,7 +1424,24 @@
     "noLongerFree": "This time isn't free anymore in your plan.",
     "acceptName": "Accept {name}'s request",
     "declineName": "Decline {name}'s request",
-    "inboxError": "Couldn't load your requests."
+    "inboxError": "Couldn't load your requests.",
+    "ctaTitle": "Made with 24/7",
+    "ctaBody": "Plan your day in 7 blocks and grow a small farm.",
+    "ctaButton": "Start your own — free",
+    "picture": {
+      "caption": "Plan your day, grow a farm. Free.",
+      "ready": "Picture ready.",
+      "error": "Couldn't share. Try again.",
+      "share": "Share",
+      "hatchTitle": "My {name} hatched!",
+      "hatchLine": "A new friend on my farm",
+      "capsuleTitle": "I got {name}!",
+      "capsuleLine": "{rarity} crop from a capsule",
+      "streakTitle": "{n} days in a row",
+      "streakLine": "Up on time and planned every night"
+    },
+    "pictureAsk": "Scan to ask me for a time",
+    "pictureApp": "Made with 24/7"
   },
   "factory": {
     "title": "Factory",

@@ -1,43 +1,61 @@
 "use client";
 
 /**
- * The "Share my week" picture (G4, docs/GROWTH.md: "farm + streak + Day score ring"; pictures
- * over words). A 4:5 card for IG/LINE stories: a daytime farm scene drawn from the app's own SVG
- * art, a Day score ring and a few numbers. Only tokens (styles/tokens.css): no black, gradients
- * only in the sky. The farm always uses its daytime palette, so the light tokens are read even in
- * dark mode.
+ * Shared pictures (G4, docs/GROWTH.md: "farm + streak + Day score ring"; pictures over words). A
+ * 4:5 card for IG/LINE stories: a daytime farm scene drawn from the app's own SVG art, a Day score
+ * ring (the week) or one big piece of art (a proud moment), a few lines, and a footer with the
+ * app's address and a QR code so the picture leads back to the app (review fix A1). Only tokens
+ * (styles/tokens.css): no black, gradients only in the sky. The farm always uses its daytime
+ * palette, so the light tokens are read even in dark mode.
  */
+import { qrMatrix } from "./qr";
 
-export type WeekPictureLine = { text: string; icon?: string };
-export type WeekPictureInput = {
+export type CardLine = { text: string; icon?: string };
+export type CardInput = {
   title: string;
-  /** Mean Day score 0..1, or null (no scored day this week). */
-  score: number | null;
-  scoreLabel: string;
-  lines: readonly WeekPictureLine[];
+  /** The week: mean Day score 0..1 (null = no scored day) in a ring. */
+  ring?: { value: number | null; label: string };
+  /** A proud moment: the slot of one piece of art shown large instead of the ring. */
+  hero?: string;
+  lines: readonly CardLine[];
+  /** Slots that stand between Som and the farmhouse (her crops and animals), left to right. */
+  scene: readonly string[];
+  footer: { host: string; caption: string; url: string };
   /** Holds the art as `<svg data-slot="…">` elements (hidden; rendered by React). */
   art: HTMLElement;
 };
 
-const W = 540;
-const H = 675;
+export const CARD = { w: 540, h: 675 } as const;
+const W = CARD.w;
+const H = CARD.h;
 const SCALE = 2;
 const GROUND = 468;
+/** The address + QR card on the soil. */
+export const FOOTER = { x: 20, y: 531, w: 500, h: 124 } as const;
 
 /** Every art piece stands on y = 41 of its 48×48 box (its soft shadow; parts.tsx GROUND_Y + 1). */
 const ART_FEET = 41 / 48;
 /** Top of a piece of `size` whose feet sit on the grass (a little into it, like the farm scene). */
 export const standY = (size: number) => Math.round(GROUND + 4 - size * ART_FEET);
 
-/** Where each art slot goes on the card (logical px): x, y, size. Everything stands on the ground. */
-export const WEEK_PICTURE_SLOTS = {
-  house: [392, standY(128), 128],
-  som: [28, standY(116), 116],
-  crop1: [150, standY(92), 92],
-  crop2: [232, standY(92), 92],
-  crop3: [314, standY(92), 92],
-  streak: [0, 0, 28],
-} as const satisfies Record<string, readonly [number, number, number]>;
+type Box = readonly [x: number, y: number, size: number];
+
+/**
+ * Where each piece of the farm goes (logical px). Som stands on the left, the farmhouse on the
+ * right, and up to five crops or animals between them, smaller when there are more.
+ */
+export function layoutScene(middle: readonly string[]): Record<string, Box> {
+  const out: Record<string, Box> = { som: [28, standY(116), 116], house: [392, standY(128), 128] };
+  const n = middle.length;
+  const size = n <= 3 ? 92 : n === 4 ? 76 : 64;
+  const from = 196;
+  const to = 360;
+  middle.forEach((slot, i) => {
+    const cx = n === 1 ? (from + to) / 2 : from + ((to - from) * i) / (n - 1);
+    out[slot] = [Math.round(cx - size / 2), standY(size), size];
+  });
+  return out;
+}
 
 /** The innermost `var(--x)` or `var(--x, fallback)` (a fallback with no parentheses left). */
 const INNER_VAR = /var\(\s*(--[\w-]+)\s*(?:,\s*([^()]*?))?\s*\)/;
@@ -88,7 +106,7 @@ async function svgImage(svg: SVGElement, tokens: Map<string, string>, px: number
   return img;
 }
 
-export async function weekPicture(p: WeekPictureInput): Promise<Blob> {
+export async function cardPicture(p: CardInput): Promise<Blob> {
   // Draw with the app's fonts, not a fallback (looped Thai especially; G7 R-M14-15).
   await document.fonts?.ready;
   const svgs = [...p.art.querySelectorAll<SVGElement>("svg[data-slot]")];
@@ -104,11 +122,22 @@ export async function weekPicture(p: WeekPictureInput): Promise<Blob> {
     "--ui-text",
     "--ui-text-muted",
     "--ui-primary",
+    "--art-qr",
   ]);
   for (const s of svgs) for (const n of varNames(s.outerHTML)) names.add(n);
   const tk = lightTokens(names);
   const c = (n: string) => tk.get(n) ?? "";
   const font = getComputedStyle(document.body).fontFamily;
+  const scene = layoutScene(p.scene);
+  /** Drawn size of each slot: the farm pieces, plus the small and large art in the cards. */
+  const sizeOf = (slot: string) => scene[slot]?.[2] ?? (slot === p.hero ? 168 : 56);
+  const imgs = new Map<string, HTMLImageElement>();
+  await Promise.all(
+    svgs.map(async (s) => {
+      const slot = s.dataset.slot!;
+      imgs.set(slot, await svgImage(s, tk, sizeOf(slot) * SCALE));
+    }),
+  );
 
   const canvas = document.createElement("canvas");
   canvas.width = W * SCALE;
@@ -124,12 +153,6 @@ export async function weekPicture(p: WeekPictureInput): Promise<Blob> {
   g.fillRect(0, 0, W, GROUND);
   g.fillStyle = c("--art-soil");
   g.fillRect(0, GROUND, W, H - GROUND);
-  g.fillStyle = c("--art-soil-dark");
-  for (let x = 30; x < W; x += 90) {
-    g.beginPath();
-    g.ellipse(x, GROUND + 90 + ((x / 90) % 2) * 50, 16, 5, 0, 0, Math.PI * 2);
-    g.fill();
-  }
   g.fillStyle = c("--art-leaf-3");
   g.fillRect(0, GROUND, W, 16);
   g.fillStyle = c("--art-leaf-2");
@@ -142,7 +165,7 @@ export async function weekPicture(p: WeekPictureInput): Promise<Blob> {
   g.font = `800 30px ${font}`;
   g.fillText(p.title, 32, 60, W - 64);
 
-  // The card: ring on the left, numbers on the right.
+  // The card: the ring (or the big art) on the left, the lines on the right.
   const top = 88;
   g.fillStyle = c("--ui-surface");
   g.beginPath();
@@ -150,41 +173,39 @@ export async function weekPicture(p: WeekPictureInput): Promise<Blob> {
   g.fill();
   const cx = 116;
   const cy = top + 116;
-  const r = 66;
-  g.lineWidth = 18;
-  g.lineCap = "round";
-  g.strokeStyle = c("--ui-surface-2");
-  g.beginPath();
-  g.arc(cx, cy, r, 0, Math.PI * 2);
-  g.stroke();
-  if (p.score !== null && p.score > 0) {
-    g.strokeStyle = c("--ui-primary");
+  const hero = p.hero ? imgs.get(p.hero) : undefined;
+  if (hero) {
+    g.drawImage(hero, cx - 84, cy - 84, 168, 168);
+  } else if (p.ring) {
+    const r = 66;
+    g.lineWidth = 18;
+    g.lineCap = "round";
+    g.strokeStyle = c("--ui-surface-2");
     g.beginPath();
-    g.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, p.score));
+    g.arc(cx, cy, r, 0, Math.PI * 2);
     g.stroke();
+    if (p.ring.value !== null && p.ring.value > 0) {
+      g.strokeStyle = c("--ui-primary");
+      g.beginPath();
+      g.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, p.ring.value));
+      g.stroke();
+    }
+    g.textAlign = "center";
+    g.fillStyle = c("--ui-text");
+    g.font = `800 32px ${font}`;
+    g.fillText(p.ring.value === null ? "–" : `${Math.round(p.ring.value * 100)}%`, cx, cy + 8);
+    g.fillStyle = c("--ui-text-muted");
+    g.font = `600 13px ${font}`;
+    g.fillText(p.ring.label, cx, cy + 30, r * 2 - 24);
+    g.textAlign = "left";
   }
-  g.textAlign = "center";
-  g.fillStyle = c("--ui-text");
-  g.font = `800 32px ${font}`;
-  g.fillText(p.score === null ? "–" : `${Math.round(p.score * 100)}%`, cx, cy + 8);
-  g.fillStyle = c("--ui-text-muted");
-  g.font = `600 13px ${font}`;
-  g.fillText(p.scoreLabel, cx, cy + 30, r * 2 - 24);
-  g.textAlign = "left";
-
-  const imgs = new Map<string, HTMLImageElement>();
-  await Promise.all(
-    svgs.map(async (s) => {
-      const slot = s.dataset.slot as keyof typeof WEEK_PICTURE_SLOTS;
-      const size = WEEK_PICTURE_SLOTS[slot]?.[2];
-      if (size) imgs.set(slot, await svgImage(s, tk, size * SCALE));
-    }),
-  );
 
   const x0 = 214;
   const step = Math.min(44, 196 / Math.max(1, p.lines.length));
+  // Few lines sit in the middle of the card, not at its top.
+  const first = top + 116 - ((p.lines.length - 1) * step) / 2 + 7;
   p.lines.forEach((l, i) => {
-    const y = top + 52 + i * step;
+    const y = first + i * step;
     const icon = l.icon ? imgs.get(l.icon) : undefined;
     if (icon) g.drawImage(icon, x0 - 2, y - 22, 28, 28);
     g.fillStyle = c("--ui-text");
@@ -193,11 +214,38 @@ export async function weekPicture(p: WeekPictureInput): Promise<Blob> {
   });
 
   // The farm.
-  for (const [slot, [x, y, size]] of Object.entries(WEEK_PICTURE_SLOTS)) {
-    if (slot === "streak") continue;
+  for (const [slot, [x, y, size]] of Object.entries(scene)) {
     const img = imgs.get(slot);
     if (img) g.drawImage(img, x, y, size, size);
   }
+
+  // Footer: the app's mark and address, and a QR code that opens it.
+  g.fillStyle = c("--ui-surface");
+  g.beginPath();
+  g.roundRect(FOOTER.x, FOOTER.y, FOOTER.w, FOOTER.h, 24);
+  g.fill();
+  const mark = imgs.get("mark");
+  if (mark) g.drawImage(mark, FOOTER.x + 18, FOOTER.y + 34, 56, 56);
+  const qrSize = 96;
+  const qrX = FOOTER.x + FOOTER.w - qrSize - 14;
+  const textX = FOOTER.x + 88;
+  const textW = qrX - textX - 12;
+  g.fillStyle = c("--ui-text");
+  g.font = `800 19px ${font}`;
+  g.fillText(p.footer.host, textX, FOOTER.y + 58, textW);
+  g.fillStyle = c("--ui-text-muted");
+  g.font = `600 14px ${font}`;
+  g.fillText(p.footer.caption, textX, FOOTER.y + 82, textW);
+  // Dark brown modules on the white card (never black); the card is the quiet zone.
+  const m = qrMatrix(p.footer.url);
+  const cell = qrSize / m.length;
+  g.fillStyle = c("--art-qr");
+  m.forEach((row, r) =>
+    row.forEach((dark, col) => {
+      // A hair of overlap, so no light seams show between modules after scaling.
+      if (dark) g.fillRect(qrX + col * cell, FOOTER.y + 14 + r * cell, cell + 0.3, cell + 0.3);
+    }),
+  );
 
   return new Promise((res, rej) =>
     canvas.toBlob((b) => (b ? res(b) : rej(new Error("no image"))), "image/png"),

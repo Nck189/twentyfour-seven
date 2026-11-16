@@ -2,7 +2,9 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
+import { AppMark } from "@/components/art/AppMark";
 import { Button } from "@/components/ui/Button";
+import { sitePath } from "@/content/site";
 import { askForSlot } from "@/app/share/[token]/actions";
 
 type Day = { date: string; free: { start: string; end: string }[] };
@@ -97,6 +99,23 @@ export function ShareView({
           ))}
       </ul>
       <p className="mt-6 text-xs text-muted">{t("footer")}</p>
+      {/* What made this page, and a way in for the friend (review fix A2). No owner details. */}
+      <aside
+        aria-label={t("ctaTitle")}
+        className="mt-4 flex items-center gap-3 rounded-[var(--radius-lg)] bg-surface p-4"
+      >
+        <AppMark className="h-12 w-12 shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="font-bold">{t("ctaTitle")}</p>
+          <p className="mb-2 text-sm text-muted">{t("ctaBody")}</p>
+          <a
+            href={sitePath("/", "share")}
+            className="tap inline-flex min-h-11 items-center rounded-full bg-primary px-4 font-bold text-on-primary"
+          >
+            {t("ctaButton")}
+          </a>
+        </div>
+      </aside>
     </main>
   );
 }

@@ -43,6 +43,9 @@ test("CJ-SHARE-1 a friend asks for a free time through the link; the owner accep
   // Free/busy only: no block names or plans on the page.
   for (const word of ["Work", "Focus", "Sleep", "Gradation"])
     await expect(friend.locator("main")).not.toContainText(word);
+  // The page says what made it and invites the friend in (review fix A2).
+  const cta = friend.getByRole("link", { name: "Start your own — free" });
+  await expect(cta).toHaveAttribute("href", "/?from=share");
   await expectNoHorizontalScroll(friend);
   await expectTouchTargets(friend);
   await slots.first().click();
@@ -50,6 +53,7 @@ test("CJ-SHARE-1 a friend asks for a free time through the link; the owner accep
   await friend.getByLabel("A short note (optional)").fill("Coffee and notes?");
   await friend.getByRole("button", { name: "Send request" }).click();
   await expect(friend.getByRole("status")).toContainText("Sent!");
+  await expect(cta).toBeVisible();
   await friendCtx.close();
 
   // The owner answers in More.

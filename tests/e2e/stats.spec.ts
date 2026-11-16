@@ -129,3 +129,10 @@ test("CJ-M10-1 Stats shows the charts from the data; the weekly review pays +3 o
     await expect(page.getByRole("region", { name: "Weekly review" })).toContainText("review is done");
   }
 });
+
+test("review A5: a week with nothing logged doesn't offer the share picture", async ({ page }) => {
+  await setup(page);
+  await page.goto("/stats");
+  await expect(page.getByRole("region", { name: "Your estimates vs real time" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Share my week" })).toHaveCount(0);
+});

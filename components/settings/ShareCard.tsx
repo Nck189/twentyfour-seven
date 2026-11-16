@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { freeDaysFromContext } from "@/lib/share/compute";
 import { slotFits, slotsText, type DayFree } from "@/lib/share/freebusy";
 import { getSupabase } from "@/lib/supabase/client";
+import { SITE_HOST, siteUrl } from "@/content/site";
 import { textPicture as slotsImage } from "@/lib/share/picture";
 import { loadDayContext } from "@/lib/today/loadContext";
 
@@ -131,7 +132,11 @@ export function ShareCard() {
   useEffect(() => {
     let cancelled = false;
     if (!text) return;
-    void slotsImage(text)
+    // With a link on, the QR opens it so a friend can ask for a time; else it opens the app.
+    const footer = url
+      ? { url, caption: t("pictureAsk"), host: SITE_HOST }
+      : { url: siteUrl("/", "free"), caption: t("pictureApp"), host: SITE_HOST };
+    void slotsImage(text, footer)
       .then((blob) => {
         if (!cancelled) setImage(new File([blob], "free-times.png", { type: "image/png" }));
       })
@@ -139,7 +144,7 @@ export function ShareCard() {
     return () => {
       cancelled = true;
     };
-  }, [text]);
+  }, [text, url, t]);
 
   const run = async (fn: () => Promise<string>, fail = t("failed")) => {
     setBusy(true);
