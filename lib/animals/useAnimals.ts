@@ -77,64 +77,70 @@ export function useAnimals() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const { data: auth } = await getUserCached();
-      if (!auth.user) return;
-      const [profile, settings, gs, animals, inv, petted] = await Promise.all([
-        client.from("profiles").select("timezone").eq("user_id", auth.user.id).maybeSingle(),
-        client
-          .from("settings")
-          .select("weekly_exercise_goal, gym_close_time")
-          .eq("user_id", auth.user.id)
-          .single(),
-        client.from("game_state").select("egg_progress").eq("user_id", auth.user.id).maybeSingle(),
-        client
-          .from("animals")
-          .select("id, species, love, fed_until, last_produced, created_at")
-          .order("created_at"),
-        client.from("inventory").select("qty").eq("item_id", "feed").maybeSingle(),
-        client
-          .from("events")
-          .select("payload")
-          .eq("type", "animal_petted")
-          .gte("at", new Date(Date.now() - 24 * 3_600_000).toISOString()),
-      ]);
-      const pets: Record<string, number> = {};
-      for (const e of (petted.data ?? []) as { payload: { animal?: string } }[])
-        if (e.payload?.animal) pets[e.payload.animal] = (pets[e.payload.animal] ?? 0) + 1;
-      const tz = (profile.data?.timezone as string | undefined) ?? DEFAULT_TZ;
-      const today = localDate(new Date(), tz);
-      const monday = addDays(today, 1 - isoWeekday(today));
-      const logs = await client
-        .from("exercise_logs")
-        .select("at, type, minutes, counted")
-        .gte("at", zonedInstant(monday, 0, tz).toISOString())
-        .order("at");
-      if (cancelled) return;
-      if (settings.error || animals.error || logs.error) {
-        setStatus("error");
-        return;
+      try {
+        const { data: auth } = await getUserCached();
+        if (!auth.user) return;
+        const [profile, settings, gs, animals, inv, petted] = await Promise.all([
+          client.from("profiles").select("timezone").eq("user_id", auth.user.id).maybeSingle(),
+          client
+            .from("settings")
+            .select("weekly_exercise_goal, gym_close_time")
+            .eq("user_id", auth.user.id)
+            .single(),
+          client.from("game_state").select("egg_progress").eq("user_id", auth.user.id).maybeSingle(),
+          client
+            .from("animals")
+            .select("id, species, love, fed_until, last_produced, created_at")
+            .order("created_at"),
+          client.from("inventory").select("qty").eq("item_id", "feed").maybeSingle(),
+          client
+            .from("events")
+            .select("payload")
+            .eq("type", "animal_petted")
+            .gte("at", new Date(Date.now() - 24 * 3_600_000).toISOString()),
+        ]);
+        const pets: Record<string, number> = {};
+        for (const e of (petted.data ?? []) as { payload: { animal?: string } }[])
+          if (e.payload?.animal) pets[e.payload.animal] = (pets[e.payload.animal] ?? 0) + 1;
+        const tz = (profile.data?.timezone as string | undefined) ?? DEFAULT_TZ;
+        const today = localDate(new Date(), tz);
+        const monday = addDays(today, 1 - isoWeekday(today));
+        const logs = await client
+          .from("exercise_logs")
+          .select("at, type, minutes, counted")
+          .gte("at", zonedInstant(monday, 0, tz).toISOString())
+          .order("at");
+        if (cancelled) return;
+        if (settings.error || animals.error || logs.error) {
+          setStatus("error");
+          return;
+        }
+        setState({
+          animals: (animals.data ?? [])
+            .map((a) => row(a as Record<string, unknown>))
+            .filter((a): a is Animal => !!a),
+          pets,
+          // Before the M8 migration is on prod there's no egg_progress: 0.
+          eggProgress:
+            ((gs.data as { egg_progress?: number } | null)?.egg_progress as number | undefined) ?? 0,
+          feed: (inv.data?.qty as number | undefined) ?? 0,
+          week: ((logs.data ?? []) as Record<string, unknown>[])
+            .filter((l) => isExerciseType(l.type))
+            .map((l) => ({
+              at: l.at as string,
+              type: l.type as ExerciseType,
+              minutes: l.minutes as number,
+              counted: Boolean(l.counted),
+            })),
+          weeklyGoal: (settings.data.weekly_exercise_goal as number) ?? 3,
+          gymClose: ((settings.data.gym_close_time as string) ?? "22:00").slice(0, 5),
+          timezone: tz,
+        });
+        setStatus("ready");
+      } catch {
+        // Offline or a timeout: said so on the pen, with Try again (M14 states audit).
+        if (!cancelled) setStatus("error");
       }
-      setState({
-        animals: (animals.data ?? [])
-          .map((a) => row(a as Record<string, unknown>))
-          .filter((a): a is Animal => !!a),
-        pets,
-        // Before the M8 migration is on prod there's no egg_progress: 0.
-        eggProgress: ((gs.data as { egg_progress?: number } | null)?.egg_progress as number | undefined) ?? 0,
-        feed: (inv.data?.qty as number | undefined) ?? 0,
-        week: ((logs.data ?? []) as Record<string, unknown>[])
-          .filter((l) => isExerciseType(l.type))
-          .map((l) => ({
-            at: l.at as string,
-            type: l.type as ExerciseType,
-            minutes: l.minutes as number,
-            counted: Boolean(l.counted),
-          })),
-        weeklyGoal: (settings.data.weekly_exercise_goal as number) ?? 3,
-        gymClose: ((settings.data.gym_close_time as string) ?? "22:00").slice(0, 5),
-        timezone: tz,
-      });
-      setStatus("ready");
     })();
     return () => {
       cancelled = true;

@@ -961,7 +961,8 @@
       "alpaca": "Som disappears into the alpaca's fluff.",
       "red_panda": "Som and the red panda compare tails. It's a tie."
     },
-    "petDone": "Petted today ♡"
+    "petDone": "Petted today ♡",
+    "loadError": "Couldn't load your animals."
   },
   "streak": {
     "title": "Streak",

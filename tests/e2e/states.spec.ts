@@ -38,3 +38,23 @@ test("CJ-STATE-1 More: a failed load of the exercise goal and the requests inbox
   await expect(share.getByText("No requests waiting.")).toBeVisible();
   await expect(share.getByRole("alert")).toHaveCount(0);
 });
+
+test("CJ-STATE-2 Farm: when the animals don't load, the pen says so (never just vanishes); Try again fixes it", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await setPrefs(page, { locale: "en", theme: "light" });
+  await signIn(page, uniqueEmail("states-pen"));
+  await leaveAfterSignIn(page);
+  const broken = /\/rest\/v1\/animals\?/;
+  await page.route(broken, (route) =>
+    route.request().method() === "GET" ? route.abort("failed") : route.fallback(),
+  );
+  await page.goto("/farm");
+  const pen = page.getByRole("region", { name: "Animals" });
+  await expect(pen.getByRole("alert")).toContainText("Couldn't load your animals.");
+  await page.unroute(broken);
+  await pen.getByRole("button", { name: "Try again" }).click();
+  await expect(pen.getByText("Work out to hatch your first animal.")).toBeVisible();
+  await expect(pen.getByRole("alert")).toHaveCount(0);
+});
