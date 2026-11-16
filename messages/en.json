@@ -1494,5 +1494,13 @@
     "makeAnyway": "Make anyway",
     "makeAnywayAria": "Make {name} anyway",
     "premiumWarn": "This uses a gold or weather crop that's worth more sold on its own."
+  },
+  "admin": {
+    "title": "Retention",
+    "hint": "{n} accounts from the last 120 days, by sign-up week. Active = anything logged that day.",
+    "empty": "No sign-ups yet.",
+    "week": "Sign-up week",
+    "users": "Accounts",
+    "day": "Day {n}"
   }
 }

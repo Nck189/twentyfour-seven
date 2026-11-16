@@ -92,6 +92,14 @@ export default defineConfig({
         reuseExistingServer: !process.env.CI,
         timeout: 240_000,
         // Uncompressed responses for WebKit on the CI runner (next.config.ts `compress`).
-        env: { ...(process.env as Record<string, string>), E2E_NO_COMPRESS: "1" },
+        env: {
+          ...(process.env as Record<string, string>),
+          E2E_NO_COMPRESS: "1",
+          // G3: the retention dashboard opens for this test account only.
+          // One per project (they run in parallel and a new sign-in link replaces the last one).
+          ADMIN_EMAILS: ["iphone", "iphone-small", "ipad-portrait", "ipad-landscape", "mac", "chrome-desktop"]
+            .map((p) => `admin-e2e-${p}@test.local`)
+            .join(","),
+        },
       },
 });

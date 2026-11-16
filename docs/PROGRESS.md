@@ -52,6 +52,7 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 - ~~**M12 share (G7 R-M12-14)**~~ **Answered 2026-11-14 ("เอาที่เหมาะสม"):** sick/vacation days and slots inside Free show as busy.
 - **M12 (merged 2026-11-14, PR #20):** key on Vercel ✅; left: `db push` (share) + redeploy + a real-iPhone copy check + `qc:prod`.
 - ~~**Delete account (M14, G15)**~~ **Answered 2026-11-16 ("เพิ่มได้"):** More → Account → Delete my account (2 steps).
+- **G3 retention dashboard (setup once):** on Vercel add `ADMIN_EMAILS` = your login email (server-only, not NEXT_PUBLIC_), redeploy, then open `/admin/retention`.
 - Please test the offline page once on your real iPhone — link + steps sent in chat 2026-11-02; waiting for her result.
 
 ---

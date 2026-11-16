@@ -283,3 +283,8 @@ Format: date · decision · why · how to change it
     - anything older than 7 days.
   - **Not covered:** tasks, the Night ritual and farm actions aren't part of this queue (they already say when a save failed).
 - 2026-11-16 · **R-M9-10 done.** The unlock notice pops in, the icon springs, and the celebrate sound plays once per new unlock. There's no motion under reduced motion or "skip animations", and the sound follows the global mute. The 7-day streak egg now hatches with the same reveal as a workout egg: the species comes from the server's `egg_hatched` event for that unlock, and the client decides nothing.
+- 2026-11-16 · **G3 retention dashboard** at `/admin/retention`
+  - **Who can open it:** only emails listed in the server env `ADMIN_EMAILS` (comma-separated, on Vercel, never public). Everyone else gets a 404.
+  - **What it shows:** accounts from the last 120 days, grouped by sign-up week (Monday). For each group, the share active on day 1/7/14/30 after signing up. "Active" means anything logged in `events` that local day. A day that hasn't come yet shows "–".
+  - **How it's built:** the data is read server-side with the service key, and only the table reaches the browser. The math is the pure function `lib/stats/retention.ts`, with unit tests.
+  - **Deferred:** where in the day people drop off.
