@@ -13,6 +13,7 @@ import {
   statsFrom,
   usedBlocks,
   usedSince,
+  weekShare,
   weekSummary,
 } from "@/lib/stats/stats";
 
@@ -267,5 +268,31 @@ describe("a block is judged from its first check-in on (G7 R-M10-R3-2)", () => {
     // Wednesday (before Sleep's first check-in) isn't counted for Sleep.
     expect(heatmap(days).sleep[3]).toEqual({ success: 0, judged: 0 });
     expect(heatmap(days).sleep[4]).toEqual({ success: 1, judged: 1 });
+  });
+});
+
+describe("Share my week picture (G4, G7 R-M14-3)", () => {
+  const empty = (date: string, o: Partial<DayFacts> = {}) =>
+    day(date, {}, { wakeInWindow: false, nightRitualDone: false, ...o });
+  it("counts days with something logged in the last 7 days (today included), not calendar days", () => {
+    const days = [
+      empty("2026-11-08"), // 8 days ago: outside the week
+      empty("2026-11-10", { away: true }),
+      empty("2026-11-11", { away: true }),
+      day("2026-11-12", { work: log("2026-11-12") }),
+      empty("2026-11-13", { away: true }),
+      empty("2026-11-14", { away: true }),
+      empty("2026-11-15", { away: true }),
+      empty("2026-11-16", { wakeInWindow: true }), // today: pressed "I'm up"
+    ];
+    const s = weekShare(days, "2026-11-16");
+    expect(s.days).toBe(2);
+    expect(s.of).toBe(7);
+  });
+  it("an empty week is 0 of 7, not 7 of 7", () => {
+    const days = Array.from({ length: 7 }, (_, i) =>
+      empty(`2026-11-${String(10 + i).padStart(2, "0")}`, i < 6 ? { away: true } : {}),
+    );
+    expect(weekShare(days, "2026-11-16").days).toBe(0);
   });
 });

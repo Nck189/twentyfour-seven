@@ -256,6 +256,26 @@ export function weekSummary(days: readonly DayFacts[], since: UsedSince = usedSi
   };
 }
 
+// ---------- share my week (G4) ----------
+
+/** Something was really logged that day: a check-in, an in-window "I'm up", the Night ritual or a workout. */
+const logged = (d: DayFacts) =>
+  !d.away && (Object.keys(d.logs).length > 0 || d.wakeInWindow || d.nightRitualDone || d.exercised);
+
+/**
+ * The numbers on the "Share my week" picture: the last 7 wake-days, today included. `days` counts
+ * days with something logged, never calendar days (G7 R-M14-3: an empty week isn't "7 of 7").
+ */
+export function weekShare(
+  all: readonly DayFacts[],
+  today: string,
+  since: UsedSince = usedSince(all),
+): { days: number; of: 7; perfectDays: number; bestBlock: BlockKey | null } {
+  const week = all.filter((d) => d.date > addDays(today, -7) && d.date <= today);
+  const s = weekSummary(week, since);
+  return { days: week.filter(logged).length, of: 7, perfectDays: s.perfectDays, bestBlock: s.bestBlock };
+}
+
 // ---------- overview (Minnie 2026-11-10: plain numbers, like IG insights) ----------
 
 export type PeriodCompare = {

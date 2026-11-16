@@ -4,10 +4,9 @@ import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { textPicture } from "@/lib/share/picture";
-import { usedSince, weekSummary } from "@/lib/stats/stats";
+import { usedSince, weekShare } from "@/lib/stats/stats";
 import type { StatsData } from "@/lib/stats/useStats";
 import type { StreakView } from "@/lib/streak/useStreak";
-import { addDays } from "@/lib/time";
 
 /**
  * G4: "Share my week" as a small picture for IG/LINE stories — days logged, perfect days, the
@@ -20,11 +19,7 @@ export function WeekShare({ data, streak }: { data: StatsData; streak: StreakVie
   const [file, setFile] = useState<File | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const text = useMemo(() => {
-    const cut = addDays(data.today, -7);
-    const s = weekSummary(
-      data.days.filter((d) => d.date >= cut),
-      usedSince(data.days),
-    );
+    const s = weekShare(data.days, data.today, usedSince(data.days));
     return [
       t("title"),
       t("days", { n: s.days }),
