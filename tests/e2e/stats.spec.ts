@@ -74,6 +74,7 @@ async function seedDays(id: string) {
 
 test("CJ-M10-1 Stats shows the charts from the data; the weekly review pays +3 once (on Sunday/Monday)", async ({
   page,
+  browserName,
 }) => {
   const id = await setup(page);
   await seedDays(id);
@@ -85,6 +86,15 @@ test("CJ-M10-1 Stats shows the charts from the data; the weekly review pays +3 o
   await expect(page.locator("main")).not.toContainText("OEE");
   await expectNoSeriousA11y(page);
   await expectTouchTargets(page);
+  // G4: the weekly picture is drawn ahead of the tap (ready to share).
+  const share = page.getByRole("region", { name: "Share my week" });
+  await expect(share.getByRole("button", { name: "Make the picture" })).toBeEnabled();
+  if (browserName === "chromium") {
+    const download = page.waitForEvent("download");
+    await share.getByRole("button", { name: "Make the picture" }).click();
+    expect((await download).suggestedFilename()).toBe("my-week.png");
+    await expect(share.getByRole("status")).toContainText("Picture ready.");
+  }
 
   const tabs = page.getByRole("radiogroup", { name: "Stats view" });
   await tabs.getByRole("radio", { name: "Sleep" }).click();

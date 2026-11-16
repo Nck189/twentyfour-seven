@@ -288,3 +288,4 @@ Format: date · decision · why · how to change it
   - **What it shows:** accounts from the last 120 days, grouped by sign-up week (Monday). For each group, the share active on day 1/7/14/30 after signing up. "Active" means anything logged in `events` that local day. A day that hasn't come yet shows "–".
   - **How it's built:** the data is read server-side with the service key, and only the table reaches the browser. The math is the pure function `lib/stats/retention.ts`, with unit tests.
   - **Deferred:** where in the day people drop off.
+- 2026-11-16 · **G4 weekly share card.** Stats → Overview has "Share my week", a small picture of the last 7 days for IG or LINE. It shows days logged, perfect days, the streak and the best block, and nothing private (no tasks, names, times or notes). It reuses the M12 picture drawer (`lib/share/picture.ts`, UI tokens, no black) and is drawn ahead of the tap, so the iOS share sheet works.

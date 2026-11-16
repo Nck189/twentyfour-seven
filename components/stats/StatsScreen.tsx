@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { EstimateCard } from "./EstimateCard";
+import { WeekShare } from "./WeekShare";
 import { COFFEE_MIN_DAYS } from "@/lib/game/cafe";
 import { useMemo, useRef, useState } from "react";
 import { Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, XAxis, YAxis } from "recharts";
@@ -617,6 +618,7 @@ export function StatsBody({
           <WeeklyReview data={data} submit={submit} />
           <Overview data={data} streak={streak} />
           <EstimateCard />
+          <WeekShare data={data} streak={streak} />
         </>
       )}
       {tab === "sleep" && (

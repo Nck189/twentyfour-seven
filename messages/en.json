@@ -474,6 +474,18 @@
       "ratio": "Tasks take about ×{x} your estimate",
       "over": "{p} of {n} tasks ran over",
       "tag": "{tag}: ×{x}"
+    },
+    "share": {
+      "cardTitle": "Share my week",
+      "hint": "A small picture of your week for IG or LINE — no tasks, names or times.",
+      "button": "Make the picture",
+      "title": "My week on 24/7",
+      "days": "{n} of 7 days logged",
+      "perfect": "{n} perfect days",
+      "streak": "{n}-day streak",
+      "best": "Best block: {block}",
+      "ready": "Picture ready.",
+      "error": "Couldn't share. Try again."
     }
   },
   "more": {
