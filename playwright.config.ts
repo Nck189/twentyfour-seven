@@ -87,10 +87,7 @@ export default defineConfig({
   webServer: BASE_URL
     ? undefined
     : {
-        // Keep idle connections open: Node closes them after 5 s by default, and WebKit reports a
-        // navigation that reuses a just-closed one as "WebKit encountered an internal error"
-        // (tests seed data for a few seconds, then navigate). Chrome retries silently.
-        command: `npm run build && npx next start -p ${PORT} --keepAliveTimeout 70000`,
+        command: `npm run build && npx next start -p ${PORT}`,
         url: `http://localhost:${PORT}/login`,
         reuseExistingServer: !process.env.CI,
         timeout: 240_000,
