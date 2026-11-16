@@ -10,6 +10,7 @@ import { NotificationsCard } from "@/components/settings/NotificationsCard";
 import { CalendarCard } from "@/components/settings/CalendarCard";
 import { ShareCard } from "@/components/settings/ShareCard";
 import { SoundCard } from "@/components/settings/SoundCard";
+import { DeleteAccount } from "@/components/settings/DeleteAccount";
 import { ExerciseSettings } from "@/components/settings/ExerciseSettings";
 import { ChevronIcon, MoonIcon, SunriseIcon } from "@/components/ui/Icons";
 import { Button } from "@/components/ui/Button";
@@ -155,6 +156,7 @@ export function MoreScreen() {
           <li>{t("privacy.noAds")}</li>
           <li>{t("privacy.export")}</li>
           <li>{t("privacy.share")}</li>
+          <li>{t("privacy.delete")}</li>
         </ul>
       </Card>
       <ExportCard />
@@ -163,6 +165,7 @@ export function MoreScreen() {
         <Button variant="secondary" onClick={signOut}>
           {t("signOut")}
         </Button>
+        <DeleteAccount />
       </Card>
     </>
   );
