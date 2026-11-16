@@ -206,3 +206,32 @@ test("offline: a failed save is retried by itself when the connection comes back
     .poll(async () => (await blockLogs(id)).find((l) => l.block === "work")?.items_done)
     .toEqual(["work-0"]);
 });
+
+test("M14 offline queue: a tick saved while offline survives closing the app and is sent on the next open", async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName === "webkit", "WebKit can't intercept requests to the local API");
+  const id = await user(page);
+  await setWakeMinutesAgo(id, 150);
+  await setChecklist(id, "work", ["Alpha"]);
+  await page.goto("/today");
+  const item = page
+    .getByRole("region", { name: "Current block" })
+    .getByRole("checkbox", { name: "Alpha", exact: true });
+  await expect(item).toBeVisible({ timeout: 15_000 });
+  await page.route("**/rest/v1/rpc/set_block_item**", (r) => r.abort("internetdisconnected"));
+  await item.click();
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("Nothing was lost");
+  // The app is closed before the connection comes back.
+  await page.goto("about:blank");
+  await page.unroute("**/rest/v1/rpc/set_block_item**");
+  expect((await blockLogs(id)).find((l) => l.block === "work")?.items_done ?? []).toEqual([]);
+  // Next open, online: the tick is sent by itself.
+  await page.goto("/today");
+  await expect(item).toHaveAttribute("aria-checked", "true", { timeout: 15_000 });
+  await expect
+    .poll(async () => (await blockLogs(id)).find((l) => l.block === "work")?.items_done)
+    .toEqual(["work-0"]);
+  await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
+});
