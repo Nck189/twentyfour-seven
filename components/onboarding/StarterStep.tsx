@@ -2,12 +2,14 @@
 
 import { useTranslations } from "next-intl";
 import type { JSX } from "react";
-import { BriefcaseIcon, CapIcon, LaptopIcon, SlidersIcon } from "@/components/ui/Icons";
+import { BriefcaseIcon, CapIcon, LaptopIcon, MoonIcon, PeopleIcon, SlidersIcon } from "@/components/ui/Icons";
 import { STARTERS, type Starter } from "@/content/starters";
 
 const ICON: Record<Starter["key"] | "custom", (p: { className?: string }) => JSX.Element> = {
   student: CapIcon,
   office: BriefcaseIcon,
+  shift: MoonIcon,
+  parent: PeopleIcon,
   flex: LaptopIcon,
   custom: SlidersIcon,
 };

@@ -270,3 +270,7 @@ Format: date · decision · why · how to change it
     - the share of tasks that ran over;
     - the tags (3 or more tasks each) that run over most.
   - **Deferred:** finishing a task from Today or the Night ritual doesn't ask yet.
+- 2026-11-16 · M14 step 2 (Minnie: "ทำต่อ")
+  - **G8 presets:** "Shift work" (wake 10:30, work 14–22, 8 h sleep) and "Parent" (wake 06:00, no fixed slots, 7.5 h sleep) join Student / Office / Flexible. A unit test checks every preset's week plans with no conflict and no short sleep.
+  - **G15 privacy promise in More**, in plain words: private to your account, no ads, never sold, download anytime, and the share link shows only free/busy and can be turned off. It doesn't promise self-serve deletion, because the app has no delete-account button yet (question for Minnie).
+  - **Estimate vs actual** now also asks after ticking an estimated task on Today.

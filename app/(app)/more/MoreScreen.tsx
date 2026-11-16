@@ -148,6 +148,15 @@ export function MoreScreen() {
       <Card title={t("install")} id="install">
         <p className="text-muted">{installed ? t("installDone") : t("installSteps")}</p>
       </Card>
+      {/* G15: the privacy promise in plain words, next to the export it points to. */}
+      <Card title={t("privacy.title")} id="privacy">
+        <ul className="flex list-disc flex-col gap-1 pl-5 text-sm">
+          <li>{t("privacy.private")}</li>
+          <li>{t("privacy.noAds")}</li>
+          <li>{t("privacy.export")}</li>
+          <li>{t("privacy.share")}</li>
+        </ul>
+      </Card>
       <ExportCard />
       <Card title={t("account")}>
         {email && <p className="mb-3 text-muted">{t("signedInAs", { email })}</p>}

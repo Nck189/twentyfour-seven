@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { ActualPrompt } from "@/components/backlog/ActualPrompt";
 import { DEFAULT_BLOCK } from "@/lib/backlog";
 import { useBacklog } from "@/lib/backlog/useBacklog";
 import type { BlockKey } from "@/content/blocks";
@@ -24,13 +25,16 @@ export function BlockTasks({
   const t = useTranslations("today.block");
   const backlog = useBacklog(userId);
   const [coins, setCoins] = useState<number | null>(null);
+  // M14 estimate vs actual: finishing an estimated task here asks too (same as Plan).
+  const [asking, setAsking] = useState<string | null>(null);
+  const askItem = backlog.items.find((i) => i.id === asking && (i.estimate_min ?? 0) > 0);
   const items = backlog.items.filter(
     (i) =>
       i.scheduled_date === date &&
       (i.block ?? DEFAULT_BLOCK) === block &&
       (i.status === "scheduled" || i.status === "done"),
   );
-  if (items.length === 0) return null;
+  if (items.length === 0 && !askItem) return null;
   return (
     <section aria-label={t("tasks")} className="mt-3">
       <h3 className="mb-1 text-sm font-bold text-muted">{t("tasks")}</h3>
@@ -52,11 +56,22 @@ export function BlockTasks({
                 sfx.tick();
                 const granted = await backlog.complete(i.id);
                 if (granted) setCoins(granted);
+                if (granted !== null && (i.estimate_min ?? 0) > 0) setAsking(i.id);
               }}
             />
           );
         })}
       </div>
+      {askItem && (
+        <ActualPrompt
+          item={askItem as typeof askItem & { estimate_min: number }}
+          onPick={(min) => {
+            setAsking(null);
+            void backlog.update(askItem.id, { actual_min: min });
+          }}
+          onSkip={() => setAsking(null)}
+        />
+      )}
       {coins !== null && (
         <p role="status" className="mt-1 text-sm font-bold text-primary">
           {t("taskCoins", { n: coins })}

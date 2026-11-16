@@ -14,7 +14,7 @@ export type StarterKind = {
   events: FixedEvent[];
 };
 export type Starter = {
-  key: "student" | "office" | "flex";
+  key: "student" | "office" | "shift" | "parent" | "flex";
   kinds: StarterKind[];
   /** Blocks without a built-in default get suggestion 1; the rest keep their default. */
   first10: Partial<Record<BlockKey, string | null>>;
@@ -55,6 +55,29 @@ export const STARTERS: Starter[] = [
         events: [{ id: "work", key: "work", title: null, start: "09:00", end: "18:00" }],
       },
       DAY_OFF("09:00"),
+    ],
+    first10: FIRST10,
+  },
+  {
+    // G8: presets by audience (docs/GROWTH.md).
+    key: "shift",
+    kinds: [
+      {
+        key: "shift_day",
+        weekdays: [1, 2, 3, 4, 5],
+        wake: "10:30",
+        sleepMin: 480,
+        events: [{ id: "work", key: "work", title: null, start: "14:00", end: "22:00" }],
+      },
+      DAY_OFF("10:30"),
+    ],
+    first10: FIRST10,
+  },
+  {
+    key: "parent",
+    kinds: [
+      { key: "parent_day", weekdays: [1, 2, 3, 4, 5], wake: "06:00", sleepMin: 450, events: [] },
+      DAY_OFF("07:00"),
     ],
     first10: FIRST10,
   },
