@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, type ReactNode } from "react";
-import { AppMark } from "@/components/art/AppMark";
+import { SproutMark } from "@/components/art/AppMark";
 import { ExerciseArt } from "@/components/art/Exercise";
 import { CapsuleMachine } from "@/components/art/farm/Capsule";
 import { ScarecrowArt, StreakSun } from "@/components/art/Streak";
@@ -18,8 +18,8 @@ const ART: Record<TipId, ReactNode> = {
   night: <TicketArt className="h-8 w-12" kind="night" />,
   exercise: <ExerciseArt type="run" className="h-10 w-10" />,
   streak: <ScarecrowArt className="h-10 w-10" />,
-  plan: <AppMark className="h-10 w-10" />,
-  plots: <AppMark className="h-10 w-10" />,
+  plan: <SproutMark className="h-10 w-10" />,
+  plots: <SproutMark className="h-10 w-10" />,
   capsule: <CapsuleMachine className="h-10 w-10" />,
 };
 

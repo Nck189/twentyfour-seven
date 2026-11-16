@@ -49,8 +49,8 @@ function Eyes({ cx, cy, mood }: { cx: number; cy: number; mood: Mood }) {
   );
 }
 
-/** The big round head centred on (cx, cy). */
-function Head({
+/** The big round head centred on (cx, cy). Exported for the app icon (components/art/AppIcon.tsx). */
+export function SomHead({
   cx,
   cy,
   mood,
@@ -192,7 +192,7 @@ export function SomArt({
           <ellipse cx={30} cy={30.2} rx={4.6} ry={1.2} fill={FUR.light} />
           <ellipse cx={29} cy={39} rx={8.8} ry={1.7} fill={FUR.dark} />
           <circle cx={37.6} cy={38.4} r={1.6} fill={FUR.base} />
-          <Head cx={15.5} cy={30.4} mood="shut" tilt={-6} />
+          <SomHead cx={15.5} cy={30.4} mood="shut" tilt={-6} />
           <Bubbles />
         </g>
       )}
@@ -208,13 +208,13 @@ export function SomArt({
           <ellipse cx={27.5} cy={29.5} rx={9.3} ry={5.3} fill={FUR.base} transform="rotate(-18 27.5 29.5)" />
           <ellipse cx={4.6} cy={39.4} rx={2.6} ry={1.3} fill={CREAM} />
           <ellipse cx={9.4} cy={39.6} rx={2.6} ry={1.3} fill={CREAM} />
-          <Head cx={15} cy={30.6} mood="shut" tilt={-4} />
+          <SomHead cx={15} cy={30.6} mood="shut" tilt={-4} />
         </g>
       )}
       {(pose === "sit" || pose === "lookUp" || pose === "happy" || pose === "carrySeed") && (
         <g>
           <SitBody tailUp={pose === "happy"} />
-          <Head
+          <SomHead
             cx={24}
             cy={pose === "lookUp" ? 20.6 : 21.4}
             mood={pose === "happy" ? "happy" : pose === "lookUp" ? "up" : "open"}
