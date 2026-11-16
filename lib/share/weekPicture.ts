@@ -24,13 +24,18 @@ const H = 675;
 const SCALE = 2;
 const GROUND = 468;
 
-/** Where each art slot goes on the card (logical px): x, y, size. */
+/** Every art piece stands on y = 41 of its 48×48 box (its soft shadow; parts.tsx GROUND_Y + 1). */
+const ART_FEET = 41 / 48;
+/** Top of a piece of `size` whose feet sit on the grass (a little into it, like the farm scene). */
+export const standY = (size: number) => Math.round(GROUND + 4 - size * ART_FEET);
+
+/** Where each art slot goes on the card (logical px): x, y, size. Everything stands on the ground. */
 export const WEEK_PICTURE_SLOTS = {
-  house: [392, 330, 128],
-  som: [28, 372, 116],
-  crop1: [150, 396, 92],
-  crop2: [232, 396, 92],
-  crop3: [314, 396, 92],
+  house: [392, standY(128), 128],
+  som: [28, standY(116), 116],
+  crop1: [150, standY(92), 92],
+  crop2: [232, standY(92), 92],
+  crop3: [314, standY(92), 92],
   streak: [0, 0, 28],
 } as const satisfies Record<string, readonly [number, number, number]>;
 

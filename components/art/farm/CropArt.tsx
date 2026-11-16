@@ -17,11 +17,14 @@ const SEED_TONE: Record<Rarity, keyof typeof TONES> = {
   legendary: "yellow",
 };
 
+/** Centred on 24 like every later stage, so the plant doesn't jump sideways when it sprouts. */
 const SEEDS: readonly [x: number, rot: number][] = [
-  [16.5, -20],
-  [21.5, 12],
-  [26.5, -8],
+  [19, -20],
+  [24, 12],
+  [29, -8],
 ];
+/** The marker's tag: rarity colors, but a pale stone label for common (wood on wood didn't read). */
+const TAG_TONE: Record<Rarity, keyof typeof TONES> = { ...SEED_TONE, common: "stone" };
 
 /**
  * Stage 0: just planted. A flat dug row with three seeds in it and a little marker stake whose tag
@@ -30,11 +33,13 @@ const SEEDS: readonly [x: number, rot: number][] = [
  */
 export function Seed({ rarity }: { rarity: Rarity }) {
   const tone = TONES[SEED_TONE[rarity]];
+  const tag = TONES[TAG_TONE[rarity]];
   const y = GROUND_Y;
   return (
     <g>
-      <ellipse cx={21.5} cy={y} rx={10} ry={2.3} fill="var(--art-soil-deep)" />
-      <ellipse cx={21.5} cy={y - 0.4} rx={8.6} ry={1.5} fill="var(--art-soil-dark)" />
+      {/* A flat dug row (a "half-buried" version read as a mound again; QC 2026-11-16). */}
+      <ellipse cx={24} cy={y} rx={10} ry={2.3} fill="var(--art-soil-deep)" />
+      <ellipse cx={24} cy={y - 0.4} rx={8.6} ry={1.5} fill="var(--art-soil-dark)" />
       {SEEDS.map(([x, rot]) => (
         <g key={x} transform={`rotate(${rot} ${x} ${y - 0.8})`}>
           <ellipse cx={x + 0.3} cy={y - 0.5} rx={1.7} ry={1.05} fill={tone.dark} />
@@ -42,11 +47,20 @@ export function Seed({ rarity }: { rarity: Rarity }) {
           <ellipse cx={x - 0.5} cy={y - 1.1} rx={0.55} ry={0.3} fill={tone.light} />
         </g>
       ))}
-      <Shadow cx={34} rx={3} />
-      <rect x={33.2} y={y - 14} width={1.6} height={14} rx={0.8} fill="var(--art-wood-dark)" />
-      <rect x={29.4} y={y - 18} width={9.2} height={6.4} rx={1.8} fill={tone.dark} />
-      <rect x={29.4} y={y - 18.4} width={9.2} height={5.8} rx={1.8} fill={tone.base} />
-      <rect x={30.6} y={y - 17.3} width={3.8} height={1.2} rx={0.6} fill={tone.light} />
+      <Shadow cx={36.2} rx={3} />
+      <rect x={35.4} y={y - 14} width={1.6} height={14} rx={0.8} fill="var(--art-wood-dark)" />
+      <rect x={31.6} y={y - 18} width={9.2} height={6.4} rx={1.8} fill={tag.dark} />
+      <rect x={31.6} y={y - 18.4} width={9.2} height={5.8} rx={1.8} fill={tag.base} />
+      <rect x={32.8} y={y - 17.3} width={3.4} height={1.1} rx={0.55} fill={tag.light} />
+      {/* A seed drawn on the tag: a seed marker, never a lollipop or a signpost. */}
+      <ellipse
+        cx={37.6}
+        cy={y - 15}
+        rx={1.6}
+        ry={1}
+        fill={tone.dark}
+        transform={`rotate(-20 37.6 ${y - 15})`}
+      />
     </g>
   );
 }
