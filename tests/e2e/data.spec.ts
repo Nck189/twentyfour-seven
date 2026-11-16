@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
+import { expectNoSeriousA11y } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
+import { rest, userIdFor } from "../helpers/db";
 import { IS_PROD_RUN } from "../helpers/env";
 import { EXPORT_TABLES } from "@/lib/export/tables";
 
@@ -83,4 +85,23 @@ test("regression: language change survives an immediate reload while the profile
   await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("วันนี้");
   await page.waitForTimeout(1500);
   await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("วันนี้");
+});
+
+test("G15 delete my account: two steps, then signed out and the data is gone", async ({ page }) => {
+  test.skip(IS_PROD_RUN, "deletes a user");
+  const email = uniqueEmail("delete-me");
+  await setPrefs(page, { locale: "en", theme: "light" });
+  await signIn(page, email);
+  const id = await userIdFor(email);
+  await page.goto("/more");
+  await page.getByRole("button", { name: "Delete my account" }).click();
+  const confirm = page.getByRole("alertdialog", { name: "Delete your account?" });
+  await expect(confirm).toBeVisible();
+  await expectNoSeriousA11y(page);
+  await confirm.getByRole("button", { name: "Keep my account" }).click();
+  await expect(confirm).toHaveCount(0);
+  await page.getByRole("button", { name: "Delete my account" }).click();
+  await confirm.getByRole("button", { name: "Yes, delete everything" }).click();
+  await expect(page).toHaveURL(/\/login/);
+  expect(await rest(`profiles?user_id=eq.${id}&select=user_id`)).toEqual([]);
 });

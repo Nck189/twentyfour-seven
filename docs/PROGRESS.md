@@ -51,6 +51,7 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 - **Later (Minnie, 2026-11-03 — "ค่อยทำ โน้ตไว้ก่อน"):** (1) send sign-in emails from a dedicated Gmail (e.g. a new app-only address) instead of Minnie's own — re-run `scripts/setup-email.mjs` with it; later a real email service + own domain (`no-reply@…`) if many friends join. (2) Invite-only sign-up (only friends Minnie invites can create an account) — today anyone with the link can sign up.
 - ~~**M12 share (G7 R-M12-14)**~~ **Answered 2026-11-14 ("เอาที่เหมาะสม"):** sick/vacation days and slots inside Free show as busy.
 - **M12 (merged 2026-11-14, PR #20):** key on Vercel ✅; left: `db push` (share) + redeploy + a real-iPhone copy check + `qc:prod`.
+- ~~**Delete account (M14, G15)**~~ **Answered 2026-11-16 ("เพิ่มได้"):** More → Account → Delete my account (2 steps).
 - Please test the offline page once on your real iPhone — link + steps sent in chat 2026-11-02; waiting for her result.
 
 ---
