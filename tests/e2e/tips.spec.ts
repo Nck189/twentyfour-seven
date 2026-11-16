@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
-import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
+import { setPrefs, settle, signIn, uniqueEmail } from "../helpers/auth";
 import { rest, userIdFor } from "../helpers/db";
 import { gotoToday } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
@@ -47,6 +47,7 @@ test("CJ-M10-2 a tip shows once, one at a time; Skip all turns them off; More br
 
   // More → Show tips again.
   await page.goto("/more");
+  await settle(page);
   // A tap before the page is interactive does nothing; tap again until it answers (CI WebKit).
   await expect(async () => {
     await page.getByRole("button", { name: "Show tips again" }).click();

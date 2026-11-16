@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { expectNoSeriousA11y } from "../helpers/a11y";
-import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
+import { setPrefs, settle, signIn, uniqueEmail } from "../helpers/auth";
 import { rest, userIdFor } from "../helpers/db";
 import { IS_PROD_RUN } from "../helpers/env";
 import { EXPORT_TABLES } from "@/lib/export/tables";
@@ -94,6 +94,8 @@ test("G15 delete my account: two steps, then signed out and the data is gone", a
   await signIn(page, email);
   const id = await userIdFor(email);
   await page.goto("/more");
+  // A tap before the page is interactive does nothing (CI WebKit, 2026-11-16): wait for it.
+  await settle(page);
   await page.getByRole("button", { name: "Delete my account" }).click();
   const confirm = page.getByRole("alertdialog", { name: "Delete your account?" });
   await expect(confirm).toBeVisible();

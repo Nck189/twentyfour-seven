@@ -213,6 +213,7 @@ Hand-built SVG in the same style (start from `design/reference-style-a.svg`), ea
 - Each setup step and the "All set" screen.
 - The offline and error pages (Som under an umbrella).
 - A sky strip on Today that follows the time of day (the farm's sky tokens).
+- **Som follows the day (Minnie, 2026-11-16: "can the icon change with the current block?").** The Home Screen icon can't: iOS and Android fix a web app's icon when it is installed. Inside the app it can, and the art exists (`components/art/AppIcon.tsx` has sunrise, meadow and night skies). Put the mark in the Today header and let it follow the current block: sunrise and open eyes for Wake, daytime for Focus/Work/Gradation/Free, dusk for Down Time, night and closed eyes for Sleep. The browser tab icon can follow too on desktop.
 **Tests:** art lint; each new piece on `/dev/art`; a look at 48 px and 160 px in light and dark.
 
 ### F5. Short cutscenes at milestones
