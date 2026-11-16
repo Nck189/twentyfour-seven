@@ -289,3 +289,15 @@ Format: date · decision · why · how to change it
   - **How it's built:** the data is read server-side with the service key, and only the table reaches the browser. The math is the pure function `lib/stats/retention.ts`, with unit tests.
   - **Deferred:** where in the day people drop off.
 - 2026-11-16 · **G4 weekly share card.** Stats → Overview has "Share my week", a small picture of the last 7 days for IG or LINE. It shows days logged, perfect days, the streak and the best block, and nothing private (no tasks, names, times or notes). It reuses the M12 picture drawer (`lib/share/picture.ts`, UI tokens, no black) and is drawn ahead of the tap, so the iOS share sheet works.
+- 2026-11-16 · **M14 states audit** (`docs/qa/M14-states-audit.md`). A failed load must say so and never show a default as if it were the user's: the exercise goal, the requests inbox and the animal pen got an alert with Try again (CJ-STATE-1/2). The Collection book, streak chip and café toggle still hide or disable on a partial failure (S3, deferred).
+- 2026-11-16 · **G7 M14 fixes**
+  - **Offline queue (R-M14-1/2/11):**
+    - **Final, dropped at once:** an explicit list (SQLSTATE 22/23, P0001, PGRST1xx/2xx).
+    - **Retried:** everything else. That includes 42501 from an expired token sent with the anon key, which used to drop the save.
+    - **A refused save:** kept for up to 5 tries, together with the same block's later saves. Other blocks carry on.
+    - **A restored block:** gets the server's copy as its rollback baseline.
+    - **During a replay:** taps wait behind it, and the device copy is updated after each save.
+  - **Trade-off kept (R-M14-10, S3):** a check-in sent late is judged by the server's clock. A start or first-10 sent more than 10 min late counts as backfilled (no bonus). That's the anti-cheat rule (CJ-06): the server can't trust device times. There's no "saved late" note yet.
+  - **Week picture (R-M14-3/4):** it counts days with something logged over exactly 7 days. It's now the farm card GROWTH G4 asks for: Som, ripe crops and the farmhouse drawn from the app's own SVG art, the streak, and a Day score ring. It always uses the daytime palette (light tokens), even in dark mode, because it's a farm scene.
+  - **Privacy wording (R-M14-13):** exactly true now. Data is kept with hosting providers to run the app, and anonymous totals are looked at. It's never sold.
+- 2026-11-16 · **Seed art (Minnie: "เหมือนขี้ไปหน่อย").** A just-planted plot is now a flat dug row with three seeds and a marker stake. The stake's tag keeps the rarity color. It replaces the soil mound with a lump on top.
