@@ -105,7 +105,19 @@ export async function signIn(
   }
   await page.goto(`/auth/callback?token_hash=${body.hashed_token}&type=${body.verification_type}`);
   await page.waitForURL("**/today");
+  await settle(page);
   return email;
+}
+
+/**
+ * Waits until the page's own requests have finished (or 10 s). Tests navigate with `page.goto`,
+ * a hard navigation; on the CI runner WebKit fails one that starts while Today is still loading
+ * ("WebKit encountered an internal error"). Every such failure in two CI runs left Today right
+ * after landing on it, and no spec that waited first ever hit it. Real use isn't affected: the
+ * app's own tabs navigate on the client.
+ */
+export async function settle(page: Page) {
+  await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
 }
 
 export async function setPrefs(

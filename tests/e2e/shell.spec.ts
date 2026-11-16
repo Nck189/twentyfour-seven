@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
-import { setPrefs, signIn } from "../helpers/auth";
+import { setPrefs, settle, signIn } from "../helpers/auth";
 import { fixClock } from "../helpers/clock";
 import { rest, userIdFor } from "../helpers/db";
 import { IS_PROD_RUN } from "../helpers/env";
@@ -32,6 +32,7 @@ test.describe("app shell", () => {
           [1, 2, 3].map((n) => ({ user_id: id, date: addDays(today, -n - 1), kind: "minimum" })),
         ),
       });
+      await settle(page);
       await page.reload();
     }
     for (const s of SCREENS) {
@@ -80,6 +81,8 @@ test.describe("app shell", () => {
     await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("เพิ่มเติม");
     for (const s of SCREENS) {
       await page.goto(`/${s}`);
+      // The screen's own text (not its loading state), and no hard navigation mid-load.
+      await settle(page);
       const text = await page.locator("body").innerText();
       expect(text).not.toMatch(/\b(?:app|common|tabs|login|today|plan|farm|stats|more)\.[a-zA-Z]+\b/);
     }
