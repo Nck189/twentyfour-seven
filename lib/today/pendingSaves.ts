@@ -17,6 +17,8 @@ export type PendingOp<Log = unknown> = {
   event: [string, Record<string, unknown>];
   /** When the action happened (ISO). */
   at: string;
+  /** Replays the server answered but refused for a retryable reason (R-M14-1). */
+  tries?: number;
 };
 
 /** Older pending saves are dropped: a week-old check-in isn't worth guessing about. */
@@ -62,10 +64,33 @@ export function readPending(store: Store | null, userId: string, now: Date): Pen
   }
 }
 
-/** A refusal from Postgres itself (SQLSTATE, e.g. a check failed): retrying won't help. */
-export function isPermanent(error: unknown): boolean {
+const codeOf = (error: unknown): string => {
   const code = (error as { code?: unknown } | null)?.code;
-  return typeof code === "string" && /^[0-9A-Z]{5}$/.test(code);
+  return typeof code === "string" ? code : "";
+};
+
+/**
+ * Retrying can't help: bad data or a rule (SQLSTATE classes 22 and 23, a function's own
+ * `raise` P0001), or a request the API can't map any more (PGRST1xx/2xx, e.g. an RPC whose
+ * parameters changed in a later deploy). An explicit list (G7 R-M14-1): anything else, such as
+ * 42501 from an expired token sent with the anon key, a timeout or a conflict, is retried.
+ */
+export function isPermanent(error: unknown): boolean {
+  const code = codeOf(error);
+  return /^(22|23)[0-9A-Z]{3}$/.test(code) || code === "P0001" || /^PGRST[12]\d\d$/.test(code);
+}
+
+/** A save the server keeps refusing for a retryable reason is dropped after this many tries. */
+export const MAX_TRIES = 5;
+
+/**
+ * What a replay does with a failed save: drop it (final, or tried too often), keep it for later
+ * without holding up the rest (the server answered but refused), or stop (no answer: offline).
+ */
+export function replayDecision(error: unknown, tries: number): "drop" | "keep" | "stop" {
+  if (isPermanent(error)) return "drop";
+  if (!codeOf(error)) return "stop";
+  return tries + 1 >= MAX_TRIES ? "drop" : "keep";
 }
 
 export async function execReq(

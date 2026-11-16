@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { isPermanent, readPending, writePending, type PendingOp } from "@/lib/today/pendingSaves";
+import {
+  MAX_TRIES,
+  isPermanent,
+  readPending,
+  replayDecision,
+  writePending,
+  type PendingOp,
+} from "@/lib/today/pendingSaves";
 
 const mem = () => {
   const m = new Map<string, string>();
@@ -46,5 +53,29 @@ describe("pending check-ins survive closing the app (M14)", () => {
     expect(isPermanent({ code: "", message: "TypeError: Failed to fetch" })).toBe(false);
     expect(isPermanent({ code: "PGRST301" })).toBe(false);
     expect(isPermanent(null)).toBe(false);
+  });
+
+  it("an explicit list decides what's final (G7 R-M14-1)", () => {
+    // Data / integrity refusals and a request the API can't map (changed RPC or column) are final.
+    for (const code of ["22023", "23505", "P0001", "PGRST202", "PGRST204", "PGRST100"])
+      expect(isPermanent({ code }), code).toBe(true);
+    // Auth (an expired token sent with the anon key), connection, conflicts, load, timeouts: retry.
+    for (const code of ["42501", "28000", "08006", "40001", "53300", "57014", "PGRST301", "PGRST303"])
+      expect(isPermanent({ code }), code).toBe(false);
+  });
+
+  it("replay: final → drop; network → stop; any other refusal is kept (not blocking) until 5 tries", () => {
+    expect(replayDecision({ code: "23514" }, 0)).toBe("drop");
+    expect(replayDecision({ code: "", message: "Failed to fetch" }, 0)).toBe("stop");
+    expect(replayDecision(new TypeError("Failed to fetch"), 3)).toBe("stop");
+    expect(replayDecision({ code: "42501" }, 0)).toBe("keep");
+    expect(replayDecision({ code: "42501" }, MAX_TRIES - 2)).toBe("keep");
+    expect(replayDecision({ code: "42501" }, MAX_TRIES - 1)).toBe("drop");
+  });
+
+  it("the try count survives closing the app", () => {
+    const s = mem();
+    writePending(s, "u1", [{ ...op("2026-11-16T09:00:00Z"), tries: 2 }]);
+    expect(readPending(s, "u1", NOW)[0].tries).toBe(2);
   });
 });

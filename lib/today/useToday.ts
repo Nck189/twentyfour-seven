@@ -20,7 +20,14 @@ import {
 import { sameDayContext, shouldRefreshOnForeground } from "./foreground";
 import { loadDayContext } from "./loadContext";
 import { QUIET_RETRY_MS } from "@/lib/supabase/fetchWithTimeout";
-import { execReq, isPermanent, readPending, writePending, type SaveReq } from "./pendingSaves";
+import {
+  execReq,
+  readPending,
+  replayDecision,
+  writePending,
+  type PendingOp,
+  type SaveReq,
+} from "./pendingSaves";
 
 const pendingStore = () => {
   try {
@@ -98,20 +105,18 @@ export function useToday(now: Date) {
   const serverRef = useRef<Record<string, BlockLog>>({});
   const seqRef = useRef<Record<string, number>>({});
   /** A save as plain data, so a failed one can be kept on the device (M14 offline queue). */
-  type Op = {
-    key: string;
-    next: BlockLog;
-    req: SaveReq;
-    event: [string, Record<string, unknown>];
-    at: string;
-  };
+  type Op = PendingOp<BlockLog>;
   const queueRef = useRef<Op[]>([]);
   const userIdRef = useRef<string | null>(null);
   const restoredRef = useRef(false);
+  /** A replay is running: new taps wait behind it (R-M14-11), and these are its unsent saves. */
+  const replayingRef = useRef(false);
+  const replayRestRef = useRef<Op[]>([]);
   const [replay, setReplay] = useState(0);
   /** Keep the failed saves on the device until they're sent (survives closing the app). */
   const persist = useCallback(() => {
-    if (userIdRef.current) writePending(pendingStore(), userIdRef.current, queueRef.current);
+    if (userIdRef.current)
+      writePending(pendingStore(), userIdRef.current, [...replayRestRef.current, ...queueRef.current]);
   }, []);
   /** Saves currently in flight per block: a refetch must not overwrite those blocks. */
   const inflightRef = useRef<Record<string, number>>({});
@@ -161,7 +166,11 @@ export function useToday(now: Date) {
           (inflightRef.current[k] ?? 0) > 0 || queueRef.current.some((o) => o.key === k);
         const merged: Record<string, BlockLog> = { ...loadedLogs };
         for (const [k, v] of Object.entries(logsRef.current)) if (busy(k)) merged[k] = v;
-        for (const [k, v] of Object.entries(loadedLogs)) if (!busy(k)) serverRef.current[k] = v;
+        // A block with restored saves still gets the server's copy as the baseline a failed replay
+        // rolls back to; otherwise it would be blanked and a new Start would overwrite the real
+        // start (G7 R-M14-2).
+        for (const [k, v] of Object.entries(loadedLogs))
+          if (!busy(k) || !(k in serverRef.current)) serverRef.current[k] = v;
         logsRef.current = merged;
         setLogs(merged);
         setWakes(Object.fromEntries(((wakeRows.data ?? []) as WakeEvent[]).map((w) => [w.date, w])));
@@ -341,6 +350,12 @@ export function useToday(now: Date) {
     async (key: string, next: BlockLog, req: SaveReq, event: Op["event"]) => {
       const op: Op = { key, next, req, event, at: new Date().toISOString() };
       show(key, next);
+      if (replayingRef.current) {
+        // Older saves are being sent: this one goes out after them, in order (R-M14-11).
+        queueRef.current = [...queueRef.current, op];
+        persist();
+        return;
+      }
       if (queueRef.current.length) {
         // Earlier writes are still pending: keep order, wait for "Try again".
         failQueue([op]);
@@ -352,30 +367,68 @@ export function useToday(now: Date) {
         failQueue([op]);
       }
     },
-    [failQueue, runOp, show],
+    [failQueue, persist, runOp, show],
   );
 
   const retrySave = useCallback(async () => {
-    const ops = queueRef.current;
-    queueRef.current = [];
+    if (replayingRef.current) return;
+    replayingRef.current = true;
     setSaveError(0);
-    for (let i = 0; i < ops.length; i++) {
-      show(ops[i].key, ops[i].next);
-      try {
-        await runOp(ops[i]);
-      } catch (e) {
-        // The server itself refused it (not the network): retrying can't help, so let it go and
-        // show what the server has, instead of an error that never clears.
-        if (isPermanent(e)) {
-          show(ops[i].key, serverRef.current[ops[i].key]);
+    // Saves the server refused for now: kept for the next try, with the same block's later saves
+    // held behind them (order per block), while other blocks carry on (G7 R-M14-1).
+    const kept: Op[] = [];
+    const held = new Set<string>();
+    let rest = queueRef.current;
+    queueRef.current = [];
+    // The device copy always has what's still unsent, so a kill mid-replay doesn't resend (R-M14-11).
+    const sync = () => {
+      replayRestRef.current = [...kept, ...rest];
+      persist();
+    };
+    sync();
+    try {
+      for (;;) {
+        // Taps made during the replay go out after the older saves.
+        if (!rest.length && queueRef.current.length) {
+          rest = queueRef.current;
+          queueRef.current = [];
+        }
+        if (!rest.length) break;
+        const [op, ...after] = rest;
+        if (held.has(op.key)) {
+          kept.push(op);
+          rest = after;
           continue;
         }
-        failQueue(ops.slice(i));
-        return;
+        show(op.key, op.next);
+        try {
+          await runOp(op);
+        } catch (e) {
+          const d = replayDecision(e, op.tries ?? 0);
+          // No answer (offline): stop here; everything left waits for the next try.
+          if (d === "stop") break;
+          if (d === "keep") {
+            kept.push({ ...op, tries: (op.tries ?? 0) + 1 });
+            held.add(op.key);
+          } else {
+            // Final (or refused too often): let it go and show what the server has.
+            show(op.key, serverRef.current[op.key]);
+          }
+        }
+        rest = after;
+        sync();
       }
+    } finally {
+      replayingRef.current = false;
+      replayRestRef.current = [];
     }
+    queueRef.current = [...kept, ...rest, ...queueRef.current];
     persist();
-  }, [failQueue, persist, runOp, show]);
+    if (queueRef.current.length) {
+      for (const key of new Set(queueRef.current.map((o) => o.key))) show(key, serverRef.current[key]);
+      setSaveError(queueRef.current.length);
+    }
+  }, [persist, runOp, show]);
 
   // Saves restored from the device are sent as soon as there's a connection.
   useEffect(() => {
