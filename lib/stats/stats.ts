@@ -270,10 +270,16 @@ export function weekShare(
   all: readonly DayFacts[],
   today: string,
   since: UsedSince = usedSince(all),
-): { days: number; of: 7; perfectDays: number; bestBlock: BlockKey | null } {
+): { days: number; of: 7; perfectDays: number; bestBlock: BlockKey | null; score: number | null } {
   const week = all.filter((d) => d.date > addDays(today, -7) && d.date <= today);
   const s = weekSummary(week, since);
-  return { days: week.filter(logged).length, of: 7, perfectDays: s.perfectDays, bestBlock: s.bestBlock };
+  return {
+    days: week.filter(logged).length,
+    of: 7,
+    perfectDays: s.perfectDays,
+    bestBlock: s.bestBlock,
+    score: s.avgOee,
+  };
 }
 
 // ---------- overview (Minnie 2026-11-10: plain numbers, like IG insights) ----------
