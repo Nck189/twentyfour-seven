@@ -473,7 +473,8 @@
       "empty": "After you finish a task, tap how long it really took. After {n} tasks, this shows how far your estimates run.",
       "ratio": "Tasks take about ×{x} your estimate",
       "over": "{p} of {n} tasks ran over",
-      "tag": "{tag}: ×{x}"
+      "tag": "{tag}: ×{x}",
+      "loadError": "Couldn't load your estimates."
     },
     "share": {
       "cardTitle": "Share my week",
@@ -516,7 +517,7 @@
     "privacy": {
       "title": "Your data is yours",
       "private": "Your plans, check-ins, tasks and farm are private to your account.",
-      "noAds": "No ads. Your data is never sold or given to anyone.",
+      "noAds": "No ads, and your data is never sold. It's kept with our hosting providers only to run the app, and we look at anonymous totals (like how many people come back) to make it better.",
       "export": "Download all of it any time, just below.",
       "share": "A share link shows only when you're free, never your plans, and you can turn it off.",
       "delete": "Delete your account any time in Account; everything goes with it."
