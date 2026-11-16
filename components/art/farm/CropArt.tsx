@@ -17,16 +17,36 @@ const SEED_TONE: Record<Rarity, keyof typeof TONES> = {
   legendary: "yellow",
 };
 
-/** Stage 0: a little soil mound with the seed peeking out. */
+const SEEDS: readonly [x: number, rot: number][] = [
+  [16.5, -20],
+  [21.5, 12],
+  [26.5, -8],
+];
+
+/**
+ * Stage 0: just planted. A flat dug row with three seeds in it and a little marker stake whose tag
+ * is the rarity color (Minnie 2026-11-16: the old round mound with a lump on top looked like poop,
+ * so nothing here is a brown blob on a mound).
+ */
 export function Seed({ rarity }: { rarity: Rarity }) {
   const tone = TONES[SEED_TONE[rarity]];
+  const y = GROUND_Y;
   return (
     <g>
-      <ellipse cx={24} cy={GROUND_Y - 0.5} rx={9} ry={4} fill="var(--art-soil-dark)" />
-      <ellipse cx={23.5} cy={GROUND_Y - 1.2} rx={8} ry={3.2} fill="var(--art-soil-light)" />
-      <ellipse cx={24.5} cy={GROUND_Y - 3.4} rx={3} ry={2.2} fill={tone.dark} />
-      <ellipse cx={24} cy={GROUND_Y - 3.8} rx={2.6} ry={1.9} fill={tone.base} />
-      <ellipse cx={23.2} cy={GROUND_Y - 4.5} rx={1} ry={0.6} fill={tone.light} />
+      <ellipse cx={21.5} cy={y} rx={10} ry={2.3} fill="var(--art-soil-deep)" />
+      <ellipse cx={21.5} cy={y - 0.4} rx={8.6} ry={1.5} fill="var(--art-soil-dark)" />
+      {SEEDS.map(([x, rot]) => (
+        <g key={x} transform={`rotate(${rot} ${x} ${y - 0.8})`}>
+          <ellipse cx={x + 0.3} cy={y - 0.5} rx={1.7} ry={1.05} fill={tone.dark} />
+          <ellipse cx={x} cy={y - 0.8} rx={1.5} ry={0.9} fill={tone.base} />
+          <ellipse cx={x - 0.5} cy={y - 1.1} rx={0.55} ry={0.3} fill={tone.light} />
+        </g>
+      ))}
+      <Shadow cx={34} rx={3} />
+      <rect x={33.2} y={y - 14} width={1.6} height={14} rx={0.8} fill="var(--art-wood-dark)" />
+      <rect x={29.4} y={y - 18} width={9.2} height={6.4} rx={1.8} fill={tone.dark} />
+      <rect x={29.4} y={y - 18.4} width={9.2} height={5.8} rx={1.8} fill={tone.base} />
+      <rect x={30.6} y={y - 17.3} width={3.8} height={1.2} rx={0.6} fill={tone.light} />
     </g>
   );
 }
