@@ -1,10 +1,10 @@
 "use client";
 
-import { useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { AppMark } from "@/components/art/AppMark";
+import { InAppNote } from "./InAppNote";
 import { CropArt } from "@/components/art/farm/CropArt";
 import { FarmSky } from "@/components/art/farm/FarmSky";
 import { Farmhouse } from "@/components/art/farm/Farmhouse";
@@ -12,17 +12,26 @@ import { PlotArt } from "@/components/art/farm/PlotArt";
 import { SomArt } from "@/components/art/Som";
 import { Segmented } from "@/components/ui/Segmented";
 import type { CropId } from "@/content/crops";
-import { isInAppBrowser } from "@/lib/platform/inAppBrowser";
+import { getSupabase } from "@/lib/supabase/client";
 import type { Locale } from "@/lib/i18n/config";
 import { usePrefs } from "@/lib/store/prefs";
 
 const CROPS: readonly CropId[] = ["strawberry", "radish", "corn", "carrot"];
 type Stage = 0 | 1 | 2 | 3;
-const noop = () => () => {};
+const MOTION = "(prefers-reduced-motion: reduce)";
+const subscribeMotion = (cb: () => void) => {
+  const m = window.matchMedia(MOTION);
+  m.addEventListener("change", cb);
+  return () => m.removeEventListener("change", cb);
+};
+const prefersReducedMotion = () => window.matchMedia(MOTION).matches;
 
 /** The farm growing once: each plot a step behind its neighbour, then all ripe. Still when motion is reduced. */
 function GrowingFarm({ label }: { label: string }) {
-  const reduce = useReducedMotion();
+  const skipAnimations = usePrefs((p) => p.skipAnimations);
+  // Read after hydration (the server can't know): the first paint matches the server's, so
+  // there is no hydration error for people with reduced motion (G7 R-B-2).
+  const reduce = useSyncExternalStore(subscribeMotion, prefersReducedMotion, () => false) || skipAnimations;
   const [tick, setTick] = useState(0);
   useEffect(() => {
     if (reduce || tick >= 6) return;
@@ -61,13 +70,20 @@ export function Landing() {
   const t = useTranslations("landing");
   const tl = useTranslations("login");
   const { locale, setLocale } = usePrefs();
-  // Links from LINE or Instagram open in their own browser: suggest the real one (B3).
-  const inApp = useSyncExternalStore(
-    noop,
-    () => isInAppBrowser(navigator.userAgent),
-    () => false,
-  );
-  const [copied, setCopied] = useState(false);
+  // Back after signing in can restore this page from the browser's cache, past the proxy:
+  // someone with a session goes on to Today (G7 R-B-1).
+  useEffect(() => {
+    const go = () =>
+      void getSupabase()
+        .auth.getSession()
+        .then(({ data }) => {
+          if (data.session) window.location.replace("/today");
+        })
+        .catch(() => {});
+    go();
+    window.addEventListener("pageshow", go);
+    return () => window.removeEventListener("pageshow", go);
+  }, []);
   const steps = [
     { key: "plan", art: <SomArt pose="sleep" className="h-14 w-14" /> },
     { key: "tap", art: <PlotArt cropId="radish" stage={1} className="h-14 w-14" /> },
@@ -105,23 +121,7 @@ export function Landing() {
         <p className="mt-2 text-lg text-muted">{t("subtitle")}</p>
       </div>
 
-      {inApp && (
-        <div role="note" className="rounded-xl bg-primary-soft p-3 text-sm">
-          <p className="font-bold text-primary">{t("inApp")}</p>
-          <button
-            type="button"
-            onClick={() => {
-              void navigator.clipboard?.writeText(window.location.origin).then(
-                () => setCopied(true),
-                () => setCopied(false),
-              );
-            }}
-            className="tap mt-2 min-h-11 rounded-full bg-surface px-4 font-bold"
-          >
-            {copied ? t("copied") : t("copyLink")}
-          </button>
-        </div>
-      )}
+      <InAppNote />
 
       <div className="flex flex-col gap-2">
         <Link

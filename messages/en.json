@@ -46,7 +46,9 @@
     "codePlaceholder": "123456",
     "codeTip": "Type the 6-digit code from the email (iPhone may offer it above the keyboard).",
     "whatIs": "What is 24/7?",
-    "or": "or"
+    "or": "or",
+    "googleCancelled": "Google sign-in was cancelled. Try again, or use the email code.",
+    "googleError": "Google sign-in didn't work. Use the email code for now."
   },
   "today": {
     "title": "Today",
@@ -1561,6 +1563,7 @@
     "privacy": "No ads. Your data is yours, and it's never sold.",
     "inApp": "For the full app, open this page in Safari or Chrome.",
     "copyLink": "Copy link",
-    "copied": "Copied"
+    "copied": "Copied",
+    "copyManual": "Copy this address:"
   }
 }

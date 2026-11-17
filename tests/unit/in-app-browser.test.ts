@@ -13,6 +13,19 @@ describe("in-app browsers (review fix B3)", () => {
       ),
     ).toBe(true);
   });
+  it("spots TikTok, X, Threads, WeChat and a plain Android WebView (G7 R-B-4)", () => {
+    expect(isInAppBrowser(`${IOS} Mobile/15E148 musical_ly_33.0.0 JsSdk/2.0 BytedanceWebview/d8a21c6`)).toBe(
+      true,
+    );
+    expect(isInAppBrowser(`${IOS} Mobile/15E148 Twitter for iPhone/10.40`)).toBe(true);
+    expect(isInAppBrowser(`${IOS} Mobile/15E148 Barcelona 330.0.0.20.105 (iPhone15,2)`)).toBe(true);
+    expect(isInAppBrowser(`${IOS} Mobile/15E148 MicroMessenger/8.0.49(0x18003127) NetType/WIFI`)).toBe(true);
+    expect(
+      isInAppBrowser(
+        "Mozilla/5.0 (Linux; Android 14; Pixel 8 Build/UQ1A.240205.004; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/125.0.6422.52 Mobile Safari/537.36",
+      ),
+    ).toBe(true);
+  });
   it("leaves Safari, Chrome and the installed app alone", () => {
     expect(isInAppBrowser(`${IOS} Version/17.5 Mobile/15E148 Safari/604.1`)).toBe(false);
     expect(isInAppBrowser(`${IOS} CriOS/125.0.6422.80 Mobile/15E148 Safari/604.1`)).toBe(false);

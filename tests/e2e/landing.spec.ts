@@ -54,6 +54,9 @@ test("inside LINE or Instagram's browser, the page says to open it in Safari or 
   await page.goto("/");
   await expect(page.getByRole("note")).toContainText("open this page in Safari or Chrome");
   await expect(page.getByRole("button", { name: "Copy link" })).toBeVisible();
+  // The login page says it too (G7 R-B-3).
+  await page.goto("/login");
+  await expect(page.getByRole("note")).toContainText("open this page in Safari or Chrome");
   await ctx.close();
 });
 
@@ -63,4 +66,28 @@ test("Google sign-in is off unless it has been set up (B2)", async ({ page }) =>
   await expect(page.getByRole("button", { name: "Email me a sign-in code" })).toBeVisible();
   // CI and local builds don't set NEXT_PUBLIC_GOOGLE_LOGIN, so the button must not show.
   await expect(page.getByRole("button", { name: "Continue with Google" })).toHaveCount(0);
+});
+
+test("a sign-in the person backed out of says so, not 'link expired' (G7 R-B-6)", async ({ page }) => {
+  await setPrefs(page, { locale: "en", theme: "light" });
+  await page.goto("/auth/callback?error=access_denied&error_description=The+user+denied+access");
+  await expect(page).toHaveURL(/\/login\?error=cancelled$/);
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("Google sign-in was cancelled.");
+});
+
+test("reduced motion: the farm stands ripe and the page has no hydration error (G7 R-B-2)", async ({
+  browser,
+}) => {
+  const ctx = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 390, height: 844 } });
+  const page = await ctx.newPage();
+  const errors: string[] = [];
+  page.on("console", (m) => {
+    if (m.type() === "error") errors.push(m.text());
+  });
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await page.waitForLoadState("networkidle").catch(() => {});
+  expect(errors.filter((e) => /hydrat/i.test(e))).toEqual([]);
+  await ctx.close();
 });

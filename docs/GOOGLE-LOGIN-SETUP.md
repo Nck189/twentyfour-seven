@@ -23,9 +23,13 @@ Menu names in Google Cloud and Supabase change now and then; look for the neares
 2. **Deployments → ⋯ → Redeploy** (a `NEXT_PUBLIC_` value is baked in at build time).
 
 ## 4. Check before telling anyone
+Do steps 1 and 2 **before** step 3. With the switch on but the provider not enabled in Supabase, the button leads to a bare error page.
 - [ ] On a phone in Safari or Chrome: "Continue with Google" → you land on Today.
-- [ ] **Same account, not a second one.** Sign in with Google using the same address as your existing email-code account: your farm, streak and plans must be there. Supabase links a Google sign-in to an existing account with the same verified email; this could not be tested from the build environment, so check it with your own account first. If you land on an empty farm, turn the switch off (step 3, value `0`, redeploy) and tell the builder.
+- [ ] **In the installed Home Screen app on the iPhone** (it keeps its own sign-in, separate from Safari): the same.
+- [ ] **Same account, not a second one.** Sign in with Google using the same address as your existing email-code account: your farm, streak and plans must be there. Supabase should link a Google sign-in to an existing account with the same verified email; this could not be tested or looked up from the build environment, so check it with your own account first. If you land on an empty farm, turn the switch off (step 3, value `0`, redeploy) and tell the builder.
+- [ ] Back out of Google's screen: the login page says the sign-in was cancelled.
 - [ ] Open the app's link inside LINE: the button is not shown, and the page suggests Safari or Chrome.
+- [ ] In Supabase → Authentication → URL Configuration, read the redirect list yourself: `https://twentyfour-seven.vercel.app/auth/callback` (or a pattern that covers it) must be on it.
 
 ## Turning it off
 Set `NEXT_PUBLIC_GOOGLE_LOGIN` to `0` (or delete it) on Vercel and redeploy. Accounts made with Google keep working through the email code for the same address.

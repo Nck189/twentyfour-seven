@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { InAppNote } from "@/components/landing/InAppNote";
 import { googleLoginOffered } from "@/lib/auth/google";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -87,7 +88,13 @@ export function LoginForm() {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(
-    params.get("error") === "link" ? t("callbackError") : null,
+    params.get("error") === "link"
+      ? t("callbackError")
+      : params.get("error") === "cancelled"
+        ? t("googleCancelled")
+        : params.get("error") === "provider"
+          ? t("googleError")
+          : null,
   );
 
   // Resend countdown tick.
@@ -185,6 +192,10 @@ export function LoginForm() {
         </Link>
       </div>
 
+      {/* Inside LINE's or Instagram's browser: suggest the real one here too (G7 R-B-3). */}
+      <div className="mb-4 empty:hidden">
+        <InAppNote />
+      </div>
       {!pending && google && (
         <div className="mb-4 flex flex-col gap-3">
           <Button
@@ -192,11 +203,16 @@ export function LoginForm() {
             disabled={busy}
             onClick={async () => {
               setError(null);
+              setBusy(true);
               const { error: err } = await getSupabase().auth.signInWithOAuth({
                 provider: "google",
                 options: { redirectTo: `${window.location.origin}/auth/callback` },
               });
-              if (err) setError(t("error"));
+              // On success the browser is already leaving for Google; the button stays busy.
+              if (err) {
+                setBusy(false);
+                setError(t("googleError"));
+              }
             }}
           >
             {t("google")}
