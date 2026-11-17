@@ -44,7 +44,8 @@
     "rateLimited": "Please wait a minute before asking for another code. Your earlier code still works.",
     "language": "Language",
     "codePlaceholder": "123456",
-    "codeTip": "Type the 6-digit code from the email (iPhone may offer it above the keyboard)."
+    "codeTip": "Type the 6-digit code from the email (iPhone may offer it above the keyboard).",
+    "whatIs": "What is 24/7?"
   },
   "today": {
     "title": "Today",
@@ -1534,5 +1535,31 @@
     "week": "Sign-up week",
     "users": "Accounts",
     "day": "Day {n}"
+  },
+  "landing": {
+    "title": "Your day in 7 blocks.",
+    "title2": "Live them, and your farm grows.",
+    "subtitle": "Plan tonight. Tap when you start. Watch it grow.",
+    "farmAlt": "A small farm growing",
+    "start": "Start free",
+    "haveAccount": "I have an account",
+    "steps": {
+      "plan": {
+        "title": "Plan tonight",
+        "body": "Two minutes before bed: tomorrow is ready."
+      },
+      "tap": {
+        "title": "Tap when you start",
+        "body": "One tap per block. No timers to babysit."
+      },
+      "grow": {
+        "title": "Your farm grows from real days",
+        "body": "Good days grow crops, hatch animals and fill your capsules."
+      }
+    },
+    "privacy": "No ads. Your data is yours, and it's never sold.",
+    "inApp": "For the full app, open this page in Safari or Chrome.",
+    "copyLink": "Copy link",
+    "copied": "Copied"
   }
 }

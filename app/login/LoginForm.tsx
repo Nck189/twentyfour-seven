@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore, type FormEvent } from "react";
@@ -167,6 +168,12 @@ export function LoginForm() {
         <AppMark className="mb-4 h-20 w-20" />
         <h1 className="text-2xl font-extrabold">{t("title")}</h1>
         <p className="text-muted">{t("subtitle")}</p>
+        <Link
+          href="/"
+          className="tap mt-1 inline-flex min-h-11 items-center px-3 text-sm font-bold text-primary"
+        >
+          {t("whatIs")}
+        </Link>
       </div>
 
       {!pending ? (
