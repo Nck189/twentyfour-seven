@@ -4,6 +4,7 @@
  * outlines, tokens only; the one gradient is the sky. Full-bleed 64 × 64 (the OS rounds corners);
  * `safe` shrinks the art into the middle 80% for a maskable icon.
  */
+import { useId } from "react";
 import { IconSky, type IconSkyVariant } from "./IconSky";
 import { SomHead } from "./Som";
 import { Leaf } from "./farm/parts";
@@ -63,12 +64,13 @@ export function AppIcon({
   className?: string;
   variant?: AppIconVariant;
 }) {
+  const clip = `app-icon-clip-${useId()}`;
   return (
     <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
-      <clipPath id={`app-icon-clip-${variant}`}>
+      <clipPath id={clip}>
         <rect width="64" height="64" rx="15" />
       </clipPath>
-      <g clipPath={`url(#app-icon-clip-${variant})`}>
+      <g clipPath={`url(#${clip})`}>
         <AppIconArt variant={variant} />
       </g>
     </svg>

@@ -8,7 +8,7 @@
  * (styles/tokens.css): no black, gradients only in the sky. The farm always uses its daytime
  * palette, so the light tokens are read even in dark mode.
  */
-import { qrMatrix } from "./qr";
+import { qrBox, qrMatrix } from "./qr";
 
 export type CardLine = { text: string; icon?: string };
 export type CardInput = {
@@ -48,13 +48,25 @@ export function layoutScene(middle: readonly string[]): Record<string, Box> {
   const out: Record<string, Box> = { som: [28, standY(116), 116], house: [392, standY(128), 128] };
   const n = middle.length;
   const size = n <= 3 ? 92 : n === 4 ? 76 : 64;
-  const from = 196;
-  const to = 360;
+  // Evenly spaced around the middle of the gap, so two pieces don't stand at its far ends.
+  const gap = n <= 3 ? 82 : n === 4 ? 60 : 46;
+  const mid = 278;
   middle.forEach((slot, i) => {
-    const cx = n === 1 ? (from + to) / 2 : from + ((to - from) * i) / (n - 1);
+    const cx = mid + (i - (n - 1) / 2) * gap;
     out[slot] = [Math.round(cx - size / 2), standY(size), size];
   });
   return out;
+}
+
+/**
+ * The font size (px) at which a line fits `maxWidth`: the base size when it fits, smaller when it
+ * doesn't, never under 14. `measure(px)` is the line's width at that size. Letters are never
+ * squeezed (G7 R-A-4).
+ */
+export function fitFont(base: number, maxWidth: number, measure: (px: number) => number): number {
+  const w = measure(base);
+  if (w <= maxWidth) return base;
+  return Math.max(14, Math.floor((maxWidth / w) * base * 10) / 10);
 }
 
 /** The innermost `var(--x)` or `var(--x, fallback)` (a fallback with no parentheses left). */
@@ -209,8 +221,13 @@ export async function cardPicture(p: CardInput): Promise<Blob> {
     const icon = l.icon ? imgs.get(l.icon) : undefined;
     if (icon) g.drawImage(icon, x0 - 2, y - 22, 28, 28);
     g.fillStyle = c("--ui-text");
-    g.font = `700 20px ${font}`;
-    g.fillText(l.text, icon ? x0 + 32 : x0, y, W - 40 - x0 - (icon ? 52 : 20));
+    const room = W - 40 - x0 - (icon ? 52 : 20);
+    const px = fitFont(20, room, (size) => {
+      g.font = `700 ${size}px ${font}`;
+      return g.measureText(l.text).width;
+    });
+    g.font = `700 ${px}px ${font}`;
+    g.fillText(l.text, icon ? x0 + 32 : x0, y, room);
   });
 
   // The farm.
@@ -226,24 +243,25 @@ export async function cardPicture(p: CardInput): Promise<Blob> {
   g.fill();
   const mark = imgs.get("mark");
   if (mark) g.drawImage(mark, FOOTER.x + 18, FOOTER.y + 34, 56, 56);
-  const qrSize = 96;
-  const qrX = FOOTER.x + FOOTER.w - qrSize - 14;
+  // Dark brown modules on the white card (never black). Whole-pixel modules; the card is the
+  // light margin around the code.
+  const m = qrMatrix(p.footer.url);
+  const cell = Math.max(2, Math.min(qrBox(m.length, 96).cell, Math.floor((FOOTER.h - 16) / m.length)));
+  const qrSize = cell * m.length;
+  const qrX = FOOTER.x + FOOTER.w - qrSize - 16;
+  const qrY = FOOTER.y + Math.round((FOOTER.h - qrSize) / 2);
   const textX = FOOTER.x + 88;
-  const textW = qrX - textX - 12;
+  const textW = qrX - textX - 16;
   g.fillStyle = c("--ui-text");
   g.font = `800 19px ${font}`;
   g.fillText(p.footer.host, textX, FOOTER.y + 58, textW);
   g.fillStyle = c("--ui-text-muted");
   g.font = `600 14px ${font}`;
   g.fillText(p.footer.caption, textX, FOOTER.y + 82, textW);
-  // Dark brown modules on the white card (never black); the card is the quiet zone.
-  const m = qrMatrix(p.footer.url);
-  const cell = qrSize / m.length;
   g.fillStyle = c("--art-qr");
   m.forEach((row, r) =>
     row.forEach((dark, col) => {
-      // A hair of overlap, so no light seams show between modules after scaling.
-      if (dark) g.fillRect(qrX + col * cell, FOOTER.y + 14 + r * cell, cell + 0.3, cell + 0.3);
+      if (dark) g.fillRect(qrX + col * cell, qrY + r * cell, cell, cell);
     }),
   );
 

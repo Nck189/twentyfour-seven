@@ -1438,10 +1438,11 @@
       "capsuleTitle": "I got {name}!",
       "capsuleLine": "{rarity} crop from a capsule",
       "streakTitle": "{n} days in a row",
-      "streakLine": "Up on time and planned every night"
+      "streakLine": "Up on time, every night planned"
     },
     "pictureAsk": "Scan to ask me for a time",
-    "pictureApp": "Made with 24/7"
+    "pictureApp": "Made with 24/7",
+    "pictureHasLink": "The picture has a QR code to your link. Anyone who scans it sees when you're free."
   },
   "factory": {
     "title": "Factory",

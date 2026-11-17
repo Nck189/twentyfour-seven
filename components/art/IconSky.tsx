@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 /** The sky behind the app icon (the only gradient in the icon, as the art rules allow for skies). */
 export type IconSkyVariant = "sunrise" | "meadow" | "night";
 
@@ -9,7 +11,8 @@ const SKY: Record<IconSkyVariant, [top: string, bottom: string]> = {
 
 export function IconSky({ variant }: { variant: IconSkyVariant }) {
   const [top, bottom] = SKY[variant];
-  const id = `app-icon-sky-${variant}`;
+  // Unique per copy: with a fixed id, a hidden copy earlier on the page blanks a visible one (G7 R-A-3).
+  const id = `app-icon-sky-${useId()}`;
   return (
     <>
       <defs>

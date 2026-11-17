@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { GENERIC_FARM, buildSnapshot } from "@/lib/share/farmSnapshot";
-import { CARD, FOOTER, layoutScene } from "@/lib/share/cardPicture";
+import { CARD, FOOTER, fitFont, layoutScene } from "@/lib/share/cardPicture";
+import { qrBox } from "@/lib/share/qr";
 
 describe("her own farm on shared pictures (review fix A4)", () => {
   it("picks up to 3 different crops, rarest first, and up to 2 animals, newest first", () => {
@@ -64,5 +65,31 @@ describe("picture layout", () => {
     expect(FOOTER.x + FOOTER.w).toBeLessThanOrEqual(CARD.w);
     expect(FOOTER.y).toBeGreaterThan(484);
     expect(FOOTER.y + FOOTER.h).toBeLessThanOrEqual(CARD.h);
+  });
+});
+
+describe("G7 review of Phase A", () => {
+  it("R-A-11: two pieces stand at one third and two thirds, not at the far ends", () => {
+    const s = layoutScene(["a", "b"]);
+    const centre = (k: string) => s[k]![0] + s[k]![2] / 2;
+    expect(centre("b") - centre("a")).toBeLessThan(120);
+    expect(centre("a")).toBeGreaterThan(196);
+  });
+
+  it("R-A-1: QR modules are whole pixels, at least 3 logical px, with a 4-module quiet zone", () => {
+    for (const n of [25, 33, 41, 45]) {
+      const q = qrBox(n, 96);
+      expect(Number.isInteger(q.cell)).toBe(true);
+      expect(q.cell).toBeGreaterThanOrEqual(3);
+      expect(q.size).toBe(q.cell * n);
+      expect(q.margin).toBeGreaterThanOrEqual(4 * q.cell);
+    }
+  });
+
+  it("R-A-4: a line wider than its box gets a smaller font, never squeezed letters", () => {
+    const measure = (px: number) => px * 17; // a 340 px line at 20 px
+    expect(fitFont(20, 266, measure)).toBeLessThanOrEqual(15.7);
+    expect(fitFont(20, 266, (px) => px * 10)).toBe(20);
+    expect(fitFont(20, 100, measure)).toBe(14); // floor: still readable
   });
 });

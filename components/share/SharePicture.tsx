@@ -55,6 +55,7 @@ export function SharePicture({
   const [farm, setFarm] = useState<FarmSnapshot | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,7 +89,10 @@ export function SharePicture({
       .then((b) => {
         if (!cancelled) setFile(new File([b], fileName, { type: "image/png" }));
       })
-      .catch(() => undefined);
+      // No picture: no dead button (G7 R-A-5).
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -97,6 +101,13 @@ export function SharePicture({
   }, [farm, scene, title, lines, ring, caption, fileName, kind]);
 
   const f = farm ?? GENERIC_FARM;
+  // A proud moment loses nothing without the button; the week card says why there's none.
+  if (failed)
+    return kind === "week" ? (
+      <p role="alert" className="text-sm font-bold text-accent">
+        {t("error")}
+      </p>
+    ) : null;
   return (
     <div className={className}>
       <div ref={art} hidden aria-hidden="true">

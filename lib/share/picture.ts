@@ -1,6 +1,6 @@
 "use client";
 
-import { qrMatrix } from "./qr";
+import { qrBox, qrMatrix } from "./qr";
 
 export type PictureFooter = {
   /** What the QR opens (her own share link, so a friend can ask for a time; else the app). */
@@ -10,9 +10,6 @@ export type PictureFooter = {
   /** The address shown under it (short, readable). */
   host: string;
 };
-
-/** Height of the footer row (QR + two lines), logical px. */
-export const TEXT_PICTURE_FOOTER = 120;
 
 /**
  * A few lines of text as a small PNG for LINE/IG (free times, M12): the app's own colors (UI
@@ -34,7 +31,11 @@ export async function textPicture(text: string, footer?: PictureFooter): Promise
   const w = 720;
   const lh = 44;
   const body = 80 + lines.length * lh;
-  const h = body + (footer ? TEXT_PICTURE_FOOTER : 0);
+  // The QR: whole-pixel modules of at least 3 px and a 4-module light margin (G7 R-A-1).
+  const m = footer ? qrMatrix(footer.url) : null;
+  const q = m ? qrBox(m.length, 110) : null;
+  const tile = q ? q.size + 2 * q.margin : 0;
+  const h = body + (q ? tile + 4 : 0);
   const c = document.createElement("canvas");
   c.width = w * scale;
   c.height = h * scale;
@@ -51,30 +52,27 @@ export async function textPicture(text: string, footer?: PictureFooter): Promise
     g.font = `${i === 0 ? "700 28px" : "500 22px"} ${font}`;
     g.fillText(l, 48, 70 + i * lh, w - 96);
   });
-  if (footer) {
-    // The QR sits on a light square in both themes, with dark modules (never black): a camera
-    // needs dark-on-light.
-    const size = 92;
-    const x = w - 48 - size;
-    const y = body - 18;
+  if (footer && m && q) {
+    // The code sits on a light tile in both themes, with dark modules (never black): a camera
+    // needs dark on light.
+    const x = w - 44 - tile;
+    const y = body - 24;
     g.fillStyle = css.getPropertyValue("--art-white").trim();
     g.beginPath();
-    g.roundRect(x - 8, y - 8, size + 16, size + 16, 12);
+    g.roundRect(x, y, tile, tile, 12);
     g.fill();
-    const m = qrMatrix(footer.url);
-    const cell = size / m.length;
     g.fillStyle = css.getPropertyValue("--art-qr").trim();
     m.forEach((row, r) =>
       row.forEach((dark, col) => {
-        if (dark) g.fillRect(x + col * cell, y + r * cell, cell + 0.3, cell + 0.3);
+        if (dark) g.fillRect(x + q.margin + col * q.cell, y + q.margin + r * q.cell, q.cell, q.cell);
       }),
     );
     g.fillStyle = ink;
     g.font = `700 20px ${font}`;
-    g.fillText(footer.caption, 48, y + 40, x - 48 - 28);
+    g.fillText(footer.caption, 48, y + tile / 2 - 6, x - 48 - 24);
     g.fillStyle = muted;
     g.font = `500 17px ${font}`;
-    g.fillText(footer.host, 48, y + 70, x - 48 - 28);
+    g.fillText(footer.host, 48, y + tile / 2 + 24, x - 48 - 24);
   }
   return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("no image"))), "image/png"));
 }

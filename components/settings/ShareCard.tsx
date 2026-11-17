@@ -261,7 +261,8 @@ export function ShareCard() {
               a.href = URL.createObjectURL(image);
               a.download = image.name;
               a.click();
-              URL.revokeObjectURL(a.href);
+              // WebKit can drop a download whose URL is already revoked (as ExportCard; R-M14-15).
+              setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
               setMsg({ kind: "ok", text: t("imageReady") });
             }
           }}
@@ -269,6 +270,8 @@ export function ShareCard() {
           {t("slotsImage")}
         </Button>
       </div>
+      {/* The picture leads to her live link while one is on: say so before she posts it (G7 R-A-2). */}
+      {url && <p className="mt-2 text-xs text-muted">{t("pictureHasLink")}</p>}
       {msg && (
         <p
           role={msg.kind === "error" ? "alert" : "status"}

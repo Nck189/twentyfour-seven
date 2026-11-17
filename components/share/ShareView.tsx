@@ -100,7 +100,7 @@ export function ShareView({
       </ul>
       <p className="mt-6 text-xs text-muted">{t("footer")}</p>
       {/* What made this page, and a way in for the friend (review fix A2). No owner details. */}
-      <aside
+      <section
         aria-label={t("ctaTitle")}
         className="mt-4 flex items-center gap-3 rounded-[var(--radius-lg)] bg-surface p-4"
       >
@@ -115,7 +115,7 @@ export function ShareView({
             {t("ctaButton")}
           </a>
         </div>
-      </aside>
+      </section>
     </main>
   );
 }
