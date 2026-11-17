@@ -206,3 +206,108 @@ test("offline: a failed save is retried by itself when the connection comes back
     .poll(async () => (await blockLogs(id)).find((l) => l.block === "work")?.items_done)
     .toEqual(["work-0"]);
 });
+
+test("M14 offline queue: a tick saved while offline survives closing the app and is sent on the next open", async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName === "webkit", "WebKit can't intercept requests to the local API");
+  const id = await user(page);
+  await setWakeMinutesAgo(id, 150);
+  await setChecklist(id, "work", ["Alpha"]);
+  await page.goto("/today");
+  const item = page
+    .getByRole("region", { name: "Current block" })
+    .getByRole("checkbox", { name: "Alpha", exact: true });
+  await expect(item).toBeVisible({ timeout: 15_000 });
+  await page.route("**/rest/v1/rpc/set_block_item**", (r) => r.abort("internetdisconnected"));
+  await item.click();
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("Nothing was lost");
+  // The app is closed before the connection comes back.
+  await page.goto("about:blank");
+  await page.unroute("**/rest/v1/rpc/set_block_item**");
+  expect((await blockLogs(id)).find((l) => l.block === "work")?.items_done ?? []).toEqual([]);
+  // Next open, online: the tick is sent by itself.
+  await page.goto("/today");
+  await expect(item).toHaveAttribute("aria-checked", "true", { timeout: 15_000 });
+  await expect
+    .poll(async () => (await blockLogs(id)).find((l) => l.block === "work")?.items_done)
+    .toEqual(["work-0"]);
+  await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
+});
+
+const ITEM_RPC = "**/rest/v1/rpc/set_block_item**";
+async function workItems(page: Page, id: string, names: string[]) {
+  await setWakeMinutesAgo(id, 150);
+  await setChecklist(id, "work", names);
+  await page.goto("/today");
+  const region = page.getByRole("region", { name: "Current block" });
+  const box = (n: string) => region.getByRole("checkbox", { name: n, exact: true });
+  await expect(box(names[0])).toBeVisible({ timeout: 15_000 });
+  return box;
+}
+const itemsDone = async (id: string) =>
+  (await blockLogs(id)).find((l) => l.block === "work")?.items_done ?? [];
+
+test("G7 R-M14-1 a stored save the API can't take any more is dropped; it never holds up later saves", async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName === "webkit", "WebKit can't intercept requests to the local API");
+  const id = await user(page);
+  const box = await workItems(page, id, ["Alpha", "Beta"]);
+  await page.route(ITEM_RPC, (r) => r.abort("internetdisconnected"));
+  await box("Alpha").click();
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("Nothing was lost");
+  await page.goto("about:blank");
+  await page.unroute(ITEM_RPC);
+  // A later deploy changed the RPC: the stored save is refused with a PostgREST code.
+  let refused = 0;
+  await page.route(ITEM_RPC, (r) => {
+    if (refused++ > 0) return r.fallback();
+    return r.fulfill({
+      status: 404,
+      contentType: "application/json",
+      body: JSON.stringify({
+        code: "PGRST202",
+        message: "Could not find the function",
+        details: null,
+        hint: null,
+      }),
+    });
+  });
+  await page.goto("/today");
+  await expect(box("Beta")).toBeVisible({ timeout: 15_000 });
+  await expect.poll(() => refused).toBeGreaterThan(0);
+  await box("Beta").click();
+  await expect.poll(() => itemsDone(id)).toEqual(["work-1"]);
+  await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
+});
+
+test("G7 R-M14-2 a restored block whose replay fails shows what the server has (never a blank block)", async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName === "webkit", "WebKit can't intercept requests to the local API");
+  const id = await user(page);
+  const box = await workItems(page, id, ["Alpha", "Beta"]);
+  await box("Alpha").click(); // online: the server has the block started, Alpha done
+  await expect.poll(() => itemsDone(id)).toEqual(["work-0"]);
+  const started = (await blockLogs(id)).find((l) => l.block === "work")?.started_at;
+  await page.route(ITEM_RPC, (r) => r.abort("internetdisconnected"));
+  await box("Beta").click();
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("Nothing was lost");
+  await page.goto("about:blank");
+  // Next open on a flaky connection: the load works, the replay doesn't.
+  await page.goto("/today");
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("Nothing was lost", {
+    timeout: 15_000,
+  });
+  await expect(box("Alpha")).toHaveAttribute("aria-checked", "true");
+  await expect(box("Beta")).toHaveAttribute("aria-checked", "false");
+  // Back online: Beta goes through, and the real start time is untouched.
+  await page.unroute(ITEM_RPC);
+  await page.evaluate(() => window.dispatchEvent(new Event("online")));
+  await expect.poll(() => itemsDone(id)).toEqual(["work-0", "work-1"]);
+  expect((await blockLogs(id)).find((l) => l.block === "work")?.started_at).toBe(started);
+});

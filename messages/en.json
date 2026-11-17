@@ -473,7 +473,20 @@
       "empty": "After you finish a task, tap how long it really took. After {n} tasks, this shows how far your estimates run.",
       "ratio": "Tasks take about ×{x} your estimate",
       "over": "{p} of {n} tasks ran over",
-      "tag": "{tag}: ×{x}"
+      "tag": "{tag}: ×{x}",
+      "loadError": "Couldn't load your estimates."
+    },
+    "share": {
+      "cardTitle": "Share my week",
+      "hint": "A small picture of your week for IG or LINE — no tasks, names or times.",
+      "button": "Make the picture",
+      "title": "My week on 24/7",
+      "days": "{n} of 7 days logged",
+      "perfect": "{n} perfect days",
+      "streak": "{n}-day streak",
+      "best": "Best block: {block}",
+      "ready": "Picture ready.",
+      "error": "Couldn't share. Try again."
     }
   },
   "more": {
@@ -504,7 +517,7 @@
     "privacy": {
       "title": "Your data is yours",
       "private": "Your plans, check-ins, tasks and farm are private to your account.",
-      "noAds": "No ads. Your data is never sold or given to anyone.",
+      "noAds": "No ads, and your data is never sold. It's kept with our hosting providers only to run the app, and we look at anonymous totals (like how many people come back) to make it better.",
       "export": "Download all of it any time, just below.",
       "share": "A share link shows only when you're free, never your plans, and you can turn it off.",
       "delete": "Delete your account any time in Account; everything goes with it."
@@ -870,7 +883,8 @@
     "planAdd": "Add workout",
     "planRemove": "Remove workout",
     "slotLabel": "Workout {n} min",
-    "saveError": "Couldn't save. Check your connection and try again."
+    "saveError": "Couldn't save. Check your connection and try again.",
+    "loadError": "Couldn't load your weekly goal."
   },
   "animals": {
     "chicken": "Chicken",
@@ -948,7 +962,8 @@
       "alpaca": "Som disappears into the alpaca's fluff.",
       "red_panda": "Som and the red panda compare tails. It's a tie."
     },
-    "petDone": "Petted today ♡"
+    "petDone": "Petted today ♡",
+    "loadError": "Couldn't load your animals."
   },
   "streak": {
     "title": "Streak",
@@ -1410,7 +1425,8 @@
     "past": "This time has passed.",
     "noLongerFree": "This time isn't free anymore in your plan.",
     "acceptName": "Accept {name}'s request",
-    "declineName": "Decline {name}'s request"
+    "declineName": "Decline {name}'s request",
+    "inboxError": "Couldn't load your requests."
   },
   "factory": {
     "title": "Factory",
@@ -1494,5 +1510,13 @@
     "makeAnyway": "Make anyway",
     "makeAnywayAria": "Make {name} anyway",
     "premiumWarn": "This uses a gold or weather crop that's worth more sold on its own."
+  },
+  "admin": {
+    "title": "Retention",
+    "hint": "{n} accounts from the last 120 days, by sign-up week. Active = anything logged that day.",
+    "empty": "No sign-ups yet.",
+    "week": "Sign-up week",
+    "users": "Accounts",
+    "day": "Day {n}"
   }
 }

@@ -12,16 +12,18 @@ import { getSupabase } from "@/lib/supabase/client";
 export function EstimateCard() {
   const t = useTranslations("stats.estimates");
   const locale = useLocale();
-  const [s, setS] = useState<EstimateSummary | null | undefined>(undefined);
+  const [s, setS] = useState<EstimateSummary | null | "error" | undefined>(undefined);
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       const r = await getSupabase()
         .from("backlog_items")
         .select("estimate_min, actual_min, tag")
+        // Finished tasks only: a reopened one (ticked by mistake) doesn't count (G7 R-M14-14).
+        .eq("status", "done")
         .not("actual_min", "is", null)
         .gt("estimate_min", 0);
-      if (!cancelled) setS(r.error ? null : estimateSummary(r.data ?? []));
+      if (!cancelled) setS(r.error ? "error" : estimateSummary(r.data ?? []));
     })();
     return () => {
       cancelled = true;
@@ -33,7 +35,11 @@ export function EstimateCard() {
   return (
     <section aria-label={t("title")} className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
       <h2 className="mb-1 text-lg font-bold">{t("title")}</h2>
-      {!s ? (
+      {s === "error" ? (
+        <p role="alert" className="text-sm font-bold">
+          {t("loadError")}
+        </p>
+      ) : !s ? (
         <p className="text-sm text-muted">{t("empty", { n: MIN_TASKS })}</p>
       ) : (
         <>

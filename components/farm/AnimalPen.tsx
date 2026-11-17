@@ -158,8 +158,26 @@ function AnimalSheet({
 export function AnimalPen({ animals }: { animals: ReturnType<typeof useAnimals> }) {
   const t = useTranslations("pen");
   const names = useTranslations("animals");
+  const tc = useTranslations("common");
   const [open, setOpen] = useState<string | null>(null);
   const s = animals.state;
+  if (!s && animals.status === "error")
+    // Never just vanish: a user with animals would think they were gone (M14 states audit).
+    return (
+      <section aria-label={t("title")} className="mx-4 mt-4 lg:mx-6">
+        <h2 className="mb-1 text-sm font-bold text-muted">{t("title")}</h2>
+        <div role="alert" className="flex flex-wrap items-center gap-2 rounded-xl bg-accent-soft p-3 text-sm">
+          <span className="flex-1 font-bold">{t("loadError")}</span>
+          <button
+            type="button"
+            onClick={animals.reload}
+            className="tap min-h-11 rounded-full bg-surface px-4 font-bold"
+          >
+            {tc("retry")}
+          </button>
+        </div>
+      </section>
+    );
   if (!s) return null;
   const now = new Date();
   const selected = s.animals.find((a) => a.id === open);

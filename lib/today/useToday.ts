@@ -20,6 +20,22 @@ import {
 import { sameDayContext, shouldRefreshOnForeground } from "./foreground";
 import { loadDayContext } from "./loadContext";
 import { QUIET_RETRY_MS } from "@/lib/supabase/fetchWithTimeout";
+import {
+  execReq,
+  readPending,
+  replayDecision,
+  writePending,
+  type PendingOp,
+  type SaveReq,
+} from "./pendingSaves";
+
+const pendingStore = () => {
+  try {
+    return typeof window === "undefined" ? null : window.localStorage;
+  } catch {
+    return null;
+  }
+};
 
 export type BlockLog = {
   id?: string;
@@ -88,13 +104,20 @@ export function useToday(now: Date) {
   const logsRef = useRef<Record<string, BlockLog>>({});
   const serverRef = useRef<Record<string, BlockLog>>({});
   const seqRef = useRef<Record<string, number>>({});
-  type Op = {
-    key: string;
-    next: BlockLog;
-    save: () => PromiseLike<{ data: unknown; error: unknown }>;
-    event: [string, Record<string, unknown>];
-  };
+  /** A save as plain data, so a failed one can be kept on the device (M14 offline queue). */
+  type Op = PendingOp<BlockLog>;
   const queueRef = useRef<Op[]>([]);
+  const userIdRef = useRef<string | null>(null);
+  const restoredRef = useRef(false);
+  /** A replay is running: new taps wait behind it (R-M14-11), and these are its unsent saves. */
+  const replayingRef = useRef(false);
+  const replayRestRef = useRef<Op[]>([]);
+  const [replay, setReplay] = useState(0);
+  /** Keep the failed saves on the device until they're sent (survives closing the app). */
+  const persist = useCallback(() => {
+    if (userIdRef.current)
+      writePending(pendingStore(), userIdRef.current, [...replayRestRef.current, ...queueRef.current]);
+  }, []);
   /** Saves currently in flight per block: a refetch must not overwrite those blocks. */
   const inflightRef = useRef<Record<string, number>>({});
 
@@ -123,6 +146,18 @@ export function useToday(now: Date) {
         setLoaded((prev) =>
           prev && prev.userId === userId && sameDayContext(prev.ctx, ctx) ? prev : { ctx, userId },
         );
+        userIdRef.current = userId;
+        // First load: saves that failed before the app was closed come back on screen and are sent.
+        if (!restoredRef.current) {
+          restoredRef.current = true;
+          const pending = readPending(pendingStore(), userId, new Date()) as Op[];
+          if (pending.length) {
+            queueRef.current = [...pending, ...queueRef.current];
+            for (const o of pending) logsRef.current = { ...logsRef.current, [o.key]: o.next };
+            setSaveError(queueRef.current.length);
+            setReplay((n) => n + 1);
+          }
+        }
         const loadedLogs = Object.fromEntries(
           ((blockLogs.data ?? []) as BlockLog[]).map((l) => [`${l.date}:${l.block}`, l]),
         );
@@ -131,7 +166,11 @@ export function useToday(now: Date) {
           (inflightRef.current[k] ?? 0) > 0 || queueRef.current.some((o) => o.key === k);
         const merged: Record<string, BlockLog> = { ...loadedLogs };
         for (const [k, v] of Object.entries(logsRef.current)) if (busy(k)) merged[k] = v;
-        for (const [k, v] of Object.entries(loadedLogs)) if (!busy(k)) serverRef.current[k] = v;
+        // A block with restored saves still gets the server's copy as the baseline a failed replay
+        // rolls back to; otherwise it would be blanked and a new Start would overwrite the real
+        // start (G7 R-M14-2).
+        for (const [k, v] of Object.entries(loadedLogs))
+          if (!busy(k) || !(k in serverRef.current)) serverRef.current[k] = v;
         logsRef.current = merged;
         setLogs(merged);
         setWakes(Object.fromEntries(((wakeRows.data ?? []) as WakeEvent[]).map((w) => [w.date, w])));
@@ -269,44 +308,54 @@ export function useToday(now: Date) {
     setLogs(copy);
   }, []);
 
-  const runOp = useCallback(async (op: Op) => {
-    const seq = (seqRef.current[op.key] ?? 0) + 1;
-    seqRef.current[op.key] = seq;
-    inflightRef.current[op.key] = (inflightRef.current[op.key] ?? 0) + 1;
-    let res: { data: unknown; error: unknown };
-    try {
-      res = await op.save();
-    } finally {
-      inflightRef.current[op.key] -= 1;
-    }
-    const { data, error } = res;
-    if (error) throw error;
-    if (data && typeof data === "object" && "block" in (data as object)) {
-      const saved = data as BlockLog;
-      serverRef.current[op.key] = saved;
-      // Only the newest request may overwrite what's on screen (responses can arrive out of order).
-      if (seqRef.current[op.key] === seq) {
-        logsRef.current = { ...logsRef.current, [op.key]: saved };
-        setLogs(logsRef.current);
+  const runOp = useCallback(
+    async (op: Op) => {
+      const seq = (seqRef.current[op.key] ?? 0) + 1;
+      seqRef.current[op.key] = seq;
+      inflightRef.current[op.key] = (inflightRef.current[op.key] ?? 0) + 1;
+      let res: { data: unknown; error: unknown };
+      try {
+        res = await execReq(client, op.req);
+      } finally {
+        inflightRef.current[op.key] -= 1;
       }
-    }
-    void logEvent(op.event[0], op.event[1]);
-  }, []);
+      const { data, error } = res;
+      if (error) throw error;
+      if (data && typeof data === "object" && "block" in (data as object)) {
+        const saved = data as BlockLog;
+        serverRef.current[op.key] = saved;
+        // Only the newest request may overwrite what's on screen (responses can arrive out of order).
+        if (seqRef.current[op.key] === seq) {
+          logsRef.current = { ...logsRef.current, [op.key]: saved };
+          setLogs(logsRef.current);
+        }
+      }
+      void logEvent(op.event[0], op.event[1]);
+    },
+    [client],
+  );
 
   const failQueue = useCallback(
     (ops: Op[]) => {
       queueRef.current = [...queueRef.current, ...ops];
+      persist();
       // Roll every affected block back to what the server last confirmed.
       for (const key of new Set(queueRef.current.map((o) => o.key))) show(key, serverRef.current[key]);
       setSaveError(queueRef.current.length);
     },
-    [show],
+    [persist, show],
   );
 
   const mutate = useCallback(
-    async (key: string, next: BlockLog, save: Op["save"], event: Op["event"]) => {
-      const op: Op = { key, next, save, event };
+    async (key: string, next: BlockLog, req: SaveReq, event: Op["event"]) => {
+      const op: Op = { key, next, req, event, at: new Date().toISOString() };
       show(key, next);
+      if (replayingRef.current) {
+        // Older saves are being sent: this one goes out after them, in order (R-M14-11).
+        queueRef.current = [...queueRef.current, op];
+        persist();
+        return;
+      }
       if (queueRef.current.length) {
         // Earlier writes are still pending: keep order, wait for "Try again".
         failQueue([op]);
@@ -318,23 +367,74 @@ export function useToday(now: Date) {
         failQueue([op]);
       }
     },
-    [failQueue, runOp, show],
+    [failQueue, persist, runOp, show],
   );
 
   const retrySave = useCallback(async () => {
-    const ops = queueRef.current;
-    queueRef.current = [];
+    if (replayingRef.current) return;
+    replayingRef.current = true;
     setSaveError(0);
-    for (let i = 0; i < ops.length; i++) {
-      show(ops[i].key, ops[i].next);
-      try {
-        await runOp(ops[i]);
-      } catch {
-        failQueue(ops.slice(i));
-        return;
+    // Saves the server refused for now: kept for the next try, with the same block's later saves
+    // held behind them (order per block), while other blocks carry on (G7 R-M14-1).
+    const kept: Op[] = [];
+    const held = new Set<string>();
+    let rest = queueRef.current;
+    queueRef.current = [];
+    // The device copy always has what's still unsent, so a kill mid-replay doesn't resend (R-M14-11).
+    const sync = () => {
+      replayRestRef.current = [...kept, ...rest];
+      persist();
+    };
+    sync();
+    try {
+      for (;;) {
+        // Taps made during the replay go out after the older saves.
+        if (!rest.length && queueRef.current.length) {
+          rest = queueRef.current;
+          queueRef.current = [];
+        }
+        if (!rest.length) break;
+        const [op, ...after] = rest;
+        if (held.has(op.key)) {
+          kept.push(op);
+          rest = after;
+          continue;
+        }
+        show(op.key, op.next);
+        try {
+          await runOp(op);
+        } catch (e) {
+          const d = replayDecision(e, op.tries ?? 0);
+          // No answer (offline): stop here; everything left waits for the next try.
+          if (d === "stop") break;
+          if (d === "keep") {
+            kept.push({ ...op, tries: (op.tries ?? 0) + 1 });
+            held.add(op.key);
+          } else {
+            // Final (or refused too often): let it go and show what the server has.
+            show(op.key, serverRef.current[op.key]);
+          }
+        }
+        rest = after;
+        sync();
       }
+    } finally {
+      replayingRef.current = false;
+      replayRestRef.current = [];
     }
-  }, [failQueue, runOp, show]);
+    queueRef.current = [...kept, ...rest, ...queueRef.current];
+    persist();
+    if (queueRef.current.length) {
+      for (const key of new Set(queueRef.current.map((o) => o.key))) show(key, serverRef.current[key]);
+      setSaveError(queueRef.current.length);
+    }
+  }, [persist, runOp, show]);
+
+  // Saves restored from the device are sent as soon as there's a connection.
+  useEffect(() => {
+    if (replay && queueRef.current.length && (typeof navigator === "undefined" || navigator.onLine))
+      void retrySave();
+  }, [replay, retrySave]);
 
   // Back online: replay failed saves by itself (the "Try again" button stays as a fallback).
   useEffect(() => {
@@ -374,14 +474,12 @@ export function useToday(now: Date) {
       };
       if (!current.started_at) row.started_at = startedAt;
       if (past && !current.started_at) row.backfilled = true;
-      return mutate(
-        key,
-        next,
-        () => client.from("block_logs").upsert(row, { onConflict: "user_id,date,block" }).select().single(),
-        [event, { date: next.date, block: next.block, backfilled: next.backfilled }],
-      );
+      return mutate(key, next, { t: "upsert", row }, [
+        event,
+        { date: next.date, block: next.block, backfilled: next.backfilled },
+      ]);
     },
-    [client, loaded, mutate],
+    [loaded, mutate],
   );
 
   // --- Actions ----------------------------------------------------------------------------
@@ -412,33 +510,31 @@ export function useToday(now: Date) {
           items_done: done ? [...cur.items_done, itemId] : cur.items_done.filter((x) => x !== itemId),
           backfilled: cur.backfilled || (past && !cur.started_at),
         };
-        const save = async () => {
-          if (past && !cur.started_at) {
-            // Create the backfilled log first (planned start), then toggle atomically.
-            const first = await client.from("block_logs").upsert(
-              {
-                user_id: loaded.userId,
-                date: b.logDate,
-                block: b.key,
-                planned_start: next.planned_start,
-                started_at: next.started_at,
-                items_planned: next.items_planned,
-                backfilled: true,
-              },
-              { onConflict: "user_id,date,block" },
-            );
-            if (first.error) return first;
-          }
-          return client.rpc("set_block_item", {
+        // Create the backfilled log first (planned start), then toggle atomically.
+        const req: SaveReq = {
+          t: "item",
+          pre:
+            past && !cur.started_at
+              ? {
+                  user_id: loaded.userId,
+                  date: b.logDate,
+                  block: b.key,
+                  planned_start: next.planned_start,
+                  started_at: next.started_at,
+                  items_planned: next.items_planned,
+                  backfilled: true,
+                }
+              : null,
+          args: {
             p_date: b.logDate,
             p_block: b.key,
             p_item: itemId,
             p_done: done,
             p_planned_start: next.planned_start,
             p_items_planned: next.items_planned,
-          });
+          },
         };
-        return mutate(key, next, () => save(), [
+        return mutate(key, next, req, [
           done ? "item_done" : "item_undone",
           { date: b.logDate, block: b.key, item: itemId },
         ]);
@@ -469,24 +565,19 @@ export function useToday(now: Date) {
         return mutate(
           key,
           next,
-          () =>
-            client
-              .from("block_logs")
-              .upsert(
-                {
-                  user_id: loaded.userId,
-                  date: b.logDate,
-                  block: b.key,
-                  planned_start: next.planned_start,
-                  items_planned: next.items_planned,
-                  miss_reason: reason,
-                  closed_at: next.closed_at,
-                  backfilled: true,
-                },
-                { onConflict: "user_id,date,block" },
-              )
-              .select()
-              .single(),
+          {
+            t: "upsert",
+            row: {
+              user_id: loaded.userId,
+              date: b.logDate,
+              block: b.key,
+              planned_start: next.planned_start,
+              items_planned: next.items_planned,
+              miss_reason: reason,
+              closed_at: next.closed_at,
+              backfilled: true,
+            },
+          },
           ["block_missed", { date: b.logDate, block: b.key, reason }],
         );
       },
@@ -519,21 +610,16 @@ export function useToday(now: Date) {
         return mutate(
           key,
           next,
-          () =>
-            client
-              .from("block_logs")
-              .upsert(
-                {
-                  user_id: loaded.userId,
-                  date: b.logDate,
-                  block: b.key,
-                  planned_start: next.planned_start,
-                  planned_deviation: true,
-                },
-                { onConflict: "user_id,date,block" },
-              )
-              .select()
-              .single(),
+          {
+            t: "upsert",
+            row: {
+              user_id: loaded.userId,
+              date: b.logDate,
+              block: b.key,
+              planned_start: next.planned_start,
+              planned_deviation: true,
+            },
+          },
           ["block_set_aside", { date: b.logDate, block: b.key, reason: "no_time" }],
         );
       },

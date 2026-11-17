@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { freeDaysFromContext } from "@/lib/share/compute";
 import { slotFits, slotsText, type DayFree } from "@/lib/share/freebusy";
 import { getSupabase } from "@/lib/supabase/client";
+import { textPicture as slotsImage } from "@/lib/share/picture";
 import { loadDayContext } from "@/lib/today/loadContext";
 
 type Request = {
@@ -25,6 +26,7 @@ type Request = {
  */
 export function ShareCard() {
   const t = useTranslations("share");
+  const tc = useTranslations("common");
   const locale = useLocale();
   const [url, setUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -41,6 +43,7 @@ export function ShareCard() {
   /** The first load finished (even if part of it failed). */
   const [loaded, setLoaded] = useState(false);
 
+  const [inboxFailed, setInboxFailed] = useState(false);
   const [tick, setTick] = useState(0);
   const reload = useCallback(() => setTick((n) => n + 1), []);
   useEffect(() => {
@@ -77,10 +80,13 @@ export function ShareCard() {
         ]);
         if (cancelled) return;
         setNow(Date.now());
-        if (!open.error) setPending(open.data as Request[]);
+        if (open.error) throw open.error;
+        setPending(open.data as Request[]);
         if (!done.error) setAnswered(done.data as Request[]);
+        setInboxFailed(false);
       } catch {
-        // shown as empty; reload by coming back
+        // Said so, with Try again: never "Requests (0)" as if nobody asked (M14 states audit).
+        if (!cancelled) setInboxFailed(true);
       }
     })();
     void (async () => {
@@ -181,8 +187,14 @@ export function ShareCard() {
   };
 
   return (
-    <section id="share" className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
-      <h2 className="mb-1 text-lg font-bold">{t("cardTitle")}</h2>
+    <section
+      id="share"
+      aria-labelledby="share-title"
+      className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6"
+    >
+      <h2 id="share-title" className="mb-1 text-lg font-bold">
+        {t("cardTitle")}
+      </h2>
       <p className="mb-3 text-sm text-muted">{t("cardHint")}</p>
 
       {!url ? (
@@ -261,7 +273,26 @@ export function ShareCard() {
         </p>
       )}
 
-      <h3 className="mt-4 mb-2 font-bold">{t("inbox", { n: pending?.length ?? 0 })}</h3>
+      {inboxFailed && !pending ? (
+        <div
+          role="alert"
+          className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-accent-soft p-3 text-sm"
+        >
+          <span className="flex-1 font-bold">{t("inboxError")}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setInboxFailed(false);
+              reload();
+            }}
+            className="tap min-h-11 rounded-full bg-surface px-4 font-bold"
+          >
+            {tc("retry")}
+          </button>
+        </div>
+      ) : (
+        <h3 className="mt-4 mb-2 font-bold">{t("inbox", { n: pending ? pending.length : "…" })}</h3>
+      )}
       {pending && pending.length === 0 && <p className="text-sm text-muted">{t("inboxEmpty")}</p>}
       <ul className="flex flex-col gap-2">
         {(pending ?? []).map((r) => {
@@ -319,37 +350,4 @@ function copyText(s: string): Promise<void> {
   return navigator.clipboard?.writeText
     ? navigator.clipboard.writeText(s)
     : Promise.reject(new Error("no clipboard"));
-}
-
-/** The free times as a small PNG for LINE: the app's own colors, rounded, no black. */
-async function slotsImage(text: string): Promise<Blob> {
-  const css = getComputedStyle(document.documentElement);
-  // The UI tokens (styles/tokens.css), so the picture matches the app in light and dark mode.
-  const bg = css.getPropertyValue("--ui-bg").trim();
-  const card = css.getPropertyValue("--ui-surface").trim();
-  const ink = css.getPropertyValue("--ui-text").trim();
-  const accent = css.getPropertyValue("--ui-primary").trim();
-  const font = getComputedStyle(document.body).fontFamily;
-  const lines = text.split("\n");
-  const scale = 2;
-  const w = 720;
-  const lh = 44;
-  const h = 80 + lines.length * lh;
-  const c = document.createElement("canvas");
-  c.width = w * scale;
-  c.height = h * scale;
-  const g = c.getContext("2d")!;
-  g.scale(scale, scale);
-  g.fillStyle = bg;
-  g.fillRect(0, 0, w, h);
-  g.fillStyle = card;
-  g.beginPath();
-  g.roundRect(20, 20, w - 40, h - 40, 24);
-  g.fill();
-  lines.forEach((l, i) => {
-    g.fillStyle = i === 0 ? accent : ink;
-    g.font = `${i === 0 ? "700 28px" : "500 22px"} ${font}`;
-    g.fillText(l, 48, 70 + i * lh, w - 96);
-  });
-  return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("no image"))), "image/png"));
 }
