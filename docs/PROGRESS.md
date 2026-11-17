@@ -1,6 +1,19 @@
 # PROGRESS — 24/7
 
-## Now (2026-11-14 Bangkok)
+## Now (2026-11-17 Bangkok)
+- ✅ **M14 is merged** (PRs #23, #24, #25). Prod DB has every migration through `20261116000000` (Minnie's `migration list`, 2026-11-16). CI is steady: tests leave Today only after it settles (0 WebKit internal errors, about 26 min).
+- 🔄 **Review fixes** (`docs/REVIEW_FIX_PLAN.md`, from `docs/qa/PROJECT-REVIEW-2026-11-16.md`; Minnie: "ที่เหลือเอาตามเหมาะสมเลย"):
+  - **Phase A** (shared pictures lead back, new app icon): PR #26, G7 PASS, CI running.
+  - **Phase B** (front door at `/`, in-app browser note, Google sign-in switched off): built locally on `review-b-local`, G7 review running.
+  - Next: Phase C (first minute; has one migration), D (More in four groups), F (sound, animations, pictures, cutscenes). Phase E (friends) is design only.
+- ⏳ **Minnie:**
+  1. `ADMIN_EMAILS` on Vercel + redeploy (retention page), if not done.
+  2. `npm run qc:prod` after each merge (G6).
+  3. On the Mac: `npm run e2e:update` (the visual baselines still show the old app mark).
+  4. Optional, 10 min: turn on Google sign-in (`docs/GOOGLE-LOGIN-SETUP.md`) after Phase B is merged.
+  5. On a real iPhone: share a picture, and scan its QR after sending it through LINE.
+
+## Earlier (2026-11-14 Bangkok)
 - ✅ PR #20 (M12 share + booking) merged. Minnie set `SUPABASE_SERVICE_ROLE_KEY` on Vercel; left: `db push` (share) + redeploy + a real-iPhone copy check.
 - ✅ R-M12-14 answered ("เอาที่เหมาะสม"): sick/vacation days and slots inside Free are busy on the share link.
 - 🔄 **M13 factory** (PR next): 4 machines, 11 recipes, server-clock queues, speed/space upgrades, products sold at the market, KPI panel (throughput, WIP, utilization, bottleneck, lead vs work). 1 migration: factory.
