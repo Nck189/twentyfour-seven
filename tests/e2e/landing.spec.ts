@@ -56,3 +56,11 @@ test("inside LINE or Instagram's browser, the page says to open it in Safari or 
   await expect(page.getByRole("button", { name: "Copy link" })).toBeVisible();
   await ctx.close();
 });
+
+test("Google sign-in is off unless it has been set up (B2)", async ({ page }) => {
+  await setPrefs(page, { locale: "en", theme: "light" });
+  await page.goto("/login");
+  await expect(page.getByRole("button", { name: "Email me a sign-in code" })).toBeVisible();
+  // CI and local builds don't set NEXT_PUBLIC_GOOGLE_LOGIN, so the button must not show.
+  await expect(page.getByRole("button", { name: "Continue with Google" })).toHaveCount(0);
+});

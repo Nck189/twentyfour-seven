@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { googleLoginOffered } from "@/lib/auth/google";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore, type FormEvent } from "react";
@@ -65,6 +66,8 @@ function parsePending(raw: string | null, now: number): Pending | null {
   }
 }
 
+const noSubscribe = () => () => {};
+
 export function LoginForm() {
   const t = useTranslations("login");
   const router = useRouter();
@@ -73,6 +76,12 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [link, setLink] = useState("");
   const pendingRaw = useSyncExternalStore(subscribePending, readPendingRaw, () => null);
+  // One-tap sign-in, only once it has been set up and where Google allows it (B2).
+  const google = useSyncExternalStore(
+    noSubscribe,
+    () => googleLoginOffered(process.env.NEXT_PUBLIC_GOOGLE_LOGIN, navigator.userAgent),
+    () => false,
+  );
   const [now, setNow] = useState(() => Date.now());
   const pending = parsePending(pendingRaw, now);
   const [busy, setBusy] = useState(false);
@@ -176,6 +185,27 @@ export function LoginForm() {
         </Link>
       </div>
 
+      {!pending && google && (
+        <div className="mb-4 flex flex-col gap-3">
+          <Button
+            variant="secondary"
+            disabled={busy}
+            onClick={async () => {
+              setError(null);
+              const { error: err } = await getSupabase().auth.signInWithOAuth({
+                provider: "google",
+                options: { redirectTo: `${window.location.origin}/auth/callback` },
+              });
+              if (err) setError(t("error"));
+            }}
+          >
+            {t("google")}
+          </Button>
+          <p className="text-center text-sm text-muted" aria-hidden="true">
+            {t("or")}
+          </p>
+        </div>
+      )}
       {!pending ? (
         <form onSubmit={(e) => sendLink(e)} className="flex flex-col gap-3" noValidate>
           <label htmlFor="email" className="font-bold">

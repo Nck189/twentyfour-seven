@@ -45,7 +45,8 @@
     "language": "Language",
     "codePlaceholder": "123456",
     "codeTip": "Type the 6-digit code from the email (iPhone may offer it above the keyboard).",
-    "whatIs": "What is 24/7?"
+    "whatIs": "What is 24/7?",
+    "or": "or"
   },
   "today": {
     "title": "Today",
