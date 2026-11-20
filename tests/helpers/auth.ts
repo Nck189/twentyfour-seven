@@ -18,7 +18,17 @@ export async function signIn(
     onboarded = true,
     tips = false,
     story = false,
-  }: { onboarded?: boolean; tips?: boolean; story?: boolean } = {},
+    newAccount = false,
+  }: {
+    onboarded?: boolean;
+    tips?: boolean;
+    story?: boolean;
+    /**
+     * Keep the account brand-new. By default it is made about a day old, so Today shows its
+     * everyday screen: a new account's first day keeps to one thing to do (review fix C1).
+     */
+    newAccount?: boolean;
+  } = {},
 ) {
   const res = await fetch(`${SB_URL}/auth/v1/admin/generate_link`, {
     method: "POST",
@@ -50,6 +60,17 @@ export async function signIn(
         body: JSON.stringify({ onboarding: { ...prof?.onboarding, done: true } }),
       });
     }
+  }
+  if (!newAccount && !IS_PROD_RUN && body.id) {
+    await fetch(`${SB_URL}/rest/v1/profiles?user_id=eq.${body.id}`, {
+      method: "PATCH",
+      headers: {
+        apikey: SB_SERVICE_KEY,
+        Authorization: `Bearer ${SB_SERVICE_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ created_at: new Date(Date.now() - 26 * 3_600_000).toISOString() }),
+    });
   }
   // First-time tips are off unless a test is about them (they'd add bubbles to every screen).
   if (!tips && !IS_PROD_RUN && body.id) {

@@ -12,11 +12,13 @@ import {
   emptyBlocks,
   isPastBlock,
   pickWakeCard,
+  planFor,
   timelineFor,
   type DayContext,
   type DayPlanRow,
   type TimelineBlock,
 } from "./day";
+import { isFirstDay, missedFirstWake } from "./firstDay";
 import { sameDayContext, shouldRefreshOnForeground } from "./foreground";
 import { loadDayContext } from "./loadContext";
 import { QUIET_RETRY_MS } from "@/lib/supabase/fetchWithTimeout";
@@ -65,7 +67,7 @@ export type WakeEvent = {
   backfilled: boolean;
 };
 
-type Loaded = { ctx: DayContext; userId: string };
+type Loaded = { ctx: DayContext; userId: string; createdAt: Date | null };
 
 const emptyLog = (date: string, block: BlockKey): BlockLog => ({
   date,
@@ -126,7 +128,7 @@ export function useToday(now: Date) {
     let cancelled = false;
     (async () => {
       try {
-        const { ctx, userId, today } = await loadDayContext(client);
+        const { ctx, userId, today, createdAt } = await loadDayContext(client);
         const [blockLogs, wakeRows, nightRows, snapRows] = await Promise.all([
           client.from("block_logs").select("*").gte("date", addDays(today, -1)).lte("date", today),
           client
@@ -144,7 +146,12 @@ export function useToday(now: Date) {
         if (cancelled) return;
         // Keep the same object when nothing changed, so actions and the timeline aren't rebuilt.
         setLoaded((prev) =>
-          prev && prev.userId === userId && sameDayContext(prev.ctx, ctx) ? prev : { ctx, userId },
+          prev &&
+          prev.userId === userId &&
+          sameDayContext(prev.ctx, ctx) &&
+          prev.createdAt?.getTime() === createdAt?.getTime()
+            ? prev
+            : { ctx, userId, createdAt },
         );
         userIdRef.current = userId;
         // First load: saves that failed before the app was closed come back on screen and are sent.
@@ -685,6 +692,17 @@ export function useToday(now: Date) {
     timezone: loaded?.ctx.timezone ?? DEFAULT_TZ,
     logFor,
     wakeCard,
+    /** The account's first wake-day: Today keeps to one thing to do (review fix C1). */
+    firstDay: !!(loaded?.createdAt && dayDate && isFirstDay(loaded.ctx, loaded.createdAt, dayDate)),
+    /** Today's "I'm up" closed before the account existed: offer tomorrow's (C1). */
+    wakeMissed: !!(
+      loaded?.createdAt &&
+      wakeCard?.canPress &&
+      !wakeCard.event &&
+      missedFirstWake(loaded.createdAt, wakeCard.target)
+    ),
+    /** Tomorrow's wake target, for the "tap 'I'm up' tomorrow" line. */
+    tomorrowWake: loaded && wakeCard ? planFor(loaded.ctx, addDays(wakeCard.date, 1)).wake : null,
     nightDone: dayDate ? nightDone.includes(dayDate) : false,
     /** As loaded (not flipped by finishing the ritual), so an open ritual sheet stays open. */
     nightDoneAtLoad: dayDate ? nightDoneAtLoad.includes(dayDate) : false,

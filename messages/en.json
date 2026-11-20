@@ -147,6 +147,10 @@
     "exam": {
       "label": "Exam day",
       "today": "Exam day! Som packed you a snack. Breathe, you've got this."
+    },
+    "firstDay": {
+      "tomorrowWake": "Tomorrow: tap “I'm up” the moment you leave the bed (target {time}).",
+      "more": "Everything else today"
     }
   },
   "plan": {

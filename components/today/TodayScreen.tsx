@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { formatDayLong, formatTime } from "@/lib/format";
@@ -279,7 +279,13 @@ export function TodayScreen() {
       )}
       <Tip id="night" when={isNight && !today.nightDone && tipsQuiet} />
 
-      {showWake && (
+      {showWake && today.wakeMissed && today.tomorrowWake && (
+        // Signed up after today's wake window: tomorrow's "I'm up" instead (review fix C1).
+        <p className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
+          {t("firstDay.tomorrowWake", { time: formatTime(today.tomorrowWake, today.timezone) })}
+        </p>
+      )}
+      {showWake && !today.wakeMissed && (
         <WakeCard
           key={wake.date}
           target={wake.target}
@@ -288,7 +294,7 @@ export function TodayScreen() {
           onPress={today.actions.pressWake}
         />
       )}
-      <Tip id="wake" when={!!showWake && tipsQuiet} />
+      <Tip id="wake" when={!!showWake && !today.wakeMissed && tipsQuiet} />
 
       {showCurrent && (
         <section
@@ -340,37 +346,40 @@ export function TodayScreen() {
 
       {napRunning && !menuOpen && <NapCard timezone={today.timezone} />}
 
-      <ExerciseCard animals={animals} />
-      <Tip id="exercise" when={!!animals.state && tipsQuiet} />
+      {/* The first day keeps to one thing to do; the rest waits under "More today" (C1, G1). */}
+      <FirstDayFold first={today.firstDay} label={t("firstDay.more")}>
+        <ExerciseCard animals={animals} />
+        <Tip id="exercise" when={!!animals.state && tipsQuiet && !today.firstDay} />
 
-      {!onboarding.show && <TodayReviewLine />}
-      <LastChanceLine />
-      {unlocks && !onboarding.show && <TodayUnlockLine state={unlocks} />}
+        {!onboarding.show && <TodayReviewLine />}
+        <LastChanceLine />
+        {unlocks && !onboarding.show && <TodayUnlockLine state={unlocks} />}
 
-      <div className="mx-4 mb-2 lg:mx-6">
-        <button
-          type="button"
-          aria-expanded={dayOpen}
-          onClick={() => {
-            setDayOpen((v) => !v);
-            writeDayOpen(!dayOpen);
-          }}
-          className="tap min-h-11 rounded-xl px-2 font-bold text-primary"
-        >
-          {dayOpen ? t("hideDay") : t("showDay")}
-        </button>
-      </div>
-      {dayOpen && (
-        <Timeline
-          timeline={tl}
-          logFor={today.logFor}
-          now={now}
-          timezone={today.timezone}
-          currentKey={cur?.key}
-          credited={creditedKeys}
-          onOpen={(b) => setOpenKey(b.key)}
-        />
-      )}
+        <div className="mx-4 mb-2 lg:mx-6">
+          <button
+            type="button"
+            aria-expanded={dayOpen}
+            onClick={() => {
+              setDayOpen((v) => !v);
+              writeDayOpen(!dayOpen);
+            }}
+            className="tap min-h-11 rounded-xl px-2 font-bold text-primary"
+          >
+            {dayOpen ? t("hideDay") : t("showDay")}
+          </button>
+        </div>
+        {dayOpen && (
+          <Timeline
+            timeline={tl}
+            logFor={today.logFor}
+            now={now}
+            timezone={today.timezone}
+            currentKey={cur?.key}
+            credited={creditedKeys}
+            onOpen={(b) => setOpenKey(b.key)}
+          />
+        )}
+      </FirstDayFold>
 
       {streak.view && <StreakNotice view={streak.view} />}
       {unlocks && <UnlockNotice granted={unlocks.granted} />}
@@ -418,5 +427,21 @@ export function TodayScreen() {
         </Sheet>
       )}
     </>
+  );
+}
+
+/**
+ * On the account's first day, the secondary cards sit in one closed "More today" (review fix C1);
+ * from day 2 they show as usual.
+ */
+function FirstDayFold({ first, label, children }: { first: boolean; label: string; children: ReactNode }) {
+  if (!first) return <>{children}</>;
+  return (
+    <details className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface lg:mx-6">
+      <summary className="tap flex min-h-11 cursor-pointer items-center px-4 font-bold text-primary">
+        {label}
+      </summary>
+      <div className="-mx-4 pb-2 lg:-mx-6">{children}</div>
+    </details>
   );
 }
