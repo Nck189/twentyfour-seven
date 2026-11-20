@@ -3,7 +3,7 @@ import { DEFAULT_BLOCKS } from "@/content/blocks";
 import { DEFAULT_TEMPLATES } from "@/content/defaults";
 import { parseHHMM } from "@/lib/engine";
 import type { DayContext } from "@/lib/today/day";
-import { isFirstDay, missedFirstWake } from "@/lib/today/firstDay";
+import { inFirstDays, isFirstDay, missedFirstWake } from "@/lib/today/firstDay";
 import { zonedInstant } from "@/lib/time";
 
 const TZ = "Asia/Bangkok";
@@ -43,5 +43,15 @@ describe("a new account's first day (review fix C1)", () => {
     expect(missedFirstWake(at("2026-11-03", "08:00"), target)).toBe(false);
     // A longer window from settings.
     expect(missedFirstWake(at("2026-11-03", "10:30"), target, 45)).toBe(false);
+  });
+});
+
+describe("block hints for the first days (review fix C5)", () => {
+  const made = at("2026-11-03", "23:00");
+  it("show for the account's first three wake-days, then stop", () => {
+    expect(inFirstDays(ctx(), made, "2026-11-03")).toBe(true);
+    expect(inFirstDays(ctx(), made, "2026-11-05")).toBe(true);
+    expect(inFirstDays(ctx(), made, "2026-11-06")).toBe(false);
+    expect(inFirstDays(ctx(), made, "2026-11-06", 4)).toBe(true);
   });
 });

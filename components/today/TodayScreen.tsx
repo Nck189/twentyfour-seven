@@ -85,6 +85,7 @@ export function TodayScreen() {
   const today = useToday(now);
   const onboarding = useOnboardingState();
   const setup = useSetupRewards();
+  const tb = useTranslations("blocks");
   // The farm, read once a little after Today's own data (no live updates): the strip on phones
   // and the "one miss from dying" line share this one load (review fix C3).
   const farm = useFarm({ live: false, delayMs: 2000 });
@@ -308,7 +309,11 @@ export function TodayScreen() {
           className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6"
         >
           <p className="text-xs font-bold tracking-wide text-primary uppercase">{t("block.current")}</p>
-          <h2 className="mb-3 text-xl font-extrabold">{text.name(cur.key)}</h2>
+          <h2 className={`text-xl font-extrabold ${today.earlyDays ? "" : "mb-3"}`}>{text.name(cur.key)}</h2>
+          {today.earlyDays && (
+            // What this block is, in one line, for the first three days (review fix C5).
+            <p className="mb-3 text-sm text-muted">{tb(`hint.${cur.key}`)}</p>
+          )}
           <BlockCheckin
             key={`${cur.logDate}:${cur.key}`}
             block={cur}

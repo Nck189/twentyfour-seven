@@ -594,6 +594,15 @@
         "2": "Message someone you like",
         "3": "Walk outside for 10 min"
       }
+    },
+    "hint": {
+      "wake": "From leaving the bed to starting your day: light, water, move.",
+      "focus": "Your best-brain time: the one thing that matters most.",
+      "work": "Classes or work: the main part of the day.",
+      "gradation": "A soft landing between work and evening: wind down, tidy up.",
+      "free": "Yours: friends, hobbies, rest. No guilt.",
+      "down": "Screens down, plan tomorrow in the Night ritual.",
+      "sleep": "Lights out. Sleep is a block too."
     }
   },
   "templates": {

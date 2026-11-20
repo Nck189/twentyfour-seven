@@ -19,7 +19,7 @@ import {
   type DayPlanRow,
   type TimelineBlock,
 } from "./day";
-import { isFirstDay, missedFirstWake } from "./firstDay";
+import { inFirstDays, isFirstDay, missedFirstWake } from "./firstDay";
 import { sameDayContext, shouldRefreshOnForeground } from "./foreground";
 import { loadDayContext } from "./loadContext";
 import { QUIET_RETRY_MS } from "@/lib/supabase/fetchWithTimeout";
@@ -708,6 +708,8 @@ export function useToday(now: Date) {
     wakeCard,
     /** The account's first wake-day: Today keeps to one thing to do (review fix C1). */
     firstDay: !!(loaded?.createdAt && dayDate && isFirstDay(loaded.ctx, loaded.createdAt, dayDate)),
+    /** The account's first three days: blocks say what they are (review fix C5). */
+    earlyDays: !!(loaded?.createdAt && dayDate && inFirstDays(loaded.ctx, loaded.createdAt, dayDate)),
     /** Today's "I'm up" closed before the account existed: offer tomorrow's (C1). */
     wakeMissed: !!(
       loaded?.createdAt &&

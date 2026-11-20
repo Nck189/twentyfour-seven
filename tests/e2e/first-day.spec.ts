@@ -35,6 +35,10 @@ test("signed up after today's wake: no 'I'm up' to press, tomorrow's instead; th
   ).toBeVisible();
   await expect(page.getByRole("button", { name: /I'm up/ })).toHaveCount(0);
   await expect(page.getByRole("region", { name: "Current block" })).toBeVisible();
+  // New words get one line (review fix C5).
+  await expect(page.getByRole("region", { name: "Current block" })).toContainText(
+    "Classes or work: the main part of the day.",
+  );
   // Exercise and the whole day wait under one closed disclosure.
   await expect(page.getByRole("region", { name: "Exercise" })).toBeHidden();
   await page.getByText("Everything else today").click();
