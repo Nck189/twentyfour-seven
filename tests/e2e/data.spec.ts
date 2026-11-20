@@ -11,6 +11,8 @@ test.describe("data", () => {
     await setPrefs(page, { locale: "en", theme: "light" });
     await signIn(page);
     await page.goto("/more");
+    // A tap before More is interactive does nothing on a slow WebKit phone (CI 2026-11-20): wait.
+    await settle(page);
 
     const [json] = await Promise.all([
       page.waitForEvent("download"),
@@ -51,6 +53,7 @@ test.describe("data", () => {
     await setPrefs(p1, { locale: "en", theme: "light" });
     await signIn(p1, email);
     await p1.goto("/more");
+    await settle(p1); // More answers taps only once it is interactive (slow WebKit)
     await p1.getByRole("radio", { name: "ไทย" }).click();
     await expect(p1.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("เพิ่มเติม");
     await p1.waitForTimeout(500); // let the profile write land
@@ -75,6 +78,7 @@ test("regression: language change survives an immediate reload while the profile
   await signIn(page);
   await page.waitForTimeout(800); // first-login sync done
   await page.goto("/more");
+  await settle(page); // More answers taps only once it is interactive (slow WebKit)
   // Hold every profile write for 3 s so the reload happens first.
   await page.route("**/rest/v1/profiles**", async (route) => {
     if (route.request().method() === "PATCH") await new Promise((r) => setTimeout(r, 3000));
