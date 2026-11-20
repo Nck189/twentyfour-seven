@@ -21,6 +21,8 @@ import { useAnimals } from "@/lib/animals/useAnimals";
 import { StreakChip, StreakNotice } from "@/components/streak/StreakChip";
 import { useStreak } from "@/lib/streak/useStreak";
 import { TodayUnlockLine, UnlockNotice } from "@/components/farm/CollectionBook";
+import { FarmStrip } from "./FarmStrip";
+import { useFarm } from "@/lib/farm/useFarm";
 import { LastChanceLine } from "@/components/farm/LastChanceLine";
 import { useUnlocks } from "@/lib/unlocks/useUnlocks";
 import { TodayReviewLine } from "@/components/stats/ReviewLine";
@@ -83,6 +85,9 @@ export function TodayScreen() {
   const today = useToday(now);
   const onboarding = useOnboardingState();
   const setup = useSetupRewards();
+  // The farm, read once a little after Today's own data (no live updates): the strip on phones
+  // and the "one miss from dying" line share this one load (review fix C3).
+  const farm = useFarm({ live: false, delayMs: 2000 });
   const animals = useAnimals();
   const streak = useStreak();
   // Re-claim once the streak has settled (a 7-day streak unlocks an egg).
@@ -221,6 +226,7 @@ export function TodayScreen() {
 
       {/* Under the header, next to the streak chip it explains. */}
       <Tip id="streak" when={!!streak.view && tipsQuiet} />
+      <FarmStrip data={farm.data} />
       {onboarding.show && <WelcomeCard onLater={() => void onboarding.later()} />}
       {!onboarding.show && <WelcomeBackCard />}
       <ExamCard timeline={tl} />
@@ -353,7 +359,7 @@ export function TodayScreen() {
         <Tip id="exercise" when={!!animals.state && tipsQuiet && !today.firstDay} />
 
         {!onboarding.show && <TodayReviewLine />}
-        <LastChanceLine />
+        <LastChanceLine data={farm.data} />
         {unlocks && !onboarding.show && <TodayUnlockLine state={unlocks} />}
 
         <div className="mx-4 mb-2 lg:mx-6">

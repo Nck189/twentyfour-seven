@@ -156,6 +156,9 @@
     "firstDay": {
       "tomorrowWake": "Tomorrow: tap “I'm up” the moment you leave the bed (target {time}).",
       "more": "Everything else today"
+    },
+    "farmStrip": {
+      "open": "Your farm: open it"
     }
   },
   "plan": {
