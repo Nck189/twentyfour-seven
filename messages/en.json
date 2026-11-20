@@ -108,7 +108,8 @@
       "addItem": "Add a checklist item",
       "addItemPlaceholder": "+ Add a checklist item",
       "add": "Add",
-      "saveError": "Couldn't save. Check your connection and try again."
+      "saveError": "Couldn't save. Check your connection and try again.",
+      "everyDay": "Sets it for every day. Change it in Plan."
     },
     "nap": {
       "title": "Power nap",

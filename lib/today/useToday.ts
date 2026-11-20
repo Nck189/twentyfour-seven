@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BlockKey } from "@/content/blocks";
 import { logEvent } from "@/lib/db/events";
 import { saveDirty } from "@/lib/plan/patch";
-import type { ChecklistItem } from "@/content/blocks";
+import type { BlockSetting, ChecklistItem } from "@/content/blocks";
 import { getSupabase } from "@/lib/supabase/client";
 import { addDays, DEFAULT_TZ } from "@/lib/time";
 
@@ -663,9 +663,22 @@ export function useToday(now: Date) {
        * as the block's default, like Plan's "save as my default", so every day has it and the
        * setup reward is paid (claim_setup_rewards checks settings).
        */
-      setBlockDefault: async (b: TimelineBlock, patch: { first10?: string; checklist?: ChecklistItem[] }) => {
+      setBlockDefault: async (b: TimelineBlock, patch: { first10?: string; addItem?: ChecklistItem }) => {
         if (!loaded) return;
-        const blocks = loaded.ctx.blocks.map((s) => (s.key === b.key ? { ...s, ...patch } : s));
+        // The latest saved blocks, not this screen's copy: a Plan edit since then isn't undone (R-C-5).
+        const fresh = await client.from("settings").select("blocks").eq("user_id", loaded.userId).single();
+        if (fresh.error) throw fresh.error;
+        const current = (fresh.data.blocks as BlockSetting[] | null) ?? loaded.ctx.blocks;
+        // A new checklist item goes after the saved ones (G7 N-4), never in place of them.
+        const blocks = current.map((s) =>
+          s.key !== b.key
+            ? s
+            : {
+                ...s,
+                ...(patch.first10 !== undefined ? { first10: patch.first10 } : {}),
+                ...(patch.addItem ? { checklist: [...(s.checklist ?? []), patch.addItem] } : {}),
+              },
+        );
         const { error } = await client.from("settings").update({ blocks }).eq("user_id", loaded.userId);
         if (error) throw error;
         void logEvent("block_default_saved", { block: b.key, from: "today" });

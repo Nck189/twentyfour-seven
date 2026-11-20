@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { formatDayLong, formatTime } from "@/lib/format";
@@ -89,6 +89,20 @@ export function TodayScreen() {
   // The farm, read once a little after Today's own data (no live updates): the strip on phones
   // and the "one miss from dying" line share this one load (review fix C3).
   const farm = useFarm({ live: false, delayMs: 2000 });
+  // The strip follows check-ins (G7 R-C-8): one farm read a moment after the last change on Today
+  // (a log or "I'm up"). Not before the farm's own first read, so opening Today stays one read.
+  const farmReload = useRef(farm.reload);
+  const farmLoaded = useRef(false);
+  useEffect(() => {
+    farmReload.current = farm.reload;
+    farmLoaded.current = farm.data !== null;
+  });
+  const wakeSeen = today.wakeCard?.event ? today.wakeCard.event.pressed_at : "";
+  useEffect(() => {
+    if (!farmLoaded.current) return;
+    const timer = setTimeout(() => farmReload.current(), 1500);
+    return () => clearTimeout(timer);
+  }, [today.logFor, wakeSeen]);
   const animals = useAnimals();
   const streak = useStreak();
   // Re-claim once the streak has settled (a 7-day streak unlocks an egg).
@@ -227,7 +241,7 @@ export function TodayScreen() {
 
       {/* Under the header, next to the streak chip it explains. */}
       <Tip id="streak" when={!!streak.view && tipsQuiet} />
-      <FarmStrip data={farm.data} />
+      <FarmStrip data={farm.data} failed={farm.status === "error"} />
       {onboarding.show && <WelcomeCard onLater={() => void onboarding.later()} />}
       {!onboarding.show && <WelcomeBackCard />}
       <ExamCard timeline={tl} />
@@ -322,6 +336,7 @@ export function TodayScreen() {
             timezone={today.timezone}
             actions={today.actions}
             ownFirst10={today.blockSettings.find((b) => b.key === cur.key)?.first10_options}
+            blockDefault={today.blockSettings.find((b) => b.key === cur.key)}
             onChanged={setup.reload}
           />
           <BlockTasks userId={today.userId} date={cur.logDate} block={cur.key} />
@@ -345,6 +360,8 @@ export function TodayScreen() {
             timezone={today.timezone}
             actions={today.actions}
             ownFirst10={today.blockSettings.find((b) => b.key === "sleep")?.first10_options}
+            blockDefault={today.blockSettings.find((b) => b.key === "sleep")}
+            onChanged={setup.reload}
           />
         </section>
       )}
@@ -391,12 +408,14 @@ export function TodayScreen() {
             onOpen={(b) => setOpenKey(b.key)}
           />
         )}
+        {/* First day: setup is one more thing to do, so it waits in the fold too (G7 R-C-10). */}
+        {today.firstDay && !onboarding.show && <TodaySetupHint state={setup.state} />}
       </FirstDayFold>
 
       {streak.view && <StreakNotice view={streak.view} />}
       {unlocks && <UnlockNotice granted={unlocks.granted} />}
       {setup.state && <SetupRewardNotice granted={setup.state.granted} />}
-      {!onboarding.show && <TodaySetupHint state={setup.state} />}
+      {!today.firstDay && !onboarding.show && <TodaySetupHint state={setup.state} />}
 
       {menuOpen && (
         <Sheet title={t("menu.title")} onClose={() => setMenuOpen(false)}>

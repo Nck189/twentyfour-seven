@@ -46,6 +46,7 @@ export function Onboarding() {
   };
   const setup = useSetup();
   const [kindOpen, setKindOpen] = useState(false);
+  const [opening, setOpening] = useState(false);
 
   const leave = () => router.push(fromMore ? "/more" : "/today");
   async function skip() {
@@ -188,7 +189,9 @@ export function Onboarding() {
               // A first reward in the first minute (review fix C4): sleep times paid a ticket.
               <>
                 <Button
+                  disabled={opening}
                   onClick={async () => {
+                    setOpening(true);
                     // Rewards are claimed on Today or More; claim now so the ticket is there. The
                     // server decides what's paid (claim_setup_rewards), and a failure still opens the farm.
                     await getSupabase()
@@ -200,7 +203,7 @@ export function Onboarding() {
                     router.push("/farm?capsule=1");
                   }}
                 >
-                  {t("firstCapsule")}
+                  {opening ? tc("loading") : t("firstCapsule")}
                 </Button>
                 <Button variant="secondary" onClick={leave}>
                   {t("finish")}

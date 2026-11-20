@@ -93,7 +93,7 @@ export function FarmScreen({ compact = false }: { compact?: boolean }) {
         cafe={compact ? undefined : cafe}
         compact={compact}
         // After Som's scene, if one is playing: never two sheets at once.
-        openCapsules={capsuleAsked && !story.playing}
+        openCapsules={capsuleAsked && story.checked && !story.playing}
         data={data}
         status={status}
         plant={plant}
@@ -158,9 +158,10 @@ export function FarmView({
   const [pop, setPop] = useState<{ cropId: CropId; quality: Quality; value?: number } | null>(null);
   const [sheet, setSheet] = useState<"capsules" | "dex" | "cafe" | "factory" | null>(null);
   const [capsulesOpened, setCapsulesOpened] = useState(false);
-  if (openCapsules && !capsulesOpened && !sheet && gacha?.state && gacha.state.tickets > 0) {
+  if (openCapsules && !capsulesOpened && !sheet && gacha?.state) {
     setCapsulesOpened(true);
-    setSheet("capsules");
+    // No ticket after all (the claim failed): just the farm (G7 R-C-4).
+    if (gacha.state.tickets > 0) setSheet("capsules");
     // A reload or Back doesn't open it again.
     window.history.replaceState(window.history.state, "", "/farm");
   }
