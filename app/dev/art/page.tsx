@@ -6,6 +6,7 @@
 import { notFound } from "next/navigation";
 import { CROP_IDS } from "@/content/crops";
 import { MUTATION_IDS, QUALITIES } from "@/content/game";
+import { AppIcon } from "@/components/art/AppIcon";
 import { FarmSky, type SkyPhase } from "@/components/art/farm/FarmSky";
 import { MutationIcon } from "@/components/art/farm/Fx";
 import { Capsule, CapsuleMachine, RarityLight } from "@/components/art/farm/Capsule";
@@ -27,6 +28,24 @@ function Cell({ children, caption }: { children: React.ReactNode; caption: strin
       {children}
       <figcaption className="text-[10px] text-[var(--ui-text-muted)]">{caption}</figcaption>
     </figure>
+  );
+}
+
+function Icons() {
+  return (
+    <section className="rounded-xl bg-[var(--ui-surface)] p-3">
+      <h2 className="mb-2 text-sm font-bold">App icon</h2>
+      <div className="flex flex-wrap gap-4">
+        {(["sunrise", "meadow", "night"] as const).map((v) => (
+          <Cell key={v} caption={v}>
+            <AppIcon variant={v} className="h-24 w-24" />
+          </Cell>
+        ))}
+        <Cell caption="48 px">
+          <AppIcon className="h-12 w-12" />
+        </Cell>
+      </div>
+    </section>
   );
 }
 
@@ -212,6 +231,7 @@ export default function ArtSheet() {
           </Cell>
         ))}
       </section>
+      <Icons />
       <Sheet night={false} />
       <Sheet night />
     </main>

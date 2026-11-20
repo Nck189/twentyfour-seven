@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
-import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
+import { setPrefs, settle, signIn, uniqueEmail } from "../helpers/auth";
 import { rest, setAllTemplates, userIdFor } from "../helpers/db";
 import { IS_PROD_RUN } from "../helpers/env";
 
@@ -18,6 +18,7 @@ test("CJ-SHARE-1 a friend asks for a free time through the link; the owner accep
   const id = await userIdFor(email);
   await setAllTemplates(id, "07:00");
   await page.goto("/more");
+  await settle(page); // More answers taps only once it is interactive (slow WebKit)
   const card = page.locator("#share");
   await card.getByRole("button", { name: "Get my link" }).click();
   const link = card.getByRole("textbox", { name: "Share link" });
@@ -43,6 +44,9 @@ test("CJ-SHARE-1 a friend asks for a free time through the link; the owner accep
   // Free/busy only: no block names or plans on the page.
   for (const word of ["Work", "Focus", "Sleep", "Gradation"])
     await expect(friend.locator("main")).not.toContainText(word);
+  // The page says what made it and invites the friend in (review fix A2).
+  const cta = friend.getByRole("link", { name: "Start your own — free" });
+  await expect(cta).toHaveAttribute("href", "/?from=share");
   await expectNoHorizontalScroll(friend);
   await expectTouchTargets(friend);
   await slots.first().click();
@@ -50,6 +54,7 @@ test("CJ-SHARE-1 a friend asks for a free time through the link; the owner accep
   await friend.getByLabel("A short note (optional)").fill("Coffee and notes?");
   await friend.getByRole("button", { name: "Send request" }).click();
   await expect(friend.getByRole("status")).toContainText("Sent!");
+  await expect(cta).toBeVisible();
   await friendCtx.close();
 
   // The owner answers in More.
@@ -114,6 +119,7 @@ test("CJ-SHARE-3 switching between two free times on one day sends the one picke
     }),
   });
   await page.goto("/more");
+  await settle(page); // More answers taps only once it is interactive (slow WebKit)
   const card = page.locator("#share");
   await card.getByRole("button", { name: "Get my link" }).click();
   const url = await card.getByRole("textbox", { name: "Share link" }).inputValue();
@@ -152,6 +158,7 @@ test("CJ-SHARE-4 the link works even when the inbox and plan are slow to load (C
   // The inbox and the plan never answer (a stalled connection on a phone).
   await page.route(/\/rest\/v1\/(booking_requests|day_plans)/, () => undefined);
   await page.goto("/more");
+  await settle(page); // More answers taps only once it is interactive (slow WebKit)
   const card = page.locator("#share");
   await card.getByRole("button", { name: "Get my link" }).click({ timeout: 10_000 });
   await expect(card.getByRole("textbox", { name: "Share link" })).toHaveValue(/\/share\/[0-9a-f]{48}$/);

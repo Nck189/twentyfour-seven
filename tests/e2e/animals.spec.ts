@@ -29,6 +29,7 @@ async function logWorkout(page: Page, minutes = 30) {
 
 test("CJ-13 three workouts: the ring fills, the 3rd hatches an egg (with its reveal), animals are fed", async ({
   page,
+  browserName,
 }) => {
   const id = await setup(page);
   // Two counted workouts 25 h ago (2 per rolling 24 h count), straight in the table like past check-ins.
@@ -56,6 +57,15 @@ test("CJ-13 three workouts: the ring fills, the 3rd hatches an egg (with its rev
       .first(),
   );
   await expectNoSeriousA11y(page);
+  // A proud moment can be shared as a picture; it never blocks Done (review fix A4).
+  const shareBtn = hatch.getByRole("button", { name: "Share", exact: true });
+  await expect(shareBtn).toBeEnabled();
+  if (browserName === "chromium") {
+    const download = page.waitForEvent("download");
+    await shareBtn.click();
+    expect((await download).suggestedFilename()).toBe("my-new-animal.png");
+    await expect(hatch.getByRole("status").filter({ hasText: "Picture ready." })).toBeVisible();
+  }
   await hatch.getByRole("button", { name: "Done" }).click();
   await expect(hatch).toHaveCount(0);
   await expect(sheet.getByRole("status")).toContainText("fed for 2 more days");

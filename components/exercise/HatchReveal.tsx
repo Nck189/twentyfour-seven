@@ -2,10 +2,11 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimalArt, EggArt } from "@/components/art/farm/Animals";
 import { SomArt } from "@/components/art/Som";
 import { RarityLight } from "@/components/art/farm/Capsule";
+import { SharePicture } from "@/components/share/SharePicture";
 import { Button } from "@/components/ui/Button";
 import { RARITIES } from "@/content/crops";
 import type { LogResult } from "@/lib/animals/useAnimals";
@@ -23,6 +24,9 @@ export function HatchReveal({ hatched, onDone }: { hatched: Hatched; onDone: () 
   const t = useTranslations("pen");
   const tg = useTranslations("gacha");
   const name = useTranslations("animals")(hatched.species);
+  const ts = useTranslations("share.picture");
+  const hatchLine = ts("hatchLine");
+  const shareLines = useMemo(() => [{ text: hatchLine }], [hatchLine]);
   const reduce = useReducedMotion();
   const skipPref = usePrefs((s) => s.skipAnimations) || Boolean(reduce);
   const [phase, setPhase] = useState<"egg" | "shown">(skipPref ? "shown" : "egg");
@@ -99,9 +103,21 @@ export function HatchReveal({ hatched, onDone }: { hatched: Hatched; onDone: () 
         )}
       </AnimatePresence>
       {phase === "shown" ? (
-        <Button data-hatch-action onClick={onDone} className="min-w-40">
-          {t("done")}
-        </Button>
+        <div className="flex flex-col items-center gap-2">
+          <Button data-hatch-action onClick={onDone} className="min-w-40">
+            {t("done")}
+          </Button>
+          {/* A proud moment: offered after the reveal, never in the way of Done (review fix A4). */}
+          <SharePicture
+            kind="hatch"
+            title={ts("hatchTitle", { name })}
+            lines={shareLines}
+            hero={<AnimalArt species={hatched.species} idle={false} />}
+            fileName="my-new-animal.png"
+            label={ts("share")}
+            className="flex flex-col items-center"
+          />
+        </div>
       ) : (
         <Button data-hatch-action variant="secondary" onClick={show}>
           {t("skip")}

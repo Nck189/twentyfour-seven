@@ -1,5 +1,12 @@
-/** App mark: a sprout on a soil bed, in the style of design/reference-style-a.svg. */
+import { AppIcon } from "./AppIcon";
+
+/** The app's mark wherever the brand shows (login, error pages, shared pictures): Som's face. */
 export function AppMark({ className = "" }: { className?: string }) {
+  return <AppIcon className={className} />;
+}
+
+/** A sprout on a soil bed (the first app mark); still the picture for planting tips. */
+export function SproutMark({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
       <rect x="0" y="0" width="64" height="64" rx="16" fill="var(--art-cream)" />

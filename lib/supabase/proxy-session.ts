@@ -6,6 +6,8 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from "./env";
 export const PUBLIC_PATHS = ["/login", "/auth", "/api/keepalive", "/share", "/dev", "/offline.html", "/ics"];
 
 export function isPublicPath(pathname: string): boolean {
+  // The front door is public as an exact match only: "/" must never make every path public.
+  if (pathname === "/") return true;
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
@@ -38,7 +40,8 @@ export async function updateSession(request: NextRequest) {
     url.search = "";
     return NextResponse.redirect(url);
   }
-  if (signedIn && pathname === "/login") {
+  // Someone signed in skips the front door and the sign-in form.
+  if (signedIn && (pathname === "/login" || pathname === "/")) {
     const url = request.nextUrl.clone();
     url.pathname = "/today";
     url.search = "";
