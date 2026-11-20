@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BlockKey } from "@/content/blocks";
 import { logEvent } from "@/lib/db/events";
 import { saveDirty } from "@/lib/plan/patch";
+import type { ChecklistItem } from "@/content/blocks";
 import { getSupabase } from "@/lib/supabase/client";
 import { addDays, DEFAULT_TZ } from "@/lib/time";
 
@@ -655,6 +656,19 @@ export function useToday(now: Date) {
         );
         if (!ok) throw new Error("first-10 not saved");
         void logEvent("first10_changed", { date: b.logDate, block: b.key });
+        setReload((r) => r + 1);
+      },
+      /**
+       * A block's first step or checklist set from Today when it has none (review fix C2): saved
+       * as the block's default, like Plan's "save as my default", so every day has it and the
+       * setup reward is paid (claim_setup_rewards checks settings).
+       */
+      setBlockDefault: async (b: TimelineBlock, patch: { first10?: string; checklist?: ChecklistItem[] }) => {
+        if (!loaded) return;
+        const blocks = loaded.ctx.blocks.map((s) => (s.key === b.key ? { ...s, ...patch } : s));
+        const { error } = await client.from("settings").update({ blocks }).eq("user_id", loaded.userId);
+        if (error) throw error;
+        void logEvent("block_default_saved", { block: b.key, from: "today" });
         setReload((r) => r + 1);
       },
       setMode: async (mode: DayPlanRow["mode"]) => {

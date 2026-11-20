@@ -311,6 +311,7 @@ export function TodayScreen() {
             timezone={today.timezone}
             actions={today.actions}
             ownFirst10={today.blockSettings.find((b) => b.key === cur.key)?.first10_options}
+            onChanged={setup.reload}
           />
           <BlockTasks userId={today.userId} date={cur.logDate} block={cur.key} />
         </section>

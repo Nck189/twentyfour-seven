@@ -103,7 +103,12 @@
       "tasks": "Planned tasks",
       "taskCoins": "+{n} coins",
       "first10Start": "Started with the first 10",
-      "fertilized": "Fertilizer for the {block} plot: better quality, better price"
+      "fertilized": "Fertilizer for the {block} plot: better quality, better price",
+      "pickFirst10": "+ Pick a first step",
+      "addItem": "Add a checklist item",
+      "addItemPlaceholder": "+ Add a checklist item",
+      "add": "Add",
+      "saveError": "Couldn't save. Check your connection and try again."
     },
     "nap": {
       "title": "Power nap",
