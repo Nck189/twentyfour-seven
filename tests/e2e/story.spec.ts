@@ -67,7 +67,7 @@ test("CJ-S-2 Skip closes a beat at once; its gift is already in the inventory", 
 
 test("CJ-S-3 More: sound, quiet during Focus/Work and skip animations are switches", async ({ page }) => {
   await setup(page);
-  await page.goto("/more");
+  await page.goto("/more/preferences");
   await settle(page); // More answers taps only once it is interactive (slow WebKit)
   const card = page.locator("#sound");
   const sound = card.getByRole("switch", { name: "Sounds", exact: true });

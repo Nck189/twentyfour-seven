@@ -15,7 +15,7 @@ test("CJ-ICS-1 get the calendar link and read the plan from it without signing i
   await setPrefs(page, { locale: "en", theme: "light" });
   await signIn(page, email);
   await setAllTemplates(await userIdFor(email), "07:00");
-  await page.goto("/more");
+  await page.goto("/more/sharing");
   await settle(page); // More answers taps only once it is interactive (slow WebKit)
   const card = page.locator("#calendar");
   await card.getByRole("button", { name: "Get my calendar link" }).click();

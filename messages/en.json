@@ -544,7 +544,27 @@
       "confirm": "Yes, delete everything",
       "cancel": "Keep my account",
       "error": "Couldn't delete. Check your connection and try again."
-    }
+    },
+    "back": "More",
+    "groups": {
+      "setup": {
+        "title": "Setup",
+        "hint": "Your week, first 10 minutes, exercise"
+      },
+      "sharing": {
+        "title": "Sharing",
+        "hint": "Your free times, calendar link"
+      },
+      "preferences": {
+        "title": "Preferences",
+        "hint": "Language, appearance, sound, notifications"
+      },
+      "account": {
+        "title": "Data & account",
+        "hint": "Install, privacy, export, sign out"
+      }
+    },
+    "backTo": "Back to More"
   },
   "blocks": {
     "name": {

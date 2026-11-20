@@ -48,10 +48,10 @@ export const SETUP_HREF: Record<SetupStep, string> = {
   first10: "/welcome?step=first10&from=more",
   checklist: "/plan",
   backlog_estimate: "/plan",
-  language: "/more#language",
-  home_screen: "/more#install",
-  exercise: "/more#exercise",
-  notifications: "/more#notifications",
+  language: "/more/preferences#language",
+  home_screen: "/more/account#install",
+  exercise: "/more/setup#exercise",
+  notifications: "/more/preferences#notifications",
 };
 
 export const isSetupStep = (v: unknown): v is SetupStep =>
