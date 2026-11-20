@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
-import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
+import { setPrefs, settle, signIn, uniqueEmail } from "../helpers/auth";
 import { profile, setWakeMinutesAgo, settingsBlocks, templates, userIdFor } from "../helpers/db";
 import { IS_PROD_RUN } from "../helpers/env";
 
@@ -192,6 +192,7 @@ test("Today: switch today's first-10 from the block card", async ({ page }) => {
 test("More → Setup opens each part to edit later", async ({ page }) => {
   await newUser(page);
   await page.goto("/more");
+  await settle(page); // More answers taps only once it is interactive (slow WebKit)
   await page.getByRole("link", { name: "First 10 minutes", exact: true }).click();
   await expect(page).toHaveURL(/step=first10/);
   await expect(page.getByRole("heading", { name: "Your first 10 minutes" })).toBeVisible();

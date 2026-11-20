@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
-import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
+import { setPrefs, settle, signIn, uniqueEmail } from "../helpers/auth";
 import { IS_PROD_RUN } from "../helpers/env";
 
 /**
@@ -22,6 +22,7 @@ test("CJ-PUSH-1 More shows Notifications; nothing is asked without a tap", async
   await setPrefs(page, { locale: "en", theme: "light" });
   await signIn(page, uniqueEmail("push"));
   await page.goto("/more");
+  await settle(page); // More answers taps only once it is interactive (slow WebKit)
   const card = page.locator("#notifications");
   await expect(card.getByRole("heading", { name: "Notifications" })).toBeVisible();
   // Every state is a plain sentence: coming soon (no VAPID key), Turn on, blocked, unsupported, or

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
-import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
+import { setPrefs, settle, signIn, uniqueEmail } from "../helpers/auth";
 import { rest, setAllTemplates, setWakeMinutesAgo, userIdFor } from "../helpers/db";
 import { IS_PROD_RUN } from "../helpers/env";
 import { wakeDay } from "../helpers/day";
@@ -86,6 +86,7 @@ test("CJ-CAFE-2 'Use the café in the game only' never asks; the café stays clo
 }) => {
   const id = await setup(page, "cafe-off");
   await page.goto("/more");
+  await settle(page); // More answers taps only once it is interactive (slow WebKit)
   const toggle = page.getByRole("switch", { name: /Use the café in the game only/ });
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-checked", "true");
