@@ -1,5 +1,6 @@
 "use client";
 
+import { getSupabase } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -181,7 +182,31 @@ export function Onboarding() {
             </span>
             <h2 className="text-xl font-extrabold">{t("doneTitle")}</h2>
             <p className="text-muted">{t("doneHint")}</p>
-            <Button onClick={leave}>{t("finish")}</Button>
+            {fromMore ? (
+              <Button onClick={leave}>{t("finish")}</Button>
+            ) : (
+              // A first reward in the first minute (review fix C4): sleep times paid a ticket.
+              <>
+                <Button
+                  onClick={async () => {
+                    // Rewards are claimed on Today or More; claim now so the ticket is there. The
+                    // server decides what's paid (claim_setup_rewards), and a failure still opens the farm.
+                    await getSupabase()
+                      .rpc("claim_setup_rewards")
+                      .then(
+                        () => undefined,
+                        () => undefined,
+                      );
+                    router.push("/farm?capsule=1");
+                  }}
+                >
+                  {t("firstCapsule")}
+                </Button>
+                <Button variant="secondary" onClick={leave}>
+                  {t("finish")}
+                </Button>
+              </>
+            )}
           </section>
         )}
       </div>

@@ -5,7 +5,8 @@ import { storyBusyAt, useBlockClock } from "@/lib/today/blockClock";
 import { Cutscene } from "@/components/story/Cutscene";
 import { useStory } from "@/lib/story/useStory";
 import { useTranslations } from "next-intl";
-import { useCallback, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { FarmSky } from "@/components/art/farm/FarmSky";
 import { MutationIcon } from "@/components/art/farm/Fx";
 import { PlotArt } from "@/components/art/farm/PlotArt";
@@ -66,8 +67,17 @@ export function FarmScreen({ compact = false }: { compact?: boolean }) {
   const blocks = useBlockClock((s) => s.blocks);
   const busy = clock ? storyBusyAt(blocks, clock) : false;
   const story = useStory(compact ? "other" : "farm", busy);
+  // "Open your first capsule" at the end of setup lands here with ?capsule=1 (review fix C4).
+  const [capsuleAsked, setCapsuleAsked] = useState(false);
+  const askCapsule = useCallback(() => setCapsuleAsked(true), []);
   return (
     <>
+      {!compact && (
+        // Its own Suspense: reading the query must not hold up (or un-prerender) the farm.
+        <Suspense fallback={null}>
+          <CapsuleAsk onAsk={askCapsule} />
+        </Suspense>
+      )}
       {story.playing && (
         <Cutscene
           beat={story.playing.beat}
@@ -82,6 +92,8 @@ export function FarmScreen({ compact = false }: { compact?: boolean }) {
         animals={compact ? undefined : animals}
         cafe={compact ? undefined : cafe}
         compact={compact}
+        // After Som's scene, if one is playing: never two sheets at once.
+        openCapsules={capsuleAsked && !story.playing}
         data={data}
         status={status}
         plant={plant}
@@ -93,9 +105,19 @@ export function FarmScreen({ compact = false }: { compact?: boolean }) {
   );
 }
 
+/** Reads ?capsule=1 (the URL of the page being shown, not the one being left). */
+function CapsuleAsk({ onAsk }: { onAsk: () => void }) {
+  const ask = useSearchParams().get("capsule") === "1";
+  useEffect(() => {
+    if (ask) onAsk();
+  }, [ask, onAsk]);
+  return null;
+}
+
 /** The farm UI for given data (no I/O): the app passes useFarm; /dev/farm passes a sample week. */
 export function FarmView({
   compact = false,
+  openCapsules = false,
   data,
   status,
   plant,
@@ -108,6 +130,8 @@ export function FarmView({
   cafe,
 }: {
   compact?: boolean;
+  /** Open the capsule machine once tickets are in (the first capsule after setup, C4). */
+  openCapsules?: boolean;
   data: FarmData | null;
   status: "loading" | "ready" | "error";
   plant: (slot: BlockKey, crop: CropId, replace?: boolean) => Promise<boolean>;
@@ -133,6 +157,13 @@ export function FarmView({
   const [open, setOpen] = useState<BlockKey | null>(null);
   const [pop, setPop] = useState<{ cropId: CropId; quality: Quality; value?: number } | null>(null);
   const [sheet, setSheet] = useState<"capsules" | "dex" | "cafe" | "factory" | null>(null);
+  const [capsulesOpened, setCapsulesOpened] = useState(false);
+  if (openCapsules && !capsulesOpened && !sheet && gacha?.state && gacha.state.tickets > 0) {
+    setCapsulesOpened(true);
+    setSheet("capsules");
+    // A reload or Back doesn't open it again.
+    window.history.replaceState(window.history.state, "", "/farm");
+  }
   const tfac = useTranslations("factory");
   // Loads only while the sheet is open (opening it again reloads).
   const factory = useFactory(sheet === "factory");

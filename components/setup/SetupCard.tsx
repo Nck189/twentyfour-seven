@@ -36,18 +36,18 @@ function useRewardLabel() {
   const t = useTranslations("setup");
   const crops = useTranslations("crops");
   const decor = useTranslations("decor");
+  // Every part of a reward, joined ("2 Strawberry seeds + 1 capsule ticket").
   return (r: Reward) =>
-    "tickets" in r
-      ? t("rewardTickets", { n: r.tickets })
-      : "coins" in r
-        ? t("rewardCoins", { n: r.coins })
-        : "seed" in r
-          ? t("rewardSeeds", { n: r.seed.n, crop: crops(r.seed.crop) })
-          : "feed" in r
-            ? t("rewardFeed", { n: r.feed })
-            : "egg" in r
-              ? t("rewardEgg")
-              : t("rewardDecor", { item: decor(r.decor) });
+    [
+      "seed" in r ? t("rewardSeeds", { n: r.seed.n, crop: crops(r.seed.crop) }) : null,
+      "tickets" in r ? t("rewardTickets", { n: r.tickets }) : null,
+      "coins" in r ? t("rewardCoins", { n: r.coins }) : null,
+      "feed" in r ? t("rewardFeed", { n: r.feed }) : null,
+      "egg" in r ? t("rewardEgg") : null,
+      "decor" in r ? t("rewardDecor", { item: decor(r.decor) }) : null,
+    ]
+      .filter(Boolean)
+      .join(" + ");
 }
 
 /** A small ring: steps done out of all steps. */

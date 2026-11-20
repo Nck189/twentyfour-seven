@@ -827,7 +827,8 @@
     "slotEnd": "{what} เลิก",
     "backToWeek": "กลับไปหน้าสัปดาห์",
     "doneKind": "เสร็จ",
-    "kinds": "แบบวัน"
+    "kinds": "แบบวัน",
+    "firstCapsule": "เปิดแคปซูลแรกของคุณ"
   },
   "setup": {
     "title": "ตั้งค่า 24/7",

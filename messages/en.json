@@ -827,7 +827,8 @@
     "slotEnd": "{what} ends",
     "backToWeek": "Back to the week",
     "doneKind": "Done",
-    "kinds": "Kinds of day"
+    "kinds": "Kinds of day",
+    "firstCapsule": "Open your first capsule"
   },
   "setup": {
     "title": "Set up 24/7",

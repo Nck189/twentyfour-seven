@@ -198,3 +198,21 @@ test("More → Setup opens each part to edit later", async ({ page }) => {
   await page.getByRole("button", { name: "Close" }).click();
   await expect(page).toHaveURL(/\/more$/);
 });
+
+test("review C4: right after setup, a first capsule opens (setting sleep times pays a ticket)", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await newUser(page);
+  await page.goto("/welcome");
+  await page.getByRole("button", { name: /Student/ }).click();
+  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Use all suggestions" }).click();
+  await expect(page.getByText("All set")).toBeVisible();
+  await page.getByRole("button", { name: "Open your first capsule" }).click();
+  await expect(page).toHaveURL(/\/farm$/);
+  const sheet = page.getByRole("dialog", { name: "Capsule machine" });
+  await expect(sheet).toBeVisible({ timeout: 15_000 });
+  await expect(sheet.getByRole("button", { name: "Pull ×1", exact: true })).toBeEnabled();
+  await expectNoSeriousA11y(page);
+});
