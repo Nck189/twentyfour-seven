@@ -27,6 +27,7 @@ export type StoryFacts = {
   perfectDays?: number;
   made?: number;
   welcomeBacks?: number;
+  festivalSet?: boolean;
 };
 export type StoryMoment = "farm" | "goodnight" | "other";
 
@@ -62,6 +63,8 @@ export function triggerMet(t: StoryTrigger, f: StoryFacts): boolean {
       return (f.made ?? 0) >= t.need;
     case "welcome_backs":
       return (f.welcomeBacks ?? 0) >= t.need;
+    case "festival_set":
+      return f.festivalSet === true;
   }
 }
 

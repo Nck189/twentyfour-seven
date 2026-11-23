@@ -243,3 +243,18 @@ describe("welcome back plays first (G7 S3-2)", () => {
     expect(beat).toBe("ch11_welcome_back");
   });
 });
+
+describe("farm yard festival set", () => {
+  it("plays once the set is in the yard", () => {
+    const seen = STORY_BEATS.filter(
+      (b) =>
+        b !== "yard_festival" && STORY[b].trigger.kind !== "season" && STORY[b].trigger.kind !== "season_use",
+    );
+    const base = { moment: "farm" as const, busy: false, seenToday: false, seen };
+    expect(nextBeat({ ...base, facts: { harvests: 0, goodDays: 0 } })).toBeNull();
+    expect(nextBeat({ ...base, facts: { harvests: 0, goodDays: 0, festivalSet: true } })).toBe(
+      "yard_festival",
+    );
+    expect(STORY.yard_festival.gift).toBeNull();
+  });
+});

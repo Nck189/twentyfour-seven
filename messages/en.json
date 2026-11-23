@@ -1366,6 +1366,12 @@
       "l1": "Som kept the gate warm while you were away.",
       "l2": "No catching up needed. Just one small thing today.",
       "l3": "The farm is happy you're here."
+    },
+    "yard_festival": {
+      "title": "A festival yard",
+      "l1": "Som spots the festival decor in the yard and stops.",
+      "l2": "The whole yard looks ready for the festival.",
+      "l3": "Som sits by it all evening, very pleased."
     }
   },
   "cafe": {

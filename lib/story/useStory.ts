@@ -24,6 +24,7 @@ type Status = {
     perfect_days?: number;
     made?: number;
     welcome_backs?: number;
+    festival_set?: boolean;
   };
 };
 
@@ -101,6 +102,7 @@ export function useStory(moment: StoryMoment, busy = false) {
           perfectDays: s.facts?.perfect_days ?? 0,
           made: s.facts?.made ?? 0,
           welcomeBacks: s.facts?.welcome_backs ?? 0,
+          festivalSet: s.facts?.festival_set === true,
         },
       });
       if (cancelled) return;

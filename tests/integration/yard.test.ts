@@ -57,3 +57,33 @@ describe("farm yard (server)", () => {
     expect((await rows(a.id))[0]!.spot).toBe(1);
   });
 });
+
+describe("a festival set in the yard (story beat yard_festival)", () => {
+  it("needs this month's festival item placed with 2+ other items; once, no gift", async () => {
+    const u = await withCoins("yard-fest", 2000);
+    const facts = async () =>
+      (await admin().rpc("_story_facts", { uid: u.id })).data as { day: string; festival_set: boolean };
+    const month = Number((await facts()).day.slice(5, 7));
+    const fest = (
+      {
+        1: "fireworks",
+        2: "red_lantern",
+        4: "water_bowl",
+        8: "jasmine",
+        11: "krathong",
+        12: "star_tree",
+      } as Record<number, string>
+    )[month];
+    // Two items and no festival item: not yet.
+    for (const item_id of ["fence", "path"]) await admin().from("decor").insert({ user_id: u.id, item_id });
+    expect((await u.client.rpc("claim_story_beat", { p_beat: "yard_festival" })).error?.message).toBe(
+      "not yet",
+    );
+    if (!fest) return; // a month with no festival item: the beat waits for one
+    await admin().from("decor").insert({ user_id: u.id, item_id: fest });
+    expect((await facts()).festival_set).toBe(true);
+    const r = await u.client.rpc("claim_story_beat", { p_beat: "yard_festival" });
+    expect(r.error).toBeNull();
+    expect(r.data).toMatchObject({ beat: "yard_festival", gift: null });
+  });
+});

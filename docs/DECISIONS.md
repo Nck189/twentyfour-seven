@@ -374,3 +374,14 @@ Format: date · decision · why · how to change it
   - **Where:** the Shop's seeds, seasonal seed, ticket swap and upgrades; decor; building and upgrading factory machines. Seeds and small decor stay one tap when there's plenty left.
   - **Unchanged:** the reward jar already had its own "Spend N coins" second tap. Selling never asks (it adds coins).
   - The server still decides every price; the sheet only asks.
+- 2026-11-23 · **Farm yard** (Minnie chose the full redesign; `docs/FARM_YARD_PLAN.md`; migration 20261124000000)
+  - **Spots and storage.** Decor has 8 spots below the plots, or sits in storage. Nothing is deleted. New decor (bought, earned or gifted) takes the first free spot through an insert trigger, so every place that adds decor works unchanged. Existing decor fills spots 1–8 in purchase order. Moving onto a taken spot swaps the two items (into storage when the moved one came from there).
+  - **Moving uses "Move to…".** Tap an item to pick a spot or put it away; tap an empty spot to place something from storage. **No drag yet:** with "Move to…" one tap away, drag-and-drop on a phone-sized yard adds little and risks fighting the page scroll. It can come later.
+  - **Reasons to buy, cosmetic only:**
+    - Som sits by one placed item a day (stable within the day).
+    - Butterflies come with 3+ items placed, birds with 6+. They stand still with Skip animations and reduced motion.
+    - The first placed item joins the share picture.
+    - This month's festival item placed with 2+ others brings a short Som scene, once, no gift.
+
+    Nothing changes crops, tickets or coins.
+  - **The festival scene plays once ever**, not once per festival. Per-festival scenes can follow if Minnie wants them.
