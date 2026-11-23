@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { callbackFailure } from "@/lib/auth/callback";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 /** Magic-link landing: supports the token_hash link (our email template) and PKCE `code`. */
@@ -18,5 +19,7 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     ok = !error;
   }
-  return NextResponse.redirect(new URL(ok ? "/today" : "/login?error=link", origin));
+  return NextResponse.redirect(
+    new URL(ok ? "/today" : `/login?error=${callbackFailure(searchParams)}`, origin),
+  );
 }

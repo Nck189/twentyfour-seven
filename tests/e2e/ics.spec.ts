@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
-import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
+import { setPrefs, settle, signIn, uniqueEmail } from "../helpers/auth";
 import { setAllTemplates, userIdFor } from "../helpers/db";
 import { IS_PROD_RUN } from "../helpers/env";
 
@@ -16,6 +16,7 @@ test("CJ-ICS-1 get the calendar link and read the plan from it without signing i
   await signIn(page, email);
   await setAllTemplates(await userIdFor(email), "07:00");
   await page.goto("/more");
+  await settle(page); // More answers taps only once it is interactive (slow WebKit)
   const card = page.locator("#calendar");
   await card.getByRole("button", { name: "Get my calendar link" }).click();
   const link = card.getByRole("textbox", { name: "Calendar" });

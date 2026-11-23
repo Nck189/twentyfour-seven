@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { freeDaysFromContext } from "@/lib/share/compute";
 import { slotFits, slotsText, type DayFree } from "@/lib/share/freebusy";
 import { getSupabase } from "@/lib/supabase/client";
+import { SITE_HOST, siteUrl } from "@/content/site";
 import { textPicture as slotsImage } from "@/lib/share/picture";
 import { loadDayContext } from "@/lib/today/loadContext";
 
@@ -131,7 +132,11 @@ export function ShareCard() {
   useEffect(() => {
     let cancelled = false;
     if (!text) return;
-    void slotsImage(text)
+    // With a link on, the QR opens it so a friend can ask for a time; else it opens the app.
+    const footer = url
+      ? { url, caption: t("pictureAsk"), host: SITE_HOST }
+      : { url: siteUrl("/", "free"), caption: t("pictureApp"), host: SITE_HOST };
+    void slotsImage(text, footer)
       .then((blob) => {
         if (!cancelled) setImage(new File([blob], "free-times.png", { type: "image/png" }));
       })
@@ -139,7 +144,7 @@ export function ShareCard() {
     return () => {
       cancelled = true;
     };
-  }, [text]);
+  }, [text, url, t]);
 
   const run = async (fn: () => Promise<string>, fail = t("failed")) => {
     setBusy(true);
@@ -256,7 +261,8 @@ export function ShareCard() {
               a.href = URL.createObjectURL(image);
               a.download = image.name;
               a.click();
-              URL.revokeObjectURL(a.href);
+              // WebKit can drop a download whose URL is already revoked (as ExportCard; R-M14-15).
+              setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
               setMsg({ kind: "ok", text: t("imageReady") });
             }
           }}
@@ -264,6 +270,8 @@ export function ShareCard() {
           {t("slotsImage")}
         </Button>
       </div>
+      {/* The picture leads to her live link while one is on: say so before she posts it (G7 R-A-2). */}
+      {url && <p className="mt-2 text-xs text-muted">{t("pictureHasLink")}</p>}
       {msg && (
         <p
           role={msg.kind === "error" ? "alert" : "status"}

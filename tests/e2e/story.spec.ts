@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
-import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
+import { setPrefs, settle, signIn, uniqueEmail } from "../helpers/auth";
 import { rest, setAllTemplates, userIdFor } from "../helpers/db";
 import { calmBlockClock, gotoToday, leaveAfterSignIn, setBlockNow, wakeDay } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
@@ -68,6 +68,7 @@ test("CJ-S-2 Skip closes a beat at once; its gift is already in the inventory", 
 test("CJ-S-3 More: sound, quiet during Focus/Work and skip animations are switches", async ({ page }) => {
   await setup(page);
   await page.goto("/more");
+  await settle(page); // More answers taps only once it is interactive (slow WebKit)
   const card = page.locator("#sound");
   const sound = card.getByRole("switch", { name: "Sounds", exact: true });
   await expect(sound).toHaveAttribute("aria-checked", "true");
@@ -136,6 +137,7 @@ test("G7 STORY-R6: Som waits during the wake window and Down Time, and comes at 
   const id = await setup(page, { calm: false });
   const scene = page.getByRole("dialog", { name: "Som" });
   await page.goto("/more"); // on the app's origin (More doesn't save a day)
+  await settle(page); // More answers taps only once it is interactive (slow WebKit)
   for (const busy of ["wake", "down"] as const) {
     await setBlockNow(page, busy);
     await page.goto("/farm");

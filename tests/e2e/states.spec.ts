@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
+import { setPrefs, settle, signIn, uniqueEmail } from "../helpers/auth";
 import { leaveAfterSignIn } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
 
@@ -21,6 +21,7 @@ test("CJ-STATE-1 More: a failed load of the exercise goal and the requests inbox
     route.request().method() === "GET" ? route.abort("failed") : route.fallback(),
   );
   await page.goto("/more");
+  await settle(page); // More answers taps only once it is interactive (slow WebKit)
 
   const exercise = page.getByRole("region", { name: "Weekly exercise" });
   await expect(exercise.getByRole("alert")).toContainText("Couldn't load your weekly goal.");

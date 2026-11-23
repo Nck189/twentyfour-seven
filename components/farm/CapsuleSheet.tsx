@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Capsule, CapsuleMachine, RarityLight } from "@/components/art/farm/Capsule";
 import { CropArt } from "@/components/art/farm/CropArt";
 import { TicketArt } from "@/components/art/Ticket";
+import { SharePicture } from "@/components/share/SharePicture";
 import { Sheet } from "@/components/today/BlockSheet";
 import { Button } from "@/components/ui/Button";
 import { RARITIES } from "@/content/crops";
@@ -57,6 +58,9 @@ export function Reveal({ results, onDone }: { results: PullResult[]; onDone: () 
   const best = useMemo(() => results.reduce((m, r) => Math.max(m, RANK[r.rarity]), 0), [results]);
   const top = results.find((r) => RANK[r.rarity] === best)!;
   const crops = useTranslations("crops");
+  const ts = useTranslations("share.picture");
+  const capsuleLine = ts("capsuleLine", { rarity: t(`rarity.${top.rarity}`) });
+  const shareLines = useMemo(() => [{ text: capsuleLine }], [capsuleLine]);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const shown = useRef(false);
   const box = useRef<HTMLDivElement>(null);
@@ -163,9 +167,23 @@ export function Reveal({ results, onDone }: { results: PullResult[]; onDone: () 
         )}
       </AnimatePresence>
       {phase === "shown" ? (
-        <Button data-reveal-action onClick={onDone} className="min-w-40">
-          {t("done")}
-        </Button>
+        <div className="flex flex-col items-center gap-2">
+          <Button data-reveal-action onClick={onDone} className="min-w-40">
+            {t("done")}
+          </Button>
+          {/* An epic or legendary pull is worth showing off (review fix A4). */}
+          {best >= RANK.epic && (
+            <SharePicture
+              kind="capsule"
+              title={ts("capsuleTitle", { name: crops(top.crop) })}
+              lines={shareLines}
+              hero={<CropArt cropId={top.crop} stage={3} status="ready" />}
+              fileName="my-capsule.png"
+              label={ts("share")}
+              className="flex flex-col items-center"
+            />
+          )}
+        </div>
       ) : (
         <Button data-reveal-action variant="secondary" onClick={show}>
           {t("skip")}

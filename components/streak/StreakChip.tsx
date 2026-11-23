@@ -1,9 +1,10 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ScarecrowArt, StreakSun } from "@/components/art/Streak";
 import { TicketArt } from "@/components/art/Ticket";
+import { SharePicture } from "@/components/share/SharePicture";
 import { Sheet } from "@/components/today/BlockSheet";
 import type { DayKind } from "@/lib/game/streak";
 import type { StreakView } from "@/lib/streak/useStreak";
@@ -111,6 +112,10 @@ export function StreakNotice({ view }: { view: StreakView }) {
     if (milestone) sfx.celebrate();
   }, [milestone]);
   if (seen || view.granted.length === 0) return null;
+  const days = Math.max(
+    0,
+    ...view.granted.filter((g) => g.reason !== "perfect_day").map((g) => g.days ?? Number(g.reason.slice(7))),
+  );
   const total = view.granted.reduce((n, g) => n + g.amount, 0);
   const lines = view.granted.map((g) =>
     g.reason === "perfect_day"
@@ -120,7 +125,7 @@ export function StreakNotice({ view }: { view: StreakView }) {
   return (
     <section
       role="status"
-      className="mx-4 mb-3 flex items-center gap-3 rounded-[var(--radius-lg)] bg-primary-soft p-3 lg:mx-6"
+      className="mx-4 mb-3 flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] bg-primary-soft p-3 lg:mx-6"
     >
       <TicketArt className="h-8 w-12 shrink-0" kind="sunrise" />
       <p className="min-w-0 flex-1 text-sm">
@@ -134,6 +139,25 @@ export function StreakNotice({ view }: { view: StreakView }) {
       >
         {t("ok")}
       </button>
+      {/* A streak milestone is worth showing off (review fix A4). */}
+      {days > 0 && <StreakShare days={days} />}
     </section>
+  );
+}
+
+function StreakShare({ days }: { days: number }) {
+  const ts = useTranslations("share.picture");
+  const line = ts("streakLine");
+  const lines = useMemo(() => [{ text: line }], [line]);
+  return (
+    <SharePicture
+      kind="streak"
+      title={ts("streakTitle", { n: days })}
+      lines={lines}
+      hero={<StreakSun />}
+      fileName="my-streak.png"
+      label={ts("share")}
+      className="basis-full"
+    />
   );
 }

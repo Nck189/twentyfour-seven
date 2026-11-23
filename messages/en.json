@@ -44,7 +44,11 @@
     "rateLimited": "Please wait a minute before asking for another code. Your earlier code still works.",
     "language": "Language",
     "codePlaceholder": "123456",
-    "codeTip": "Type the 6-digit code from the email (iPhone may offer it above the keyboard)."
+    "codeTip": "Type the 6-digit code from the email (iPhone may offer it above the keyboard).",
+    "whatIs": "What is 24/7?",
+    "or": "or",
+    "googleCancelled": "Google sign-in was cancelled. Try again, or use the email code.",
+    "googleError": "Google sign-in didn't work. Use the email code for now."
   },
   "today": {
     "title": "Today",
@@ -484,9 +488,7 @@
       "days": "{n} of 7 days logged",
       "perfect": "{n} perfect days",
       "streak": "{n}-day streak",
-      "best": "Best block: {block}",
-      "ready": "Picture ready.",
-      "error": "Couldn't share. Try again."
+      "best": "Best block: {block}"
     }
   },
   "more": {
@@ -1426,7 +1428,25 @@
     "noLongerFree": "This time isn't free anymore in your plan.",
     "acceptName": "Accept {name}'s request",
     "declineName": "Decline {name}'s request",
-    "inboxError": "Couldn't load your requests."
+    "inboxError": "Couldn't load your requests.",
+    "ctaTitle": "Made with 24/7",
+    "ctaBody": "Plan your day in 7 blocks and grow a small farm.",
+    "ctaButton": "Start your own — free",
+    "picture": {
+      "caption": "Plan your day, grow a farm. Free.",
+      "ready": "Picture ready.",
+      "error": "Couldn't share. Try again.",
+      "share": "Share",
+      "hatchTitle": "My {name} hatched!",
+      "hatchLine": "A new friend on my farm",
+      "capsuleTitle": "I got {name}!",
+      "capsuleLine": "{rarity} crop from a capsule",
+      "streakTitle": "{n} days in a row",
+      "streakLine": "Up on time, every night planned"
+    },
+    "pictureAsk": "Scan to ask me for a time",
+    "pictureApp": "Made with 24/7",
+    "pictureHasLink": "The picture has a QR code to your link. Anyone who scans it sees when you're free."
   },
   "factory": {
     "title": "Factory",
@@ -1518,5 +1538,32 @@
     "week": "Sign-up week",
     "users": "Accounts",
     "day": "Day {n}"
+  },
+  "landing": {
+    "title": "Your day in 7 blocks.",
+    "title2": "Live them, and your farm grows.",
+    "subtitle": "Plan tonight. Tap when you start. Watch it grow.",
+    "farmAlt": "A small farm growing",
+    "start": "Start free",
+    "haveAccount": "I have an account",
+    "steps": {
+      "plan": {
+        "title": "Plan tonight",
+        "body": "Two minutes before bed: tomorrow is ready."
+      },
+      "tap": {
+        "title": "Tap when you start",
+        "body": "One tap per block. No timers to babysit."
+      },
+      "grow": {
+        "title": "Your farm grows from real days",
+        "body": "Good days grow crops, hatch animals and fill your capsules."
+      }
+    },
+    "privacy": "No ads. Your data is yours, and it's never sold.",
+    "inApp": "For the full app, open this page in Safari or Chrome.",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "copyManual": "Copy this address:"
   }
 }

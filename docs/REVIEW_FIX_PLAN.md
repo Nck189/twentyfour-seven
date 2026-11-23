@@ -7,7 +7,7 @@ Written for whoever implements it (Minnie hands this to another session). It is 
 
 ## Rules (unchanged, repeated so this file stands alone)
 - Read `CLAUDE.md`, `docs/QA_QC.md` and the top of `docs/PROGRESS.md` first.
-- **One phase = one PR**, in the order A → B → C → D. Phase E is design only.
+- **One phase = one PR**, in the order A → B → C → D, then F. Phase E is design only.
 - Start each phase on a new local branch from `origin/main` (after PR #25 is merged). Push only to `claude/practical-cannon-a70ubq`, open a draft PR, subscribe to it.
 - **Test-first.** For every behaviour below, write the failing test named in "Tests", then the code.
 - Each PR passes gates G1–G7 (an independent G7 review included) and gets a short `docs/qa/<phase>-report.md`.
@@ -25,6 +25,8 @@ Written for whoever implements it (Minnie hands this to another session). It is 
 | 4 | Google sign-in (needs a 10-minute setup by her, B2) | Build it switched off; she turns it on |
 | 5 | A new player's first setup pays 1 capsule ticket (C4) | Yes, in place of nothing: the 2 strawberry seeds stay |
 | 6 | More becomes 4 groups with sub-pages (D) | Yes |
+| 7 | Farm ambience (F3): on or off by default | Off; a switch in Sound & motion |
+| 8 | Background music | None for now |
 
 ---
 
@@ -166,6 +168,67 @@ The review's biggest gap is that nothing is done with or for another person. Bef
 2. **Wake buddy** (G7): two accounts pair by link; each sees only whether the other pressed "I'm up" in the window today, and a shared streak. Nothing else about the other's day. Either can unpair.
 3. Privacy text for both, what a blocked or deleted account leaves behind, and what the retention dashboard should count.
 Build only after the pilot (10–20 friends) shows people stay; read `/admin/retention` first.
+
+## Phase F — sound, small animations, pictures, cutscenes (no migration expected)
+Minnie, 2026-11-16: "more cutscenes and pictures? and sound feels too little". Opinion: yes, in this order. Sound and small animations change how every tap feels and are cheap. Pictures fill the screens that are only text. Cutscenes are the most work per minute of play, so add short ones at milestones, not a longer story.
+Can be built after Phase C, or F1 + F2 alone at any time. Every sound obeys the global mute and "quiet during Focus and Work"; every animation is skipped under reduced motion and "skip animations".
+
+### F1. A sound for everything that changes something
+**Now:** `lib/sound/sfx.ts` has 15 synth sounds, most used in one place (harvest, hatch, capsule, coin, tick). Starting a block, finishing one, planting, buying, upgrading, the factory, the café, orders and errors are silent.
+**Build** (WebAudio synth like the existing ones, short, soft, pitched in one key so they sound like a set):
+| Moment | Sound |
+|---|---|
+| Start a block | one soft rising note |
+| First 10 minutes done | a small sparkle (matches the plot sparkle) |
+| Finish a block | two rising notes; three when every checklist item is ticked |
+| "I'm up" in the window | the existing sunrise, a little longer |
+| Night ritual: each step | a soft low tick; Goodnight keeps the lullaby |
+| Plant a seed | a soft "pat" |
+| A crop grew a stage (first farm visit that day) | a light pop per plot, staggered |
+| Buy, upgrade | a warm two-note "kaching", different from the sell coin |
+| Order delivered, factory collect | coin + a short flourish |
+| Factory job started | a low mechanical click |
+| Café order | a cup clink |
+| Feed an animal, pet at the cap | a munch; a soft "enough" note |
+| Something failed to save | one low, short note (never harsh) |
+| Unlock, streak milestone, perfect day | the existing celebrate, with a higher last note for bigger ones |
+- Add `docs/SOUND-MAP.md`: every moment → sound, so new features pick one.
+**Tests:** unit: every `sfx` entry is a function and plays nothing when muted or quiet; a test that walks the sound map and fails if a listed moment has no call site (grep-style, like the art lint).
+
+### F2. Small animations where the reward lands
+- Finishing a block: the matching plot in the Today farm strip (C3) bounces once and Som looks up.
+- Opening the farm after a good day: plots that grew step up one stage with a small bounce, one after another.
+- Selling and delivering: coins fly from the item to the coin counter.
+- A perfect day: a short fall of leaves and petals in token colors behind the notice.
+- All under 600 ms, transform and opacity only, none under reduced motion.
+**Tests:** E2E with reduced motion: the end state is shown at once and nothing is hidden behind an animation.
+
+### F3. Farm ambience (decide)
+A quiet loop on the Farm tab only: birds by day, crickets at night, soft rain when today's weather is rain. Its own switch in Sound & motion, **off by default** (decision for Minnie: on or off by default). Synth noise + filters first; a CC0 recording only if the synth sounds poor (self-hosted, license noted in `docs/ASSETS.md`). No background music in this phase: it needs real composing and gets muted fast.
+
+### F4. Pictures on text-only screens
+Hand-built SVG in the same style (start from `design/reference-style-a.svg`), each readable at 96–160 px:
+- Empty states: Stats before any data (Som with a blank chart), an empty backlog (an empty basket), no animals yet (a nest), no requests (a mailbox).
+- The Night ritual header (moon over the farm) and the weekly review header.
+- Each setup step and the "All set" screen.
+- The offline and error pages (Som under an umbrella).
+- A sky strip on Today that follows the time of day (the farm's sky tokens).
+- **Som follows the day (Minnie, 2026-11-16: "can the icon change with the current block?").** The Home Screen icon can't: iOS and Android fix a web app's icon when it is installed. Inside the app it can, and the art exists (`components/art/AppIcon.tsx` has sunrise, meadow and night skies). Put the mark in the Today header and let it follow the current block: sunrise and open eyes for Wake, daytime for Focus/Work/Gradation/Free, dusk for Down Time, night and closed eyes for Sleep. The browser tab icon can follow too on desktop.
+**Tests:** art lint; each new piece on `/dev/art`; a look at 48 px and 160 px in light and dark.
+
+### F5. Short cutscenes at milestones
+**Now:** Som's story has chapters and seasonal beats (`content/story.ts`, the player in `components/story/Cutscene.tsx`, paid once by `claim_story_beat`).
+**Build:** first list the beats that exist, then add only the missing ones from this list. Each is 2–3 panels, skippable, shown once, never over a check-in in progress:
+1. First harvest.
+2. First animal hatched (Som meets it; the per-species lines already exist).
+3. First perfect day.
+4. Streak of 7, then 30.
+5. First farmhouse upgrade (Som moves in).
+6. First thing made in the factory.
+7. Back after days away (pairs with the welcome-back card; kind, never guilt).
+8. First day of each season.
+- No reward bigger than the existing beats pay; any reward is granted by the server.
+**Tests:** unit: every beat has EN + TH text and a trigger; E2E: one new beat shows once and never again; skip works; reduced motion shows stills.
 
 ## After each phase
 Update `docs/BUILD_PLAN.md` status, `docs/PROGRESS.md` (what Minnie must do: env, setup, `db push`) and `docs/DECISIONS.md`.

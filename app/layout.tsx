@@ -4,6 +4,7 @@ import { AppProviders } from "@/components/providers/AppProviders";
 import { ServiceWorkerRegister } from "@/components/providers/ServiceWorkerRegister";
 import { SoundUnlock } from "@/components/providers/SoundUnlock";
 import "./globals.css";
+import { SITE_HOST } from "@/content/site";
 
 const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito", display: "swap" });
 const thai = IBM_Plex_Sans_Thai_Looped({
@@ -13,10 +14,15 @@ const thai = IBM_Plex_Sans_Thai_Looped({
   display: "swap",
 });
 
+const DESCRIPTION = "1 day = 24 hours = 7 blocks. A day planner that grows a cozy farm.";
 export const metadata: Metadata = {
+  // Absolute address for the link-preview picture (app/opengraph-image.png; review fix A3).
+  metadataBase: new URL(`https://${SITE_HOST}`),
   title: "24/7",
-  description: "1 day = 24 hours = 7 blocks. A day planner that grows a cozy farm.",
+  description: DESCRIPTION,
   applicationName: "24/7",
+  openGraph: { type: "website", siteName: "24/7", title: "24/7", description: DESCRIPTION },
+  twitter: { card: "summary_large_image", title: "24/7", description: DESCRIPTION },
   appleWebApp: { capable: true, title: "24/7", statusBarStyle: "default" },
   formatDetection: { telephone: false },
 };

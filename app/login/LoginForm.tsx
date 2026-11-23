@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import { InAppNote } from "@/components/landing/InAppNote";
+import { googleLoginOffered } from "@/lib/auth/google";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore, type FormEvent } from "react";
@@ -64,6 +67,8 @@ function parsePending(raw: string | null, now: number): Pending | null {
   }
 }
 
+const noSubscribe = () => () => {};
+
 export function LoginForm() {
   const t = useTranslations("login");
   const router = useRouter();
@@ -72,12 +77,24 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [link, setLink] = useState("");
   const pendingRaw = useSyncExternalStore(subscribePending, readPendingRaw, () => null);
+  // One-tap sign-in, only once it has been set up and where Google allows it (B2).
+  const google = useSyncExternalStore(
+    noSubscribe,
+    () => googleLoginOffered(process.env.NEXT_PUBLIC_GOOGLE_LOGIN, navigator.userAgent),
+    () => false,
+  );
   const [now, setNow] = useState(() => Date.now());
   const pending = parsePending(pendingRaw, now);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(
-    params.get("error") === "link" ? t("callbackError") : null,
+    params.get("error") === "link"
+      ? t("callbackError")
+      : params.get("error") === "cancelled"
+        ? t("googleCancelled")
+        : params.get("error") === "provider"
+          ? t("googleError")
+          : null,
   );
 
   // Resend countdown tick.
@@ -167,8 +184,44 @@ export function LoginForm() {
         <AppMark className="mb-4 h-20 w-20" />
         <h1 className="text-2xl font-extrabold">{t("title")}</h1>
         <p className="text-muted">{t("subtitle")}</p>
+        <Link
+          href="/"
+          className="tap mt-1 inline-flex min-h-11 items-center px-3 text-sm font-bold text-primary"
+        >
+          {t("whatIs")}
+        </Link>
       </div>
 
+      {/* Inside LINE's or Instagram's browser: suggest the real one here too (G7 R-B-3). */}
+      <div className="mb-4 empty:hidden">
+        <InAppNote />
+      </div>
+      {!pending && google && (
+        <div className="mb-4 flex flex-col gap-3">
+          <Button
+            variant="secondary"
+            disabled={busy}
+            onClick={async () => {
+              setError(null);
+              setBusy(true);
+              const { error: err } = await getSupabase().auth.signInWithOAuth({
+                provider: "google",
+                options: { redirectTo: `${window.location.origin}/auth/callback` },
+              });
+              // On success the browser is already leaving for Google; the button stays busy.
+              if (err) {
+                setBusy(false);
+                setError(t("googleError"));
+              }
+            }}
+          >
+            {t("google")}
+          </Button>
+          <p className="text-center text-sm text-muted" aria-hidden="true">
+            {t("or")}
+          </p>
+        </div>
+      )}
       {!pending ? (
         <form onSubmit={(e) => sendLink(e)} className="flex flex-col gap-3" noValidate>
           <label htmlFor="email" className="font-bold">
