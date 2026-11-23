@@ -1,11 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, settle, signIn, uniqueEmail } from "../helpers/auth";
+import { rest, settingsBlocks, userIdFor } from "../helpers/db";
+import { IS_PROD_RUN } from "../helpers/env";
 
 /** Review fix D: More is four groups, each its own page with the same cards. */
 
 const GROUPS = [
-  { row: "Setup", path: "/more/setup", cards: ["#setup-links", "#exercise"] },
+  { row: "Getting started", path: "/more/setup", cards: ["#setup-links", "#exercise"] },
   { row: "Sharing", path: "/more/sharing", cards: ["#share", "#calendar"] },
   {
     row: "Preferences",
@@ -56,10 +58,30 @@ test("old /more#<card> links land on the card's page", async ({ page }) => {
   for (const [id, path] of old) {
     await page.goto(`/more#${id}`);
     await expect(page).toHaveURL(new RegExp(`${path}#${id}$`));
-    await expect(page.locator(`#${id}`)).toBeVisible();
+    await expect(page.locator(`#${id}`)).toBeInViewport();
   }
-  // The setup card still lives on More itself.
-  await page.goto("/more#nope");
-  await expect(page).toHaveURL(/\/more#nope$/);
-  await expect(page.getByRole("navigation", { name: "More" })).toBeVisible();
+  // The setup card still lives on More itself; an unknown or broken anchor stays on More too.
+  for (const hash of ["setup", "nope", "%"]) {
+    await page.goto(`/more#${hash}`);
+    await expect(page.getByRole("navigation", { name: "More" })).toBeVisible();
+    await settle(page); // the redirect effect has run
+    await expect(page).toHaveURL(new RegExp(`/more#${hash.replace("%", "%(25)?")}$`));
+    if (hash === "setup") await expect(page.locator("#setup")).toBeInViewport();
+  }
+});
+
+test("G7 D-1: a setup reward claimed on a group page says so there", async ({ page }) => {
+  test.skip(IS_PROD_RUN, "writes settings directly");
+  const email = uniqueEmail("more-reward");
+  await signIn(page, email);
+  const id = await userIdFor(email);
+  // A first step for Focus, set elsewhere (another device): the step is done, not yet paid.
+  const blocks = (await settingsBlocks(id)).map((b) =>
+    b.key === "focus" ? { ...b, first10: "Open the notes" } : b,
+  );
+  await rest(`settings?user_id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ blocks }) });
+  await page.goto("/more/sharing");
+  const notice = page.getByRole("status").filter({ hasText: "Setup reward" });
+  await expect(notice).toBeVisible();
+  await expect(notice).toContainText("1 capsule ticket");
 });

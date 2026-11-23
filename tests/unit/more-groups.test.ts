@@ -20,6 +20,10 @@ describe("More in four groups (review fix D)", () => {
     expect(hashRedirect("")).toBeNull();
     expect(hashRedirect("#nope")).toBeNull();
     expect(hashRedirect("#%2F%2Fevil.example")).toBeNull();
+    // A broken escape never throws (it would replace More with the error screen; G7 D-2).
+    expect(hashRedirect("#%")).toBeNull();
+    expect(hashRedirect("#%E0%A4")).toBeNull();
+    expect(hashRedirect("#%6Canguage")).toBe("/more/preferences#language");
   });
   it("only the four groups are pages", () => {
     expect(isMoreGroup("sharing")).toBe(true);

@@ -48,7 +48,7 @@ export function Onboarding() {
   const [kindOpen, setKindOpen] = useState(false);
   const [opening, setOpening] = useState(false);
 
-  const leave = () => router.push(fromMore ? "/more/setup" : "/today");
+  const leave = () => router.push(fromMore ? "/more" : "/today");
   async function skip() {
     if (!fromMore && !setup.onboarding?.done) await setup.finish("skipped");
     leave();

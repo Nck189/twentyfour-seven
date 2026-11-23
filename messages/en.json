@@ -548,7 +548,7 @@
     "back": "More",
     "groups": {
       "setup": {
-        "title": "Setup",
+        "title": "Getting started",
         "hint": "Your week, first 10 minutes, exercise"
       },
       "sharing": {
@@ -821,7 +821,7 @@
     "ownPlaceholder": "Your first-10 for {block}",
     "addButton": "Add",
     "doneTitle": "All set",
-    "doneHint": "Change any of this later in More → Setup.",
+    "doneHint": "Change any of this later in More → Getting started.",
     "weekdays": "Days",
     "starterTitle": "What's your week like?",
     "starter": {
@@ -1338,7 +1338,7 @@
       "already": "You already answered today. That answer stays."
     },
     "error": "Couldn't reach the café. Try again.",
-    "privacy": "Turn the question off any time: More → Som's café.",
+    "privacy": "Turn the question off any time: More → Preferences → Som's café.",
     "nightTitle": "Coffee or tea today in real life? (your latest cup)",
     "nightThanks": "Thanks, noted.",
     "slot": {

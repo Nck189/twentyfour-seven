@@ -197,7 +197,7 @@ test("More → Setup opens each part to edit later", async ({ page }) => {
   await expect(page).toHaveURL(/step=first10/);
   await expect(page.getByRole("heading", { name: "Your first 10 minutes" })).toBeVisible();
   await page.getByRole("button", { name: "Close" }).click();
-  await expect(page).toHaveURL(/\/more\/setup$/);
+  await expect(page).toHaveURL(/\/more$/);
 });
 
 test("review C4: right after setup, a first capsule opens (setting sleep times pays a ticket)", async ({

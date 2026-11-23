@@ -27,7 +27,12 @@ export function groupOfCard(id: string): MoreGroup | null {
  * (no hash, `#setup` — the setup card is still there — or an anchor that no longer exists).
  */
 export function hashRedirect(hash: string): string | null {
-  const id = decodeURIComponent(hash.replace(/^#/, ""));
+  let id: string;
+  try {
+    id = decodeURIComponent(hash.replace(/^#/, ""));
+  } catch {
+    return null; // a broken escape (`#%`) stays on More instead of throwing (G7 D-2)
+  }
   const g = id ? groupOfCard(id) : null;
   return g ? `/more/${g}#${id}` : null;
 }

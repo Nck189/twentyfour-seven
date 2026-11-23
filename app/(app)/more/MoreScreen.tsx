@@ -75,7 +75,7 @@ export function MoreScreen() {
   return (
     <>
       <ScreenHeader title={t("title")} />
-      {setup.state && <SetupRewardNotice granted={setup.state.granted.filter((g) => g !== "exercise")} />}
+      {setup.state && <SetupRewardNotice granted={setup.state.granted} />}
       {setup.state && <SetupCard state={setup.state} />}
       <nav aria-label={t("title")} className="mx-4 mb-3 lg:mx-6">
         <ul className="flex flex-col gap-2">
@@ -103,6 +103,10 @@ export function MoreScreen() {
 /** One group's page: a way back to More, then its cards as they were. */
 export function MoreGroupScreen({ group }: { group: MoreGroup }) {
   const t = useTranslations("more");
+  // One claim per page, and every reward it pays is said here (G7 D-1). On Setup the exercise
+  // reward shows next to its setting instead (Minnie 2026-11-14).
+  const setup = useSetupRewards();
+  const granted = setup.state?.granted ?? [];
   return (
     <>
       <div className="px-2 pt-2 lg:px-4">
@@ -116,23 +120,25 @@ export function MoreGroupScreen({ group }: { group: MoreGroup }) {
         </Link>
       </div>
       <ScreenHeader title={t(`groups.${group}.title`)} />
-      {group === "setup" && <SetupGroup />}
+      <SetupRewardNotice granted={group === "setup" ? granted.filter((g) => g !== "exercise") : granted} />
+      {group === "setup" && <SetupGroup setup={setup} />}
       {group === "sharing" && (
         <>
           <ShareCard />
           <CalendarCard />
         </>
       )}
-      {group === "preferences" && <PreferencesGroup />}
+      {group === "preferences" && <PreferencesGroup setup={setup} />}
       {group === "account" && <AccountGroup />}
     </>
   );
 }
 
-function SetupGroup() {
+type Setup = ReturnType<typeof useSetupRewards>;
+
+function SetupGroup({ setup }: { setup: Setup }) {
   const t = useTranslations("more");
   const te = useTranslations("exercise");
-  const setup = useSetupRewards();
   return (
     <>
       <Card title={t("setupTitle")} id="setup-links">
@@ -177,10 +183,9 @@ function SetupGroup() {
   );
 }
 
-function PreferencesGroup() {
+function PreferencesGroup({ setup }: { setup: Setup }) {
   const t = useTranslations("more");
   const { locale, setLocale, theme, setTheme } = usePrefs();
-  const setup = useSetupRewards();
 
   async function changeLocale(next: Locale) {
     setLocale(next);
@@ -205,7 +210,6 @@ function PreferencesGroup() {
 
   return (
     <>
-      {setup.state && <SetupRewardNotice granted={setup.state.granted.filter((g) => g === "language")} />}
       <Card title={t("language")} id="language">
         <Segmented<Locale>
           label={t("language")}
