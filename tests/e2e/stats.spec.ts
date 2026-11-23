@@ -119,12 +119,13 @@ test("CJ-M10-1 Stats shows the charts from the data; the weekly review pays +3 o
   const review = page.getByRole("region", { name: "Weekly review" });
   // The review is open on the week's Sunday and the Monday after (by wake-day) only.
   if (await review.isVisible()) {
+    const before = (await gameState(id)).tickets;
     await review.getByLabel("Keep").fill("Focus on time every day");
     await review.getByLabel("Problem").fill("Phone during Work");
     await review.getByLabel("Try").fill("Phone in the bag at 13:00");
     await review.getByRole("button", { name: "Save · +3 tickets" }).click();
     await expect(review.getByRole("status")).toContainText("+3 tickets");
-    expect((await gameState(id)).tickets).toBe(3);
+    expect((await gameState(id)).tickets).toBe(before + 3);
     await page.reload();
     await expect(page.getByRole("region", { name: "Weekly review" })).toContainText("review is done");
   }

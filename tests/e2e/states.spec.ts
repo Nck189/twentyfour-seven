@@ -20,20 +20,26 @@ test("CJ-STATE-1 More: a failed load of the exercise goal and the requests inbox
   await page.route(broken, (route) =>
     route.request().method() === "GET" ? route.abort("failed") : route.fallback(),
   );
-  await page.goto("/more");
+  // The exercise goal is on More → Setup, the requests inbox on More → Sharing (review fix D).
+  await page.goto("/more/setup");
   await settle(page); // More answers taps only once it is interactive (slow WebKit)
-
   const exercise = page.getByRole("region", { name: "Weekly exercise" });
   await expect(exercise.getByRole("alert")).toContainText("Couldn't load your weekly goal.");
   await expect(exercise.getByText("3 times a week")).toHaveCount(0); // no default shown as yours
-  const share = page.getByRole("region", { name: "Share my free time" });
-  await expect(share.getByRole("alert")).toContainText("Couldn't load your requests.");
-  await expect(share.getByText("Requests (0)")).toHaveCount(0);
-
   await page.unroute(broken);
   await exercise.getByRole("button", { name: "Try again" }).click();
   await expect(exercise.getByText("3 times a week")).toBeVisible();
   await expect(exercise.getByRole("alert")).toHaveCount(0);
+
+  await page.route(broken, (route) =>
+    route.request().method() === "GET" ? route.abort("failed") : route.fallback(),
+  );
+  await page.goto("/more/sharing");
+  await settle(page);
+  const share = page.getByRole("region", { name: "Share my free time" });
+  await expect(share.getByRole("alert")).toContainText("Couldn't load your requests.");
+  await expect(share.getByText("Requests (0)")).toHaveCount(0);
+  await page.unroute(broken);
   await share.getByRole("button", { name: "Try again" }).click();
   await expect(share.getByText("Requests (0)")).toBeVisible();
   await expect(share.getByText("No requests waiting.")).toBeVisible();

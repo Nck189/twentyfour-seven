@@ -11,6 +11,8 @@ export type Reward =
   | { tickets: number }
   | { coins: number }
   | { seed: { crop: CropId; n: number } }
+  /** Seeds and capsule tickets together (the first setup step: a capsule in the first minute). */
+  | { seed: { crop: CropId; n: number }; tickets: number }
   | { decor: DecorId }
   | { feed: number }
   /** An animal egg: hatches at once (server roll, like a workout egg). */
@@ -29,7 +31,8 @@ export const SETUP_STEPS = [
 export type SetupStep = (typeof SETUP_STEPS)[number];
 
 export const SETUP_REWARD: Record<SetupStep, Reward> = {
-  sleep_times: { seed: { crop: "strawberry", n: 2 } },
+  // Plus a ticket, so a new player opens a first capsule right after setup (review fix C4).
+  sleep_times: { seed: { crop: "strawberry", n: 2 }, tickets: 1 },
   first10: { tickets: 1 },
   checklist: { coins: 20 },
   backlog_estimate: { coins: 15 },
@@ -45,10 +48,10 @@ export const SETUP_HREF: Record<SetupStep, string> = {
   first10: "/welcome?step=first10&from=more",
   checklist: "/plan",
   backlog_estimate: "/plan",
-  language: "/more#language",
-  home_screen: "/more#install",
-  exercise: "/more#exercise",
-  notifications: "/more#notifications",
+  language: "/more/preferences#language",
+  home_screen: "/more/account#install",
+  exercise: "/more/setup#exercise",
+  notifications: "/more/preferences#notifications",
 };
 
 export const isSetupStep = (v: unknown): v is SetupStep =>

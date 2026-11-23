@@ -85,7 +85,7 @@ test("CJ-CAFE-2 'Use the café in the game only' never asks; the café stays clo
   page,
 }) => {
   const id = await setup(page, "cafe-off");
-  await page.goto("/more");
+  await page.goto("/more/preferences");
   await settle(page); // More answers taps only once it is interactive (slow WebKit)
   const toggle = page.getByRole("switch", { name: /Use the café in the game only/ });
   await toggle.click();

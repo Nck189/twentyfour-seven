@@ -11,7 +11,7 @@ export function CafeCard() {
   const cafe = useCafe();
   const [busy, setBusy] = useState(false);
   return (
-    <section className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
+    <section id="cafe" className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
       <h2 className="mb-1 text-lg font-bold">{t("title")}</h2>
       <Toggle
         label={t("gameOnly")}

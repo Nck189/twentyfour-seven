@@ -1,5 +1,6 @@
 "use client";
 
+import type { ChecklistItem } from "@/content/blocks";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -24,6 +25,8 @@ export type CheckinActions = {
   reopen: (b: TimelineBlock, at: Date) => Promise<void>;
   setLocation: (b: TimelineBlock, loc: "home" | "out", at: Date) => Promise<void>;
   setFirst10?: (b: TimelineBlock, value: string | null) => Promise<void>;
+  /** Sets a block's first step or checklist as its default, from Today (review fix C2). */
+  setBlockDefault?: (b: TimelineBlock, patch: { first10?: string; addItem?: ChecklistItem }) => Promise<void>;
 };
 
 function Scale({
@@ -69,6 +72,8 @@ export function BlockCheckin({
   timezone,
   actions,
   ownFirst10 = [],
+  blockDefault,
+  onChanged,
 }: {
   block: TimelineBlock;
   log: BlockLog;
@@ -77,6 +82,13 @@ export function BlockCheckin({
   actions: CheckinActions;
   /** The user's own first-10 texts for this block (to pick today's). */
   ownFirst10?: string[];
+  /**
+   * The block's own default (settings). The in-place editors show only when that default is
+   * itself empty, so a card that is empty for today only never offers to overwrite it (G7 R-C-1).
+   */
+  blockDefault?: { first10: string | null; checklist: ChecklistItem[] };
+  /** After a first step or checklist was set here: Today claims the setup reward. */
+  onChanged?: () => void;
 }) {
   const t = useTranslations("today.block");
   const text = useBlockText();
@@ -192,6 +204,24 @@ export function BlockCheckin({
               void actions.toggleFirst10(block, new Date());
             }}
           />
+        ) : actions.setBlockDefault &&
+          !closed &&
+          blockDefault &&
+          // null in settings means the built-in text: only a block with none at all gets the picker
+          // (G7 N-1: "None" for today on Wake or Work must not invite overwriting every day).
+          text.first10(block.key, blockDefault.first10) === null ? (
+          // No first step yet: pick one right here, no trip to Plan (review fix C2).
+          <>
+            <FirstStepPicker
+              options={first10Options(block.key, ownFirst10).filter((o): o is string => o !== null)}
+              label={(o) => text.first10(block.key, o) ?? o}
+              onPick={async (o) => {
+                await actions.setBlockDefault!(block, { first10: o });
+                onChanged?.();
+              }}
+            />
+            <p className="mt-1 text-xs text-muted">{t("everyDay")}</p>
+          </>
         ) : (
           <p className="text-sm text-muted">{t("first10Unset")}</p>
         )}
@@ -209,7 +239,23 @@ export function BlockCheckin({
             </span>
           )}
         </h3>
-        {block.checklist.length === 0 ? (
+        {block.checklist.length === 0 &&
+        actions.setBlockDefault &&
+        !closed &&
+        blockDefault &&
+        blockDefault.checklist.length === 0 ? (
+          // No checklist yet: add the first item right here (review fix C2).
+          <>
+            <AddChecklistItem
+              onAdd={async (label) => {
+                // Appended to the saved default (read fresh), never replacing it (G7 N-4).
+                await actions.setBlockDefault!(block, { addItem: { id: newItemId(), label } });
+                onChanged?.();
+              }}
+            />
+            <p className="mt-1 text-xs text-muted">{t("everyDay")}</p>
+          </>
+        ) : block.checklist.length === 0 ? (
           <p className="text-sm text-muted">{t("noChecklist")}</p>
         ) : (
           <div className="flex flex-col gap-2">
@@ -287,5 +333,111 @@ export function BlockCheckin({
         </Button>
       ) : null}
     </div>
+  );
+}
+
+const newItemId = () => `i${Math.random().toString(36).slice(2, 9)}`;
+
+/** "+ Pick a first step": the block's suggestions, one tap to choose (review fix C2). */
+function FirstStepPicker({
+  options,
+  label,
+  onPick,
+}: {
+  options: string[];
+  label: (o: string) => string;
+  onPick: (o: string) => Promise<void>;
+}) {
+  const t = useTranslations("today.block");
+  const [open, setOpen] = useState(false);
+  const [state, setState] = useState<"idle" | "saving" | "error">("idle");
+  if (!open)
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="tap min-h-11 rounded-xl px-1 text-sm font-bold text-primary"
+      >
+        {t("pickFirst10")}
+      </button>
+    );
+  return (
+    <div role="radiogroup" aria-label={t("pickFirst10")} className="flex flex-col gap-1.5">
+      {options.map((o) => (
+        <button
+          key={o}
+          type="button"
+          role="radio"
+          aria-checked={false}
+          disabled={state === "saving"}
+          onClick={async () => {
+            setState("saving");
+            try {
+              await onPick(o);
+              setState("idle");
+              setOpen(false);
+            } catch {
+              setState("error");
+            }
+          }}
+          className="tap min-h-11 rounded-xl bg-surface-2 px-3 py-2 text-left text-sm font-bold"
+        >
+          {label(o)}
+        </button>
+      ))}
+      {state === "error" && (
+        <p role="alert" className="text-sm font-bold text-accent">
+          {t("saveError")}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** "+ Add a checklist item", inline (review fix C2). */
+function AddChecklistItem({ onAdd }: { onAdd: (label: string) => Promise<void> }) {
+  const t = useTranslations("today.block");
+  const [label, setLabel] = useState("");
+  const [state, setState] = useState<"idle" | "saving" | "error">("idle");
+  return (
+    <form
+      className="flex flex-col gap-2"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        const v = label.trim();
+        if (!v || state === "saving") return;
+        setState("saving");
+        try {
+          await onAdd(v.slice(0, 80));
+          setLabel("");
+          setState("idle");
+        } catch {
+          setState("error");
+        }
+      }}
+    >
+      <div className="flex gap-2">
+        <input
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          maxLength={80}
+          aria-label={t("addItem")}
+          placeholder={t("addItemPlaceholder")}
+          className="min-h-11 min-w-0 flex-1 rounded-xl border border-line bg-surface px-3 text-base"
+        />
+        <button
+          type="submit"
+          disabled={!label.trim() || state === "saving"}
+          className="tap min-h-11 rounded-xl bg-surface-2 px-4 font-bold disabled:opacity-50"
+        >
+          {t("add")}
+        </button>
+      </div>
+      {state === "error" && (
+        <p role="alert" className="text-sm font-bold text-accent">
+          {t("saveError")}
+        </p>
+      )}
+    </form>
   );
 }

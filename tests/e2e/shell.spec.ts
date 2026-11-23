@@ -7,6 +7,8 @@ import { IS_PROD_RUN } from "../helpers/env";
 import { addDays, localDate } from "@/lib/time";
 
 const SCREENS = ["today", "plan", "farm", "stats", "more"] as const;
+/** Every page: the tabs plus More's four groups, whose cards live on their own pages (G7 D-3). */
+const PAGES = [...SCREENS, "more/setup", "more/sharing", "more/preferences", "more/account"] as const;
 
 test.describe("app shell", () => {
   let email = "";
@@ -58,11 +60,11 @@ test.describe("app shell", () => {
     } as const;
     for (const locale of ["en", "th"] as const) {
       for (const theme of ["light", "dark"] as const) {
-        await page.goto("/more");
+        await page.goto("/more/preferences");
         await settle(page); // More answers taps only once it is interactive (slow WebKit)
         await page.getByRole("radio", { name: labels[locale] }).click();
         await page.getByRole("radio", { name: themeLabels[locale][theme] }).click();
-        for (const s of SCREENS) {
+        for (const s of PAGES) {
           await page.goto(`/${s}`);
           await expect(page.locator("html")).toHaveAttribute("lang", locale);
           await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
@@ -75,13 +77,15 @@ test.describe("app shell", () => {
   });
 
   test("CJ-14 language toggle switches EN/TH, persists across reload, no raw keys", async ({ page }) => {
-    await page.goto("/more");
+    await page.goto("/more/preferences");
     await settle(page); // More answers taps only once it is interactive (slow WebKit)
     await page.getByRole("radio", { name: "ไทย" }).click();
-    await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("เพิ่มเติม");
+    await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("การตั้งค่า");
     await page.reload();
+    await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("การตั้งค่า");
+    await page.goto("/more");
     await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("เพิ่มเติม");
-    for (const s of SCREENS) {
+    for (const s of PAGES) {
       await page.goto(`/${s}`);
       // The screen's own text (not its loading state), and no hard navigation mid-load.
       await settle(page);
@@ -91,7 +95,7 @@ test.describe("app shell", () => {
   });
 
   test("sign out returns to login", async ({ page }) => {
-    await page.goto("/more");
+    await page.goto("/more/account");
     await settle(page); // More answers taps only once it is interactive (slow WebKit)
     await page.getByRole("button", { name: "Sign out" }).click();
     await expect(page).toHaveURL(/\/login$/);

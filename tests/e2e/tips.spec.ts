@@ -46,7 +46,7 @@ test("CJ-M10-2 a tip shows once, one at a time; Skip all turns them off; More br
   await expect(tip).toHaveCount(0);
 
   // More → Show tips again.
-  await page.goto("/more");
+  await page.goto("/more/preferences");
   await settle(page);
   // A tap before the page is interactive does nothing; tap again until it answers (CI WebKit).
   await expect(async () => {

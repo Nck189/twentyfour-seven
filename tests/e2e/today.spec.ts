@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
-import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
+import { setPrefs, settle, signIn, uniqueEmail } from "../helpers/auth";
 import { blockLogs, gameState, setChecklist, setWakeMinutesAgo, userIdFor } from "../helpers/db";
 import { IS_PROD_RUN } from "../helpers/env";
 import { localDate } from "@/lib/time";
@@ -21,8 +21,13 @@ async function setup(page: Page, wakeMinutesAgo: number, checklist?: { block: st
   if (checklist) await setChecklist(id, checklist.block, checklist.items);
   await page.goto("/today");
   await expect(page.getByRole("button", { name: "See the whole day" })).toBeVisible();
+  // Today's first load claims the setup rewards (sleep times pays a ticket since review fix C4):
+  // tests count what their own action adds on top.
+  await settle(page);
   return id;
 }
+
+const ticketsOf = async (id: string) => (await gameState(id)).tickets;
 
 /** The full-day timeline is folded away by default (one thing at a time). */
 async function showDay(page: Page) {
@@ -54,9 +59,10 @@ const wokeYesterday = (minutesAgo: number) =>
 test("CJ-03 I'm up within the window → +1 Sunrise ticket", async ({ page }) => {
   test.skip(wokeYesterday(15), "a wake 10 min ago would land on yesterday's date");
   const id = await setup(page, 10);
+  const before = await ticketsOf(id);
   await page.getByRole("button", { name: /I'm up — out of bed/ }).click();
   await expect(page.getByText(/on time! \+1 Sunrise ticket/)).toBeVisible();
-  expect((await gameState(id)).tickets).toBe(1);
+  expect(await ticketsOf(id)).toBe(before + 1);
   // One tap from launch: reload shows the result, not the button.
   await page.reload();
   await expect(page.getByRole("button", { name: /I'm up/ })).toHaveCount(0);
@@ -65,9 +71,10 @@ test("CJ-03 I'm up within the window → +1 Sunrise ticket", async ({ page }) =>
 test("CJ-04 I'm up 20 min late → logged, no ticket", async ({ page }) => {
   test.skip(wokeYesterday(25), "a wake 20 min ago would land on yesterday's date");
   const id = await setup(page, 20);
+  const before = await ticketsOf(id);
   await page.getByRole("button", { name: /I'm up — out of bed/ }).click();
   await expect(page.getByText(/Logged — no ticket this time/)).toBeVisible();
-  expect((await gameState(id)).tickets).toBe(0);
+  expect(await ticketsOf(id)).toBe(before);
 });
 
 test("CJ-05 check-in: first-10 → 3 items → close in ≤ 5 taps and ≤ 5 s", async ({ page }) => {
@@ -118,6 +125,7 @@ test("CJ-05 check-in: first-10 → 3 items → close in ≤ 5 taps and ≤ 5 s",
 
 test("CJ-06 backfilling a past block: counts, labeled backfilled", async ({ page }) => {
   const id = await setup(page, 150);
+  const before = await ticketsOf(id);
   await showDay(page);
   await page.getByRole("button", { name: "Open Wake" }).click();
   const sheet = page.getByRole("dialog", { name: "Wake" });
@@ -128,7 +136,7 @@ test("CJ-06 backfilling a past block: counts, labeled backfilled", async ({ page
   await sheet.getByRole("button", { name: "Close", exact: true }).click();
   await expect(page.getByRole("button", { name: "Open Wake" })).toContainText("Backfilled");
   await expect.poll(async () => (await blockLogs(id)).find((l) => l.block === "wake")?.backfilled).toBe(true);
-  expect((await gameState(id)).tickets).toBe(0);
+  expect(await ticketsOf(id)).toBe(before);
 });
 
 test("location is asked when Work is finished; vacation mode lives in the menu", async ({ page }) => {
