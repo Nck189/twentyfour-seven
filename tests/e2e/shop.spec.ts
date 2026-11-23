@@ -42,14 +42,22 @@ test("shop: sell produce, buy a seed, swap coins for a ticket, upgrade, and a re
     .getByRole("button", { name: /^Buy .* seed for 30 coins$/ })
     .first()
     .click();
+  // A small buy doesn't ask (Minnie 2026-11-23: big buys only).
+  await expect(page.getByRole("dialog", { name: "Buy this?" })).toHaveCount(0);
   await expect(shop.getByText("615 coins")).toBeAttached();
   await shop.getByRole("button", { name: "Swap" }).click();
+  // 150 coins is a big buy: it asks first, with what's left after.
+  const ask = page.getByRole("dialog", { name: "Buy this?" });
+  await expect(ask).toContainText("A capsule ticket for 150 coins. You'll have 465 left.");
+  await expectTouchTargets(page);
+  await ask.getByRole("button", { name: "Buy for 150" }).click();
   await expect(shop.getByText("1 of 2 left this week")).toBeVisible();
   await expect(shop.getByText("465 coins")).toBeAttached();
 
   // Upgrades: market stall to level 1 (200).
   await shop.getByRole("radio", { name: "Upgrades" }).click();
   await shop.getByRole("button", { name: "Level 1 · 200" }).first().click();
+  await page.getByRole("dialog", { name: "Buy this?" }).getByRole("button", { name: "Buy for 200" }).click();
   await expect(shop.getByText("265 coins")).toBeAttached();
 
   // My rewards: add one and redeem it.

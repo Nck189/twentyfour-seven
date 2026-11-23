@@ -8,6 +8,7 @@ import { DECOR_ART } from "@/components/art/farm/DecorArt";
 import { Coin } from "@/components/art/Coin";
 import { BASIC_DECOR, DECOR_PRICE, type DecorId, type ShopDecorId } from "@/content/decor";
 import type { Season } from "@/content/seasons";
+import { useBuyConfirm } from "./BuyConfirm";
 
 export { DECOR_ART };
 
@@ -29,6 +30,8 @@ export function DecorShop({
   const names = useTranslations("decor");
   const [busy, setBusy] = useState<DecorId | null>(null);
   const [error, setError] = useState(false);
+  const confirm = useBuyConfirm(coins);
+  const tc = useTranslations("shop.confirm");
   return (
     <section aria-label={t("decor")} className={embedded ? "" : "mx-4 mt-4 lg:mx-6"}>
       <div className="mb-1 flex items-center justify-between">
@@ -45,6 +48,7 @@ export function DecorShop({
           </p>
         )}
       </div>
+      {confirm.sheet}
       <ul className="grid grid-cols-4 gap-2">
         {[...(season?.festival ? [season.festival] : []), ...BASIC_DECOR].map((id: ShopDecorId) => {
           const Art = DECOR_ART[id];
@@ -56,14 +60,16 @@ export function DecorShop({
                 type="button"
                 disabled={short || busy !== null}
                 aria-label={t("buyItem", { item: names(id), price })}
-                onClick={async () => {
-                  setBusy(id);
-                  setError(false);
-                  const ok = await onBuy(id);
-                  setBusy(null);
-                  if (!ok) setError(true);
-                  else sfx.buy();
-                }}
+                onClick={() =>
+                  confirm.buy(price, tc("decor", { item: names(id) }), async () => {
+                    setBusy(id);
+                    setError(false);
+                    const ok = await onBuy(id);
+                    setBusy(null);
+                    if (!ok) setError(true);
+                    else sfx.buy();
+                  })
+                }
                 className="tap flex min-h-11 w-full flex-col items-center rounded-xl bg-surface p-1 disabled:opacity-50"
               >
                 <Art className="h-12 w-12" />

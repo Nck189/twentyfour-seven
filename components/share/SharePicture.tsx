@@ -13,6 +13,7 @@ import { SITE_HOST, siteUrl, type LinkSource } from "@/content/site";
 import { logEvent } from "@/lib/db/events";
 import { cardPicture, type CardInput } from "@/lib/share/cardPicture";
 import { GENERIC_FARM, loadFarmSnapshot, type FarmSnapshot } from "@/lib/share/farmSnapshot";
+import { DECOR_ART } from "@/components/art/farm/DecorArt";
 import { getSupabase } from "@/lib/supabase/client";
 
 /** Tags its one art child (an <svg>) with the slot it's drawn into. */
@@ -69,7 +70,13 @@ export function SharePicture({
 
   const scene = useMemo(
     () =>
-      farm ? [...farm.crops.map((_, i) => `crop${i}`), ...farm.animals.map((_, i) => `animal${i}`)] : [],
+      farm
+        ? [
+            ...farm.crops.map((_, i) => `crop${i}`),
+            ...farm.animals.map((_, i) => `animal${i}`),
+            ...farm.decor.map((_, i) => `decor${i}`),
+          ]
+        : [],
     [farm],
   );
   const caption = t("caption");
@@ -133,6 +140,14 @@ export function SharePicture({
             <AnimalArt species={a} idle={false} />
           </Slot>
         ))}
+        {f.decor.map((d, i) => {
+          const Art = DECOR_ART[d];
+          return (
+            <Slot key={`d${i}`} name={`decor${i}`}>
+              <Art />
+            </Slot>
+          );
+        })}
         {hero && <Slot name="hero">{hero}</Slot>}
       </div>
       <Button

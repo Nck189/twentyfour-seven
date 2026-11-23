@@ -21,6 +21,8 @@ export const STORY_BEATS = [
   "ch8_thirty_days",
   "ch10_first_batch",
   "ch11_welcome_back",
+  // Farm yard: this month's festival item placed with 2+ other items (docs/FARM_YARD_PLAN.md).
+  "yard_festival",
   // Seasonal crop beats (docs/STORY.md "Seasonal crops"): November, Candle Lotus.
   "lotus_open",
   "lotus_market",
@@ -80,7 +82,9 @@ export type StoryTrigger =
   /** Factory collects that took something (one per collect, not per product). */
   | { kind: "made"; need: number }
   /** Welcome backs claimed in the last 7 days (back after 3+ away days). */
-  | { kind: "welcome_backs"; need: number };
+  | { kind: "welcome_backs"; need: number }
+  /** This month's festival decor placed in the yard with 2+ other items. */
+  | { kind: "festival_set" };
 
 export type StoryGift = { seed: { crop: CropId; n: number } } | { tickets: number } | { decor: "farm_sign" };
 
@@ -223,6 +227,16 @@ export const STORY: Record<StoryBeatId, StoryBeat> = {
       { scene: "gate", pose: "sleep", line: "l1", motion: "pan" },
       { scene: "gate", pose: "stretch", line: "l2", motion: "hop" },
       { scene: "field", pose: "happy", line: "l3", motion: "none" },
+    ],
+    gift: null,
+  },
+  yard_festival: {
+    chapter: 12,
+    trigger: { kind: "festival_set" },
+    panels: [
+      { scene: "field", pose: "lookUp", line: "l1", motion: "pan" },
+      { scene: "field", pose: "happy", line: "l2", motion: "sparkle" },
+      { scene: "field", pose: "sit", line: "l3", motion: "none" },
     ],
     gift: null,
   },

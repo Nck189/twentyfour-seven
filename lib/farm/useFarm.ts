@@ -28,6 +28,8 @@ type PlotRow = {
   harvested_on?: string | null;
 };
 
+export type YardItem = { id: string; item: DecorId; spot: number | null };
+
 export type FarmData = {
   farm: FarmState;
   /** Block plots with nothing planted. */
@@ -35,6 +37,8 @@ export type FarmData = {
   coins: number;
   /** Decor bought, oldest first (SPEC §8.9). */
   decor: DecorId[];
+  /** Every decor item with its yard spot (1–8), or null when it's in storage (farm yard). */
+  yard: YardItem[];
   sky: SkyPhase;
   today: string;
   /** Farmhouse upgrade level (economy v2); 0 = no house yet. */
@@ -95,7 +99,16 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
           .select("at")
           .gte("at", `${addDays(from, -1)}T00:00:00Z`),
         client.from("game_state").select("coins").maybeSingle(),
-        client.from("decor").select("item_id").order("created_at"),
+        client
+          .from("decor")
+          .select("id, item_id, spot")
+          .order("created_at")
+          .then(async (r) =>
+            // Before the farm yard migration there's no spot column: the farm still loads (G7 G-S3-4).
+            r.error?.code === "42703"
+              ? await client.from("decor").select("id, item_id").order("created_at")
+              : r,
+          ),
         // Optional: before the economy migration there's no table; the farm shows without a house.
         client.from("upgrades").select("track, level"),
       ]);
@@ -127,6 +140,13 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
           sky: skyPhaseFor(block),
           coins: (game.data?.coins as number | undefined) ?? 0,
           decor: ((decorRows.data ?? []) as { item_id: string }[]).map((d) => d.item_id).filter(isDecorId),
+          yard: ((decorRows.data ?? []) as { id: string; item_id: string; spot: number | null }[])
+            .filter((d) => isDecorId(d.item_id))
+            .map((d, i) => ({
+              id: d.id,
+              item: d.item_id as DecorId,
+              spot: d.spot === undefined ? (i < 8 ? i + 1 : null) : d.spot,
+            })),
           today,
           house: levelOf(houseRow.data, "house"),
           stall: levelOf(houseRow.data, "stall"),
@@ -210,8 +230,36 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
     [client],
   );
 
+  // Farm yard: move an item to a spot (swapping with what's there) or put it away (server-side).
+  const placeDecor = useCallback(
+    async (id: string, spot: number) => {
+      const { error } = await client.rpc("place_decor", { p_id: id, p_spot: spot });
+      if (!error) setReload((r) => r + 1);
+      return !error;
+    },
+    [client],
+  );
+  const storeDecor = useCallback(
+    async (id: string) => {
+      const { error } = await client.rpc("store_decor", { p_id: id });
+      if (!error) setReload((r) => r + 1);
+      return !error;
+    },
+    [client],
+  );
+
   return useMemo(
-    () => ({ data, status, userId, plant, harvest, buyDecor, reload: () => setReload((r) => r + 1) }),
-    [data, status, userId, plant, harvest, buyDecor],
+    () => ({
+      data,
+      status,
+      userId,
+      plant,
+      harvest,
+      buyDecor,
+      placeDecor,
+      storeDecor,
+      reload: () => setReload((r) => r + 1),
+    }),
+    [data, status, userId, plant, harvest, buyDecor, placeDecor, storeDecor],
   );
 }

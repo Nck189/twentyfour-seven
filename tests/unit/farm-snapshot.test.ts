@@ -41,9 +41,12 @@ describe("her own farm on shared pictures (review fix A4)", () => {
     expect(buildSnapshot([{ crop_id: "radish" }], [], 0).house).toBe(1);
   });
 
-  it("holds nothing private: only crop ids, species and a house level", () => {
-    const s = buildSnapshot([{ crop_id: "radish" }], [{ species: "cat", created_at: "x" }], 1);
-    expect(Object.keys(s).sort()).toEqual(["animals", "crops", "house"]);
+  it("holds nothing private: only crop ids, species, decor ids and a house level", () => {
+    const s = buildSnapshot([{ crop_id: "radish" }], [{ species: "cat", created_at: "x" }], 1, [
+      { item_id: "fence", spot: 1 },
+    ]);
+    expect(Object.keys(s).sort()).toEqual(["animals", "crops", "decor", "house"]);
+    expect(s.decor).toEqual(["fence"]);
   });
 });
 
@@ -91,5 +94,32 @@ describe("G7 review of Phase A", () => {
     expect(fitFont(20, 266, measure)).toBeLessThanOrEqual(15.7);
     expect(fitFont(20, 266, (px) => px * 10)).toBe(20);
     expect(fitFont(20, 100, measure)).toBe(14); // floor: still readable
+  });
+});
+
+describe("the farm picture shows placed decor (farm yard)", () => {
+  it("adds the first placed item (lowest spot); stored decor never shows", () => {
+    const s = buildSnapshot([{ crop_id: "radish" }], [], 1, [
+      { item_id: "fence", spot: null },
+      { item_id: "pond", spot: 4 },
+      { item_id: "flowers", spot: 2 },
+    ]);
+    expect(s.decor).toEqual(["flowers"]);
+  });
+  it("still at most five pieces between Som and the house", () => {
+    const s = buildSnapshot(
+      [{ crop_id: "radish" }, { crop_id: "corn" }, { crop_id: "strawberry" }],
+      [
+        { species: "chick", created_at: "2026-11-02" },
+        { species: "rabbit", created_at: "2026-11-01" },
+      ],
+      1,
+      [{ item_id: "flowers", spot: 1 }],
+    );
+    expect(s.crops.length + s.animals.length + s.decor.length).toBeLessThanOrEqual(5);
+    expect(s.decor).toEqual(["flowers"]);
+  });
+  it("no decor placed: no decor in the picture", () => {
+    expect(buildSnapshot([{ crop_id: "radish" }], [], 1).decor).toEqual([]);
   });
 });

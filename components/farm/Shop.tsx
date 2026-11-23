@@ -25,6 +25,7 @@ import { notifyWalletChange } from "@/lib/market/changes";
 import { useMarket, type ActResult, type MarketStatus } from "@/lib/market/useMarket";
 import { sfx } from "@/lib/sound/sfx";
 import { shopSound } from "@/lib/sound/recipes";
+import { useBuyConfirm } from "./BuyConfirm";
 import { usePrefs } from "@/lib/store/prefs";
 import { DecorShop } from "./DecorShop";
 
@@ -56,7 +57,13 @@ export function Shop({
   const s = m.status;
   const clearNotice = useCallback(() => setNotice(null), []);
 
-  const run: Run = async (key, action, payoff) => {
+  // A big buy asks first (Minnie 2026-11-23): components/farm/BuyConfirm.tsx.
+  const confirm = useBuyConfirm(s?.coins ?? 0);
+  const run: Run = async (key, action, payoff, cost) => {
+    if (cost) confirm.buy(cost.price, cost.what, () => void act(key, action, payoff));
+    else await act(key, action, payoff);
+  };
+  const act = async (key: string, action: () => Promise<ActResult>, payoff?: (r: ActResult) => Notice) => {
     setBusy(key);
     setFailed(null);
     setNotice(null);
@@ -104,6 +111,7 @@ export function Shop({
         ]}
       />
       <Payoff notice={notice} onDone={clearNotice} />
+      {confirm.sheet}
       {m.error && !s && (
         <p role="alert" className="rounded-xl bg-accent-soft p-3 text-sm font-bold">
           {t("loadError")}{" "}
@@ -135,6 +143,8 @@ type Run = (
   key: string,
   action: () => Promise<ActResult>,
   payoff?: (r: ActResult) => Notice,
+  /** What it costs: a big buy asks first (lib/economy/confirm.ts). */
+  cost?: { price: number; what: string },
 ) => Promise<void>;
 
 type TabProps = {
@@ -435,6 +445,7 @@ function SeedsAndTickets({ s, busy, run, m }: TabProps) {
                 `seed-${seasonal.crop}`,
                 () => m.buySeed(seasonal.crop),
                 () => ({ text: t("boughtSeed", { crop: crops(seasonal.crop) }) }),
+                { price: seasonal.price, what: t("confirm.seed", { crop: crops(seasonal.crop) }) },
               )
             }
           >
@@ -456,6 +467,7 @@ function SeedsAndTickets({ s, busy, run, m }: TabProps) {
                   `seed-${x.crop}`,
                   () => m.buySeed(x.crop),
                   () => ({ text: t("boughtSeed", { crop: crops(x.crop) }) }),
+                  { price: x.price, what: t("confirm.seed", { crop: crops(x.crop) }) },
                 )
               }
               className="tap flex min-h-11 w-full flex-col items-center rounded-xl bg-surface p-2 disabled:opacity-50"
@@ -477,7 +489,12 @@ function SeedsAndTickets({ s, busy, run, m }: TabProps) {
         <Button
           variant="secondary"
           disabled={busy !== null || left <= 0 || s.coins < s.exchange.price}
-          onClick={() => void run("exchange", m.exchange, () => ({ text: t("gotTicket") }))}
+          onClick={() =>
+            void run("exchange", m.exchange, () => ({ text: t("gotTicket") }), {
+              price: s.exchange.price,
+              what: t("confirm.ticket"),
+            })
+          }
         >
           {t("exchange")}
         </Button>
@@ -520,6 +537,10 @@ function Upgrades({ s, busy, run, m }: TabProps) {
                     `up-${track}`,
                     () => m.upgrade(track),
                     () => ({ text: t("upgraded", { name: t(`upgrade.${track}.name`), n: level + 1 }) }),
+                    {
+                      price,
+                      what: t("confirm.upgrade", { name: t(`upgrade.${track}.name`), n: level + 1 }),
+                    },
                   )
                 }
               >

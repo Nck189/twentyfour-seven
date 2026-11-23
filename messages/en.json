@@ -279,7 +279,23 @@
     "lastChance": "One more missed {block} and it dies. Do {block} today, or mark it done in the Night ritual, to save it.",
     "lastChanceToday": "{crop} in {block}: one more miss and it dies",
     "house": "Farmhouse, level {n}",
-    "harvestValue": "Sells for {n} coins at the market"
+    "harvestValue": "Sells for {n} coins at the market",
+    "yard": {
+      "title": "Farm yard",
+      "placed": "{item} in spot {n}: tap to move or put away",
+      "stored": "{item} in storage: tap to place",
+      "storage": "In storage ({n})",
+      "emptySpot": "Empty spot {n}",
+      "moveTo": "Move to…",
+      "spot": "Spot {n}",
+      "spotFree": "Move to spot {n}",
+      "spotSwap": "Move to spot {n} (swaps with {item})",
+      "here": "Here now",
+      "putAway": "Put away",
+      "placeHere": "Place here",
+      "placeItem": "Place {item} in spot {n}",
+      "error": "Couldn't move it. Try again."
+    }
   },
   "crops": {
     "radish": "Radish",
@@ -1202,6 +1218,17 @@
       "marketHint": "{crop} sells for ×1.5 until the month ends, and there's one special order.",
       "order": "Special order: {crop} × {n}",
       "priceTag": "Seasonal market ×{n}"
+    },
+    "confirm": {
+      "title": "Buy this?",
+      "body": "{what} for {price} coins. You'll have {left} left.",
+      "buy": "Buy for {price}",
+      "cancel": "Not now",
+      "seed": "{crop} seeds",
+      "ticket": "A capsule ticket",
+      "upgrade": "{name}, level {n}",
+      "decor": "{item} for your farm",
+      "build": "The {name}"
     }
   },
   "story": {
@@ -1339,6 +1366,12 @@
       "l1": "Som kept the gate warm while you were away.",
       "l2": "No catching up needed. Just one small thing today.",
       "l3": "The farm is happy you're here."
+    },
+    "yard_festival": {
+      "title": "A festival yard",
+      "l1": "Som spots the festival decor in the yard and stops.",
+      "l2": "The whole yard looks ready for the festival.",
+      "l3": "Som sits by it all evening, very pleased."
     }
   },
   "cafe": {

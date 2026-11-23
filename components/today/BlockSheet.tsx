@@ -3,6 +3,9 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, type ReactNode } from "react";
 
+/** The sheets open now, oldest first: only the last one answers Escape. */
+const OPEN_SHEETS: object[] = [];
+
 /** Bottom sheet (phone) / centered panel (iPad/Mac) with a visible close button and Escape. */
 export function Sheet({
   title,
@@ -22,10 +25,21 @@ export function Sheet({
     onCloseRef.current = onClose;
   });
   useEffect(() => {
+    // Sheets can open over sheets (a buy confirm over the factory): only the top one answers
+    // Escape, and focus goes back to what opened it when it closes (G7 G-S3-3).
+    const opener = document.activeElement as HTMLElement | null;
+    const me = {};
+    OPEN_SHEETS.push(me);
     closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onCloseRef.current();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && OPEN_SHEETS[OPEN_SHEETS.length - 1] === me) onCloseRef.current();
+    };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      OPEN_SHEETS.splice(OPEN_SHEETS.indexOf(me), 1);
+      if (opener?.isConnected) opener.focus();
+    };
   }, []);
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center md:p-6">

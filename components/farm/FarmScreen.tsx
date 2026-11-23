@@ -33,9 +33,9 @@ import { SeedDexSheet } from "./SeedDexSheet";
 import { sfx } from "@/lib/sound/sfx";
 import { usePrefs } from "@/lib/store/prefs";
 import { grownSince, readSeen, snapshot, writeSeen } from "@/lib/farm/growthSeen";
+import { Yard } from "./Yard";
 import { ambienceKind, useAmbience } from "@/lib/sound/ambience";
 import { HarvestPop } from "./HarvestPop";
-import { DECOR_ART } from "./DecorShop";
 import { Shop } from "./Shop";
 import { parseItem, sellPrice } from "@/lib/game/market";
 import { seasonPriceMult } from "@/lib/game/seasonal";
@@ -59,7 +59,7 @@ const LOCKED_FIELDS = 3;
  * `compact` = the iPad/Mac side panel (read-only, no sheets).
  */
 export function FarmScreen({ compact = false }: { compact?: boolean }) {
-  const { data, status, userId, plant, harvest, buyDecor, reload } = useFarm();
+  const { data, status, userId, plant, harvest, buyDecor, placeDecor, storeDecor, reload } = useFarm();
   const gacha = useGacha();
   const animals = useAnimals();
   const unlocks = useUnlocks();
@@ -103,6 +103,8 @@ export function FarmScreen({ compact = false }: { compact?: boolean }) {
         plant={plant}
         harvest={harvest}
         buyDecor={buyDecor}
+        placeDecor={placeDecor}
+        storeDecor={storeDecor}
         reload={reload}
       />
     </>
@@ -128,6 +130,8 @@ export function FarmView({
   plant,
   harvest,
   buyDecor,
+  placeDecor,
+  storeDecor,
   reload,
   gacha,
   animals,
@@ -144,6 +148,9 @@ export function FarmView({
   plant: (slot: BlockKey, crop: CropId, replace?: boolean) => Promise<boolean>;
   harvest: (slot: BlockKey) => Promise<string | null>;
   buyDecor: (item: DecorId) => Promise<boolean>;
+  /** Farm yard moves (absent in the side panel and the preview: the yard is read-only there). */
+  placeDecor?: (id: string, spot: number) => Promise<boolean>;
+  storeDecor?: (id: string) => Promise<boolean>;
   reload: () => void;
   /** Capsule machine + Seed-dex (absent in the compact side panel and the preview). */
   gacha?: ReturnType<typeof useGacha>;
@@ -159,7 +166,6 @@ export function FarmView({
   const crops = useTranslations("crops");
   const tg = useTranslations("gacha");
   const blocks = useTranslations("blocks");
-  const decorNames = useTranslations("decor");
   const tcafe = useTranslations("cafe");
   const [open, setOpen] = useState<BlockKey | null>(null);
   const [pop, setPop] = useState<{ cropId: CropId; quality: Quality; value?: number } | null>(null);
@@ -319,21 +325,14 @@ export function FarmView({
               </li>
             ))}
           </ul>
-          {data.decor.length > 0 && (
-            <ul
-              aria-label={t("decor")}
-              className={`flex flex-wrap items-end gap-1 px-3 pb-3 ${night ? "bg-[var(--sky-night-bottom)]" : "bg-[var(--art-leaf-light)]"}`}
-            >
-              {data.decor.map((id, k) => {
-                const Art = DECOR_ART[id];
-                return (
-                  <li key={`${id}-${k}`} aria-label={decorNames(id)}>
-                    <Art className="h-10 w-10" />
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+          {/* The farm yard: decor you place, move and put away (Minnie 2026-11-23). */}
+          <Yard
+            items={data.yard}
+            today={data.today}
+            night={night}
+            onPlace={compact ? undefined : placeDecor}
+            onStore={compact ? undefined : storeDecor}
+          />
           {/* The farm's own night palette: one soft veil over the field (not the UI dark mode). */}
           {night && (
             <div
