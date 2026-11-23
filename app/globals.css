@@ -133,6 +133,20 @@ html[lang="th"] body {
   animation: petal-fall 480ms ease-in both;
 }
 
+/* Farm yard visitors: a slow drift (stopped by reduced motion; skipped with Skip animations). */
+@keyframes visitor-drift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(10px, -4px);
+  }
+}
+.visitor-drift {
+  animation: visitor-drift 5s ease-in-out infinite;
+}
+
 /* Factory: a slow puff over a working machine (M13). Stopped by the reduced-motion rule. */
 @keyframes machine-puff {
   0% {

@@ -156,6 +156,11 @@ export function FarmPreview() {
           empty: BLOCK_KEYS.filter((b) => !planted.has(b)),
           coins: 120,
           decor: ["fence", "fence", "flowers"],
+          yard: [
+            { id: "p1", item: "fence", spot: 1 },
+            { id: "p2", item: "fence", spot: 2 },
+            { id: "p3", item: "flowers", spot: 5 },
+          ],
         }}
         status="ready"
         plant={async () => true}
