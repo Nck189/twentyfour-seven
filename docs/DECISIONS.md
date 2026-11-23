@@ -369,3 +369,8 @@ Format: date · decision · why · how to change it
   - **Scenes from the plan that already existed:** first harvest, first animal hatched, a 7-day streak and the first Farmhouse.
   - **Not added:** "first day of each season". The seasons in the app are the seasonal crops' months, and those already have their opening scenes.
   - **Art:** the new scenes reuse the existing scenes and poses. The scene art for a perfect day or the factory, and the pictures on text-only screens (F4), come next.
+- 2026-11-23 · **Big buys ask first** (Minnie chose "big buys only")
+  - **What asks:** anything at 100 coins or more, or a quarter or more of the coins you have (`lib/economy/confirm.ts`, unit-tested). The sheet names the buy, its price and what's left after.
+  - **Where:** the Shop's seeds, seasonal seed, ticket swap and upgrades; decor; building and upgrading factory machines. Seeds and small decor stay one tap when there's plenty left.
+  - **Unchanged:** the reward jar already had its own "Spend N coins" second tap. Selling never asks (it adds coins).
+  - The server still decides every price; the sheet only asks.

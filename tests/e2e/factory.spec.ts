@@ -31,6 +31,7 @@ test("CJ-FAC-1 build the jam jar, make pickles, collect them, read the numbers a
   const sheet = page.getByRole("dialog", { name: "Factory" });
   await expect(sheet.getByText("600 coins")).toBeVisible();
   await sheet.getByRole("button", { name: "Build the Jam jar for 150 coins" }).click();
+  await page.getByRole("dialog", { name: "Buy this?" }).getByRole("button", { name: "Buy for 150" }).click();
   await expect(sheet.getByRole("status")).toContainText("Jam jar built!");
   await expect(sheet.getByText("450 coins")).toBeVisible();
   await expectNoSeriousA11y(page);

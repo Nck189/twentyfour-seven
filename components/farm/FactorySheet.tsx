@@ -30,6 +30,7 @@ import {
   type MachineRow,
 } from "@/lib/game/factory";
 import { sfx } from "@/lib/sound/sfx";
+import { useBuyConfirm } from "./BuyConfirm";
 
 type Factory = ReturnType<typeof useFactory>;
 
@@ -150,6 +151,9 @@ function MachineCard({
   const name = t(`machines.${id}`);
   const def = MACHINES[id];
   const coins = factory.data?.coins ?? 0;
+  // Building and upgrading machines are big buys: they ask first (Minnie 2026-11-23).
+  const bigBuy = useBuyConfirm(coins);
+  const tc = useTranslations("shop.confirm");
   const stock = factory.data?.stock ?? [];
   const working = jobs.some((j) => jobState(j, now) === "running");
   const ready = jobs.filter((j) => jobState(j, now) === "ready").length;
@@ -159,6 +163,7 @@ function MachineCard({
   if (!machine)
     return (
       <li className="flex items-center gap-3 rounded-xl bg-surface-2 p-3">
+        {bigBuy.sheet}
         <MachineArt id={id} className="h-14 w-14 shrink-0 opacity-70" />
         <span className="min-w-0 flex-1">
           <span className="block font-extrabold">{name}</span>
@@ -169,13 +174,18 @@ function MachineCard({
           disabled={pending || coins < def.price}
           aria-label={t("buildAria", { name, n: def.price })}
           onClick={() =>
-            act(
-              async () => {
-                const e = await factory.build(id);
-                if (!e) sfx.buy();
-                return e;
-              },
-              t("built", { name }),
+            bigBuy.buy(
+              def.price,
+              tc("build", { name }),
+              () =>
+                void act(
+                  async () => {
+                    const e = await factory.build(id);
+                    if (!e) sfx.buy();
+                    return e;
+                  },
+                  t("built", { name }),
+                ),
             )
           }
         >
@@ -188,6 +198,7 @@ function MachineCard({
   const full = jobs.length >= cap;
   return (
     <li className="rounded-xl bg-surface-2 p-3">
+      {bigBuy.sheet}
       <section aria-label={name}>
         <div className="mb-2 flex items-center gap-3">
           <MachineArt id={id} working={working} className="h-14 w-14 shrink-0" />
@@ -323,7 +334,16 @@ function MachineCard({
                 disabled={pending || price === undefined || coins < price}
                 aria-label={t(`upgradeAria.${track}`, { name, level: lvl + 1 })}
                 onClick={() =>
-                  act(() => factory.upgrade(id, track), t(`upgraded.${track}`, { name, level: lvl + 1 }))
+                  price !== undefined &&
+                  bigBuy.buy(
+                    price,
+                    t(`upgradeAria.${track}`, { name, level: lvl + 1 }),
+                    () =>
+                      void act(
+                        () => factory.upgrade(id, track),
+                        t(`upgraded.${track}`, { name, level: lvl + 1 }),
+                      ),
+                  )
                 }
                 className="flex-col !items-start text-left"
               >

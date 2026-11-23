@@ -48,6 +48,8 @@ test("CJ-SEASON-1 Candle Lotus: its seed in planting season, ×1.5 and the speci
   await expectTouchTargets(page);
   await expectNoHorizontalScroll(page);
   await seed.getByRole("button", { name: "Buy Candle Lotus seed for 80 coins" }).click();
+  // 80 of 200 coins is over a quarter: it asks first (Minnie 2026-11-23).
+  await page.getByRole("dialog", { name: "Buy this?" }).getByRole("button", { name: "Buy for 80" }).click();
   await expect(shop.getByText("120 coins")).toBeAttached();
   expect(await rest(`inventory?user_id=eq.${id}&item_id=eq.seed:candle_lotus&select=qty`)).toEqual([
     { qty: 1 },
