@@ -7,6 +7,7 @@ import { COFFEE_MIN_DAYS } from "@/lib/game/cafe";
 import { useMemo, useRef, useState } from "react";
 import { Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { SomArt } from "@/components/art/Som";
+import { BannerArt, SpotArt } from "@/components/art/Spots";
 import { TicketArt } from "@/components/art/Ticket";
 import { StreakCalendar } from "@/components/streak/StreakChip";
 import { Button } from "@/components/ui/Button";
@@ -76,7 +77,12 @@ function Takeaway({ children }: { children: React.ReactNode }) {
 
 function Empty() {
   const t = useTranslations("stats");
-  return <p className="text-sm text-muted">{t("notEnough")}</p>;
+  return (
+    <div className="flex flex-col items-center gap-2 py-2 text-center">
+      <SpotArt kind="chart" className="h-20 w-30" />
+      <p className="text-sm text-muted">{t("notEnough")}</p>
+    </div>
+  );
 }
 
 /** Sunday night: the week in a few numbers, Keep / Problem / Try, +3 tickets (SPEC §7). */
@@ -145,6 +151,7 @@ function WeeklyReview({
   );
   return (
     <Card title={t("review.title")}>
+      <BannerArt kind="review" className="mb-3 h-20 w-full" />
       {(() => {
         // Sunday with Som: a kind reaction to this week before the numbers (docs/STORY.md).
         const som = somWeek(summary);

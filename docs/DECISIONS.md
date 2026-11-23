@@ -385,3 +385,16 @@ Format: date · decision · why · how to change it
 
     Nothing changes crops, tickets or coins.
   - **The festival scene plays once ever**, not once per festival. Per-festival scenes can follow if Minnie wants them.
+- 2026-11-23 · **Review fixes, Phase F4: pictures on text-only screens** (`components/art/Spots.tsx`)
+  - **Spots (96 × 64):**
+    - Stats before any data: Som and a blank chart.
+    - An empty backlog: an empty basket.
+    - No animals yet: a nest.
+    - No requests: a mailbox.
+    - The error page and the offline page: Som under an umbrella. The offline page is static HTML, so its copy is generated from the component with the tokens resolved.
+    - The four setup steps: a seed packet, a week, a 10-minute timer, and Som with a flag for "All set".
+  - **Banners (160 × 56):** the Night ritual (the farm under the moon, Som asleep) and the weekly review (seven sprouts, each a little taller).
+  - The 404 page keeps the app mark: nothing went wrong there.
+  - **No separate sky strip on Today.** The plan asked for one, but Som's mark in the header already carries the block's sky (F4 part 1), and the farm strip below it has the farm's sky. A third sky would crowd a screen that's meant to show one thing at a time.
+  - **Today's header date is shorter:** "Wed 28 October" / "พุธ 28 ตุลาคม". The long form wrapped onto two lines on a small phone (visual baselines, #33).
+  - **The farm strip's placeholder** is an empty field in the current block's sky, not a blank white card. The farm is read 2 s after Today on purpose (perf), and the white card read as broken.

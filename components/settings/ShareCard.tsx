@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
+import { SpotArt } from "@/components/art/Spots";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { freeDaysFromContext } from "@/lib/share/compute";
@@ -301,7 +302,12 @@ export function ShareCard() {
       ) : (
         <h3 className="mt-4 mb-2 font-bold">{t("inbox", { n: pending ? pending.length : "…" })}</h3>
       )}
-      {pending && pending.length === 0 && <p className="text-sm text-muted">{t("inboxEmpty")}</p>}
+      {pending && pending.length === 0 && (
+        <div className="flex items-center gap-3">
+          <SpotArt kind="mailbox" className="h-16 w-24 shrink-0" />
+          <p className="text-sm text-muted">{t("inboxEmpty")}</p>
+        </div>
+      )}
       <ul className="flex flex-col gap-2">
         {(pending ?? []).map((r) => {
           const why = blocked(r);

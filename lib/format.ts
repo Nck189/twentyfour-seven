@@ -20,6 +20,19 @@ export function formatDayLong(date: string, locale: string, timeZone: string): s
   }).format(noonUtc);
 }
 
+/** Today's header: "Wed 28 October" / "พ. 28 ตุลาคม" (the long form wraps on a small phone). */
+export function formatDayMedium(date: string, locale: string, timeZone: string): string {
+  const [y, m, d] = date.split("-").map(Number);
+  return new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-GB", {
+    timeZone,
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+  })
+    .format(new Date(Date.UTC(y, m - 1, d, 5)))
+    .replace(",", "");
+}
+
 const noonOf = (date: string) => {
   const [y, m, d] = date.split("-").map(Number);
   return new Date(Date.UTC(y, m - 1, d, 5));

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { AppMark } from "@/components/art/AppMark";
+import { SpotArt } from "@/components/art/Spots";
 import { Button } from "./Button";
 
 export function ErrorScreen({ kind, onRetry }: { kind: "notFound" | "error"; onRetry?: () => void }) {
@@ -10,7 +11,11 @@ export function ErrorScreen({ kind, onRetry }: { kind: "notFound" | "error"; onR
   const tc = useTranslations("common");
   return (
     <main className="safe-top safe-bottom flex min-h-dvh flex-col items-center justify-center gap-3 px-6 text-center">
-      <AppMark className="h-20 w-20" />
+      {kind === "error" ? (
+        <SpotArt kind="umbrella" className="h-24 w-36" />
+      ) : (
+        <AppMark className="h-20 w-20" />
+      )}
       <h1 className="text-2xl font-extrabold">
         {kind === "notFound" ? t("notFoundTitle") : t("errorTitle")}
       </h1>
