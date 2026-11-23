@@ -1315,6 +1315,30 @@
       "mornings": "{n, plural, one {# morning on time} other {# mornings on time}}",
       "loading": "Counting your year…",
       "error": "Couldn't count your year right now. It's still a good one."
+    },
+    "ch7_perfect_day": {
+      "title": "A perfect day",
+      "l1": "Every block today, start to finish. Som noticed.",
+      "l2": "The whole field looks a little brighter tonight.",
+      "l3": "Som curls up early. Good days make good naps."
+    },
+    "ch8_thirty_days": {
+      "title": "Thirty days",
+      "l1": "Thirty days in a row. Som has been counting sunsets.",
+      "l2": "Som flips through the album: a whole month of mornings.",
+      "l3": "Same time tomorrow? Som will be here."
+    },
+    "ch10_first_batch": {
+      "title": "The first batch",
+      "l1": "The first batch from the machine! Som carries it out like treasure.",
+      "l2": "Made from your own harvest. Som is very proud of you.",
+      "l3": "Som sits by the field and plans the next one."
+    },
+    "ch11_welcome_back": {
+      "title": "Welcome back",
+      "l1": "Som kept the gate warm while you were away.",
+      "l2": "No catching up needed. Just one small thing today.",
+      "l3": "The farm is happy you're here."
     }
   },
   "cafe": {

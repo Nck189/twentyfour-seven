@@ -24,6 +24,9 @@ export type StoryFacts = {
   bestStreak?: number;
   daysUsed?: number;
   house?: number;
+  perfectDays?: number;
+  made?: number;
+  welcomeBacks?: number;
 };
 export type StoryMoment = "farm" | "goodnight" | "other";
 
@@ -53,6 +56,12 @@ export function triggerMet(t: StoryTrigger, f: StoryFacts): boolean {
       return (f.daysUsed ?? 0) >= t.need;
     case "house":
       return (f.house ?? 0) >= t.need;
+    case "perfect_days":
+      return (f.perfectDays ?? 0) >= t.need;
+    case "made":
+      return (f.made ?? 0) >= t.need;
+    case "welcome_backs":
+      return (f.welcomeBacks ?? 0) >= t.need;
   }
 }
 

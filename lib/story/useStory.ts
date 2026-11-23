@@ -21,6 +21,9 @@ type Status = {
     best_streak?: number;
     days_used?: number;
     house?: number;
+    perfect_days?: number;
+    made?: number;
+    welcome_backs?: number;
   };
 };
 
@@ -95,6 +98,9 @@ export function useStory(moment: StoryMoment, busy = false) {
           bestStreak: s.facts?.best_streak ?? 0,
           daysUsed: s.facts?.days_used ?? 0,
           house: s.facts?.house ?? 0,
+          perfectDays: s.facts?.perfect_days ?? 0,
+          made: s.facts?.made ?? 0,
+          welcomeBacks: s.facts?.welcome_backs ?? 0,
         },
       });
       if (cancelled) return;
