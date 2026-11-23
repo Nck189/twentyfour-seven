@@ -20,14 +20,17 @@ export function formatDayLong(date: string, locale: string, timeZone: string): s
   }).format(noonUtc);
 }
 
-/** Today's header: "Wed 28 October" / "พ. 28 ตุลาคม" (the long form wraps on a small phone). */
+/**
+ * Today's header: "Wed 28 Oct" / "พุธ 28 ตุลาคม". The long form wraps on a small phone; English
+ * needs the short month too to fit 320 px (G7 F4 S3-4), Thai fits with the full month.
+ */
 export function formatDayMedium(date: string, locale: string, timeZone: string): string {
   const [y, m, d] = date.split("-").map(Number);
   return new Intl.DateTimeFormat(locale === "th" ? "th-TH" : "en-GB", {
     timeZone,
     weekday: "short",
     day: "numeric",
-    month: "long",
+    month: locale === "th" ? "long" : "short",
   })
     .format(new Date(Date.UTC(y, m - 1, d, 5)))
     .replace(",", "");

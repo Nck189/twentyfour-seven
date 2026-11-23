@@ -127,7 +127,11 @@ test("F4: until the farm arrives (2 s after Today), the strip is an empty field 
   await expect(waiting).toBeVisible();
   const sky = await waiting.evaluate((el) => getComputedStyle(el.firstElementChild!).backgroundImage);
   expect(sky).toContain("linear-gradient");
-  // Then the real strip takes its place, at the same height.
-  await expect(page.getByRole("link", { name: /farm/i }).first()).toBeVisible();
+  const before = await waiting.boundingBox();
+  // Then the real strip takes its place, at the same size and spot (G7 F4 S4-2).
+  const strip = page.getByRole("link", { name: "Your farm: open it" });
+  await expect(strip).toBeVisible();
   await expect(waiting).toHaveCount(0);
+  const after = await strip.boundingBox();
+  expect(after).toEqual(before);
 });

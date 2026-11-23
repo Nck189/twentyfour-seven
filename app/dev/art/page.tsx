@@ -50,7 +50,7 @@ function Icons() {
   );
 }
 
-/** F4 spot pictures and banners at 160 px and 48 px (docs/REVIEW_FIX_PLAN.md). */
+/** F4 spot pictures at 160 px and 48 px, and the banners at their in-app width (docs/REVIEW_FIX_PLAN.md). */
 function Spots() {
   return (
     <section className="rounded-xl bg-[var(--ui-surface)] p-3" data-sheet="spots">
@@ -64,7 +64,8 @@ function Spots() {
         ))}
         {BANNER_KINDS.map((k) => (
           <Cell key={k} caption={k}>
-            <BannerArt kind={k} className="h-auto w-80" />
+            {/* the in-app size: a phone sheet or card, 343 px wide */}
+            <BannerArt kind={k} className="h-auto w-[343px]" />
           </Cell>
         ))}
       </div>

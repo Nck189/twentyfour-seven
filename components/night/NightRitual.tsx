@@ -382,7 +382,7 @@ export function NightRitual({
 
   return (
     <Sheet title={t("title")} onClose={onClose}>
-      <BannerArt kind="night" className="mb-3 h-16 w-full" />
+      <BannerArt kind="night" className="mb-3 h-auto w-full" />
       <div className="mb-3 flex items-center gap-1.5">
         <span className="sr-only">{t("step", { n: step + 1, total })}</span>
         {Array.from({ length: total }, (_, i) => (

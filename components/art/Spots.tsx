@@ -3,7 +3,7 @@
  * the Night ritual and weekly review headers, the setup steps and the offline/error pages.
  * Same artist as the farm set (design/reference-style-a.svg): flat, no outlines, 2–3 same-hue
  * tones (a darker shape lower-right, a small top-left highlight), a soft flat ellipse as the only
- * shadow, tokens only. Spots are 96 × 64 with the ground at y = 56; banners are 160 × 56.
+ * shadow, tokens only. Spots are 96 × 64 with the ground at y = 56; banners are 240 × 48 strips.
  * Decorative: the text next to them says what they mean.
  */
 import type { ReactNode } from "react";
@@ -356,75 +356,75 @@ export function SpotArt({ kind, className = "h-24 w-36" }: { kind: SpotKind; cla
   );
 }
 
-/** The Night ritual header: a quiet farm under the moon, Som asleep on the hill. */
+/** The Night ritual header: a quiet farm under the moon, Som asleep on the hill (240 × 48). */
 function NightBanner() {
   return (
     <>
-      <rect width={160} height={56} fill="var(--sky-night-top)" />
-      <rect y={26} width={160} height={30} fill="var(--sky-night-bottom)" />
+      <rect width={240} height={48} fill="var(--sky-night-top)" />
       <g fill="var(--sky-star)">
-        <Sparkle cx={22} cy={11} r={2} fill="var(--sky-star)" />
-        <Sparkle cx={54} cy={19} r={1.4} fill="var(--sky-star)" />
-        <Sparkle cx={92} cy={8} r={1.3} fill="var(--sky-star)" />
-        <Sparkle cx={112} cy={22} r={1.1} fill="var(--sky-star)" />
-        <circle cx={70} cy={10} r={0.7} />
-        <circle cx={38} cy={24} r={0.6} />
-        <circle cx={148} cy={28} r={0.6} />
+        <Sparkle cx={18} cy={9} r={1.8} fill="var(--sky-star)" />
+        <Sparkle cx={74} cy={14} r={1.3} fill="var(--sky-star)" />
+        <Sparkle cx={118} cy={7} r={1.5} fill="var(--sky-star)" />
+        <Sparkle cx={186} cy={16} r={1.1} fill="var(--sky-star)" />
+        <circle cx={58} cy={6} r={0.7} />
+        <circle cx={96} cy={20} r={0.6} />
+        <circle cx={150} cy={10} r={0.7} />
+        <circle cx={232} cy={24} r={0.6} />
       </g>
-      <circle cx={134} cy={15} r={8} fill="var(--sky-moon)" />
-      <circle cx={137.4} cy={12.6} r={6.6} fill="var(--sky-night-top)" />
-      <path d="M0 40 Q40 30 80 38 Q120 46 160 35 V56 H0 Z" fill="var(--art-leaf-4)" />
-      <path d="M0 47 Q50 40 100 47 Q130 51 160 45 V56 H0 Z" fill="var(--art-leaf-3)" />
-      {/* the farmhouse */}
-      <rect x={22} y={29} width={18} height={12} rx={2} fill="var(--art-wood)" />
-      <rect x={34} y={29} width={6} height={12} rx={2} fill="var(--art-wood-dark)" />
-      <path d="M19 30.4 L31 21.4 L43 30.4 Z" fill="var(--art-red-dark)" />
-      <g transform="translate(98 12) scale(0.85)">
+      <circle cx={212} cy={13} r={7} fill="var(--sky-moon)" />
+      <circle cx={215.2} cy={10.8} r={5.8} fill="var(--sky-night-top)" />
+      <path d="M0 34 Q60 26 120 32 Q180 38 240 30 V48 H0 Z" fill="var(--art-leaf-4)" />
+      <path d="M0 41 Q80 35 150 40 Q200 43 240 39 V48 H0 Z" fill="var(--art-leaf-3)" />
+      {/* the farmhouse on the back hill */}
+      <rect x={28} y={21} width={16} height={12} rx={2} fill="var(--art-wood)" />
+      <rect x={38} y={21} width={6} height={12} rx={2} fill="var(--art-wood-dark)" />
+      <path d="M25.4 22.4 L36 14.6 L46.6 22.4 Z" fill="var(--art-red-dark)" />
+      <g transform="translate(138 12) scale(0.7)">
         <SomFigure pose="sleep" />
       </g>
-      <rect width={160} height={56} fill="var(--sky-night-veil)" opacity={0.28} />
+      <rect width={240} height={48} fill="var(--sky-night-veil)" opacity={0.28} />
       {/* the window stays lit above the night veil */}
-      <rect x={27.4} y={33} width={5} height={5} rx={1} fill="var(--art-yellow)" />
+      <rect x={31.8} y={25} width={4.4} height={4.4} rx={1} fill="var(--art-yellow)" />
     </>
   );
 }
 
-/** The weekly review header: seven days of sprouts, each a little taller. */
+/** The weekly review header: seven days of sprouts, each a little taller (240 × 48). */
 function ReviewBanner() {
   return (
     <>
-      <rect width={160} height={56} fill="var(--sky-day-top)" />
-      <rect y={24} width={160} height={32} fill="var(--sky-day-bottom)" />
-      <circle cx={140} cy={13} r={7} fill="var(--art-sun)" />
-      <ellipse cx={34} cy={13} rx={10} ry={3.6} fill="var(--art-cloud)" />
-      <ellipse cx={41} cy={10.6} rx={6} ry={3.6} fill="var(--art-cloud)" />
-      <ellipse cx={96} cy={18} rx={7} ry={2.6} fill="var(--art-cloud)" />
-      <rect y={44} width={160} height={12} fill="var(--art-leaf-1)" />
-      <rect x={8} y={42} width={144} height={10} rx={4} fill="var(--art-soil)" />
-      <rect x={8} y={42} width={144} height={3} rx={1.5} fill="var(--art-soil-light)" />
+      <rect width={240} height={48} fill="var(--sky-day-top)" />
+      <circle cx={220} cy={12} r={6} fill="var(--art-sun)" />
+      <ellipse cx={40} cy={11} rx={10} ry={3.4} fill="var(--art-cloud)" />
+      <ellipse cx={47} cy={8.8} rx={6} ry={3.4} fill="var(--art-cloud)" />
+      <ellipse cx={128} cy={14} rx={8} ry={2.6} fill="var(--art-cloud)" />
+      <rect y={39} width={240} height={9} fill="var(--art-leaf-1)" />
+      <rect x={12} y={36} width={216} height={9} rx={4} fill="var(--art-soil)" />
+      <rect x={12} y={36} width={216} height={2.6} rx={1.3} fill="var(--art-soil-light)" />
       {Array.from({ length: 7 }, (_, i) => {
-        const x = 21 + i * 19.6;
-        const h = 4 + i * 2.2;
+        const x = 30 + i * 30;
+        const h = 4 + i * 2.3;
         const s = 0.7 + i * 0.08;
+        const top = 38 - h;
         return (
           <g key={i}>
-            <ellipse cx={x} cy={44.6} rx={4.6} ry={1.1} fill="var(--art-soil-dark)" />
-            <rect x={x - 0.8} y={44 - h} width={1.6} height={h + 0.6} rx={0.8} fill="var(--art-stem)" />
+            <ellipse cx={x} cy={38.6} rx={4.6} ry={1.1} fill="var(--art-soil-dark)" />
+            <rect x={x - 0.8} y={top} width={1.6} height={h + 0.6} rx={0.8} fill="var(--art-stem)" />
             <ellipse
               cx={x - 3 * s}
-              cy={44 - h + 1}
+              cy={top + 1}
               rx={3.6 * s}
               ry={1.9 * s}
               fill="var(--art-leaf-1)"
-              transform={`rotate(-25 ${x - 3 * s} ${44 - h + 1})`}
+              transform={`rotate(-25 ${x - 3 * s} ${top + 1})`}
             />
             <ellipse
               cx={x + 3 * s}
-              cy={44 - h}
+              cy={top}
               rx={3.6 * s}
               ry={1.9 * s}
               fill="var(--art-leaf-3)"
-              transform={`rotate(25 ${x + 3 * s} ${44 - h})`}
+              transform={`rotate(25 ${x + 3 * s} ${top})`}
             />
           </g>
         );
@@ -433,11 +433,11 @@ function ReviewBanner() {
   );
 }
 
+/** A wide strip (5 : 1) shown at its own shape, never cropped (G7 F4 S2-1). */
 export function BannerArt({ kind, className = "h-auto w-full" }: { kind: BannerKind; className?: string }) {
   return (
     <svg
-      viewBox="0 0 160 56"
-      preserveAspectRatio="xMidYMid slice"
+      viewBox="0 0 240 48"
       className={`${className} overflow-hidden rounded-2xl`}
       aria-hidden="true"
       data-banner-art={kind}

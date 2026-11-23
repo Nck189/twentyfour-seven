@@ -393,8 +393,13 @@ Format: date · decision · why · how to change it
     - No requests: a mailbox.
     - The error page and the offline page: Som under an umbrella. The offline page is static HTML, so its copy is generated from the component with the tokens resolved.
     - The four setup steps: a seed packet, a week, a 10-minute timer, and Som with a flag for "All set".
-  - **Banners (160 × 56):** the Night ritual (the farm under the moon, Som asleep) and the weekly review (seven sprouts, each a little taller).
+  - **Banners (240 × 48 strips, shown whole at full width):** the Night ritual (the farm under the moon, Som asleep) and the weekly review (seven sprouts, each a little taller). A first cut was drawn at 160 × 56 and cropped to fit the strip, which cut off the moon, Som and the house (G7 S2-1).
+  - **On Stats, only the first empty card of each tab has the picture**, so it doesn't repeat down the page.
   - The 404 page keeps the app mark: nothing went wrong there.
   - **No separate sky strip on Today.** The plan asked for one, but Som's mark in the header already carries the block's sky (F4 part 1), and the farm strip below it has the farm's sky. A third sky would crowd a screen that's meant to show one thing at a time.
-  - **Today's header date is shorter:** "Wed 28 October" / "พุธ 28 ตุลาคม". The long form wrapped onto two lines on a small phone (visual baselines, #33).
+  - **Today's header date is shorter:** "Wed 28 Oct" / "พุธ 28 ตุลาคม". The long form wrapped onto two lines on a small phone (visual baselines, #33). English needs the short month to fit 320 px; Thai fits with the full month.
   - **The farm strip's placeholder** is an empty field in the current block's sky, not a blank white card. The farm is read 2 s after Today on purpose (perf), and the white card read as broken.
+  - **The offline page's picture is generated** (`npm run gen:offline-art`), and a unit test fails if it drifts from the component or the tokens.
+  - **Tests that came along:**
+    - a visual shot of the farm yard (Phase G had none), which gets its baselines when Minnie next records them;
+    - the language-toggle test (CJ-14) gets Playwright's slow-test budget, because against prod it opens every screen in Thai over the network and once took the full 30 s (qc:prod 2026-11-23).

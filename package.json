@@ -12,6 +12,7 @@
     "format:check": "prettier --check .",
     "i18n:check": "tsx scripts/i18n-check.ts",
     "art:lint": "tsx scripts/qc-art-lint.ts",
+    "gen:offline-art": "tsx scripts/gen-offline-art.tsx",
     "test": "vitest run",
     "test:cov": "vitest run --coverage",
     "e2e": "playwright test",
