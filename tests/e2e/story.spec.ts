@@ -179,7 +179,9 @@ test("review F5: the first perfect day gets a short scene, once; Skip closes it"
   await page.goto("/farm");
   const scene = page.getByRole("dialog", { name: "A perfect day" });
   await expect(scene).toBeVisible();
-  await expect(scene.getByText("Every block today, start to finish. Som noticed.")).toBeVisible();
+  await expect(
+    scene.getByText("A perfect day yesterday: on time, and almost every block done. Som noticed."),
+  ).toBeVisible();
   await scene.getByRole("button", { name: "Skip" }).click();
   await expect(scene).toHaveCount(0);
   expect(await rest(`story_seen?user_id=eq.${id}&beat=eq.ch7_perfect_day&select=beat`)).toHaveLength(1);

@@ -77,9 +77,9 @@ export type StoryTrigger =
   | { kind: "house"; need: number }
   /** Perfect days ever (day_results). */
   | { kind: "perfect_days"; need: number }
-  /** Factory batches ever collected. */
+  /** Factory collects that took something (one per collect, not per product). */
   | { kind: "made"; need: number }
-  /** Welcome backs ever claimed (back after 3+ away days). */
+  /** Welcome backs claimed in the last 7 days (back after 3+ away days). */
   | { kind: "welcome_backs"; need: number };
 
 export type StoryGift = { seed: { crop: CropId; n: number } } | { tickets: number } | { decor: "farm_sign" };

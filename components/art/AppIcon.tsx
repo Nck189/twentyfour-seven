@@ -40,7 +40,7 @@ export function AppIconArt({
               variant === "sunrise"
                 ? "var(--art-sun)"
                 : variant === "dusk"
-                  ? "var(--art-orange-light)"
+                  ? "var(--art-pink-light)"
                   : "var(--art-yellow-light)"
             }
           />

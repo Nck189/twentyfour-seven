@@ -15,7 +15,9 @@ async function refusedThenGranted(beat: string, make: (id: string) => PromiseLik
         tickets: number;
       }
     ).tickets;
-  expect((await u.client.rpc("claim_story_beat", { p_beat: beat })).error?.code).toBe("P0001");
+  const early = (await u.client.rpc("claim_story_beat", { p_beat: beat })).error;
+  expect(early?.code).toBe("P0001");
+  expect(early?.message).toBe("not yet");
   await make(u.id);
   const before = await tickets();
   const r = await u.client.rpc("claim_story_beat", { p_beat: beat });
@@ -23,7 +25,9 @@ async function refusedThenGranted(beat: string, make: (id: string) => PromiseLik
   expect(r.data).toMatchObject({ beat, gift: null });
   expect(await tickets()).toBe(before);
   await ageSeen(u.id);
-  expect((await u.client.rpc("claim_story_beat", { p_beat: beat })).error?.code).toBe("P0001");
+  const again = (await u.client.rpc("claim_story_beat", { p_beat: beat })).error;
+  expect(again?.code).toBe("P0001");
+  expect(again?.message).toBe("already seen");
   return u;
 }
 
@@ -53,11 +57,23 @@ describe("milestone scenes (server)", () => {
     );
   });
 
-  it("back after days away (the first welcome back)", async () => {
-    await refusedThenGranted("ch11_welcome_back", (id) =>
+  it("back after days away: only a welcome back in the last 7 days counts (G7 S3-2)", async () => {
+    const day = async (id: string) =>
+      ((await admin().rpc("_story_facts", { uid: id })).data as { day: string }).day;
+    // An old welcome back (weeks ago) doesn't bring the scene now.
+    const old = await newUser("beat-welcome-old");
+    const today = await day(old.id);
+    const weeksAgo = new Date(Date.parse(today) - 30 * 86_400_000).toISOString().slice(0, 10);
+    await admin()
+      .from("ticket_grants")
+      .insert({ user_id: old.id, reason: "welcome_back", ref_date: weeksAgo, amount: 1 });
+    const r = (await old.client.rpc("claim_story_beat", { p_beat: "ch11_welcome_back" })).error;
+    expect(r?.message).toBe("not yet");
+    // Today's welcome back does.
+    await refusedThenGranted("ch11_welcome_back", async (id) =>
       admin()
         .from("ticket_grants")
-        .insert({ user_id: id, reason: "welcome_back", ref_date: "2026-11-01", amount: 1 }),
+        .insert({ user_id: id, reason: "welcome_back", ref_date: await day(id), amount: 1 }),
     );
   });
 });

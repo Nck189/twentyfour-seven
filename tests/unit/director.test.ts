@@ -229,3 +229,17 @@ describe("milestone scenes (review fix F5)", () => {
       expect(STORY[b].gift).toBeNull();
   });
 });
+
+describe("welcome back plays first (G7 S3-2)", () => {
+  it("comes before a seasonal month scene and the other milestones, the day it happens", () => {
+    const seen = ["ch0_gate"];
+    const beat = nextBeat({
+      moment: "farm",
+      busy: false,
+      seenToday: false,
+      seen,
+      facts: { harvests: 0, goodDays: 0, today: "2026-11-23", perfectDays: 1, made: 1, welcomeBacks: 1 },
+    });
+    expect(beat).toBe("ch11_welcome_back");
+  });
+});

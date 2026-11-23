@@ -3,7 +3,7 @@
 --   ch7_perfect_day    the first perfect day
 --   ch8_thirty_days    best streak ≥ 30
 --   ch10_first_batch   the first factory batch collected
---   ch11_welcome_back  back after days away (the first welcome back)
+--   ch11_welcome_back  back after days away (a welcome back claimed in the last 7 days)
 -- _story_gift is unchanged: these beats return null.
 
 create or replace function public._story_facts(uid uuid)
@@ -43,8 +43,10 @@ as $$
     -- Review fix F5 (milestone scenes): perfect days, factory batches collected, welcome backs.
     'perfect_days', (select count(*) from public.day_results d where d.user_id = uid and d.kind = 'perfect'),
     'made', (select count(*) from public.events e where e.user_id = uid and e.type = 'jobs_collected'),
+    -- Only a welcome back in the last 7 days: an old one (before this scene existed) stays old.
     'welcome_backs', (select count(*) from public.ticket_grants g
-                      where g.user_id = uid and g.reason = 'welcome_back')
+                      where g.user_id = uid and g.reason = 'welcome_back'
+                        and g.ref_date > public._season_day(uid) - 7)
   )
 $$;
 
