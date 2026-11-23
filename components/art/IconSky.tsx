@@ -1,11 +1,12 @@
 import { useId } from "react";
 
 /** The sky behind the app icon (the only gradient in the icon, as the art rules allow for skies). */
-export type IconSkyVariant = "sunrise" | "meadow" | "night";
+export type IconSkyVariant = "sunrise" | "meadow" | "dusk" | "night";
 
 const SKY: Record<IconSkyVariant, [top: string, bottom: string]> = {
   sunrise: ["var(--sky-sunrise-top)", "var(--sky-sunrise-bottom)"],
   meadow: ["var(--sky-day-top)", "var(--sky-day-bottom)"],
+  dusk: ["var(--sky-dusk-top)", "var(--sky-dusk-bottom)"],
   night: ["var(--sky-night-top)", "var(--sky-night-bottom)"],
 };
 

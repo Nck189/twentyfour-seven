@@ -24,6 +24,9 @@ export type StoryFacts = {
   bestStreak?: number;
   daysUsed?: number;
   house?: number;
+  perfectDays?: number;
+  made?: number;
+  welcomeBacks?: number;
 };
 export type StoryMoment = "farm" | "goodnight" | "other";
 
@@ -53,6 +56,12 @@ export function triggerMet(t: StoryTrigger, f: StoryFacts): boolean {
       return (f.daysUsed ?? 0) >= t.need;
     case "house":
       return (f.house ?? 0) >= t.need;
+    case "perfect_days":
+      return (f.perfectDays ?? 0) >= t.need;
+    case "made":
+      return (f.made ?? 0) >= t.need;
+    case "welcome_backs":
+      return (f.welcomeBacks ?? 0) >= t.need;
   }
 }
 
@@ -74,7 +83,15 @@ export function nextBeat(input: {
   if (input.moment === "other" || input.busy || input.seenToday) return null;
   // The first-week chapters (0–2) first, then month-only seasonal beats (G7 R2-2): a queue of later
   // chapters must never push a month's opening or market past its month; they wait a day, losing nothing.
-  const rank = (b: StoryBeatId) => (STORY[b].chapter <= 2 ? 0 : STORY[b].trigger.kind === "season" ? 1 : 2);
+  // Welcome back plays first, the day it happens (G7 S3-2): a day late it no longer fits.
+  const rank = (b: StoryBeatId) =>
+    STORY[b].trigger.kind === "welcome_backs"
+      ? -1
+      : STORY[b].chapter <= 2
+        ? 0
+        : STORY[b].trigger.kind === "season"
+          ? 1
+          : 2;
   const order = [...STORY_BEATS].sort((a, b) => rank(a) - rank(b) || STORY[a].chapter - STORY[b].chapter);
   return (
     order.find((b) => {
