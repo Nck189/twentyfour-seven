@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, settle, signIn, uniqueEmail } from "../helpers/auth";
 import { rest, setAllTemplates, userIdFor } from "../helpers/db";
+import { CALM_AFTERNOON, fixClock } from "../helpers/clock";
 import { calmBlockClock, gotoToday, leaveAfterSignIn, setBlockNow, wakeDay } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
 
@@ -114,6 +115,9 @@ test("G7 STORY-R1: leaving the Farm while a beat's claim is in flight doesn't lo
   page,
 }) => {
   await setup(page);
+  // Today saves the day's blocks for Som's director: at the real hour that can be Down Time, when
+  // Today offers the Night ritual over the nav and Som waits for a calm block. Pin a calm afternoon.
+  await fixClock(page, CALM_AFTERNOON);
   // A slow network: the claim answers only after the user has already left the Farm.
   await page.route("**/rest/v1/rpc/claim_story_beat", async (route) => {
     await new Promise((r) => setTimeout(r, 2500));

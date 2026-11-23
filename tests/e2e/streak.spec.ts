@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import { gameState, rest, setAllTemplates, userIdFor } from "../helpers/db";
-import { dismissNightOffer, gotoToday, leaveAfterSignIn } from "../helpers/day";
+import { dismissNightOffer, leaveAfterSignIn } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
 import { seasonOf } from "@/content/seasons";
 import { addDays, localDate, zonedInstant } from "@/lib/time";
@@ -62,7 +62,9 @@ test("CJ-M9-1 seven good days: streak 7, +5 tickets, a scarecrow, and the 7-day 
   test.slow();
   const id = await setup(page);
   await goodDays(id, 7);
-  await gotoToday(page);
+  // Not gotoToday: at Down Time the Night ritual opens together with the hatch reveal, which sits
+  // on top of it (z-60). The hatch is handled first; the ritual is closed after it.
+  await page.goto("/today");
   // The 7 days end yesterday (by wake-day, whatever the clock): streak 7 and one scarecrow held.
   const chip = page.getByRole("button", { name: "Streak: 7 days" });
   await expect(chip).toBeVisible({ timeout: 15_000 });
@@ -73,6 +75,7 @@ test("CJ-M9-1 seven good days: streak 7, +5 tickets, a scarecrow, and the 7-day 
   await expect(hatch.getByRole("status")).toContainText(/^Meet your /);
   await hatch.getByRole("button", { name: "Done" }).click();
   await expect(hatch).toHaveCount(0);
+  await dismissNightOffer(page);
   await chip.click();
   const sheet = page.getByRole("dialog", { name: "Streak" });
   await expect(sheet.getByText("7 days in a row")).toBeVisible();
