@@ -36,7 +36,13 @@ export function AppIconArt({
             cx="32"
             cy="35"
             r="27"
-            fill={variant === "sunrise" ? "var(--art-sun)" : "var(--art-yellow-light)"}
+            fill={
+              variant === "sunrise"
+                ? "var(--art-sun)"
+                : variant === "dusk"
+                  ? "var(--art-orange-light)"
+                  : "var(--art-yellow-light)"
+            }
           />
         )}
         {/* Som: the head fills the icon; a two-leaf sprout on top says "farm". */}

@@ -4,6 +4,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
+import { AppIcon } from "@/components/art/AppIcon";
+import { markFor } from "@/lib/today/markFor";
 import { formatDayLong, formatTime } from "@/lib/format";
 import { showBedCard } from "@/lib/today/bedtime";
 import { useNow } from "@/lib/hooks/useNow";
@@ -227,6 +229,11 @@ export function TodayScreen() {
       <ScreenHeader
         title={t("title")}
         subtitle={formatDayLong(tl.date, locale, today.timezone)}
+        mark={
+          <span data-mark={markFor(cur?.key)} className="shrink-0">
+            <AppIcon variant={markFor(cur?.key)} className="h-11 w-11" />
+          </span>
+        }
         action={
           <div className="flex items-center gap-2">
             {streak.view && <StreakChip view={streak.view} />}
