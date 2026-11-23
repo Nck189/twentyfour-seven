@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Segmented } from "@/components/ui/Segmented";
 import { formatTime } from "@/lib/format";
 import { sfx } from "@/lib/sound/sfx";
+import { emitBlockDone } from "@/lib/ui/rewardEvents";
 import { startCounts } from "@/lib/game/outcome";
 import { startTiming, isPastBlock, type TimelineBlock } from "@/lib/today/day";
 import type { BlockLog } from "@/lib/today/useToday";
@@ -145,7 +146,7 @@ export function BlockCheckin({
           <Button
             variant="secondary"
             onClick={() => {
-              sfx.tick();
+              sfx.blockStart();
               void actions.start(block, new Date());
             }}
           >
@@ -200,7 +201,7 @@ export function BlockCheckin({
             label={first10Text}
             disabled={closed}
             onToggle={() => {
-              (log.first10_at ? sfx.untick : sfx.pop)();
+              (log.first10_at ? sfx.untick : sfx.sparkle)();
               void actions.toggleFirst10(block, new Date());
             }}
           />
@@ -325,7 +326,9 @@ export function BlockCheckin({
       ) : started || past ? (
         <Button
           onClick={() => {
-            sfx.pop();
+            // Three notes when every checklist item is ticked (review fix F1).
+            sfx.blockDone(block.checklist.length > 0 && log.items_done.length >= block.checklist.length);
+            emitBlockDone(block.key);
             void actions.close(block, new Date());
           }}
         >

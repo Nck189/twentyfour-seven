@@ -143,7 +143,7 @@ export async function settle(page: Page) {
 
 export async function setPrefs(
   page: Page,
-  prefs: { locale?: "en" | "th"; theme?: "light" | "dark" | "system" },
+  prefs: { locale?: "en" | "th"; theme?: "light" | "dark" | "system"; animations?: boolean },
 ) {
   // Seed once per tab; later reloads keep whatever the app (or the test) saved.
   await page.addInitScript((p) => {
@@ -152,7 +152,13 @@ export async function setPrefs(
     localStorage.setItem(
       "247-prefs",
       JSON.stringify({
-        state: { locale: p.locale ?? "en", theme: p.theme ?? "light", soundOn: true, skipAnimations: true },
+        state: {
+          locale: p.locale ?? "en",
+          theme: p.theme ?? "light",
+          soundOn: true,
+          // Animations are skipped in specs unless one checks them (review fix F2).
+          skipAnimations: !p.animations,
+        },
         version: 0,
       }),
     );

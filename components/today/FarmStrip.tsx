@@ -1,12 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { FarmSky } from "@/components/art/farm/FarmSky";
 import { PlotArt } from "@/components/art/farm/PlotArt";
 import { SomArt } from "@/components/art/Som";
 import { DAY_ORDER } from "@/content/blocks";
 import type { FarmData } from "@/lib/farm/useFarm";
+import { usePrefs } from "@/lib/store/prefs";
+import { onBlockDone } from "@/lib/ui/rewardEvents";
+import type { BlockKey } from "@/content/blocks";
 
 /**
  * Today's farm strip on phones (review fix C3): the 7 block plots at their real stage, in day
@@ -15,6 +19,11 @@ import type { FarmData } from "@/lib/farm/useFarm";
  */
 export function FarmStrip({ data, failed = false }: { data: FarmData | null; failed?: boolean }) {
   const t = useTranslations("today.farmStrip");
+  // A block finished on Today: its plot bounces once and Som looks up (review fix F2).
+  const [done, setDone] = useState<{ key: BlockKey; n: number } | null>(null);
+  const skip = usePrefs((s) => s.skipAnimations);
+  useEffect(() => onBlockDone((key) => setDone((d) => ({ key, n: (d?.n ?? 0) + 1 }))), []);
+  const bounce = (on: boolean) => (on && !skip ? "grow-step" : "");
   // Its space is kept from the first paint, so nothing on Today moves under a finger when the
   // farm arrives (G7 R-C-2). No farm at all: no space.
   if (failed) return null;
@@ -36,11 +45,18 @@ export function FarmStrip({ data, failed = false }: { data: FarmData | null; fai
         aria-hidden="true"
         className="absolute inset-x-0 bottom-0 grid grid-cols-[repeat(8,minmax(0,3rem))] items-end justify-between gap-0.5 px-1"
       >
-        <SomArt className="aspect-square h-auto w-full" />
+        <span key={`som-${done?.n ?? 0}`} className={`block ${bounce(done !== null)}`}>
+          <SomArt className="aspect-square h-auto w-full" />
+        </span>
         {DAY_ORDER.map((b) => {
           const p = data.farm.plots[b];
           return (
-            <span key={b} data-plot={b} className="block">
+            <span
+              key={done?.key === b ? `${b}-${done.n}` : b}
+              data-plot={b}
+              className={`block ${bounce(done?.key === b)}`}
+              style={done?.key === b ? { animationDelay: "120ms" } : undefined}
+            >
               <PlotArt
                 cropId={p?.cropId ?? null}
                 stage={p?.stage ?? 0}

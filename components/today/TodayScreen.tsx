@@ -11,6 +11,7 @@ import { currentBlock, type TimelineBlock } from "@/lib/today/day";
 import { useBlockClock } from "@/lib/today/blockClock";
 import { PushPlanner } from "@/components/push/PushPlanner";
 import { useToday } from "@/lib/today/useToday";
+import { sfx } from "@/lib/sound/sfx";
 import { NightRitual } from "@/components/night/NightRitual";
 import { WelcomeCard } from "@/components/onboarding/WelcomeCard";
 import { useOnboardingState } from "@/lib/onboarding/useOnboardingState";
@@ -89,6 +90,12 @@ export function TodayScreen() {
   // The farm, read once a little after Today's own data (no live updates): the strip on phones
   // and the "one miss from dying" line share this one load (review fix C3).
   const farm = useFarm({ live: false, delayMs: 2000 });
+  // A failed save makes one low, short note, once per failure (review fix F1).
+  const savesFailed = useRef(today.saveError);
+  useEffect(() => {
+    if (today.saveError > savesFailed.current) sfx.error();
+    savesFailed.current = today.saveError;
+  }, [today.saveError]);
   // The strip follows check-ins (G7 R-C-8): one farm read a moment after the last change on Today
   // (a log or "I'm up"). Not before the farm's own first read, so opening Today stays one read.
   const farmReload = useRef(farm.reload);

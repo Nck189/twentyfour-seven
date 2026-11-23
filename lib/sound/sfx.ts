@@ -1,6 +1,7 @@
 "use client";
 
 import { usePrefs } from "@/lib/store/prefs";
+import { RECIPES, type Note } from "./recipes";
 import { shouldPlay } from "./quiet";
 
 /**
@@ -25,12 +26,19 @@ export function unlockAudio() {
   audio();
 }
 
-type Note = { freq: number; at: number; dur: number; type?: OscillatorType; gain?: number };
-
 /** End of the current Focus/Work block (ms), set by Today; 0 = not in a quiet block. */
 let quietUntil = 0;
 export function setQuietUntil(ms: number) {
   quietUntil = ms;
+}
+/** The ambience loop checks the same quiet block (review fix F3). */
+export function ambienceQuietUntil() {
+  return quietUntil;
+}
+/** Plays notes as they are (the caller has already checked mute and quiet). */
+export function playNotes(notes: Note[]) {
+  const ac = audio();
+  if (ac) schedule(ac, notes);
 }
 
 function play(notes: Note[], essential = false) {
@@ -47,12 +55,17 @@ function play(notes: Note[], essential = false) {
     return;
   const ac = audio();
   if (!ac) return;
+  schedule(ac, notes);
+}
+
+function schedule(ac: AudioContext, notes: Note[]) {
   const t0 = ac.currentTime + 0.01;
   for (const n of notes) {
     const osc = ac.createOscillator();
     const g = ac.createGain();
     osc.type = n.type ?? "sine";
     osc.frequency.setValueAtTime(n.freq, t0 + n.at);
+    if (n.to) osc.frequency.exponentialRampToValueAtTime(n.to, t0 + n.at + n.dur);
     g.gain.setValueAtTime(0.0001, t0 + n.at);
     g.gain.exponentialRampToValueAtTime(n.gain ?? 0.2, t0 + n.at + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + n.at + n.dur);
@@ -126,12 +139,7 @@ export const sfx = {
       { freq: 880, at: 0.42, dur: 0.1, type: "sine", gain: 0.18 },
       { freq: 1175, at: 0.52, dur: 0.16, type: "sine", gain: 0.14 },
     ]),
-  sunrise: () =>
-    play([
-      { freq: 523, at: 0, dur: 0.15 },
-      { freq: 659, at: 0.1, dur: 0.15 },
-      { freq: 784, at: 0.2, dur: 0.25 },
-    ]),
+  sunrise: () => play(RECIPES.sunrise()),
   /** A timer the user set (power nap): rings even during a quiet block (never when muted). */
   alarm: () =>
     play(
@@ -158,17 +166,22 @@ export const sfx = {
       { freq: 1568, at: 0, dur: 0.07, type: "triangle", gain: 0.12 },
       { freq: 2093, at: 0.06, dur: 0.16, type: "triangle", gain: 0.1 },
     ]),
-  /** A streak milestone or welcome back: a soft rising celebration. */
-  celebrate: () =>
-    play(
-      [523, 659, 784, 1047, 784, 1047].map((freq, i) => ({
-        freq,
-        at: i * 0.1,
-        dur: i === 5 ? 0.35 : 0.12,
-        type: "triangle" as OscillatorType,
-        gain: 0.12,
-      })),
-    ),
+  /** Unlock, streak milestone, welcome back: a soft rising celebration; bigger (0–2) ends higher. */
+  celebrate: (size = 0) => play(RECIPES.celebrate(size)),
+  /** Phase F sounds (review fix F1): see docs/SOUND-MAP.md. */
+  blockStart: () => play(RECIPES.blockStart()),
+  sparkle: () => play(RECIPES.sparkle()),
+  blockDone: (all = false) => play(RECIPES.blockDone(all)),
+  ritualStep: () => play(RECIPES.ritualStep()),
+  plant: () => play(RECIPES.plant()),
+  grow: (n: number) => play(RECIPES.grow(n)),
+  buy: () => play(RECIPES.buy()),
+  deliver: () => play(RECIPES.deliver()),
+  machine: () => play(RECIPES.machine()),
+  clink: () => play(RECIPES.clink()),
+  munch: () => play(RECIPES.munch()),
+  enough: () => play(RECIPES.enough()),
+  error: () => play(RECIPES.error()),
   /** Som: a short meow (a pitch glide up, then down). */
   meow: () => {
     const p = usePrefs.getState();

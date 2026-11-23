@@ -31,6 +31,9 @@ import { CapsuleSheet } from "./CapsuleSheet";
 import { Tip } from "@/components/tips/Tip";
 import { SeedDexSheet } from "./SeedDexSheet";
 import { sfx } from "@/lib/sound/sfx";
+import { usePrefs } from "@/lib/store/prefs";
+import { grownSince, readSeen, snapshot, writeSeen } from "@/lib/farm/growthSeen";
+import { ambienceKind, useAmbience } from "@/lib/sound/ambience";
 import { HarvestPop } from "./HarvestPop";
 import { DECOR_ART } from "./DecorShop";
 import { Shop } from "./Shop";
@@ -158,6 +161,28 @@ export function FarmView({
   const [pop, setPop] = useState<{ cropId: CropId; quality: Quality; value?: number } | null>(null);
   const [sheet, setSheet] = useState<"capsules" | "dex" | "cafe" | "factory" | null>(null);
   const [capsulesOpened, setCapsulesOpened] = useState(false);
+  // Crops that grew since this device last showed the farm: a pop each and a small step-up,
+  // one after another (review fix F1/F2). Not in the side panel: the Farm tab is where it lands.
+  const [grown, setGrown] = useState<BlockKey[]>([]);
+  useAmbience(compact || !data ? null : ambienceKind(data.sky));
+  const skipAnimations = usePrefs((s) => s.skipAnimations);
+  useEffect(() => {
+    if (compact || !data) return;
+    const now: Partial<Record<BlockKey, { cropId: string; stage: number; plantedKey: string }>> = {};
+    for (const b of DAY_ORDER) {
+      const p = data.farm.plots[b];
+      if (p && p.status !== "dead") now[b] = { cropId: p.cropId, stage: p.stage, plantedKey: String(p.star) };
+    }
+    // A moment after the farm paints, so the step-ups are seen (and a cancelled run writes nothing).
+    const timer = setTimeout(() => {
+      const g = grownSince(readSeen("device"), now);
+      writeSeen("device", snapshot(now));
+      if (g.length === 0) return;
+      sfx.grow(g.length);
+      setGrown(g);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [compact, data]);
   if (openCapsules && !capsulesOpened && !sheet && gacha?.state) {
     setCapsulesOpened(true);
     // No ticket after all (the claim failed): just the farm (G7 R-C-4).
@@ -276,7 +301,13 @@ export function FarmView({
                     type="button"
                     aria-label={label(slot)}
                     onClick={() => setOpen(slot)}
-                    className="tap flex w-full flex-col items-center rounded-xl p-1"
+                    data-grew={grown.includes(slot) || undefined}
+                    className={`tap flex w-full flex-col items-center rounded-xl p-1 ${
+                      grown.includes(slot) && !skipAnimations ? "grow-step" : ""
+                    }`}
+                    style={
+                      grown.includes(slot) ? { animationDelay: `${grown.indexOf(slot) * 120}ms` } : undefined
+                    }
                   >
                     {art(slot)}
                   </button>
@@ -467,7 +498,7 @@ export function FarmView({
           onPlant={async (crop, replace) => {
             const ok = await plant(open, crop, replace);
             if (ok) {
-              sfx.tick();
+              sfx.plant();
               setOpen(null);
               gacha?.reload();
             }

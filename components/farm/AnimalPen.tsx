@@ -90,6 +90,7 @@ function AnimalSheet({
               sfx.animal(ANIMALS[animal.species].pitch, !fed);
               setHearts2((n) => n + 1);
               const counted = await actions.pet(animal.id);
+              if (!counted) sfx.enough();
               setNote({ text: counted ? t("petted", { name }) : t("petEnough", { name }) });
             })
           }
@@ -128,6 +129,7 @@ function AnimalSheet({
             onClick={() =>
               void run(async () => {
                 const ok = await actions.feed(animal.id);
+                if (ok) sfx.munch();
                 setNote(ok ? { text: t("fedOne") } : { text: t("error"), error: true });
               })
             }

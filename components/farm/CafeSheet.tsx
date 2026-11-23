@@ -149,7 +149,7 @@ export function CafeSheet({ cafe, onClose }: { cafe: ReturnType<typeof useCafe>;
                     setError(true);
                     return;
                   }
-                  sfx.pop();
+                  sfx.clink();
                   if (r.reward) sfx.celebrate();
                   setLast({ drink: d, r });
                   setAnswered(null);

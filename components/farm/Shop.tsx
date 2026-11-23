@@ -24,6 +24,7 @@ import { ProductArt } from "@/components/art/farm/Factory";
 import { notifyWalletChange } from "@/lib/market/changes";
 import { useMarket, type ActResult, type MarketStatus } from "@/lib/market/useMarket";
 import { sfx } from "@/lib/sound/sfx";
+import { shopSound } from "@/lib/sound/recipes";
 import { usePrefs } from "@/lib/store/prefs";
 import { DecorShop } from "./DecorShop";
 
@@ -63,8 +64,10 @@ export function Shop({
     setBusy(null);
     if (r.ok) {
       const n = payoff?.(r);
-      if (n?.coins && n.coins > 0) sfx.coin();
-      else sfx.tick();
+      // One sound per kind of action (docs/SOUND-MAP.md): deliver, buy, sell.
+      const sound = shopSound(key);
+      if (sound === "tick" && n?.coins && n.coins > 0) sfx.coin();
+      else sfx[sound]();
       setNotice(n ?? null);
       onChanged();
       notifyWalletChange();
@@ -168,12 +171,26 @@ function Payoff({ notice, onDone }: { notice: Notice | null; onDone: () => void 
       {notice.coins !== undefined && (
         <motion.span
           aria-hidden="true"
-          className="inline-flex"
+          className="relative inline-flex"
           initial={skip ? false : { scale: 0.3, rotate: -40 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ type: "spring", stiffness: 420, damping: 12 }}
         >
           <Coin className="h-6 w-6" />
+          {/* Coins fly up into the counter from where the row was tapped (review fix F2). */}
+          {!skip &&
+            (notice.coins ?? 0) > 0 &&
+            [0, 1, 2].map((i) => (
+              <motion.span
+                key={i}
+                className="absolute inset-0"
+                initial={{ y: 140 + i * 18, x: (i - 1) * 14, opacity: 0, scale: 0.8 }}
+                animate={{ y: 0, x: 0, opacity: [0, 1, 0], scale: 1 }}
+                transition={{ duration: 0.5, delay: i * 0.07, ease: "easeOut" }}
+              >
+                <Coin className="h-6 w-6" />
+              </motion.span>
+            ))}
         </motion.span>
       )}
       <span className="min-w-0 flex-1 break-words">{notice.text}</span>
