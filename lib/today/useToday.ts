@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BlockKey } from "@/content/blocks";
 import { logEvent } from "@/lib/db/events";
 import { saveDirty } from "@/lib/plan/patch";
+import type { BlockSetting, ChecklistItem } from "@/content/blocks";
 import { getSupabase } from "@/lib/supabase/client";
 import { addDays, DEFAULT_TZ } from "@/lib/time";
 
@@ -12,11 +13,13 @@ import {
   emptyBlocks,
   isPastBlock,
   pickWakeCard,
+  planFor,
   timelineFor,
   type DayContext,
   type DayPlanRow,
   type TimelineBlock,
 } from "./day";
+import { inFirstDays, isFirstDay, missedFirstWake } from "./firstDay";
 import { sameDayContext, shouldRefreshOnForeground } from "./foreground";
 import { loadDayContext } from "./loadContext";
 import { QUIET_RETRY_MS } from "@/lib/supabase/fetchWithTimeout";
@@ -65,7 +68,7 @@ export type WakeEvent = {
   backfilled: boolean;
 };
 
-type Loaded = { ctx: DayContext; userId: string };
+type Loaded = { ctx: DayContext; userId: string; createdAt: Date | null };
 
 const emptyLog = (date: string, block: BlockKey): BlockLog => ({
   date,
@@ -126,7 +129,7 @@ export function useToday(now: Date) {
     let cancelled = false;
     (async () => {
       try {
-        const { ctx, userId, today } = await loadDayContext(client);
+        const { ctx, userId, today, createdAt } = await loadDayContext(client);
         const [blockLogs, wakeRows, nightRows, snapRows] = await Promise.all([
           client.from("block_logs").select("*").gte("date", addDays(today, -1)).lte("date", today),
           client
@@ -144,7 +147,12 @@ export function useToday(now: Date) {
         if (cancelled) return;
         // Keep the same object when nothing changed, so actions and the timeline aren't rebuilt.
         setLoaded((prev) =>
-          prev && prev.userId === userId && sameDayContext(prev.ctx, ctx) ? prev : { ctx, userId },
+          prev &&
+          prev.userId === userId &&
+          sameDayContext(prev.ctx, ctx) &&
+          prev.createdAt?.getTime() === createdAt?.getTime()
+            ? prev
+            : { ctx, userId, createdAt },
         );
         userIdRef.current = userId;
         // First load: saves that failed before the app was closed come back on screen and are sent.
@@ -650,6 +658,32 @@ export function useToday(now: Date) {
         void logEvent("first10_changed", { date: b.logDate, block: b.key });
         setReload((r) => r + 1);
       },
+      /**
+       * A block's first step or checklist set from Today when it has none (review fix C2): saved
+       * as the block's default, like Plan's "save as my default", so every day has it and the
+       * setup reward is paid (claim_setup_rewards checks settings).
+       */
+      setBlockDefault: async (b: TimelineBlock, patch: { first10?: string; addItem?: ChecklistItem }) => {
+        if (!loaded) return;
+        // The latest saved blocks, not this screen's copy: a Plan edit since then isn't undone (R-C-5).
+        const fresh = await client.from("settings").select("blocks").eq("user_id", loaded.userId).single();
+        if (fresh.error) throw fresh.error;
+        const current = (fresh.data.blocks as BlockSetting[] | null) ?? loaded.ctx.blocks;
+        // A new checklist item goes after the saved ones (G7 N-4), never in place of them.
+        const blocks = current.map((s) =>
+          s.key !== b.key
+            ? s
+            : {
+                ...s,
+                ...(patch.first10 !== undefined ? { first10: patch.first10 } : {}),
+                ...(patch.addItem ? { checklist: [...(s.checklist ?? []), patch.addItem] } : {}),
+              },
+        );
+        const { error } = await client.from("settings").update({ blocks }).eq("user_id", loaded.userId);
+        if (error) throw error;
+        void logEvent("block_default_saved", { block: b.key, from: "today" });
+        setReload((r) => r + 1);
+      },
       setMode: async (mode: DayPlanRow["mode"]) => {
         if (!loaded || !dayDate) return;
         const { error } = await client
@@ -685,6 +719,19 @@ export function useToday(now: Date) {
     timezone: loaded?.ctx.timezone ?? DEFAULT_TZ,
     logFor,
     wakeCard,
+    /** The account's first wake-day: Today keeps to one thing to do (review fix C1). */
+    firstDay: !!(loaded?.createdAt && dayDate && isFirstDay(loaded.ctx, loaded.createdAt, dayDate)),
+    /** The account's first three days: blocks say what they are (review fix C5). */
+    earlyDays: !!(loaded?.createdAt && dayDate && inFirstDays(loaded.ctx, loaded.createdAt, dayDate)),
+    /** Today's "I'm up" closed before the account existed: offer tomorrow's (C1). */
+    wakeMissed: !!(
+      loaded?.createdAt &&
+      wakeCard?.canPress &&
+      !wakeCard.event &&
+      missedFirstWake(loaded.createdAt, wakeCard.target)
+    ),
+    /** Tomorrow's wake target, for the "tap 'I'm up' tomorrow" line. */
+    tomorrowWake: loaded && wakeCard ? planFor(loaded.ctx, addDays(wakeCard.date, 1)).wake : null,
     nightDone: dayDate ? nightDone.includes(dayDate) : false,
     /** As loaded (not flipped by finishing the ritual), so an open ritual sheet stays open. */
     nightDoneAtLoad: dayDate ? nightDoneAtLoad.includes(dayDate) : false,

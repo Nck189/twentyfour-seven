@@ -103,7 +103,13 @@
       "tasks": "Planned tasks",
       "taskCoins": "+{n} coins",
       "first10Start": "Started with the first 10",
-      "fertilized": "Fertilizer for the {block} plot: better quality, better price"
+      "fertilized": "Fertilizer for the {block} plot: better quality, better price",
+      "pickFirst10": "+ Pick a first step",
+      "addItem": "Add a checklist item",
+      "addItemPlaceholder": "+ Add a checklist item",
+      "add": "Add",
+      "saveError": "Couldn't save. Check your connection and try again.",
+      "everyDay": "Sets it for every day. Change it in Plan."
     },
     "nap": {
       "title": "Power nap",
@@ -147,6 +153,13 @@
     "exam": {
       "label": "Exam day",
       "today": "Exam day! Som packed you a snack. Breathe, you've got this."
+    },
+    "firstDay": {
+      "tomorrowWake": "Tomorrow: tap “I'm up” the moment you leave the bed (target {time}).",
+      "more": "Everything else today"
+    },
+    "farmStrip": {
+      "open": "Your farm: open it"
     }
   },
   "plan": {
@@ -531,7 +544,27 @@
       "confirm": "Yes, delete everything",
       "cancel": "Keep my account",
       "error": "Couldn't delete. Check your connection and try again."
-    }
+    },
+    "back": "More",
+    "groups": {
+      "setup": {
+        "title": "Getting started",
+        "hint": "Your week, first 10 minutes, exercise"
+      },
+      "sharing": {
+        "title": "Sharing",
+        "hint": "Your free times, calendar link"
+      },
+      "preferences": {
+        "title": "Preferences",
+        "hint": "Language, appearance, sound, notifications"
+      },
+      "account": {
+        "title": "Data & account",
+        "hint": "Install, privacy, export, sign out"
+      }
+    },
+    "backTo": "Back to More"
   },
   "blocks": {
     "name": {
@@ -582,6 +615,15 @@
         "2": "Message someone you like",
         "3": "Walk outside for 10 min"
       }
+    },
+    "hint": {
+      "wake": "From leaving the bed to starting your day: light, water, move.",
+      "focus": "Your best-brain time: the one thing that matters most.",
+      "work": "Classes or work: the main part of the day.",
+      "gradation": "A soft landing between work and evening: wind down, tidy up.",
+      "free": "Yours: friends, hobbies, rest. No guilt.",
+      "down": "Screens down, plan tomorrow in the Night ritual.",
+      "sleep": "Lights out. Sleep is a block too."
     }
   },
   "templates": {
@@ -779,7 +821,7 @@
     "ownPlaceholder": "Your first-10 for {block}",
     "addButton": "Add",
     "doneTitle": "All set",
-    "doneHint": "Change any of this later in More → Setup.",
+    "doneHint": "Change any of this later in More → Getting started.",
     "weekdays": "Days",
     "starterTitle": "What's your week like?",
     "starter": {
@@ -823,7 +865,8 @@
     "slotEnd": "{what} ends",
     "backToWeek": "Back to the week",
     "doneKind": "Done",
-    "kinds": "Kinds of day"
+    "kinds": "Kinds of day",
+    "firstCapsule": "Open your first capsule"
   },
   "setup": {
     "title": "Set up 24/7",
@@ -1295,7 +1338,7 @@
       "already": "You already answered today. That answer stays."
     },
     "error": "Couldn't reach the café. Try again.",
-    "privacy": "Turn the question off any time: More → Som's café.",
+    "privacy": "Turn the question off any time: More → Preferences → Som's café.",
     "nightTitle": "Coffee or tea today in real life? (your latest cup)",
     "nightThanks": "Thanks, noted.",
     "slot": {

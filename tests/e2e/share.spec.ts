@@ -17,7 +17,7 @@ test("CJ-SHARE-1 a friend asks for a free time through the link; the owner accep
   await signIn(page, email);
   const id = await userIdFor(email);
   await setAllTemplates(id, "07:00");
-  await page.goto("/more");
+  await page.goto("/more/sharing");
   await settle(page); // More answers taps only once it is interactive (slow WebKit)
   const card = page.locator("#share");
   await card.getByRole("button", { name: "Get my link" }).click();
@@ -118,7 +118,7 @@ test("CJ-SHARE-3 switching between two free times on one day sends the one picke
       },
     }),
   });
-  await page.goto("/more");
+  await page.goto("/more/sharing");
   await settle(page); // More answers taps only once it is interactive (slow WebKit)
   const card = page.locator("#share");
   await card.getByRole("button", { name: "Get my link" }).click();
@@ -157,7 +157,7 @@ test("CJ-SHARE-4 the link works even when the inbox and plan are slow to load (C
   await signIn(page, uniqueEmail("share-slow"));
   // The inbox and the plan never answer (a stalled connection on a phone).
   await page.route(/\/rest\/v1\/(booking_requests|day_plans)/, () => undefined);
-  await page.goto("/more");
+  await page.goto("/more/sharing");
   await settle(page); // More answers taps only once it is interactive (slow WebKit)
   const card = page.locator("#share");
   await card.getByRole("button", { name: "Get my link" }).click({ timeout: 10_000 });

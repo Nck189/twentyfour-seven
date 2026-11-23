@@ -12,7 +12,7 @@ export function TipsCard() {
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
   return (
-    <section className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
+    <section id="tips" className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
       <h2 className="mb-1 text-lg font-bold">{t("title")}</h2>
       <p className="mb-3 text-sm text-muted">{t("moreHint")}</p>
       <Button

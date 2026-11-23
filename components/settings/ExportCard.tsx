@@ -38,7 +38,7 @@ export function ExportCard() {
   }
 
   return (
-    <section className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
+    <section id="export" className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
       <h2 className="mb-2 text-lg font-bold">{t("title")}</h2>
       <p className="mb-3 text-muted">{t("description")}</p>
       <div className="flex flex-wrap gap-2">

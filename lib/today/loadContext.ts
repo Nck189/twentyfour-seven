@@ -11,11 +11,11 @@ export async function loadDayContext(
   client: SupabaseClient,
   fromOffset = -2,
   toOffset = 3,
-): Promise<{ ctx: DayContext; userId: string; today: string }> {
+): Promise<{ ctx: DayContext; userId: string; today: string; createdAt: Date | null }> {
   const { data: auth } = await getUserCached();
   if (!auth.user) throw new Error("signed out");
   const [profile, settings, templates] = await Promise.all([
-    client.from("profiles").select("timezone").eq("user_id", auth.user.id).maybeSingle(),
+    client.from("profiles").select("timezone, created_at").eq("user_id", auth.user.id).maybeSingle(),
     client.from("settings").select("blocks, gym_close_time").eq("user_id", auth.user.id).single(),
     client.from("templates").select("*").order("sort"),
   ]);
@@ -31,6 +31,8 @@ export async function loadDayContext(
   return {
     userId: auth.user.id,
     today,
+    // When the account was made: its first day is kept simple (review fix C1).
+    createdAt: profile.data?.created_at ? new Date(profile.data.created_at as string) : null,
     ctx: {
       timezone,
       blocks: settings.data.blocks as BlockSetting[],

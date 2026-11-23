@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { formatDayLong, formatTime } from "@/lib/format";
@@ -21,6 +21,8 @@ import { useAnimals } from "@/lib/animals/useAnimals";
 import { StreakChip, StreakNotice } from "@/components/streak/StreakChip";
 import { useStreak } from "@/lib/streak/useStreak";
 import { TodayUnlockLine, UnlockNotice } from "@/components/farm/CollectionBook";
+import { FarmStrip } from "./FarmStrip";
+import { useFarm } from "@/lib/farm/useFarm";
 import { LastChanceLine } from "@/components/farm/LastChanceLine";
 import { useUnlocks } from "@/lib/unlocks/useUnlocks";
 import { TodayReviewLine } from "@/components/stats/ReviewLine";
@@ -83,6 +85,24 @@ export function TodayScreen() {
   const today = useToday(now);
   const onboarding = useOnboardingState();
   const setup = useSetupRewards();
+  const tb = useTranslations("blocks");
+  // The farm, read once a little after Today's own data (no live updates): the strip on phones
+  // and the "one miss from dying" line share this one load (review fix C3).
+  const farm = useFarm({ live: false, delayMs: 2000 });
+  // The strip follows check-ins (G7 R-C-8): one farm read a moment after the last change on Today
+  // (a log or "I'm up"). Not before the farm's own first read, so opening Today stays one read.
+  const farmReload = useRef(farm.reload);
+  const farmLoaded = useRef(false);
+  useEffect(() => {
+    farmReload.current = farm.reload;
+    farmLoaded.current = farm.data !== null;
+  });
+  const wakeSeen = today.wakeCard?.event ? today.wakeCard.event.pressed_at : "";
+  useEffect(() => {
+    if (!farmLoaded.current) return;
+    const timer = setTimeout(() => farmReload.current(), 1500);
+    return () => clearTimeout(timer);
+  }, [today.logFor, wakeSeen]);
   const animals = useAnimals();
   const streak = useStreak();
   // Re-claim once the streak has settled (a 7-day streak unlocks an egg).
@@ -221,6 +241,7 @@ export function TodayScreen() {
 
       {/* Under the header, next to the streak chip it explains. */}
       <Tip id="streak" when={!!streak.view && tipsQuiet} />
+      <FarmStrip data={farm.data} failed={farm.status === "error"} />
       {onboarding.show && <WelcomeCard onLater={() => void onboarding.later()} />}
       {!onboarding.show && <WelcomeBackCard />}
       <ExamCard timeline={tl} />
@@ -279,7 +300,13 @@ export function TodayScreen() {
       )}
       <Tip id="night" when={isNight && !today.nightDone && tipsQuiet} />
 
-      {showWake && (
+      {showWake && today.wakeMissed && today.tomorrowWake && (
+        // Signed up after today's wake window: tomorrow's "I'm up" instead (review fix C1).
+        <p className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
+          {t("firstDay.tomorrowWake", { time: formatTime(today.tomorrowWake, today.timezone) })}
+        </p>
+      )}
+      {showWake && !today.wakeMissed && (
         <WakeCard
           key={wake.date}
           target={wake.target}
@@ -288,7 +315,7 @@ export function TodayScreen() {
           onPress={today.actions.pressWake}
         />
       )}
-      <Tip id="wake" when={!!showWake && tipsQuiet} />
+      <Tip id="wake" when={!!showWake && !today.wakeMissed && tipsQuiet} />
 
       {showCurrent && (
         <section
@@ -296,7 +323,11 @@ export function TodayScreen() {
           className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6"
         >
           <p className="text-xs font-bold tracking-wide text-primary uppercase">{t("block.current")}</p>
-          <h2 className="mb-3 text-xl font-extrabold">{text.name(cur.key)}</h2>
+          <h2 className={`text-xl font-extrabold ${today.earlyDays ? "" : "mb-3"}`}>{text.name(cur.key)}</h2>
+          {today.earlyDays && (
+            // What this block is, in one line, for the first three days (review fix C5).
+            <p className="mb-3 text-sm text-muted">{tb(`hint.${cur.key}`)}</p>
+          )}
           <BlockCheckin
             key={`${cur.logDate}:${cur.key}`}
             block={cur}
@@ -305,6 +336,8 @@ export function TodayScreen() {
             timezone={today.timezone}
             actions={today.actions}
             ownFirst10={today.blockSettings.find((b) => b.key === cur.key)?.first10_options}
+            blockDefault={today.blockSettings.find((b) => b.key === cur.key)}
+            onChanged={setup.reload}
           />
           <BlockTasks userId={today.userId} date={cur.logDate} block={cur.key} />
         </section>
@@ -327,6 +360,8 @@ export function TodayScreen() {
             timezone={today.timezone}
             actions={today.actions}
             ownFirst10={today.blockSettings.find((b) => b.key === "sleep")?.first10_options}
+            blockDefault={today.blockSettings.find((b) => b.key === "sleep")}
+            onChanged={setup.reload}
           />
         </section>
       )}
@@ -340,42 +375,47 @@ export function TodayScreen() {
 
       {napRunning && !menuOpen && <NapCard timezone={today.timezone} />}
 
-      <ExerciseCard animals={animals} />
-      <Tip id="exercise" when={!!animals.state && tipsQuiet} />
+      {/* The first day keeps to one thing to do; the rest waits under "More today" (C1, G1). */}
+      <FirstDayFold first={today.firstDay} label={t("firstDay.more")}>
+        <ExerciseCard animals={animals} />
+        <Tip id="exercise" when={!!animals.state && tipsQuiet && !today.firstDay} />
 
-      {!onboarding.show && <TodayReviewLine />}
-      <LastChanceLine />
-      {unlocks && !onboarding.show && <TodayUnlockLine state={unlocks} />}
+        {!onboarding.show && <TodayReviewLine />}
+        <LastChanceLine data={farm.data} />
+        {unlocks && !onboarding.show && <TodayUnlockLine state={unlocks} />}
 
-      <div className="mx-4 mb-2 lg:mx-6">
-        <button
-          type="button"
-          aria-expanded={dayOpen}
-          onClick={() => {
-            setDayOpen((v) => !v);
-            writeDayOpen(!dayOpen);
-          }}
-          className="tap min-h-11 rounded-xl px-2 font-bold text-primary"
-        >
-          {dayOpen ? t("hideDay") : t("showDay")}
-        </button>
-      </div>
-      {dayOpen && (
-        <Timeline
-          timeline={tl}
-          logFor={today.logFor}
-          now={now}
-          timezone={today.timezone}
-          currentKey={cur?.key}
-          credited={creditedKeys}
-          onOpen={(b) => setOpenKey(b.key)}
-        />
-      )}
+        <div className="mx-4 mb-2 lg:mx-6">
+          <button
+            type="button"
+            aria-expanded={dayOpen}
+            onClick={() => {
+              setDayOpen((v) => !v);
+              writeDayOpen(!dayOpen);
+            }}
+            className="tap min-h-11 rounded-xl px-2 font-bold text-primary"
+          >
+            {dayOpen ? t("hideDay") : t("showDay")}
+          </button>
+        </div>
+        {dayOpen && (
+          <Timeline
+            timeline={tl}
+            logFor={today.logFor}
+            now={now}
+            timezone={today.timezone}
+            currentKey={cur?.key}
+            credited={creditedKeys}
+            onOpen={(b) => setOpenKey(b.key)}
+          />
+        )}
+        {/* First day: setup is one more thing to do, so it waits in the fold too (G7 R-C-10). */}
+        {today.firstDay && !onboarding.show && <TodaySetupHint state={setup.state} />}
+      </FirstDayFold>
 
       {streak.view && <StreakNotice view={streak.view} />}
       {unlocks && <UnlockNotice granted={unlocks.granted} />}
       {setup.state && <SetupRewardNotice granted={setup.state.granted} />}
-      {!onboarding.show && <TodaySetupHint state={setup.state} />}
+      {!today.firstDay && !onboarding.show && <TodaySetupHint state={setup.state} />}
 
       {menuOpen && (
         <Sheet title={t("menu.title")} onClose={() => setMenuOpen(false)}>
@@ -418,5 +458,21 @@ export function TodayScreen() {
         </Sheet>
       )}
     </>
+  );
+}
+
+/**
+ * On the account's first day, the secondary cards sit in one closed "More today" (review fix C1);
+ * from day 2 they show as usual.
+ */
+function FirstDayFold({ first, label, children }: { first: boolean; label: string; children: ReactNode }) {
+  if (!first) return <>{children}</>;
+  return (
+    <details className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface lg:mx-6">
+      <summary className="tap flex min-h-11 cursor-pointer items-center px-4 font-bold text-primary">
+        {label}
+      </summary>
+      <div className="-mx-4 pb-2 lg:-mx-6">{children}</div>
+    </details>
   );
 }

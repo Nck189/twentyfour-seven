@@ -1,3 +1,4 @@
+import { SETUP_REWARD } from "@/content/unlocks";
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
@@ -25,6 +26,9 @@ async function newUserOn(page: Page) {
   await signIn(page, email);
   return userIdFor(email);
 }
+
+/** Tickets the setup rewards pay a signed-in (onboarded) account on its first load. */
+const SETUP_TICKETS = (SETUP_REWARD.sleep_times as { tickets?: number }).tickets ?? 0;
 
 test("CJ-07 night ritual end to end: open blocks closed with reasons, tomorrow planned, Night ticket +1, under 2 min", async ({
   page,
@@ -70,7 +74,8 @@ test("CJ-07 night ritual end to end: open blocks closed with reasons, tomorrow p
   await expect(sheet.getByText("+1 Night ticket. Sleep well.")).toBeVisible();
   expect(Date.now() - t0).toBeLessThan(120_000);
 
-  expect((await gameState(id)).tickets).toBe(1);
+  // The Night ticket, on top of the setup rewards Today's first load claimed (review fix C4).
+  await expect.poll(async () => (await gameState(id)).tickets).toBe(1 + SETUP_TICKETS);
   const logs = await blockLogs(id);
   expect(logs.filter((l) => l.miss_reason)).toHaveLength(5);
   expect(logs.find((l) => l.block === "work")!.miss_reason).toBe("interruption");
@@ -353,7 +358,8 @@ test("R-M4-5: Goodnight waits until tomorrow's plan is saved (offline edit isn't
   await sheet.getByRole("checkbox", { name: "Alarm set + phone out of reach" }).click();
   await sheet.getByRole("button", { name: "Goodnight" }).click();
   await expect(sheet.getByRole("alert")).toContainText("Tomorrow's plan isn't saved yet");
-  expect((await gameState(id)).tickets).toBe(0);
+  // No Night ticket: only what setup paid.
+  await expect.poll(async () => (await gameState(id)).tickets).toBe(SETUP_TICKETS);
 
   await page.unroute("**/rest/v1/rpc/patch_day_plan**");
   await page.unroute("**/rest/v1/day_plans**");

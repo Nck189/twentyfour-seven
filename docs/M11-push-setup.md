@@ -31,7 +31,7 @@ Nothing here goes into git: the keys live in Supabase function secrets and Verce
        body := '{}'::jsonb)
    $$);
    ```
-6. **Try it:** on the iPhone, open 24/7 **from the Home Screen** (iOS 16.4+), More → Notifications →
+6. **Try it:** on the iPhone, open 24/7 **from the Home Screen** (iOS 16.4+), More → Preferences → Notifications →
    Turn on, then open Today once (it uploads the day's reminders).
 
 How it works: Today plans the day's reminders in your language and uploads them; every minute the

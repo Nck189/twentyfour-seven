@@ -60,6 +60,8 @@ function writePending(p: Pending | null): void {
 
 export function useStory(moment: StoryMoment, busy = false) {
   const [playing, setPlaying] = useState<PlayingBeat | null>(null);
+  /** The check for a beat is over (one plays, or none will): the farm can open other sheets. */
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     if (moment === "other" || busy) return;
@@ -67,14 +69,17 @@ export function useStory(moment: StoryMoment, busy = false) {
     void (async () => {
       const client = getSupabase();
       const uid = (await client.auth.getSession()).data.session?.user.id;
-      if (cancelled || !uid) return;
+      if (cancelled) return;
+      if (!uid) return setChecked(true);
       const waiting = readPending();
       if (waiting?.uid === uid) {
         setPlaying({ beat: waiting.beat, gift: waiting.gift });
+        setChecked(true);
         return;
       }
       const { data, error } = await client.rpc("story_status");
-      if (cancelled || error || !data) return;
+      if (cancelled) return;
+      if (error || !data) return setChecked(true);
       const s = data as Status;
       const beat = nextBeat({
         moment,
@@ -92,15 +97,19 @@ export function useStory(moment: StoryMoment, busy = false) {
           house: s.facts?.house ?? 0,
         },
       });
-      if (!beat || cancelled) return;
+      if (cancelled) return;
+      if (!beat) return setChecked(true);
       const claim = await client.rpc("claim_story_beat", { p_beat: beat });
-      if (claim.error || !claim.data) return;
+      if (claim.error || !claim.data) return setChecked(true);
       const r = claim.data as { beat: string; gift: StoryGift | null };
-      if (!isStoryBeatId(r.beat)) return;
+      if (!isStoryBeatId(r.beat)) return setChecked(true);
       // Granted: keep it even if the user has left the Farm meanwhile (STORY-R1).
       writePending({ uid, beat: r.beat, gift: r.gift });
       if (r.gift) notifyWalletChange();
-      if (!cancelled) setPlaying({ beat: r.beat, gift: r.gift });
+      if (!cancelled) {
+        setPlaying({ beat: r.beat, gift: r.gift });
+        setChecked(true);
+      }
     })();
     return () => {
       cancelled = true;
@@ -113,5 +122,6 @@ export function useStory(moment: StoryMoment, busy = false) {
   }, []);
   // A floated wish settles the beat: if the user leaves before Done, it doesn't replay (STORY-R22).
   const settle = useCallback(() => writePending(null), []);
-  return { playing, done, settle };
+  // Nothing to check here (another screen, or a busy moment): done at once.
+  return { playing, done, settle, checked: checked || moment === "other" || busy };
 }

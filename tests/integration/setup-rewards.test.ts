@@ -28,7 +28,8 @@ describe("claim_setup_rewards / report_home_screen", () => {
     expect(b.data.granted).toEqual([]);
 
     const gs = (await admin().from("game_state").select("tickets, coins").eq("user_id", u.id).single()).data!;
-    expect(gs.tickets).toBe(1);
+    // first10 pays 1 ticket; sleep times pays 1 more with its seeds: a first capsule (review fix C4).
+    expect(gs.tickets).toBe(2);
     expect(gs.coins).toBe(35);
     const seed = (
       await admin()

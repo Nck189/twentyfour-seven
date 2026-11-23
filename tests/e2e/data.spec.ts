@@ -10,7 +10,7 @@ test.describe("data", () => {
   test("CJ-17 export downloads JSON with every table and a CSV zip", async ({ page }) => {
     await setPrefs(page, { locale: "en", theme: "light" });
     await signIn(page);
-    await page.goto("/more");
+    await page.goto("/more/account");
     // A tap before More is interactive does nothing on a slow WebKit phone (CI 2026-11-20): wait.
     await settle(page);
 
@@ -52,10 +52,10 @@ test.describe("data", () => {
     const p1 = await phone.newPage();
     await setPrefs(p1, { locale: "en", theme: "light" });
     await signIn(p1, email);
-    await p1.goto("/more");
+    await p1.goto("/more/preferences");
     await settle(p1); // More answers taps only once it is interactive (slow WebKit)
     await p1.getByRole("radio", { name: "ไทย" }).click();
-    await expect(p1.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("เพิ่มเติม");
+    await expect(p1.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("การตั้งค่า");
     await p1.waitForTimeout(500); // let the profile write land
 
     const mac = await browser.newContext();
@@ -77,7 +77,7 @@ test("regression: language change survives an immediate reload while the profile
   await setPrefs(page, { locale: "en", theme: "light" });
   await signIn(page);
   await page.waitForTimeout(800); // first-login sync done
-  await page.goto("/more");
+  await page.goto("/more/preferences");
   await settle(page); // More answers taps only once it is interactive (slow WebKit)
   // Hold every profile write for 3 s so the reload happens first.
   await page.route("**/rest/v1/profiles**", async (route) => {
@@ -97,7 +97,7 @@ test("G15 delete my account: two steps, then signed out and the data is gone", a
   await setPrefs(page, { locale: "en", theme: "light" });
   await signIn(page, email);
   const id = await userIdFor(email);
-  await page.goto("/more");
+  await page.goto("/more/account");
   // A tap before the page is interactive does nothing (CI WebKit, 2026-11-16): wait for it.
   await settle(page);
   await page.getByRole("button", { name: "Delete my account" }).click();
