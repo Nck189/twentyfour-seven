@@ -5,6 +5,8 @@ import { rest, setAllTemplates, userIdFor } from "../helpers/db";
 import { CALM_AFTERNOON, fixClock } from "../helpers/clock";
 import { calmBlockClock, gotoToday, leaveAfterSignIn, setBlockNow, wakeDay } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
+import { STORY_BEATS, isSeasonalBeat } from "@/content/story";
+import { beatKey } from "@/lib/game/director";
 
 /** Story beats with Som (docs/STORY.md): a calm moment, skippable, once, recorded by the server. */
 test.skip(IS_PROD_RUN, "creates dedicated users");
@@ -153,4 +155,40 @@ test("G7 STORY-R6: Som waits during the wake window and Down Time, and comes at 
   await setBlockNow(page, "focus");
   await page.goto("/farm");
   await expect(scene).toBeVisible();
+});
+
+test("review F5: the first perfect day gets a short scene, once; Skip closes it", async ({ page }) => {
+  const id = await setup(page);
+  await rest("story_seen", {
+    method: "POST",
+    body: JSON.stringify({ user_id: id, beat: "ch0_gate", day: "2000-01-01" }),
+  });
+  // This month's seasonal scenes come first by design: mark them seen, any month of the year.
+  for (const b of STORY_BEATS.filter(isSeasonalBeat)) {
+    const key = beatKey(b, wakeDay());
+    if (key)
+      await rest("story_seen", {
+        method: "POST",
+        body: JSON.stringify({ user_id: id, beat: key, day: "2000-01-01" }),
+      });
+  }
+  await rest("day_results", {
+    method: "POST",
+    body: JSON.stringify({ user_id: id, date: "2026-11-01", kind: "perfect" }),
+  });
+  await page.goto("/farm");
+  const scene = page.getByRole("dialog", { name: "A perfect day" });
+  await expect(scene).toBeVisible();
+  await expect(
+    scene.getByText("A perfect day yesterday: on time, and almost every block done. Som noticed."),
+  ).toBeVisible();
+  await scene.getByRole("button", { name: "Skip" }).click();
+  await expect(scene).toHaveCount(0);
+  expect(await rest(`story_seen?user_id=eq.${id}&beat=eq.ch7_perfect_day&select=beat`)).toHaveLength(1);
+  // Never again, even on a later day.
+  await rest(`story_seen?user_id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ day: "2000-01-02" }) });
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Farm", level: 1 })).toBeVisible();
+  await page.waitForTimeout(1500);
+  await expect(page.getByRole("dialog", { name: "A perfect day" })).toHaveCount(0);
 });

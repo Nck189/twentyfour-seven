@@ -16,6 +16,11 @@ export const STORY_BEATS = [
   "ch6_album",
   // Som's café opens with the Farmhouse at level 2 (docs/STORY.md "Som's café").
   "cafe_open",
+  // Milestone scenes (review fix F5): short, once, no gift (the milestone already pays).
+  "ch7_perfect_day",
+  "ch8_thirty_days",
+  "ch10_first_batch",
+  "ch11_welcome_back",
   // Seasonal crop beats (docs/STORY.md "Seasonal crops"): November, Candle Lotus.
   "lotus_open",
   "lotus_market",
@@ -69,7 +74,13 @@ export type StoryTrigger =
   /** Wake-days with an "I'm up" (days used, not a streak). */
   | { kind: "days_used"; need: number }
   /** The Farmhouse level. */
-  | { kind: "house"; need: number };
+  | { kind: "house"; need: number }
+  /** Perfect days ever (day_results). */
+  | { kind: "perfect_days"; need: number }
+  /** Factory collects that took something (one per collect, not per product). */
+  | { kind: "made"; need: number }
+  /** Welcome backs claimed in the last 7 days (back after 3+ away days). */
+  | { kind: "welcome_backs"; need: number };
 
 export type StoryGift = { seed: { crop: CropId; n: number } } | { tickets: number } | { decor: "farm_sign" };
 
@@ -172,6 +183,46 @@ export const STORY: Record<StoryBeatId, StoryBeat> = {
       { scene: "cafe", pose: "carrySeed", line: "l1", motion: "pan" },
       { scene: "cafe", pose: "happy", line: "l2", motion: "sparkle" },
       { scene: "cafe", pose: "sit", line: "l3", motion: "none" },
+    ],
+    gift: null,
+  },
+  ch7_perfect_day: {
+    chapter: 7,
+    trigger: { kind: "perfect_days", need: 1 },
+    panels: [
+      { scene: "field", pose: "lookUp", line: "l1", motion: "pan" },
+      { scene: "field", pose: "happy", line: "l2", motion: "sparkle" },
+      { scene: "field", pose: "sleep", line: "l3", motion: "none" },
+    ],
+    gift: null,
+  },
+  ch8_thirty_days: {
+    chapter: 8,
+    trigger: { kind: "best_streak", need: 30 },
+    panels: [
+      { scene: "sunset", pose: "sit", line: "l1", motion: "pan" },
+      { scene: "album", pose: "lookUp", line: "l2", motion: "none" },
+      { scene: "sunset", pose: "happy", line: "l3", motion: "sparkle" },
+    ],
+    gift: null,
+  },
+  ch10_first_batch: {
+    chapter: 10,
+    trigger: { kind: "made", need: 1 },
+    panels: [
+      { scene: "shed", pose: "carrySeed", line: "l1", motion: "hop" },
+      { scene: "shed", pose: "happy", line: "l2", motion: "sparkle" },
+      { scene: "field", pose: "sit", line: "l3", motion: "none" },
+    ],
+    gift: null,
+  },
+  ch11_welcome_back: {
+    chapter: 11,
+    trigger: { kind: "welcome_backs", need: 1 },
+    panels: [
+      { scene: "gate", pose: "sleep", line: "l1", motion: "pan" },
+      { scene: "gate", pose: "stretch", line: "l2", motion: "hop" },
+      { scene: "field", pose: "happy", line: "l3", motion: "none" },
     ],
     gift: null,
   },

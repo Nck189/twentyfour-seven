@@ -357,3 +357,15 @@ Format: date · decision · why · how to change it
     - petals fall once behind a perfect-day notice.
   - **Tests and animations.** Specs still run with animations skipped; `setPrefs(page, { animations: true })` turns them on for a spec that checks one.
   - **Farm ambience is off by default** (the plan left it to Minnie; off is the quiet choice for a habit app opened in class). It has its own switch in Sound & motion. Birds play by day and at sunrise, crickets at dusk and night, Farm tab only. It is synthesized and very soft, stops when the tab is hidden, and obeys mute and quiet blocks. There's no rain: today's weather set has no rain (sunrise glow, dew, moonlit, breeze, spark, rainbow).
+- 2026-11-23 · **Review fixes, Phase F part 2 (so far): Som in Today's header, milestone scenes** (F4 in part, F5)
+  - **Som follows the block** in Today's header: sunrise for Wake, day for Focus/Work/Gradation/Free, a new dusk sky for Down Time, night with closed eyes for Sleep. The Home Screen icon can't change (iOS and Android fix it at install). The browser-tab icon following the block is not done: a server-rendered favicon would need the user's block on the server.
+  - **Four new scenes** (2026-11-23 migration; the server checks each trigger as before):
+    - the first perfect day;
+    - a best streak of 30;
+    - the first factory batch collected;
+    - back after days away (the first welcome back).
+
+    Three panels each, skippable, once. **None pays anything**, because the milestones already do (a 30-day streak pays 5 tickets, a welcome back pays 1).
+  - **Scenes from the plan that already existed:** first harvest, first animal hatched, a 7-day streak and the first Farmhouse.
+  - **Not added:** "first day of each season". The seasons in the app are the seasonal crops' months, and those already have their opening scenes.
+  - **Art:** the new scenes reuse the existing scenes and poses. The scene art for a perfect day or the factory, and the pictures on text-only screens (F4), come next.

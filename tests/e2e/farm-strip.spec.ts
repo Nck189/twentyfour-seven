@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test";
-import { expectNoSeriousA11y } from "../helpers/a11y";
+import { expectNoHorizontalScroll, expectNoSeriousA11y } from "../helpers/a11y";
 import { setPrefs, settle, signIn, uniqueEmail } from "../helpers/auth";
 import { setWakeMinutesAgo, userIdFor } from "../helpers/db";
 import { dismissNightOffer } from "../helpers/day";
 import { IS_PROD_RUN } from "../helpers/env";
+import { localDate } from "@/lib/time";
 
 /** Review fix C3: the farm on Today (phones), from the farm load Today already makes. */
 test.skip(IS_PROD_RUN, "creates dedicated users");
@@ -91,5 +92,26 @@ test("G7 R-C-7 / N-3: every plot fits inside the strip on a small phone and on a
       expect(p.y).toBeGreaterThanOrEqual(box.y - 0.5);
       expect(p.y + p.height).toBeLessThanOrEqual(box.y + box.height + 0.5);
     }
+  }
+});
+
+test("G7 F2 S3-4: Som in Today's header follows the block; the header fits 390 px in EN and TH", async ({
+  page,
+}) => {
+  test.skip(
+    localDate(new Date(Date.now() - 100 * 60_000), "Asia/Bangkok") !== localDate(new Date(), "Asia/Bangkok"),
+    "today's wake would be yesterday's date",
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const locale of ["en", "th"] as const) {
+    const email = uniqueEmail(`mark-${locale}`);
+    await setPrefs(page, { locale, theme: "light" });
+    await signIn(page, email);
+    await setWakeMinutesAgo(await userIdFor(email), 100); // Focus: the day sky
+    await page.goto("/today");
+    await dismissNightOffer(page);
+    await expect(page.locator("[data-mark]")).toHaveAttribute("data-mark", "meadow");
+    await expectNoHorizontalScroll(page);
+    await page.context().clearCookies();
   }
 });

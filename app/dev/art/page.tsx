@@ -36,7 +36,7 @@ function Icons() {
     <section className="rounded-xl bg-[var(--ui-surface)] p-3">
       <h2 className="mb-2 text-sm font-bold">App icon</h2>
       <div className="flex flex-wrap gap-4">
-        {(["sunrise", "meadow", "night"] as const).map((v) => (
+        {(["sunrise", "meadow", "dusk", "night"] as const).map((v) => (
           <Cell key={v} caption={v}>
             <AppIcon variant={v} className="h-24 w-24" />
           </Cell>

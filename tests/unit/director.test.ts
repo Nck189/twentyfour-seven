@@ -203,3 +203,43 @@ describe("seasonal beats (Snow Strawberry, December)", () => {
     expect(STORY.snow_use.panels.filter((p) => p.form === "review")).toHaveLength(1);
   });
 });
+
+describe("milestone scenes (review fix F5)", () => {
+  const base = { moment: "farm" as const, busy: false, seenToday: false };
+  const seenAll = (except: string[]) =>
+    STORY_BEATS.filter(
+      (b) =>
+        !except.includes(b) && STORY[b].trigger.kind !== "season" && STORY[b].trigger.kind !== "season_use",
+    );
+  it("each waits for its milestone, then plays", () => {
+    const cases = [
+      ["ch7_perfect_day", { perfectDays: 1 }],
+      ["ch8_thirty_days", { bestStreak: 30 }],
+      ["ch10_first_batch", { made: 1 }],
+      ["ch11_welcome_back", { welcomeBacks: 1 }],
+    ] as const;
+    for (const [beat, facts] of cases) {
+      const seen = seenAll([beat]);
+      expect(nextBeat({ ...base, seen, facts: { harvests: 0, goodDays: 0 } })).toBeNull();
+      expect(nextBeat({ ...base, seen, facts: { harvests: 0, goodDays: 0, ...facts } })).toBe(beat);
+    }
+  });
+  it("none of them pays: the milestone itself already does", () => {
+    for (const b of ["ch7_perfect_day", "ch8_thirty_days", "ch10_first_batch", "ch11_welcome_back"] as const)
+      expect(STORY[b].gift).toBeNull();
+  });
+});
+
+describe("welcome back plays first (G7 S3-2)", () => {
+  it("comes before a seasonal month scene and the other milestones, the day it happens", () => {
+    const seen = ["ch0_gate"];
+    const beat = nextBeat({
+      moment: "farm",
+      busy: false,
+      seenToday: false,
+      seen,
+      facts: { harvests: 0, goodDays: 0, today: "2026-11-23", perfectDays: 1, made: 1, welcomeBacks: 1 },
+    });
+    expect(beat).toBe("ch11_welcome_back");
+  });
+});
