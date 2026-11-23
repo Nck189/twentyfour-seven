@@ -6,6 +6,7 @@ import { sfx } from "@/lib/sound/sfx";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Coin } from "@/components/art/Coin";
+import { SpotArt } from "@/components/art/Spots";
 import { Button } from "@/components/ui/Button";
 import {
   CarryIcon,
@@ -389,7 +390,10 @@ export function BacklogList({
           )}
         </div>
       ) : inbox.length + earlier.length === 0 ? (
-        <p className="text-muted">{t("empty")}</p>
+        <div className="flex flex-col items-center gap-2 py-2 text-center">
+          <SpotArt kind="basket" className="h-20 w-30" />
+          <p className="text-muted">{t("empty")}</p>
+        </div>
       ) : (
         <>
           {inbox.length > 0 && (

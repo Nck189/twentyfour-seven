@@ -115,3 +115,23 @@ test("G7 F2 S3-4: Som in Today's header follows the block; the header fits 390 p
     await page.context().clearCookies();
   }
 });
+
+test("F4: until the farm arrives (2 s after Today), the strip is an empty field in the block's sky, not a blank card", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 760 });
+  await setPrefs(page, { locale: "en", theme: "light" });
+  await signIn(page, uniqueEmail("strip-wait"));
+  await page.goto("/today");
+  const waiting = page.locator('[data-farm-strip="waiting"]');
+  await expect(waiting).toBeVisible();
+  const sky = await waiting.evaluate((el) => getComputedStyle(el.firstElementChild!).backgroundImage);
+  expect(sky).toContain("linear-gradient");
+  const before = await waiting.boundingBox();
+  // Then the real strip takes its place, at the same size and spot (G7 F4 S4-2).
+  const strip = page.getByRole("link", { name: "Your farm: open it" });
+  await expect(strip).toBeVisible();
+  await expect(waiting).toHaveCount(0);
+  const after = await strip.boundingBox();
+  expect(after).toEqual(before);
+});

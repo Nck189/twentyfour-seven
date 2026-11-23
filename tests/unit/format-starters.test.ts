@@ -5,6 +5,7 @@ import en from "@/messages/en.json";
 import th from "@/messages/th.json";
 import {
   formatDayLong,
+  formatDayMedium,
   formatDayShort,
   formatTime,
   formatWeekdayLong,
@@ -28,6 +29,12 @@ describe("format (Bangkok time, EN + TH)", () => {
     expect(formatDayLong("2026-11-06", "en", TZ)).toContain("6 November");
     expect(formatWeekdayLong("2026-11-04", "th", TZ)).toContain("พุธ");
     expect(formatDayShort("2026-11-06", "th", TZ)).toContain("พ.ย.");
+  });
+  it("Today's header date fits a small phone: short weekday, full month (visual baseline 2026-11-23)", () => {
+    expect(formatDayMedium("2026-10-28", "en", TZ)).toBe("Wed 28 Oct"); // fits 320 px (G7 F4 S3-4)
+    const th = formatDayMedium("2026-10-28", "th", TZ);
+    expect(th).toContain("28 ตุลาคม");
+    expect(th.length).toBeLessThan(formatDayLong("2026-10-28", "th", TZ).length);
   });
 });
 

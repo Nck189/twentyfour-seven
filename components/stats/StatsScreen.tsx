@@ -7,6 +7,7 @@ import { COFFEE_MIN_DAYS } from "@/lib/game/cafe";
 import { useMemo, useRef, useState } from "react";
 import { Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { SomArt } from "@/components/art/Som";
+import { BannerArt, SpotArt } from "@/components/art/Spots";
 import { TicketArt } from "@/components/art/Ticket";
 import { StreakCalendar } from "@/components/streak/StreakChip";
 import { Button } from "@/components/ui/Button";
@@ -74,9 +75,16 @@ function Takeaway({ children }: { children: React.ReactNode }) {
   return <p className="mb-2 text-base font-bold">{children}</p>;
 }
 
-function Empty() {
+/** Not enough data yet. `art`: only the first empty card of a tab carries the picture (G7 F4 S3-2). */
+function Empty({ art = false }: { art?: boolean }) {
   const t = useTranslations("stats");
-  return <p className="text-sm text-muted">{t("notEnough")}</p>;
+  if (!art) return <p className="text-sm text-muted">{t("notEnough")}</p>;
+  return (
+    <div className="flex flex-col items-center gap-2 py-2 text-center">
+      <SpotArt kind="chart" className="h-20 w-30" />
+      <p className="text-sm text-muted">{t("notEnough")}</p>
+    </div>
+  );
 }
 
 /** Sunday night: the week in a few numbers, Keep / Problem / Try, +3 tickets (SPEC §7). */
@@ -145,6 +153,7 @@ function WeeklyReview({
   );
   return (
     <Card title={t("review.title")}>
+      <BannerArt kind="review" className="mb-3 h-auto w-full" />
       {(() => {
         // Sunday with Som: a kind reaction to this week before the numbers (docs/STORY.md).
         const som = somWeek(summary);
@@ -273,7 +282,7 @@ function WakeChart({ data }: { data: StatsData }) {
           <p className="mt-1 text-xs text-muted">{t("wake.help")}</p>
         </>
       ) : (
-        <Empty />
+        <Empty art />
       )}
     </Card>
   );
@@ -404,7 +413,7 @@ function Heat({ data }: { data: StatsData }) {
           </p>
         </>
       ) : (
-        <Empty />
+        <Empty art />
       )}
     </Card>
   );
@@ -511,7 +520,7 @@ function Overview({ data, streak }: { data: StatsData; streak: StreakView | null
         <p className="text-sm text-muted">{t("score.period")}</p>
         <h2 className="font-bold">{t("score.title")}</h2>
         {cmp.now === null ? (
-          <Empty />
+          <Empty art />
         ) : (
           <>
             <p className="mt-1 flex items-baseline gap-3">

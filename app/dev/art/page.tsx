@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import { CROP_IDS } from "@/content/crops";
 import { MUTATION_IDS, QUALITIES } from "@/content/game";
 import { AppIcon } from "@/components/art/AppIcon";
+import { BANNER_KINDS, BannerArt, SPOT_KINDS, SpotArt } from "@/components/art/Spots";
 import { FarmSky, type SkyPhase } from "@/components/art/farm/FarmSky";
 import { MutationIcon } from "@/components/art/farm/Fx";
 import { Capsule, CapsuleMachine, RarityLight } from "@/components/art/farm/Capsule";
@@ -44,6 +45,29 @@ function Icons() {
         <Cell caption="48 px">
           <AppIcon className="h-12 w-12" />
         </Cell>
+      </div>
+    </section>
+  );
+}
+
+/** F4 spot pictures at 160 px and 48 px, and the banners at their in-app width (docs/REVIEW_FIX_PLAN.md). */
+function Spots() {
+  return (
+    <section className="rounded-xl bg-[var(--ui-surface)] p-3" data-sheet="spots">
+      <h2 className="mb-2 text-sm font-bold">Spots and banners</h2>
+      <div className="flex flex-wrap items-end gap-4">
+        {SPOT_KINDS.map((k) => (
+          <Cell key={k} caption={k}>
+            <SpotArt kind={k} className="h-[107px] w-40" />
+            <SpotArt kind={k} className="h-8 w-12" />
+          </Cell>
+        ))}
+        {BANNER_KINDS.map((k) => (
+          <Cell key={k} caption={k}>
+            {/* the in-app size: a phone sheet or card, 343 px wide */}
+            <BannerArt kind={k} className="h-auto w-[343px]" />
+          </Cell>
+        ))}
       </div>
     </section>
   );
@@ -232,6 +256,7 @@ export default function ArtSheet() {
         ))}
       </section>
       <Icons />
+      <Spots />
       <Sheet night={false} />
       <Sheet night />
     </main>

@@ -183,6 +183,15 @@ export function SomArt({
 }) {
   return (
     <Art className={className} label={label}>
+      <SomFigure pose={pose} headband={headband} />
+    </Art>
+  );
+}
+
+/** Som's shapes in the 48 × 48 frame (ground at y = 40), to place inside bigger scenes. */
+export function SomFigure({ pose = "sit", headband = false }: { pose?: SomPose; headband?: boolean }) {
+  return (
+    <>
       {pose === "sleep" && (
         <g>
           <Shadow cx={25} rx={14} />
@@ -230,6 +239,6 @@ export function SomArt({
           )}
         </g>
       )}
-    </Art>
+    </>
   );
 }

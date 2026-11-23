@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { AppIcon } from "@/components/art/AppIcon";
 import { markFor } from "@/lib/today/markFor";
-import { formatDayLong, formatTime } from "@/lib/format";
+import { formatDayMedium, formatTime } from "@/lib/format";
 import { showBedCard } from "@/lib/today/bedtime";
 import { useNow } from "@/lib/hooks/useNow";
 import { currentBlock, type TimelineBlock } from "@/lib/today/day";
@@ -26,6 +26,7 @@ import { useStreak } from "@/lib/streak/useStreak";
 import { TodayUnlockLine, UnlockNotice } from "@/components/farm/CollectionBook";
 import { FarmStrip } from "./FarmStrip";
 import { useFarm } from "@/lib/farm/useFarm";
+import { skyPhaseFor } from "@/lib/farm/sky";
 import { LastChanceLine } from "@/components/farm/LastChanceLine";
 import { useUnlocks } from "@/lib/unlocks/useUnlocks";
 import { TodayReviewLine } from "@/components/stats/ReviewLine";
@@ -228,7 +229,7 @@ export function TodayScreen() {
       <PushPlanner day={tl.date} blocks={tl.blocks} timezone={today.timezone} mode={tl.mode} />
       <ScreenHeader
         title={t("title")}
-        subtitle={formatDayLong(tl.date, locale, today.timezone)}
+        subtitle={formatDayMedium(tl.date, locale, today.timezone)}
         mark={
           <span data-mark={markFor(cur?.key)} className="shrink-0">
             <AppIcon variant={markFor(cur?.key)} className="h-11 w-11" />
@@ -255,7 +256,7 @@ export function TodayScreen() {
 
       {/* Under the header, next to the streak chip it explains. */}
       <Tip id="streak" when={!!streak.view && tipsQuiet} />
-      <FarmStrip data={farm.data} failed={farm.status === "error"} />
+      <FarmStrip data={farm.data} failed={farm.status === "error"} phase={skyPhaseFor(cur?.key)} />
       {onboarding.show && <WelcomeCard onLater={() => void onboarding.later()} />}
       {!onboarding.show && <WelcomeBackCard />}
       <ExamCard timeline={tl} />

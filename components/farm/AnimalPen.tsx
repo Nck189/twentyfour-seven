@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import { AnimalArt, EggArt, FeedArt, Heart, ProduceArt } from "@/components/art/farm/Animals";
+import { SpotArt } from "@/components/art/Spots";
 import { Sheet } from "@/components/today/BlockSheet";
 import { Button } from "@/components/ui/Button";
 import { ANIMALS, EXERCISE_RULES, type ProduceId } from "@/content/animals";
@@ -225,9 +226,12 @@ export function AnimalPen({ animals }: { animals: ReturnType<typeof useAnimals> 
         })}
       </ul>
       {s.animals.length === 0 && (
-        <p className="mt-2 text-sm text-muted">
-          {t("empty")} {t("eggHint")}
-        </p>
+        <div className="mt-2 flex items-center gap-3">
+          <SpotArt kind="nest" className="h-16 w-24 shrink-0" />
+          <p className="text-sm text-muted">
+            {t("empty")} {t("eggHint")}
+          </p>
+        </div>
       )}
       {selected && (
         <AnimalSheet animal={selected} feed={s.feed} actions={animals} onClose={() => setOpen(null)} />

@@ -116,6 +116,28 @@ for (const { locale, theme } of COMBOS) {
       await expect(page).toHaveScreenshot(`seeddex-${locale}-${theme}.png`);
     });
 
+    // The farm yard (docs/FARM_YARD_PLAN.md): six items bring butterflies and birds; Som's spot is
+    // seeded by the fixed date. Animations are skipped in these runs, so the picture is still.
+    test("farm yard", async ({ page }, info) => {
+      await fixClock(page);
+      await setPrefs(page, { locale, theme });
+      const id = await userIdFor(await signIn(page));
+      await rest(`decor?user_id=eq.${id}`, { method: "DELETE" });
+      for (const item_id of ["fence", "flowers", "pond", "garden_lantern", "path", "mailbox"])
+        await rest("decor", { method: "POST", body: JSON.stringify({ user_id: id, item_id }) });
+      await page.goto("/farm");
+      const yard = page.locator("[data-yard]");
+      await expect(yard).toBeVisible();
+      await page.evaluate(() => document.fonts.ready);
+      await page.waitForTimeout(400);
+      await yard.screenshot({
+        path: `screenshots/${MILESTONE}-yard-${info.project.name}-${locale}-${theme}.png`,
+      });
+      await expect(yard).toHaveScreenshot(`yard-${locale}-${theme}.png`);
+      // Leave the account as the other shots expect it (no decor).
+      await rest(`decor?user_id=eq.${id}`, { method: "DELETE" });
+    });
+
     test("app screens", async ({ page }, info) => {
       await fixClock(page);
       await setPrefs(page, { locale, theme });

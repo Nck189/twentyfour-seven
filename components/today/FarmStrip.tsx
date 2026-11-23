@@ -11,13 +11,23 @@ import type { FarmData } from "@/lib/farm/useFarm";
 import { usePrefs } from "@/lib/store/prefs";
 import { onBlockDone } from "@/lib/ui/rewardEvents";
 import type { BlockKey } from "@/content/blocks";
+import type { SkyPhase } from "@/lib/farm/sky";
 
 /**
  * Today's farm strip on phones (review fix C3): the 7 block plots at their real stage, in day
  * order, with Som at one end, so a check-in visibly grows something. Tap → the farm. Hidden from
  * `lg` up, where the farm is already in the side panel. Reads the farm Today already loads.
  */
-export function FarmStrip({ data, failed = false }: { data: FarmData | null; failed?: boolean }) {
+export function FarmStrip({
+  data,
+  failed = false,
+  phase = "day",
+}: {
+  data: FarmData | null;
+  failed?: boolean;
+  /** The sky of the current block, for the empty field shown until the farm arrives. */
+  phase?: SkyPhase;
+}) {
   const t = useTranslations("today.farmStrip");
   // A block finished on Today: its plot bounces once and Som looks up (review fix F2).
   const [done, setDone] = useState<{ key: BlockKey; n: number } | null>(null);
@@ -27,9 +37,18 @@ export function FarmStrip({ data, failed = false }: { data: FarmData | null; fai
   // Its space is kept from the first paint, so nothing on Today moves under a finger when the
   // farm arrives (G7 R-C-2). No farm at all: no space.
   if (failed) return null;
+  // While the farm is on its way (Today reads it 2 s later): an empty field, sky and grass, not a
+  // blank card that reads as broken (visual baselines 2026-11-23).
   if (!data)
     return (
-      <div aria-hidden="true" className="mx-4 mb-3 h-14 rounded-[var(--radius-lg)] bg-surface lg:hidden" />
+      <div
+        aria-hidden="true"
+        data-farm-strip="waiting"
+        className="relative mx-4 mb-3 h-14 overflow-hidden rounded-[var(--radius-lg)] lg:hidden"
+      >
+        <FarmSky phase={phase} className="h-14" />
+        <div className="absolute inset-x-0 bottom-0 h-6 bg-[var(--art-leaf-2)]" />
+      </div>
     );
   return (
     <Link

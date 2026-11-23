@@ -77,6 +77,9 @@ test.describe("app shell", () => {
   });
 
   test("CJ-14 language toggle switches EN/TH, persists across reload, no raw keys", async ({ page }) => {
+    // It opens every screen in Thai; against prod over the network that can pass the 30 s default
+    // (qc:prod 2026-11-23 took 30 s, its retry 19 s), so it gets the slow-test budget.
+    test.slow();
     await page.goto("/more/preferences");
     await settle(page); // More answers taps only once it is interactive (slow WebKit)
     await page.getByRole("radio", { name: "ไทย" }).click();

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { CheckIcon } from "@/components/ui/Icons";
+import { SpotArt } from "@/components/art/Spots";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { useSetup } from "@/lib/onboarding/useSetup";
 import type { TemplateRow } from "@/lib/today/day";
@@ -119,6 +119,7 @@ export function Onboarding() {
             {tc("error")}
           </p>
         )}
+        {setup.status === "ready" && step !== "done" && <SpotArt kind={step} className="mx-auto h-20 w-30" />}
         {setup.status === "ready" && step === "starter" && (
           <StarterStep
             onPick={async (starter) => {
@@ -178,9 +179,7 @@ export function Onboarding() {
         )}
         {step === "done" && (
           <section className="flex flex-col items-center gap-3 py-8 text-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-soft text-primary">
-              <CheckIcon className="h-8 w-8" />
-            </span>
+            <SpotArt kind="done" className="h-28 w-42" />
             <h2 className="text-xl font-extrabold">{t("doneTitle")}</h2>
             <p className="text-muted">{t("doneHint")}</p>
             {fromMore ? (
