@@ -211,7 +211,7 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
   );
 
   return useMemo(
-    () => ({ data, status, plant, harvest, buyDecor, reload: () => setReload((r) => r + 1) }),
-    [data, status, plant, harvest, buyDecor],
+    () => ({ data, status, userId, plant, harvest, buyDecor, reload: () => setReload((r) => r + 1) }),
+    [data, status, userId, plant, harvest, buyDecor],
   );
 }

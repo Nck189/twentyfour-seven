@@ -9,6 +9,7 @@ import { Sheet } from "@/components/today/BlockSheet";
 import type { DayKind } from "@/lib/game/streak";
 import type { StreakView } from "@/lib/streak/useStreak";
 import { sfx } from "@/lib/sound/sfx";
+import { usePrefs } from "@/lib/store/prefs";
 import { addDays, isoWeekday } from "@/lib/time";
 
 const CELL: Record<DayKind, string> = {
@@ -107,10 +108,15 @@ export function StreakChip({ view }: { view: StreakView }) {
 export function StreakNotice({ view }: { view: StreakView }) {
   const t = useTranslations("streak");
   const [seen, setSeen] = useState(false);
-  const milestone = view.granted.some((g) => g.reason !== "perfect_day");
+  const skipAnimations = usePrefs((s) => s.skipAnimations);
+  // Perfect day 0, a 7- or 14-day streak 1, 30 days 2: bigger ends higher (review fix F1).
+  const size = view.granted.reduce(
+    (m, g) => Math.max(m, g.reason === "streak_30" ? 2 : g.reason === "perfect_day" ? 0 : 1),
+    -1,
+  );
   useEffect(() => {
-    if (milestone) sfx.celebrate();
-  }, [milestone]);
+    if (size >= 0) sfx.celebrate(size);
+  }, [size]);
   if (seen || view.granted.length === 0) return null;
   const days = Math.max(
     0,
@@ -122,11 +128,14 @@ export function StreakNotice({ view }: { view: StreakView }) {
       ? t("grantPerfect")
       : t("grantStreak", { n: g.days ?? Number(g.reason.slice(7)) }),
   );
+  const perfect = view.granted.some((g) => g.reason === "perfect_day");
   return (
     <section
       role="status"
-      className="mx-4 mb-3 flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] bg-primary-soft p-3 lg:mx-6"
+      className="relative isolate mx-4 mb-3 flex flex-wrap items-center gap-3 overflow-hidden rounded-[var(--radius-lg)] bg-primary-soft p-3 lg:mx-6"
     >
+      {/* A perfect day: a short fall of leaves and petals behind the notice (review fix F2). */}
+      {perfect && !skipAnimations && <Petals />}
       <TicketArt className="h-8 w-12 shrink-0" kind="sunrise" />
       <p className="min-w-0 flex-1 text-sm">
         <span className="block font-bold text-primary">{t("grantTitle", { n: total })}</span>
@@ -159,5 +168,31 @@ function StreakShare({ days }: { days: number }) {
       label={ts("share")}
       className="basis-full"
     />
+  );
+}
+
+const PETALS = [
+  "var(--art-pink-light)",
+  "var(--art-leaf-2)",
+  "var(--art-peach)",
+  "var(--art-pink)",
+  "var(--art-leaf-1)",
+  "var(--art-sun)",
+  "var(--art-blush-light)",
+  "var(--art-leaf-3)",
+];
+
+/** Eight petals and leaves in token colors, one short fall (≤ 600 ms), behind the content. */
+function Petals() {
+  return (
+    <span aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+      {PETALS.map((c, i) => (
+        <span
+          key={i}
+          className="petal-fall absolute top-0 h-2 w-1.5 rounded-full"
+          style={{ left: `${6 + i * 12}%`, background: c, animationDelay: `${(i % 4) * 30}ms` }}
+        />
+      ))}
+    </span>
   );
 }

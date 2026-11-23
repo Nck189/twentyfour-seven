@@ -11,6 +11,8 @@ type PrefsState = {
   theme: ThemePref;
   soundOn: boolean;
   skipAnimations: boolean;
+  /** Farm ambience (review fix F3): off unless turned on. Optional for stores saved before it. */
+  ambienceOn?: boolean;
   /** Sounds go quiet by themselves during Focus and Work blocks (lib/sound/quiet.ts). */
   autoQuiet: boolean;
   /** True while a language change made on this device hasn't been saved to the profile yet. */
@@ -27,6 +29,7 @@ type PrefsState = {
   setTheme: (theme: ThemePref) => void;
   setSoundOn: (on: boolean) => void;
   setSkipAnimations: (skip: boolean) => void;
+  setAmbienceOn: (on: boolean) => void;
   setAutoQuiet: (on: boolean) => void;
 };
 
@@ -46,6 +49,7 @@ export const usePrefs = create<PrefsState>()(
       theme: "system",
       soundOn: true,
       skipAnimations: false,
+      ambienceOn: false,
       autoQuiet: true,
       localeDirty: false,
       setLocale: (locale) => set({ locale, localeDirty: true }),
@@ -54,6 +58,7 @@ export const usePrefs = create<PrefsState>()(
       setTheme: (theme) => set({ theme }),
       setSoundOn: (soundOn) => set({ soundOn }),
       setSkipAnimations: (skipAnimations) => set({ skipAnimations }),
+      setAmbienceOn: (ambienceOn) => set({ ambienceOn }),
       setAutoQuiet: (autoQuiet) => set({ autoQuiet }),
     }),
     {

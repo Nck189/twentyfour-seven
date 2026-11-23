@@ -169,9 +169,10 @@ export function useAnimals() {
   );
 
   const pet = useCallback(
-    async (id: string): Promise<boolean> => {
+    /** True when it counted, false when today's pets are used up, null when it failed. */
+    async (id: string): Promise<boolean | null> => {
       const { data, error } = await client.rpc("pet_animal", { p_id: id });
-      if (error) return false;
+      if (error) return null;
       const counted = Boolean(data.counted);
       setState((s) =>
         s

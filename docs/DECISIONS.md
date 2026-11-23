@@ -338,3 +338,22 @@ Format: date · decision · why · how to change it
   - **Rewards:** each More page claims setup rewards once and shows every reward it paid at the top (on Getting started, the exercise reward shows by its setting). Editing your week or first 10 minutes from More returns to `/more`, where the progress card is.
   - **Not changed:** the cards themselves, sign out, delete account and the locale sync.
   - **Known, not from Phase D:** two specs (`story` STORY-R1, `streak` CJ-M9-1) fail when run in the early morning Bangkok time, because the night ritual offer or a hatch overlay covers what they tap. They pass in the daytime run. Logged for a separate test-robustness fix.
+- 2026-11-23 · **Review fixes, Phase F part 1: sound, small animations, farm ambience** (`docs/REVIEW_FIX_PLAN.md` F1–F3; Minnie: "write the plan and start building")
+  - **One set of sounds.** The new sounds are WebAudio synth notes in C major (unit-tested: in key, ≤ 1 s, soft), so they sound like one family with the old ones. `docs/SOUND-MAP.md` lists every moment and its sound. A unit test fails if a mapped sound is never called, or if `sfx` has a sound the map doesn't list.
+  - **Where sounds changed:**
+    - Starting a block now rises; finishing one plays two notes, or three when the checklist is complete.
+    - The first-10 tick sparkles.
+    - Night ritual steps tick softly.
+    - Planting pats.
+    - The shop's buy, upgrade and ticket swap "kaching", lower than the sell coin.
+    - Orders and factory collect play coin + flourish; starting a factory job clicks.
+    - The café clinks; feeding munches; pets used up for the day get a soft "that's enough".
+    - A failed save on Today plays one low note per failure.
+    - Celebrations end higher for bigger moments (perfect day < 7/14 days < 30 days). A perfect day now celebrates too.
+  - **Grown crops.** Each device remembers the stages it last showed (localStorage, per device, not per account). A crop at a higher stage of the same planting gets a pop each, rising, and steps up one plot after another. The first visit on a device shows nothing grown. A replant of the same crop at the same star can't be told apart from the old planting (stages only go down then, so it never counts as growth).
+  - **Animations** are all ≤ 600 ms, transform and opacity only, skipped with "Skip animations" and stopped by reduced motion:
+    - finishing a block makes its plot on the Today farm strip bounce, and Som too;
+    - coins fly up into the shop's payoff;
+    - petals fall once behind a perfect-day notice.
+  - **Tests and animations.** Specs still run with animations skipped; `setPrefs(page, { animations: true })` turns them on for a spec that checks one.
+  - **Farm ambience is off by default** (the plan left it to Minnie; off is the quiet choice for a habit app opened in class). It has its own switch in Sound & motion. Birds play by day and at sunrise, crickets at dusk and night, Farm tab only. It is synthesized and very soft, stops when the tab is hidden, and obeys mute and quiet blocks. There's no rain: today's weather set has no rain (sunrise glow, dew, moonlit, breeze, spark, rainbow).

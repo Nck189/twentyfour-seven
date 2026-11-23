@@ -401,7 +401,10 @@ export function NightRitual({
         {step < total - 1 ? (
           <Button
             variant={step === 0 && phoneEnds !== null && left > 0 ? "secondary" : "primary"}
-            onClick={() => setStep((s) => s + 1)}
+            onClick={() => {
+              sfx.ritualStep();
+              setStep((s) => s + 1);
+            }}
           >
             {step === 0 && phoneEnds !== null && left > 0 ? t("phoneSkip") : t("next")}
           </Button>

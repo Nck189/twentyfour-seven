@@ -49,7 +49,7 @@ export function PlantAll() {
     setBusy(false);
     if (ok < empty.length) setError(true);
     if (ok > 0) {
-      sfx.tick();
+      sfx.plant();
       setPlanted(ok);
     }
     const next = await fetchEmpty();

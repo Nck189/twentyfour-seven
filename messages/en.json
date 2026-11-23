@@ -564,7 +564,9 @@
         "hint": "Install, privacy, export, sign out"
       }
     },
-    "backTo": "Back to More"
+    "backTo": "Back to More",
+    "ambience": "Farm sounds",
+    "ambienceHint": "Birds by day, crickets at night, on the Farm tab."
   },
   "blocks": {
     "name": {

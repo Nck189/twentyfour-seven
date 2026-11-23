@@ -98,6 +98,41 @@ html[lang="th"] body {
   }
 }
 
+/* Phase F2: a plot that grew steps up once (≤ 600 ms, transform only). Stopped by reduced motion. */
+@keyframes grow-step {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  45% {
+    transform: translateY(-5px) scale(1.08);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+.grow-step {
+  animation: grow-step 480ms ease-out backwards;
+}
+
+/* Phase F2: petals fall once behind a perfect-day notice, then stay hidden. */
+@keyframes petal-fall {
+  0% {
+    transform: translateY(-8px) rotate(0deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(56px) rotate(160deg);
+    opacity: 0;
+  }
+}
+.petal-fall {
+  opacity: 0;
+  animation: petal-fall 480ms ease-in both;
+}
+
 /* Factory: a slow puff over a working machine (M13). Stopped by the reduced-motion rule. */
 @keyframes machine-puff {
   0% {

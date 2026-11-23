@@ -1,5 +1,7 @@
 "use client";
 
+import { sfx } from "@/lib/sound/sfx";
+
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { DECOR_ART } from "@/components/art/farm/DecorArt";
@@ -60,6 +62,7 @@ export function DecorShop({
                   const ok = await onBuy(id);
                   setBusy(null);
                   if (!ok) setError(true);
+                  else sfx.buy();
                 }}
                 className="tap flex min-h-11 w-full flex-col items-center rounded-xl bg-surface p-1 disabled:opacity-50"
               >

@@ -49,7 +49,16 @@ export function Toggle({
  */
 export function SoundCard() {
   const t = useTranslations("more");
-  const { soundOn, setSoundOn, autoQuiet, setAutoQuiet, skipAnimations, setSkipAnimations } = usePrefs();
+  const {
+    soundOn,
+    setSoundOn,
+    autoQuiet,
+    setAutoQuiet,
+    skipAnimations,
+    setSkipAnimations,
+    ambienceOn,
+    setAmbienceOn,
+  } = usePrefs();
   const changeSound = (on: boolean) => {
     setSoundOn(on);
     void (async () => {
@@ -67,6 +76,14 @@ export function SoundCard() {
         hint={t("autoQuietHint")}
         on={autoQuiet ?? true}
         onChange={setAutoQuiet}
+        disabled={!soundOn}
+      />
+      {/* Review fix F3: birds by day, crickets at night, on the Farm tab only. Off by default. */}
+      <Toggle
+        label={t("ambience")}
+        hint={t("ambienceHint")}
+        on={ambienceOn ?? false}
+        onChange={setAmbienceOn}
         disabled={!soundOn}
       />
       <Toggle

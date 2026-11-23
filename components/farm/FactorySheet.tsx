@@ -172,7 +172,7 @@ function MachineCard({
             act(
               async () => {
                 const e = await factory.build(id);
-                if (!e) sfx.coin();
+                if (!e) sfx.buy();
                 return e;
               },
               t("built", { name }),
@@ -202,7 +202,7 @@ function MachineCard({
                   const n = await factory.collect(id);
                   if (n === null) return "error";
                   // The server's count (a phone clock running fast may show one too early; R-M13-3).
-                  if (n > 0) sfx.pop();
+                  if (n > 0) sfx.deliver();
                   return { text: n > 0 ? t("collected", { n }) : t("notYet") };
                 }, "")
               }
@@ -288,7 +288,14 @@ function MachineCard({
                       return;
                     }
                     setConfirm(null);
-                    void act(() => factory.start(id, r.id), t("started", { name: products(r.id) }));
+                    void act(
+                      async () => {
+                        const e = await factory.start(id, r.id);
+                        if (!e) sfx.machine();
+                        return e;
+                      },
+                      t("started", { name: products(r.id) }),
+                    );
                   }}
                 >
                   {asking ? t("makeAnyway") : t("make")}
