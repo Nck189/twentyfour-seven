@@ -99,7 +99,16 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
           .select("at")
           .gte("at", `${addDays(from, -1)}T00:00:00Z`),
         client.from("game_state").select("coins").maybeSingle(),
-        client.from("decor").select("id, item_id, spot").order("created_at"),
+        client
+          .from("decor")
+          .select("id, item_id, spot")
+          .order("created_at")
+          .then(async (r) =>
+            // Before the farm yard migration there's no spot column: the farm still loads (G7 G-S3-4).
+            r.error?.code === "42703"
+              ? await client.from("decor").select("id, item_id").order("created_at")
+              : r,
+          ),
         // Optional: before the economy migration there's no table; the farm shows without a house.
         client.from("upgrades").select("track, level"),
       ]);
@@ -133,7 +142,11 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
           decor: ((decorRows.data ?? []) as { item_id: string }[]).map((d) => d.item_id).filter(isDecorId),
           yard: ((decorRows.data ?? []) as { id: string; item_id: string; spot: number | null }[])
             .filter((d) => isDecorId(d.item_id))
-            .map((d) => ({ id: d.id, item: d.item_id as DecorId, spot: d.spot ?? null })),
+            .map((d, i) => ({
+              id: d.id,
+              item: d.item_id as DecorId,
+              spot: d.spot === undefined ? (i < 8 ? i + 1 : null) : d.spot,
+            })),
           today,
           house: levelOf(houseRow.data, "house"),
           stall: levelOf(houseRow.data, "stall"),

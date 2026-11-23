@@ -337,7 +337,7 @@ function MachineCard({
                   price !== undefined &&
                   bigBuy.buy(
                     price,
-                    t(`upgradeAria.${track}`, { name, level: lvl + 1 }),
+                    `${name}: ${t(`track.${track}`, { level: lvl + 1 })}`,
                     () =>
                       void act(
                         () => factory.upgrade(id, track),

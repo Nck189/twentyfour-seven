@@ -10,8 +10,8 @@ export const YARD_SPOTS = [
   { spot: 4, x: 0.78, y: 0.8 },
   { spot: 5, x: 0.36, y: 0.35 },
   { spot: 6, x: 0.64, y: 0.35 },
-  { spot: 7, x: 0.06, y: 0.85 },
-  { spot: 8, x: 0.94, y: 0.85 },
+  { spot: 7, x: 0.06, y: 0.78 },
+  { spot: 8, x: 0.94, y: 0.78 },
 ] as const;
 export type YardSpot = (typeof YARD_SPOTS)[number]["spot"];
 export const YARD_SIZE = YARD_SPOTS.length;

@@ -87,3 +87,20 @@ describe("a festival set in the yard (story beat yard_festival)", () => {
     expect(r.data).toMatchObject({ beat: "yard_festival", gift: null });
   });
 });
+
+describe("two decor items added at once (G7 S3-1)", () => {
+  it("both land, in different spots (no unique-spot failure)", async () => {
+    const u = await withCoins("yard-race");
+    for (let round = 0; round < 3; round++) {
+      const r = await Promise.all(
+        ["fence", "path", "flowers"].map((item_id) =>
+          admin().from("decor").insert({ user_id: u.id, item_id }),
+        ),
+      );
+      for (const x of r) expect(x.error).toBeNull();
+    }
+    const spots = (await rows(u.id)).map((x) => x.spot).filter((s) => s !== null);
+    expect(new Set(spots).size).toBe(spots.length);
+    expect(spots).toHaveLength(8);
+  });
+});

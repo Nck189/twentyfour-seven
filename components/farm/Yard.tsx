@@ -93,7 +93,10 @@ export function Yard({
           return (
             <div key={spot} className="absolute -translate-x-1/2" style={style} data-spot={spot}>
               {som === spot && (
-                <span aria-hidden="true" className="absolute -left-7 bottom-0">
+                <span
+                  aria-hidden="true"
+                  className={`pointer-events-none absolute bottom-0 ${x < 0.5 ? "left-full -ml-1" : "-left-7"}`}
+                >
                   <SomArt pose="sit" className="h-8 w-8" />
                 </span>
               )}
@@ -139,7 +142,7 @@ export function Yard({
       {editable && stored.length > 0 && (
         <section
           aria-label={t("storage", { n: stored.length })}
-          className="flex flex-wrap items-center gap-2 px-3 py-2"
+          className="relative z-10 flex flex-wrap items-center gap-2 px-3 py-2"
         >
           <span className="text-xs font-bold text-muted">{t("storage", { n: stored.length })}</span>
           {stored.map((item) => {

@@ -31,6 +31,9 @@ set search_path = ''
 as $$
 begin
   if new.spot is null then
+    -- One at a time per user: two decor items added at once (a buy and a reward claim) would
+    -- otherwise pick the same free spot and one would fail (G7 S3-1). Held to the transaction's end.
+    perform pg_advisory_xact_lock(hashtext('decor-spot:' || new.user_id::text));
     new.spot := public._decor_first_spot(new.user_id);
   end if;
   return new;
@@ -96,6 +99,9 @@ begin
   select * into item from public.decor where id = p_id and user_id = uid for update;
   if not found then
     raise exception 'not yours' using errcode = 'P0001';
+  end if;
+  if item.spot is null then
+    return jsonb_build_object('id', item.id, 'spot', null);
   end if;
   update public.decor set spot = null where id = item.id;
   insert into public.events (user_id, type, payload)
