@@ -327,7 +327,9 @@ export function BlockCheckin({
         <Button
           onClick={() => {
             // Three notes when every checklist item is ticked (review fix F1).
-            sfx.blockDone(block.checklist.length > 0 && log.items_done.length >= block.checklist.length);
+            sfx.blockDone(
+              block.checklist.length > 0 && block.checklist.every((c) => log.items_done.includes(c.id)),
+            );
             emitBlockDone(block.key);
             void actions.close(block, new Date());
           }}

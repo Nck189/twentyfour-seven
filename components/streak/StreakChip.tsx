@@ -190,7 +190,7 @@ function Petals() {
         <span
           key={i}
           className="petal-fall absolute top-0 h-2 w-1.5 rounded-full"
-          style={{ left: `${6 + i * 12}%`, background: c, animationDelay: `${(i % 4) * 40}ms` }}
+          style={{ left: `${6 + i * 12}%`, background: c, animationDelay: `${(i % 4) * 30}ms` }}
         />
       ))}
     </span>

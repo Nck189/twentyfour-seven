@@ -22,7 +22,7 @@ All sounds obey the global mute and "Quiet during Focus and Work". The one excep
 | Crops grew since the last farm visit (one pop per plot) | `sfx.grow` |
 | Harvest | `sfx.harvest` |
 | Sell, coins earned | `sfx.coin` |
-| Buy a seed, upgrade, swap coins for a ticket, redeem a reward | `sfx.buy` |
+| Buy a seed or decor, upgrade, swap coins for a ticket, redeem a reward | `sfx.buy` |
 | Deliver an order, collect from the factory | `sfx.deliver` |
 | Start a factory job | `sfx.machine` |
 | Order at the café | `sfx.clink` |
@@ -36,3 +36,5 @@ All sounds obey the global mute and "Quiet during Focus and Work". The one excep
 | Unlock, streak milestone, perfect day, welcome back | `sfx.celebrate` |
 | Som speaks in a story scene | `sfx.meow` |
 | A timer the user set (power nap, phone away) | `sfx.alarm` |
+
+The Farm tab's ambience (birds by day, crickets at dusk and night) is a loop in `lib/sound/ambience.ts`, not an `sfx` sound. It has its own switch in Sound & motion and is off by default. Its notes go through the same mute and quiet checks.

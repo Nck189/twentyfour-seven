@@ -17,7 +17,8 @@ function audio(): AudioContext | null {
     (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!Ctor) return null;
   if (!ctx) ctx = new Ctor();
-  if (ctx.state === "suspended") void ctx.resume();
+  // "suspended" before the first tap, "interrupted" after a call on iOS: ask to resume.
+  if (ctx.state !== "running") void ctx.resume().catch(() => undefined);
   return ctx;
 }
 
@@ -31,14 +32,9 @@ let quietUntil = 0;
 export function setQuietUntil(ms: number) {
   quietUntil = ms;
 }
-/** The ambience loop checks the same quiet block (review fix F3). */
-export function ambienceQuietUntil() {
-  return quietUntil;
-}
-/** Plays notes as they are (the caller has already checked mute and quiet). */
+/** Plays notes through the same mute and quiet checks as every sound (the farm ambience). */
 export function playNotes(notes: Note[]) {
-  const ac = audio();
-  if (ac) schedule(ac, notes);
+  play(notes);
 }
 
 function play(notes: Note[], essential = false) {
@@ -54,7 +50,9 @@ function play(notes: Note[], essential = false) {
   )
     return;
   const ac = audio();
-  if (!ac) return;
+  // Not running yet (no tap so far, or iOS interrupted it): drop the sound. Queued notes would
+  // all play at once on the next tap, late and in a pile (G7 F-1).
+  if (!ac || ac.state !== "running") return;
   schedule(ac, notes);
 }
 

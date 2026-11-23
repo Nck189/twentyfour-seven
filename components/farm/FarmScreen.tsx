@@ -59,7 +59,7 @@ const LOCKED_FIELDS = 3;
  * `compact` = the iPad/Mac side panel (read-only, no sheets).
  */
 export function FarmScreen({ compact = false }: { compact?: boolean }) {
-  const { data, status, plant, harvest, buyDecor, reload } = useFarm();
+  const { data, status, userId, plant, harvest, buyDecor, reload } = useFarm();
   const gacha = useGacha();
   const animals = useAnimals();
   const unlocks = useUnlocks();
@@ -98,6 +98,7 @@ export function FarmScreen({ compact = false }: { compact?: boolean }) {
         // After Som's scene, if one is playing: never two sheets at once.
         openCapsules={capsuleAsked && story.checked && !story.playing}
         data={data}
+        userId={userId}
         status={status}
         plant={plant}
         harvest={harvest}
@@ -122,6 +123,7 @@ export function FarmView({
   compact = false,
   openCapsules = false,
   data,
+  userId,
   status,
   plant,
   harvest,
@@ -136,6 +138,8 @@ export function FarmView({
   /** Open the capsule machine once tickets are in (the first capsule after setup, C4). */
   openCapsules?: boolean;
   data: FarmData | null;
+  /** Whose farm: grown crops are remembered per account (none = a preview, nothing remembered). */
+  userId?: string | null;
   status: "loading" | "ready" | "error";
   plant: (slot: BlockKey, crop: CropId, replace?: boolean) => Promise<boolean>;
   harvest: (slot: BlockKey) => Promise<string | null>;
@@ -167,7 +171,7 @@ export function FarmView({
   useAmbience(compact || !data ? null : ambienceKind(data.sky));
   const skipAnimations = usePrefs((s) => s.skipAnimations);
   useEffect(() => {
-    if (compact || !data) return;
+    if (compact || !data || !userId) return;
     const now: Partial<Record<BlockKey, { cropId: string; stage: number; plantedKey: string }>> = {};
     for (const b of DAY_ORDER) {
       const p = data.farm.plots[b];
@@ -175,14 +179,14 @@ export function FarmView({
     }
     // A moment after the farm paints, so the step-ups are seen (and a cancelled run writes nothing).
     const timer = setTimeout(() => {
-      const g = grownSince(readSeen("device"), now);
-      writeSeen("device", snapshot(now));
+      const g = grownSince(readSeen(userId), now);
+      writeSeen(userId, snapshot(now));
       if (g.length === 0) return;
       sfx.grow(g.length);
       setGrown(g);
     }, 300);
     return () => clearTimeout(timer);
-  }, [compact, data]);
+  }, [compact, data, userId]);
   if (openCapsules && !capsulesOpened && !sheet && gacha?.state) {
     setCapsulesOpened(true);
     // No ticket after all (the claim failed): just the farm (G7 R-C-4).

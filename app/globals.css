@@ -111,7 +111,7 @@ html[lang="th"] body {
   }
 }
 .grow-step {
-  animation: grow-step 480ms ease-out both;
+  animation: grow-step 480ms ease-out backwards;
 }
 
 /* Phase F2: petals fall once behind a perfect-day notice, then stay hidden. */
@@ -130,7 +130,7 @@ html[lang="th"] body {
 }
 .petal-fall {
   opacity: 0;
-  animation: petal-fall 560ms ease-in both;
+  animation: petal-fall 480ms ease-in both;
 }
 
 /* Factory: a slow puff over a working machine (M13). Stopped by the reduced-motion rule. */

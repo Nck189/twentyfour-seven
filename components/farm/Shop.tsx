@@ -177,7 +177,7 @@ function Payoff({ notice, onDone }: { notice: Notice | null; onDone: () => void 
           transition={{ type: "spring", stiffness: 420, damping: 12 }}
         >
           <Coin className="h-6 w-6" />
-          {/* Coins fly up into the counter from where the row was tapped (review fix F2). */}
+          {/* Coins fly up from below into the payoff's coin (review fix F2). */}
           {!skip &&
             (notice.coins ?? 0) > 0 &&
             [0, 1, 2].map((i) => (
@@ -186,7 +186,7 @@ function Payoff({ notice, onDone }: { notice: Notice | null; onDone: () => void 
                 className="absolute inset-0"
                 initial={{ y: 140 + i * 18, x: (i - 1) * 14, opacity: 0, scale: 0.8 }}
                 animate={{ y: 0, x: 0, opacity: [0, 1, 0], scale: 1 }}
-                transition={{ duration: 0.5, delay: i * 0.07, ease: "easeOut" }}
+                transition={{ duration: 0.42, delay: i * 0.06, ease: "easeOut" }}
               >
                 <Coin className="h-6 w-6" />
               </motion.span>

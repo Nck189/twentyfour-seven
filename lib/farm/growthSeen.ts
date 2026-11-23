@@ -47,7 +47,8 @@ export function readSeen(userId: string): StageSnapshot | null {
 
 export function writeSeen(userId: string, s: StageSnapshot) {
   try {
-    localStorage.setItem(STORE, JSON.stringify({ [userId]: s }));
+    const all = JSON.parse(localStorage.getItem(STORE) ?? "{}") as Record<string, StageSnapshot>;
+    localStorage.setItem(STORE, JSON.stringify({ ...all, [userId]: s }));
   } catch {
     // Private mode / full storage: the next visit just shows no growth.
   }

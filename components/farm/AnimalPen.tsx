@@ -90,6 +90,11 @@ function AnimalSheet({
               sfx.animal(ANIMALS[animal.species].pitch, !fed);
               setHearts2((n) => n + 1);
               const counted = await actions.pet(animal.id);
+              // A failed pet says so; only the server's "used up" is "that's enough" (G7 F-2).
+              if (counted === null) {
+                setNote({ text: t("error"), error: true });
+                return;
+              }
               if (!counted) sfx.enough();
               setNote({ text: counted ? t("petted", { name }) : t("petEnough", { name }) });
             })

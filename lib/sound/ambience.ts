@@ -3,8 +3,7 @@
 import { useEffect } from "react";
 import type { SkyPhase } from "@/lib/farm/sky";
 import { usePrefs } from "@/lib/store/prefs";
-import { shouldPlay } from "./quiet";
-import { ambienceQuietUntil, playNotes } from "./sfx";
+import { playNotes } from "./sfx";
 
 /**
  * Farm ambience (review fix F3): a quiet loop on the Farm tab only, birds by day and crickets
@@ -49,16 +48,8 @@ export function useAmbience(kind: AmbienceKind | null) {
     const next = () => {
       timer = setTimeout(
         () => {
-          const p = usePrefs.getState();
-          const audible =
-            document.visibilityState === "visible" &&
-            shouldPlay({
-              soundOn: p.soundOn,
-              autoQuiet: p.autoQuiet ?? true,
-              quietUntil: ambienceQuietUntil(),
-              now: Date.now(),
-            });
-          if (audible) playNotes(ambienceCall(kind, n++));
+          // Mute and quiet blocks are checked by playNotes, like every sound; a hidden tab is quiet.
+          if (document.visibilityState === "visible") playNotes(ambienceCall(kind, n++));
           next();
         },
         ambienceGap(kind, Math.random()) * 1000,
