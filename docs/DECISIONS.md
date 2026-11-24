@@ -417,6 +417,7 @@ Format: date · decision · why · how to change it
     - The placeholder component and its strings are removed.
   - **Visitors keep clear of Som and come by day only.** Butterflies hover over the item columns, and birds walk the front row's gaps except the one Som sits in.
   - **The picker's cells show their spot numbers**, matching their labels ("Spot 3: here now").
+  - **Today reads the farm just after its own data, not on a fixed 2 s timer.** The timer started the read after the page had gone quiet. On Mac WebKit in CI, a test that left Today at that moment cut the read off ("internal error"), and three Mac tests failed that way (CJ-14, tips, CJ-10). A test-side wait in `settle()` fixed it but added ~2 s per test and pushed CI past its 45-minute limit. Now the read starts 250 ms after Today's data is in: Today's own reads still go first, the strip shows sooner, and a network-idle wait covers it.
 - 2026-11-24 · **Invites, invite-only for the pilot** (Phase E part 1, `docs/FRIENDS-DESIGN.md`, migration 20261125000000)
   - **Minnie's choices:**
     - invite-only with an on/off switch on `/admin/retention`;
@@ -442,5 +443,3 @@ Format: date · decision · why · how to change it
     - a name field: nothing in the app sets `display_name` yet, so invites say "A friend" (F6);
     - the "your friend finished their first day" line on Today (the invite card shows it);
     - the invited-vs-not split on the retention dashboard.
-  - **Today reads the farm just after its own data, not on a fixed 2 s timer.** The timer started the read after the page had gone quiet. On Mac WebKit in CI, a test that left Today at that moment cut the read off ("internal error"), and three Mac tests failed that way (CJ-14, tips, CJ-10). A test-side wait in `settle()` fixed it but added ~2 s per test and pushed CI past its 45-minute limit. Now the read starts 250 ms after Today's data is in: Today's own reads still go first, the strip shows sooner, and a network-idle wait covers it.
-
