@@ -66,11 +66,12 @@ export function Yard({
       <section
         aria-label={t("title")}
         data-yard
-        className={`relative h-28 overflow-hidden ${night ? "bg-[var(--sky-night-bottom)]" : "bg-[var(--art-leaf-light)]"}`}
+        className={`relative h-32 overflow-hidden ${night ? "bg-[var(--sky-night-bottom)]" : "bg-[var(--art-leaf-light)]"}`}
       >
         {YARD_SPOTS.map(({ spot, x, y }) => {
           const item = at(spot);
-          const style = { left: `${x * 100}%`, top: `${8 + y * 64}%` };
+          // Two rows: the back row near the top of the band, the front row near the bottom.
+          const style = { left: `${x * 100}%`, top: `${4 + y * 56}%` };
           if (!item) {
             // An empty spot shows only when there's something in storage to put there.
             if (!editable || stored.length === 0) return null;
@@ -133,7 +134,7 @@ export function Yard({
             key={`r${i}`}
             aria-hidden="true"
             className="pointer-events-none absolute"
-            style={{ left: `${44 + i * 14}%`, top: "62%" }}
+            style={{ left: `${25 + i * 25}%`, top: "78%" }}
           >
             <BirdArt className="h-5 w-5" />
           </span>
@@ -170,10 +171,12 @@ export function Yard({
           {"item" in open ? (
             <>
               <p className="mb-2 text-sm font-bold">{t("moveTo")}</p>
+              {/* A map of the yard: the same 4 × 2 layout, back row on top, with what stands where. */}
               <div className="mb-3 grid grid-cols-4 gap-2" role="group" aria-label={t("moveTo")}>
                 {YARD_SPOTS.map(({ spot }) => {
                   const there = at(spot);
                   const here = open.item.spot === spot;
+                  const Art = there ? DECOR_ART[there.item] : null;
                   return (
                     <button
                       key={spot}
@@ -185,11 +188,16 @@ export function Yard({
                           : t("spotFree", { n: spot })
                       }
                       onClick={() => void act(() => onPlace!(open.item.id, spot))}
-                      className="tap flex min-h-12 flex-col items-center justify-center rounded-xl bg-surface-2 text-xs font-bold disabled:opacity-50"
+                      className={`tap flex min-h-16 flex-col items-center justify-center rounded-xl text-[11px] font-bold ${
+                        here
+                          ? "bg-primary-soft text-primary ring-2 ring-[var(--ui-primary)]"
+                          : there
+                            ? "bg-surface-2"
+                            : "border-2 border-dashed border-[var(--ui-border)] bg-transparent text-muted"
+                      }`}
                     >
-                      {t("spot", { n: spot })}
-                      {there && !here && <span className="font-normal text-muted">{names(there.item)}</span>}
-                      {here && <span className="font-normal text-muted">{t("here")}</span>}
+                      {Art ? <Art className="h-9 w-9" /> : <span aria-hidden="true">+</span>}
+                      {here && <span>{t("here")}</span>}
                     </button>
                   );
                 })}

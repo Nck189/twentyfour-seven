@@ -13,6 +13,21 @@ describe("farm yard rules (docs/FARM_YARD_PLAN.md)", () => {
       expect(s.y).toBeLessThanOrEqual(1);
     }
   });
+  it("spots read in order: two rows of 4, back then front, each left to right (Minnie 2026-11-24)", () => {
+    const rows = [YARD_SPOTS.slice(0, 4), YARD_SPOTS.slice(4)];
+    for (const row of rows) {
+      expect(new Set(row.map((s) => s.y)).size).toBe(1); // one line per row
+      const xs = row.map((s) => s.x);
+      expect(xs).toEqual([...xs].sort((a, b) => a - b)); // left to right
+      // evenly spaced
+      const gaps = xs.slice(1).map((x, i) => +(x - xs[i]!).toFixed(3));
+      expect(new Set(gaps).size).toBe(1);
+    }
+    expect(rows[0]![0]!.y).toBeLessThan(rows[1]![0]!.y); // the back row is first
+    // a spot in the front row sits right in front of the one behind it, so the picker's 4×2 grid
+    // is a map of the yard
+    expect(rows[1]!.map((s) => s.x)).toEqual(rows[0]!.map((s) => s.x));
+  });
   it("Som visits one placed item a day: the same all day, and only placed ones", () => {
     const placed = [2, 5, 7];
     const a = somSpotOfDay(placed, "2026-11-23");

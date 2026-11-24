@@ -403,3 +403,14 @@ Format: date · decision · why · how to change it
   - **Tests that came along:**
     - a visual shot of the farm yard (Phase G had none), which gets its baselines when Minnie next records them;
     - the language-toggle test (CJ-14) gets Playwright's slow-test budget, because against prod it opens every screen in Thai over the network and once took the full 30 s (qc:prod 2026-11-23).
+- 2026-11-24 · **The yard in two rows; tests that stop on a stale local DB; the backlog beside the farm**
+  - **Yard layout (Minnie: "the decor is arranged confusingly").** The 8 spots were a zigzag: spot 1 back-left, spot 2 back-right, spot 3 front-left, and so on. New items appeared all over the place, and "Move to…" listed only numbers. Now:
+    - two even rows of 4, numbered in reading order, which is also the order new items fill them;
+    - "Move to…" is a small map in the same 4 × 2 layout, showing each item's picture, with the current spot highlighted and empty spots dashed.
+
+    Spot numbers in the database are unchanged, so no migration: existing items just stand in the tidier places.
+  - **The local DB preflight.** Playwright's global setup compares `supabase_migrations.schema_migrations` in the local database with `supabase/migrations`. It stops with "run `npx supabase migration up`" when the database is behind, because `supabase start` reuses an existing local database without applying new migrations. That's how Mac baselines came to record 404/400 error states (#35). If Docker can't be read, it warns and goes on.
+  - **Visual shots fail on a visible error** (`role="alert"`, except Next's route announcer). `--update-snapshots` without `=all` keeps a baseline that differs by under 1 % of pixels, so an error line could otherwise survive.
+  - **The estimates card has Try again**, like every other load (M14 states audit).
+  - **The iPad/Mac side panel beside the farm is the backlog.** It had still been the M0 "coming soon" placeholder. Capture, tick and the estimate question work there; opening a task goes to Plan for the full sheet. The placeholder component and its strings are removed.
+

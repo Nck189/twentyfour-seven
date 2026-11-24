@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { setPrefs, signIn } from "../helpers/auth";
 import { fixClock } from "../helpers/clock";
 import { rest, userIdFor } from "../helpers/db";
@@ -8,6 +8,17 @@ import { rest, userIdFor } from "../helpers/db";
  * Baselines live in tests/visual/__snapshots__; copies go to screenshots/ for the rubric review.
  */
 const MILESTONE = process.env.QC_MILESTONE ?? "M4";
+
+/**
+ * A baseline must never record an error state (2026-11-24: a local DB behind the migrations put
+ * "Couldn't load your estimates" into the Stats baselines, and a <1 % pixel change kept it there).
+ * Next's route announcer also has role="alert", so it's left out.
+ */
+async function expectNoErrorState(page: Page) {
+  await expect(
+    page.locator('[role="alert"]:not(#__next-route-announcer__)').filter({ visible: true }),
+  ).toHaveCount(0);
+}
 const SCREENS = ["today", "plan", "farm", "stats", "more"] as const;
 const COMBOS = [
   { locale: "en", theme: "light" },
@@ -130,6 +141,7 @@ for (const { locale, theme } of COMBOS) {
       await expect(yard).toBeVisible();
       await page.evaluate(() => document.fonts.ready);
       await page.waitForTimeout(400);
+      await expectNoErrorState(page);
       await yard.screenshot({
         path: `screenshots/${MILESTONE}-yard-${info.project.name}-${locale}-${theme}.png`,
       });
@@ -146,6 +158,7 @@ for (const { locale, theme } of COMBOS) {
         await page.goto(`/${s}`);
         await page.evaluate(() => document.fonts.ready);
         await page.waitForTimeout(400); // let hydration-driven transitions settle
+        await expectNoErrorState(page);
         // Account email differs per run; hide it for stable baselines.
         const mask = s === "more" ? [page.getByText(/@test\.local/)] : [];
         await page.screenshot({
