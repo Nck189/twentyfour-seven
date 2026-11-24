@@ -54,7 +54,11 @@ export type FarmData = {
 const levelOf = (rows: unknown, track: string): number =>
   ((rows as { track: string; level: number }[] | null) ?? []).find((r) => r.track === track)?.level ?? 0;
 
-export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?: number } = {}) {
+/**
+ * `delayMs`: a secondary reader waits this long so the page's own requests go first; `null` waits
+ * until the caller says go (Today: once its own data is in, review fix C3).
+ */
+export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?: number | null } = {}) {
   const client = getSupabase();
   const [data, setData] = useState<FarmData | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -172,6 +176,7 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
           setStatus((s) => (s === "ready" ? s : "error"));
         });
     // A secondary reader (Today's warning line) waits a moment, so the page's own requests go first.
+    if (delayMs === null) return;
     const start = delayMs > 0 ? setTimeout(() => void run(), delayMs) : null;
     if (!start) void run();
     return () => {
