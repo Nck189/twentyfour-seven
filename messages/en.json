@@ -1636,7 +1636,7 @@
     "day": "Day {n}",
     "invites": {
       "title": "Invites",
-      "stateOn": "Invite-only is on: new accounts need an invite link. Accounts made before you turned it on keep their access.",
+      "stateOn": "Invite-only is on: new accounts need an invite link. Accounts made before it was first turned on keep their access.",
       "stateOff": "Invite-only is off: anyone can sign up.",
       "turnOn": "Turn invite-only on",
       "turnOff": "Turn invite-only off",
@@ -1688,7 +1688,6 @@
     "pastePlaceholder": "Paste an invite link",
     "join": "Join",
     "badLink": "That doesn't look like an invite link.",
-    "refused": "That invite can't be used: it's full, turned off, or yours.",
     "networkError": "Couldn't check the invite. Try again.",
     "signOut": "Sign out",
     "cardTitle": "Invite a friend",
@@ -1706,6 +1705,12 @@
     "joinedLabel": "Friends who joined",
     "aFriend": "A friend",
     "paid": "first day done, +1 ticket each",
-    "waiting": "joined, first day to go"
+    "waiting": "joined, first day to go",
+    "refusedFull": "That invite link is full. Ask your friend for another one.",
+    "refusedClosed": "That invite link doesn't work anymore. Ask your friend for a new one.",
+    "refusedOwn": "That's your own invite link. Send it to a friend instead.",
+    "checkFailed": "Couldn't check this invite",
+    "retry": "Try again",
+    "privacy": "Friends who join see only that you invited them. You see only whether they finished their first day."
   }
 }

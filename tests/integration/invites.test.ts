@@ -106,6 +106,9 @@ describe("invites (server)", () => {
 
   it("the switch: off lets everyone in; on lets in invited accounts and accounts made before it", async () => {
     const before = await newUser("inv-before");
+    // The inviter has access before the switch goes on (made before it).
+    const host = await newUser("inv-sw-host");
+    const hostToken = await link(host.client);
     try {
       await setSwitch(false);
       expect((await before.client.rpc("my_access")).data).toMatchObject({
@@ -116,8 +119,7 @@ describe("invites (server)", () => {
       const after = await newUser("inv-after");
       expect((await before.client.rpc("my_access")).data).toMatchObject({ invite_only: true, allowed: true });
       expect((await after.client.rpc("my_access")).data).toMatchObject({ invite_only: true, allowed: false });
-      const host = await newUser("inv-sw-host");
-      await after.client.rpc("claim_invite", { p_token: await link(host.client) });
+      await after.client.rpc("claim_invite", { p_token: hostToken });
       expect((await after.client.rpc("my_access")).data).toMatchObject({ allowed: true });
     } finally {
       await setSwitch(false);
@@ -132,5 +134,53 @@ describe("invites (server)", () => {
     expect((await admin().from("invite_links").select("*").eq("user_id", u.id)).data).toEqual([]);
     const r = await u.client.from("app_config").select("*");
     expect(r.data ?? []).toEqual([]);
+  });
+
+  it("a deleted friend doesn't free their place: the link's room is spent for good (G7 INV F1)", async () => {
+    const host = await newUser("inv-del-host");
+    const token = await link(host.client);
+    const a = await newUser("inv-del-a");
+    const b = await newUser("inv-del-b");
+    await a.client.rpc("claim_invite", { p_token: token });
+    await b.client.rpc("claim_invite", { p_token: token });
+    expect((await a.client.rpc("delete_my_account")).error).toBeNull();
+    const c = await newUser("inv-del-c");
+    expect((await c.client.rpc("claim_invite", { p_token: token })).error?.message).toBe("invite full");
+    expect((await admin().rpc("invite_preview", { p_token: token })).data).toMatchObject({ open: false });
+  });
+
+  it("with the switch on, a gated account of any age can still join through an invite (G7 INV F2)", async () => {
+    const host = await newUser("inv-gated-host");
+    const hostToken = await link(host.client);
+    try {
+      await setSwitch(true, new Date(Date.now() - 86_400_000).toISOString());
+      const old = await newUser("inv-gated-old");
+      // Made after the switch, but over 3 days ago by the time it finds an invite.
+      await admin()
+        .from("profiles")
+        .update({ created_at: new Date(Date.now() - 3_600_000).toISOString() })
+        .eq("user_id", old.id);
+      await setSwitch(true, new Date(Date.now() - 5 * 86_400_000).toISOString());
+      await admin()
+        .from("profiles")
+        .update({ created_at: new Date(Date.now() - 4 * 86_400_000).toISOString() })
+        .eq("user_id", old.id);
+      expect((await old.client.rpc("my_access")).data).toMatchObject({ allowed: false });
+      expect((await old.client.rpc("claim_invite", { p_token: hostToken })).error).toBeNull();
+      expect((await old.client.rpc("my_access")).data).toMatchObject({ allowed: true });
+    } finally {
+      await setSwitch(false);
+    }
+  });
+
+  it("a gated account can't make invite links to let others in (G7 INV F4)", async () => {
+    try {
+      await setSwitch(true, new Date(Date.now() - 60_000).toISOString());
+      const gated = await newUser("inv-gated-link");
+      expect((await gated.client.rpc("my_access")).data).toMatchObject({ allowed: false });
+      expect((await gated.client.rpc("create_invite_link")).error?.message).toBe("no access");
+    } finally {
+      await setSwitch(false);
+    }
   });
 });

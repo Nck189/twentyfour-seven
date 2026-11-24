@@ -11,11 +11,14 @@ import { getSupabase, getUserCached } from "@/lib/supabase/client";
 const OK_KEY = "247-access-ok";
 type State = "checking" | "allowed" | "gated";
 
-/** Claims a kept invite, if any; true when the server took it or it can never apply. */
-async function claim(token: string): Promise<"ok" | "refused" | "network"> {
+type Claim = "ok" | "full" | "closed" | "own" | "network";
+
+/** Claims an invite; the server says why when it can't (G7 INV F2: the reason, not a guess). */
+async function claim(token: string): Promise<Claim> {
   const { error } = await getSupabase().rpc("claim_invite", { p_token: token });
   if (!error) return "ok";
-  return error.code === "P0001" ? "refused" : "network";
+  if (error.code !== "P0001") return "network";
+  return error.message === "invite full" ? "full" : error.message === "own invite" ? "own" : "closed";
 }
 
 /**
@@ -32,10 +35,11 @@ export function InviteGate({ children }: { children: ReactNode }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  const check = async (): Promise<State> => {
+  /** "unknown": the check failed. Nobody is locked out by a failed check (the server still owns
+   *  every reward), but it isn't remembered either, so the next open asks again (G7 INV F5). */
+  const check = async (): Promise<State | "unknown"> => {
     const { data, error } = await getSupabase().rpc("my_access");
-    // A failed check never locks anyone out: the server still owns every reward.
-    if (error) return "allowed";
+    if (error) return "unknown";
     return (data as { allowed: boolean }).allowed ? "allowed" : "gated";
   };
 
@@ -67,7 +71,7 @@ export function InviteGate({ children }: { children: ReactNode }) {
           /* storage blocked */
         }
       }
-      setState(s);
+      setState(s === "unknown" ? "allowed" : s);
     })();
     return () => {
       live = false;
@@ -86,10 +90,18 @@ export function InviteGate({ children }: { children: ReactNode }) {
     setBusy(true);
     setMsg(null);
     const r = await claim(token);
-    if (r === "ok" && (await check()) === "allowed") {
+    if (r === "ok" && (await check()) !== "gated") {
       setState("allowed");
     } else {
-      setMsg(r === "network" ? t("networkError") : t("refused"));
+      setMsg(
+        r === "network" || r === "ok"
+          ? t("networkError")
+          : r === "full"
+            ? t("refusedFull")
+            : r === "own"
+              ? t("refusedOwn")
+              : t("refusedClosed"),
+      );
     }
     setBusy(false);
   };

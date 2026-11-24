@@ -17,7 +17,8 @@ async function adminId(): Promise<string | null> {
  * before it keep their access; turning it off and on again keeps the first stamp.
  */
 export async function setInviteOnly(on: boolean): Promise<boolean> {
-  if (!(await adminId())) return false;
+  const id = await adminId();
+  if (!id) return false;
   const db = adminClient();
   if (!db) return false;
   const cur = await db.from("app_config").select("value").eq("key", "invite_only").maybeSingle();
@@ -25,6 +26,8 @@ export async function setInviteOnly(on: boolean): Promise<boolean> {
   const r = await db
     .from("app_config")
     .upsert({ key: "invite_only", value: { on, since }, updated_at: new Date().toISOString() });
+  // Who changed the switch and when, like every meaningful action (G7 INV F8).
+  if (!r.error) await db.from("events").insert({ user_id: id, type: "invite_only_set", payload: { on } });
   revalidatePath("/admin/retention");
   return !r.error;
 }

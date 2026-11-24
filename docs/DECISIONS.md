@@ -427,8 +427,19 @@ Format: date · decision · why · how to change it
   - **Claiming:** the invite page keeps the token in the browser, and the new account claims it after signing in. Only accounts under 3 days old can claim, so an existing account can't take a friend's place. The inviter's link row is locked while a claim checks the room left, so two friends can't both take the last place.
   - **Paying:** a trigger on `day_results` pays when the friend's day settles as minimum or perfect and was lived (a live check-in or a live "I'm up"), once per friend. The friend's ticket goes through the ledger (`invite_joined`). The inviter is paid directly, because two friends can finish on the same date and the ledger's key is one grant per reason and date.
   - **`app_config` is the first global table.** It isn't per-user, so it isn't exported (`GLOBAL_TABLES`), and no user can read or write it.
+  - **After the G7 review (`docs/qa/REVIEW-INV-review.md`):**
+    - A link's room is a counter that never goes down: a friend who deletes their account doesn't free their place (F1).
+    - A gated account may join through an invite at any age; only accounts that already have access must be new (F2). The gate now says why a link didn't work.
+    - Only an account with access can make an invite link (F4). A failed access check lets the person in for that open but isn't remembered (F5).
+    - Names on the invite page are capped at 30 characters and wrap. A privacy line is on the invite card. Switching invite-only writes an event.
+  - **Accepted for the pilot:**
+    - No self-invite guard (same device or email domain, F3). A second account of your own can use one of your 2 places, which is worth at most 2 tickets per person.
+    - Rewards don't wait for the gate (F4): a gated account can only touch its own data.
+    - An account that already has access and is under 3 days old, and opens a friend's invite link, joins through it (F7). Opening the link is the person's own choice.
   - **Not built yet:**
     - the wake buddy (waits for the pilot);
+    - Share/QR on the invite card, turning a link off without a new one, the `invite_opened` count, and leaving the inviter's internal id out of the friend's export (F9);
+    - a name field: nothing in the app sets `display_name` yet, so invites say "A friend" (F6);
     - the "your friend finished their first day" line on Today (the invite card shows it);
     - the invited-vs-not split on the retention dashboard.
 

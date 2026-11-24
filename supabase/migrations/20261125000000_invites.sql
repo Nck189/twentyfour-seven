@@ -32,6 +32,9 @@ create table public.invite_links (
   token text not null unique check (token ~ '^[0-9a-f]{48}$'),
   -- How many friends may join through it; null = unlimited (Minnie, set from the admin page).
   quota integer default 2 check (quota is null or quota >= 0),
+  -- Friends who joined through it, ever. Never goes down: a friend who deletes their account
+  -- doesn't free their place (G7 INV F1).
+  used integer not null default 0 check (used >= 0),
   active boolean not null default true,
   created_at timestamptz not null default now()
 );
@@ -79,6 +82,10 @@ begin
   if uid is null then
     raise exception 'not authenticated' using errcode = '42501';
   end if;
+  -- A gated account can't let others in (G7 INV F4).
+  if not coalesce((public.my_access() ->> 'allowed')::boolean, false) then
+    raise exception 'no access' using errcode = 'P0001';
+  end if;
   insert into public.invite_links (user_id, token)
   values (uid, encode(extensions.gen_random_bytes(24), 'hex'))
   on conflict (user_id) do update
@@ -103,8 +110,9 @@ as $$
     'token', l.token,
     'active', l.active,
     'quota', l.quota,
+    'used', l.used,
     'joined', coalesce((select jsonb_agg(jsonb_build_object(
-                          'name', coalesce(nullif(p.display_name, ''), null),
+                          'name', nullif(left(p.display_name, 30), ''),
                           'paid', i.paid_on is not null) order by i.joined_at)
                         from public.invites i
                         left join public.profiles p on p.user_id = i.user_id
@@ -123,9 +131,8 @@ security definer
 set search_path = ''
 as $$
   select jsonb_build_object(
-    'name', coalesce(nullif(p.display_name, ''), null),
-    'open', l.active and (l.quota is null
-                          or (select count(*) from public.invites i where i.inviter_id = l.user_id) < l.quota)
+    'name', nullif(left(p.display_name, 30), ''),
+    'open', l.active and (l.quota is null or l.used < l.quota)
   )
   from public.invite_links l
   left join public.profiles p on p.user_id = l.user_id
@@ -146,7 +153,6 @@ as $$
 declare
   uid uuid := auth.uid();
   link public.invite_links;
-  used integer;
   made timestamptz;
 begin
   if uid is null then
@@ -162,15 +168,19 @@ begin
   if link.user_id = uid then
     raise exception 'own invite' using errcode = 'P0001';
   end if;
+  -- An account that already has access joins through an invite only while new (3 days), so an old
+  -- account can't take a friend's place. A gated account (invite-only, no invite yet) may join at
+  -- any age: that's the whole point of the link (G7 INV F2).
   select created_at into made from public.profiles where user_id = uid;
-  if made is null or made < now() - interval '3 days' then
+  if coalesce((public.my_access() ->> 'allowed')::boolean, false)
+     and (made is null or made < now() - interval '3 days') then
     raise exception 'not a new account' using errcode = 'P0001';
   end if;
-  select count(*) into used from public.invites where inviter_id = link.user_id;
-  if link.quota is not null and used >= link.quota then
+  if link.quota is not null and link.used >= link.quota then
     raise exception 'invite full' using errcode = 'P0001';
   end if;
   insert into public.invites (user_id, inviter_id) values (uid, link.user_id);
+  update public.invite_links set used = used + 1 where user_id = link.user_id;
   insert into public.events (user_id, type, payload)
   values (uid, 'invite_claimed', '{}'::jsonb);
   return jsonb_build_object('ok', true, 'already', false);

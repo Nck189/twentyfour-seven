@@ -9,6 +9,8 @@ type Status = {
   token: string;
   active: boolean;
   quota: number | null;
+  /** Friends who ever joined through it (a deleted account doesn't give its place back). */
+  used: number;
   joined: { name: string | null; paid: boolean }[];
 };
 
@@ -49,7 +51,7 @@ export function InviteCard() {
   };
 
   const url = s && s !== "error" ? `${window.location.origin}/i/${s.token}` : null;
-  const left = s && s !== "error" && s.quota !== null ? Math.max(0, s.quota - s.joined.length) : null;
+  const left = s && s !== "error" && s.quota !== null ? Math.max(0, s.quota - s.used) : null;
 
   return (
     <section
@@ -60,7 +62,8 @@ export function InviteCard() {
       <h2 id="invite-title" className="mb-1 text-lg font-bold">
         {t("cardTitle")}
       </h2>
-      <p className="mb-3 text-sm text-muted">{t("cardHint")}</p>
+      <p className="mb-1 text-sm text-muted">{t("cardHint")}</p>
+      <p className="mb-3 text-xs text-muted">{t("privacy")}</p>
       {s === undefined ? (
         <p role="status" className="text-sm text-muted">
           {tc("loading")}
