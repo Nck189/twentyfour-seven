@@ -154,20 +154,3 @@ test("the estimates card: a failed load says so with Try again, which loads it (
   await expect(card).toContainText("After you finish a task");
   await expect(card.getByRole("alert")).toHaveCount(0);
 });
-
-test("iPad/Mac: with the farm in the main column, the side panel is the backlog, and a task captured there is kept", async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await setup(page);
-  await page.goto("/farm");
-  const panel = page.getByRole("complementary");
-  await expect(panel.getByRole("heading", { name: "Backlog" })).toBeVisible();
-  await expect(panel).not.toContainText("coming soon");
-  const capture = panel.getByRole("textbox").first();
-  await capture.fill("Return library books");
-  await capture.press("Enter");
-  await expect(panel).toContainText("Return library books");
-  await page.goto("/plan");
-  await expect(page.getByText("Return library books")).toBeVisible();
-});

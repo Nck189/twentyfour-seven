@@ -17,6 +17,7 @@ export function EstimateCard() {
   const [s, setS] = useState<EstimateSummary | null | "error" | undefined>(undefined);
   // Try again re-runs the read (every failed load offers it, M14 states audit).
   const [attempt, setAttempt] = useState(0);
+  const [busy, setBusy] = useState(false);
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -27,7 +28,10 @@ export function EstimateCard() {
         .eq("status", "done")
         .not("actual_min", "is", null)
         .gt("estimate_min", 0);
-      if (!cancelled) setS(r.error ? "error" : estimateSummary(r.data ?? []));
+      if (!cancelled) {
+        setS(r.error ? "error" : estimateSummary(r.data ?? []));
+        setBusy(false);
+      }
     })();
     return () => {
       cancelled = true;
@@ -44,7 +48,14 @@ export function EstimateCard() {
           <p role="alert" className="text-sm font-bold">
             {t("loadError")}
           </p>
-          <Button variant="secondary" onClick={() => setAttempt((n) => n + 1)}>
+          <Button
+            variant="secondary"
+            disabled={busy}
+            onClick={() => {
+              setBusy(true);
+              setAttempt((n) => n + 1);
+            }}
+          >
             {tc("retry")}
           </Button>
         </div>

@@ -14,7 +14,7 @@ import {
 } from "@/lib/game";
 import { QUIET_RETRY_MS } from "@/lib/supabase/fetchWithTimeout";
 import { getSupabase } from "@/lib/supabase/client";
-import { notifyWalletChange } from "@/lib/market/changes";
+import { notifyWalletChange, onWalletChange } from "@/lib/market/changes";
 import { addDays } from "@/lib/time";
 import { loadDayContext } from "@/lib/today/loadContext";
 import { currentBlock, currentDayDate, timelineFor } from "@/lib/today/day";
@@ -179,6 +179,9 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
       if (start) clearTimeout(start);
     };
   }, [client, reload, delayMs]);
+
+  // Coins earned elsewhere on this page (a task ticked beside the farm) refresh the balance.
+  useEffect(() => onWalletChange(() => setReload((r) => r + 1)), []);
 
   // Planting/harvest on another device shows here too.
   useEffect(() => {

@@ -288,6 +288,7 @@
       "spotFree": "Move to spot {n}",
       "spotSwap": "Move to spot {n} (swaps with {item})",
       "here": "Here now",
+      "spotHere": "Spot {n}: here now",
       "putAway": "Put away",
       "placeHere": "Place here",
       "placeItem": "Place {item} in spot {n}",

@@ -412,5 +412,9 @@ Format: date · decision · why · how to change it
   - **The local DB preflight.** Playwright's global setup compares `supabase_migrations.schema_migrations` in the local database with `supabase/migrations`. It stops with "run `npx supabase migration up`" when the database is behind, because `supabase start` reuses an existing local database without applying new migrations. That's how Mac baselines came to record 404/400 error states (#35). If Docker can't be read, it warns and goes on.
   - **Visual shots fail on a visible error** (`role="alert"`, except Next's route announcer). `--update-snapshots` without `=all` keeps a baseline that differs by under 1 % of pixels, so an error line could otherwise survive.
   - **The estimates card has Try again**, like every other load (M14 states audit).
-  - **The iPad/Mac side panel beside the farm is the backlog.** It had still been the M0 "coming soon" placeholder. Capture, tick and the estimate question work there; opening a task goes to Plan for the full sheet. The placeholder component and its strings are removed.
+  - **The iPad/Mac side panel beside the farm is Plan, with the backlog.** It had still been the M0 "coming soon" placeholder. A backlog-only panel was tried first. The G7 review failed it: a dated task vanished from it, a task couldn't be opened, and the Shop next to it kept the old coin balance. So the panel is the whole Plan screen at h2 level, with its day cards, task sheet and Move to….
+    - Finishing a task now sends the existing wallet-changed signal, so the farm's Shop and coins beside it update.
+    - The placeholder component and its strings are removed.
+  - **Visitors keep clear of Som and come by day only.** Butterflies hover over the item columns, and birds walk the front row's gaps except the one Som sits in.
+  - **The picker's cells show their spot numbers**, matching their labels ("Spot 3: here now").
 

@@ -9,7 +9,7 @@ import { Sheet } from "@/components/today/BlockSheet";
 import { Button } from "@/components/ui/Button";
 import { YARD_SPOTS } from "@/content/yard";
 import type { YardItem } from "@/lib/farm/useFarm";
-import { somSpotOfDay, visitors } from "@/lib/game/yard";
+import { somSpotOfDay, visitorPlaces, visitors } from "@/lib/game/yard";
 import { sfx } from "@/lib/sound/sfx";
 import { usePrefs } from "@/lib/store/prefs";
 
@@ -46,7 +46,8 @@ export function Yard({
     placed.map((i) => i.spot!),
     today,
   );
-  const guests = visitors(placed.length);
+  // Butterflies and birds come by day; at night the yard is quiet (G7 TS S4-7).
+  const guests = visitorPlaces(som, night ? { butterflies: 0, birds: 0 } : visitors(placed.length));
   const editable = Boolean(onPlace && onStore);
   if (items.length === 0) return null;
 
@@ -119,22 +120,22 @@ export function Yard({
           );
         })}
         {/* Visitors: cosmetic, still under reduced motion and "Skip animations". */}
-        {Array.from({ length: guests.butterflies }, (_, i) => (
+        {guests.butterflies.map((x, i) => (
           <span
             key={`b${i}`}
             aria-hidden="true"
-            className={`pointer-events-none absolute ${skip ? "" : "visitor-drift"}`}
-            style={{ left: `${20 + i * 27}%`, top: `${10 + (i % 2) * 18}%`, animationDelay: `${i * 0.9}s` }}
+            className={`pointer-events-none absolute -translate-x-1/2 ${skip ? "" : "visitor-drift"}`}
+            style={{ left: `${x * 100}%`, top: "0%", animationDelay: `${i * 0.9}s` }}
           >
             <ButterflyArt className="h-5 w-5" tint={i % 2 ? "sun" : "pink"} />
           </span>
         ))}
-        {Array.from({ length: guests.birds }, (_, i) => (
+        {guests.birds.map((x, i) => (
           <span
             key={`r${i}`}
             aria-hidden="true"
-            className="pointer-events-none absolute"
-            style={{ left: `${25 + i * 25}%`, top: "78%" }}
+            className="pointer-events-none absolute -translate-x-1/2"
+            style={{ left: `${x * 100}%`, top: "78%" }}
           >
             <BirdArt className="h-5 w-5" />
           </span>
@@ -183,12 +184,14 @@ export function Yard({
                       type="button"
                       disabled={busy || here}
                       aria-label={
-                        there && !here
-                          ? t("spotSwap", { n: spot, item: names(there.item) })
-                          : t("spotFree", { n: spot })
+                        here
+                          ? t("spotHere", { n: spot })
+                          : there
+                            ? t("spotSwap", { n: spot, item: names(there.item) })
+                            : t("spotFree", { n: spot })
                       }
                       onClick={() => void act(() => onPlace!(open.item.id, spot))}
-                      className={`tap flex min-h-16 flex-col items-center justify-center rounded-xl text-[11px] font-bold ${
+                      className={`tap relative flex min-h-16 flex-col items-center justify-center rounded-xl text-[11px] font-bold ${
                         here
                           ? "bg-primary-soft text-primary ring-2 ring-[var(--ui-primary)]"
                           : there
@@ -196,6 +199,10 @@ export function Yard({
                             : "border-2 border-dashed border-[var(--ui-border)] bg-transparent text-muted"
                       }`}
                     >
+                      {/* the spot's number, as its label reads (G7 TS S4-1) */}
+                      <span aria-hidden="true" className="absolute left-1.5 top-1 text-[10px] text-muted">
+                        {spot}
+                      </span>
                       {Art ? <Art className="h-9 w-9" /> : <span aria-hidden="true">+</span>}
                       {here && <span>{t("here")}</span>}
                     </button>

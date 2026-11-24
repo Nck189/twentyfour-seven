@@ -15,6 +15,8 @@ const MILESTONE = process.env.QC_MILESTONE ?? "M4";
  * Next's route announcer also has role="alert", so it's left out.
  */
 async function expectNoErrorState(page: Page) {
+  // After the page's reads settle, so a late failure is caught too (G7 TS S3-4).
+  await page.waitForLoadState("networkidle").catch(() => undefined);
   await expect(
     page.locator('[role="alert"]:not(#__next-route-announcer__)').filter({ visible: true }),
   ).toHaveCount(0);
@@ -40,6 +42,7 @@ for (const { locale, theme } of COMBOS) {
       await page.screenshot({
         path: `screenshots/${MILESTONE}-login-${info.project.name}-${locale}-${theme}.png`,
       });
+      await expectNoErrorState(page);
       await expect(page).toHaveScreenshot(`login-${locale}-${theme}.png`);
     });
 
@@ -63,6 +66,7 @@ for (const { locale, theme } of COMBOS) {
         await page.screenshot({
           path: `screenshots/${MILESTONE}-${name}-${info.project.name}-${locale}-${theme}.png`,
         });
+        await expectNoErrorState(page);
         await expect(page).toHaveScreenshot(`${name}-${locale}-${theme}.png`, {
           mask: [page.getByRole("button", { name: /\(\d+/ })],
         });
@@ -73,6 +77,7 @@ for (const { locale, theme } of COMBOS) {
       await page.screenshot({
         path: `screenshots/${MILESTONE}-404-${info.project.name}-${locale}-${theme}.png`,
       });
+      await expectNoErrorState(page);
       await expect(page).toHaveScreenshot(`404-${locale}-${theme}.png`);
     });
 
@@ -88,12 +93,14 @@ for (const { locale, theme } of COMBOS) {
       await page.screenshot({
         path: `screenshots/${MILESTONE}-night-close-${info.project.name}-${locale}-${theme}.png`,
       });
+      await expectNoErrorState(page);
       await expect(page).toHaveScreenshot(`night-close-${locale}-${theme}.png`);
       await page.getByRole("button", { name: locale === "th" ? "ถัดไป" : "Next" }).click();
       await page.waitForTimeout(600);
       await page.screenshot({
         path: `screenshots/${MILESTONE}-night-plan-${info.project.name}-${locale}-${theme}.png`,
       });
+      await expectNoErrorState(page);
       await expect(page).toHaveScreenshot(`night-plan-${locale}-${theme}.png`);
       await page.getByRole("button", { name: locale === "th" ? "ปิด" : "Close", exact: true }).click();
       await page.goto("/plan");
@@ -101,6 +108,7 @@ for (const { locale, theme } of COMBOS) {
       await page.screenshot({
         path: `screenshots/${MILESTONE}-plan-week-${info.project.name}-${locale}-${theme}.png`,
       });
+      await expectNoErrorState(page);
       await expect(page).toHaveScreenshot(`plan-week-${locale}-${theme}.png`);
     });
 
@@ -117,6 +125,7 @@ for (const { locale, theme } of COMBOS) {
       await page.screenshot({
         path: `screenshots/${MILESTONE}-capsules-${info.project.name}-${locale}-${theme}.png`,
       });
+      await expectNoErrorState(page);
       await expect(page).toHaveScreenshot(`capsules-${locale}-${theme}.png`);
       await page.getByRole("button", { name: locale === "th" ? "ปิด" : "Close", exact: true }).click();
       await page.getByRole("button", { name: locale === "th" ? /^สมุดเมล็ด/ : /^Seed-dex/ }).click();
@@ -124,6 +133,7 @@ for (const { locale, theme } of COMBOS) {
       await page.screenshot({
         path: `screenshots/${MILESTONE}-seeddex-${info.project.name}-${locale}-${theme}.png`,
       });
+      await expectNoErrorState(page);
       await expect(page).toHaveScreenshot(`seeddex-${locale}-${theme}.png`);
     });
 
@@ -165,6 +175,7 @@ for (const { locale, theme } of COMBOS) {
           path: `screenshots/${MILESTONE}-${s}-${info.project.name}-${locale}-${theme}.png`,
           mask,
         });
+        await expectNoErrorState(page);
         await expect(page).toHaveScreenshot(`${s}-${locale}-${theme}.png`, { mask });
       }
     });

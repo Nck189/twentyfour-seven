@@ -54,7 +54,8 @@ const collision: CollisionDetection = (args) => {
  * and overridden without touching templates; backlog items are dragged onto a day (or, on wide
  * screens, a block), with "Move to…" in the item sheet as the tap fallback.
  */
-export function PlanScreen() {
+/** `aside`: shown in the iPad/Mac side panel beside the farm, so its heading is an h2. */
+export function PlanScreen({ aside = false }: { aside?: boolean } = {}) {
   const t = useTranslations("plan");
   const tt = useTranslations("templates");
   const tc = useTranslations("common");
@@ -89,7 +90,7 @@ export function PlanScreen() {
   if (plan.status === "error") {
     return (
       <>
-        <ScreenHeader title={t("title")} />
+        <ScreenHeader title={t("title")} level={aside ? 2 : 1} />
         <div
           role="alert"
           className="mx-4 flex flex-col items-start gap-3 rounded-[var(--radius-lg)] bg-accent-soft p-4 text-accent lg:mx-6"
@@ -105,7 +106,7 @@ export function PlanScreen() {
   if (plan.status === "loading" || !plan.ctx || !plan.today) {
     return (
       <>
-        <ScreenHeader title={t("title")} />
+        <ScreenHeader title={t("title")} level={aside ? 2 : 1} />
         <p role="status" className="px-4 text-muted lg:px-6">
           {tc("loading")}
         </p>
@@ -194,6 +195,7 @@ export function PlanScreen() {
     >
       <ScreenHeader
         title={t("title")}
+        level={aside ? 2 : 1}
         action={
           <button
             type="button"

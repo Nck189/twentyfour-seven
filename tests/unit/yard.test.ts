@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { YARD_SIZE, YARD_SPOTS } from "@/content/yard";
-import { somSpotOfDay, visitors } from "@/lib/game/yard";
+import { somGap, somSpotOfDay, visitorPlaces, visitors } from "@/lib/game/yard";
 
 describe("farm yard rules (docs/FARM_YARD_PLAN.md)", () => {
   it("8 spots, numbered 1–8, inside the scene", () => {
@@ -42,5 +42,15 @@ describe("farm yard rules (docs/FARM_YARD_PLAN.md)", () => {
     expect(visitors(3)).toEqual({ butterflies: 2, birds: 0 });
     expect(visitors(6)).toEqual({ butterflies: 3, birds: 2 });
     expect(visitors(8)).toEqual({ butterflies: 3, birds: 2 });
+  });
+  it("visitors never stand on Som, whichever spot he picks (G7 TS S3-3)", () => {
+    for (let spot = 1; spot <= 8; spot++) {
+      const som = somGap(spot)!;
+      const at = visitorPlaces(spot, { butterflies: 3, birds: 2 });
+      expect(at.birds).toHaveLength(2);
+      expect(at.butterflies).toHaveLength(3);
+      for (const b of at.butterflies) expect(Math.abs(b - som.x)).toBeGreaterThan(0.1);
+      if (som.front) for (const b of at.birds) expect(Math.abs(b - som.x)).toBeGreaterThan(0.1);
+    }
   });
 });

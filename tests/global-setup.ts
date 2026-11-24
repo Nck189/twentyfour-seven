@@ -10,7 +10,7 @@ export default async function globalSetup() {
   const { IS_PROD_RUN, PROD_SMOKE_EMAIL, SB_SERVICE_KEY, SB_URL } = await import("./helpers/env");
   if (!IS_PROD_RUN) {
     const { assertLocalDbCurrent } = await import("./helpers/localDb");
-    assertLocalDbCurrent();
+    assertLocalDbCurrent(SB_URL);
     return;
   }
   const res = await fetch(`${SB_URL}/auth/v1/admin/users`, {
