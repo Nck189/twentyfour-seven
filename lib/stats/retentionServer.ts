@@ -50,3 +50,19 @@ export async function loadRetention(now: Date): Promise<{ cohorts: Cohort[]; use
   }));
   return { cohorts: retention(users, active, localDate(now, "Asia/Bangkok")), users: users.length };
 }
+
+/** The invite-only switch and whether the admin's own link is unlimited; null unless an admin. */
+export async function loadInviteAdmin(): Promise<{ on: boolean; unlimited: boolean } | null> {
+  const { data } = await (await getServerSupabase()).auth.getUser();
+  if (!isAdminEmail(data.user?.email) || !data.user) return null;
+  const db = adminClient();
+  if (!db) return null;
+  const [cfg, link] = await Promise.all([
+    db.from("app_config").select("value").eq("key", "invite_only").maybeSingle(),
+    db.from("invite_links").select("quota").eq("user_id", data.user.id).maybeSingle(),
+  ]);
+  return {
+    on: Boolean((cfg.data?.value as { on?: boolean } | undefined)?.on),
+    unlimited: Boolean(link.data) && link.data?.quota === null,
+  };
+}

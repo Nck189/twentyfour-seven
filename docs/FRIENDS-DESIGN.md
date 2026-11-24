@@ -1,6 +1,13 @@
 # Friends: design (Phase E, docs/REVIEW_FIX_PLAN.md)
 
-**Status:** design for Minnie's OK. Nothing here is built yet. The plan says to build only after the pilot (10–20 friends) shows that people stay, so read `/admin/retention` first (§6).
+**Status (2026-11-24):** Minnie approved the invite part with changes (below), and it is built (migration `20261125000000_invites.sql`). The wake buddy (§2) waits for the pilot.
+
+**Minnie's decisions (2026-11-24):**
+- **Invite-only during the pilot, with a switch.** Without an invite link, a new account can't use the app. Minnie turns it on or off on `/admin/retention`, and accounts made before it was turned on keep their access.
+- **Two invites per person.** Minnie's own link has no limit (a button on the admin page).
+- **Reward:** 1 capsule ticket each, when the friend finishes their first lived minimum day.
+
+The caps of 5 a week and 20 in total in §1 are replaced by the per-person limit of 2. The original text below is kept for the record. The plan says to build only after the pilot (10–20 friends) shows that people stay, so read `/admin/retention` first (§6).
 
 **Why:** the review's biggest gap is that nothing in 24/7 is done with or for another person. Sharing free time (M12) is the only link to someone else, and it doesn't need the other person to have an account. SPEC §11 still rules out a social feed, friends' farms and leaderboards. This design keeps to that: two small, private ways to involve one friend, and nothing public.
 

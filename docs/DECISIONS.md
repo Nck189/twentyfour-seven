@@ -417,4 +417,18 @@ Format: date · decision · why · how to change it
     - The placeholder component and its strings are removed.
   - **Visitors keep clear of Som and come by day only.** Butterflies hover over the item columns, and birds walk the front row's gaps except the one Som sits in.
   - **The picker's cells show their spot numbers**, matching their labels ("Spot 3: here now").
+- 2026-11-24 · **Invites, invite-only for the pilot** (Phase E part 1, `docs/FRIENDS-DESIGN.md`, migration 20261125000000)
+  - **Minnie's choices:**
+    - invite-only with an on/off switch on `/admin/retention`;
+    - 2 invites per person, unlimited for her own link;
+    - 1 ticket each when the friend finishes their first lived minimum day.
+  - **Who gets in while it's on:** accounts that joined through an invite, and accounts made before the switch was first turned on (`since` is stamped once). Everyone else sees "24/7 is invite-only for now", with a box to paste an invite link and a way to sign out.
+  - **The check is cheap:** `my_access` runs once per account per browser, then it's remembered. While it runs, the app shows as usual: nearly everyone is allowed, and no reward depends on it. If the check fails, nobody is locked out.
+  - **Claiming:** the invite page keeps the token in the browser, and the new account claims it after signing in. Only accounts under 3 days old can claim, so an existing account can't take a friend's place. The inviter's link row is locked while a claim checks the room left, so two friends can't both take the last place.
+  - **Paying:** a trigger on `day_results` pays when the friend's day settles as minimum or perfect and was lived (a live check-in or a live "I'm up"), once per friend. The friend's ticket goes through the ledger (`invite_joined`). The inviter is paid directly, because two friends can finish on the same date and the ledger's key is one grant per reason and date.
+  - **`app_config` is the first global table.** It isn't per-user, so it isn't exported (`GLOBAL_TABLES`), and no user can read or write it.
+  - **Not built yet:**
+    - the wake buddy (waits for the pilot);
+    - the "your friend finished their first day" line on Today (the invite card shows it);
+    - the invited-vs-not split on the retention dashboard.
 
