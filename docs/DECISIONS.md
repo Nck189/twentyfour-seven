@@ -442,4 +442,5 @@ Format: date · decision · why · how to change it
     - a name field: nothing in the app sets `display_name` yet, so invites say "A friend" (F6);
     - the "your friend finished their first day" line on Today (the invite card shows it);
     - the invited-vs-not split on the retention dashboard.
+  - **Today reads the farm just after its own data, not on a fixed 2 s timer.** The timer started the read after the page had gone quiet. On Mac WebKit in CI, a test that left Today at that moment cut the read off ("internal error"), and three Mac tests failed that way (CJ-14, tips, CJ-10). A test-side wait in `settle()` fixed it but added ~2 s per test and pushed CI past its 45-minute limit. Now the read starts 250 ms after Today's data is in: Today's own reads still go first, the strip shows sooner, and a network-idle wait covers it.
 

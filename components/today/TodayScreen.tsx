@@ -90,9 +90,11 @@ export function TodayScreen() {
   const onboarding = useOnboardingState();
   const setup = useSetupRewards();
   const tb = useTranslations("blocks");
-  // The farm, read once a little after Today's own data (no live updates): the strip on phones
-  // and the "one miss from dying" line share this one load (review fix C3).
-  const farm = useFarm({ live: false, delayMs: 2000 });
+  // The farm, read once just after Today's own data is in (no live updates): the strip on phones
+  // and the "one miss from dying" line share this one load (review fix C3). It used to wait a fixed
+  // 2 s, which started it after the page had gone quiet: the strip showed late, and a test leaving
+  // Today then could cut the read off (WebKit "internal error" on CI, #35/#36).
+  const farm = useFarm({ live: false, delayMs: today.status === "loading" ? null : 250 });
   // A failed save makes one low, short note, once per failure (review fix F1).
   const savesFailed = useRef(today.saveError);
   useEffect(() => {
