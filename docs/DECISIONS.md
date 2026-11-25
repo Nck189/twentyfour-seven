@@ -403,3 +403,19 @@ Format: date · decision · why · how to change it
   - **Tests that came along:**
     - a visual shot of the farm yard (Phase G had none), which gets its baselines when Minnie next records them;
     - the language-toggle test (CJ-14) gets Playwright's slow-test budget, because against prod it opens every screen in Thai over the network and once took the full 30 s (qc:prod 2026-11-23).
+- 2026-11-24 · **The yard in two rows; tests that stop on a stale local DB; the backlog beside the farm**
+  - **Yard layout (Minnie: "the decor is arranged confusingly").** The 8 spots were a zigzag: spot 1 back-left, spot 2 back-right, spot 3 front-left, and so on. New items appeared all over the place, and "Move to…" listed only numbers. Now:
+    - two even rows of 4, numbered in reading order, which is also the order new items fill them;
+    - "Move to…" is a small map in the same 4 × 2 layout, showing each item's picture, with the current spot highlighted and empty spots dashed.
+
+    Spot numbers in the database are unchanged, so no migration: existing items just stand in the tidier places.
+  - **The local DB preflight.** Playwright's global setup compares `supabase_migrations.schema_migrations` in the local database with `supabase/migrations`. It stops with "run `npx supabase migration up`" when the database is behind, because `supabase start` reuses an existing local database without applying new migrations. That's how Mac baselines came to record 404/400 error states (#35). If Docker can't be read, it warns and goes on.
+  - **Visual shots fail on a visible error** (`role="alert"`, except Next's route announcer). `--update-snapshots` without `=all` keeps a baseline that differs by under 1 % of pixels, so an error line could otherwise survive.
+  - **The estimates card has Try again**, like every other load (M14 states audit).
+  - **The iPad/Mac side panel beside the farm is Plan, with the backlog.** It had still been the M0 "coming soon" placeholder. A backlog-only panel was tried first. The G7 review failed it: a dated task vanished from it, a task couldn't be opened, and the Shop next to it kept the old coin balance. So the panel is the whole Plan screen at h2 level, with its day cards, task sheet and Move to….
+    - Finishing a task now sends the existing wallet-changed signal, so the farm's Shop and coins beside it update.
+    - The placeholder component and its strings are removed.
+  - **Visitors keep clear of Som and come by day only.** Butterflies hover over the item columns, and birds walk the front row's gaps except the one Som sits in.
+  - **The picker's cells show their spot numbers**, matching their labels ("Spot 3: here now").
+  - **Today reads the farm just after its own data, not on a fixed 2 s timer.** The timer started the read after the page had gone quiet. On Mac WebKit in CI, a test that left Today at that moment cut the read off ("internal error"), and three Mac tests failed that way (CJ-14, tips, CJ-10). A test-side wait in `settle()` fixed it but added ~2 s per test and pushed CI past its 45-minute limit. Now the read starts 250 ms after Today's data is in: Today's own reads still go first, the strip shows sooner, and a network-idle wait covers it.
+

@@ -9,7 +9,7 @@ import { Sheet } from "@/components/today/BlockSheet";
 import { Button } from "@/components/ui/Button";
 import { YARD_SPOTS } from "@/content/yard";
 import type { YardItem } from "@/lib/farm/useFarm";
-import { somSpotOfDay, visitors } from "@/lib/game/yard";
+import { somSpotOfDay, visitorPlaces, visitors } from "@/lib/game/yard";
 import { sfx } from "@/lib/sound/sfx";
 import { usePrefs } from "@/lib/store/prefs";
 
@@ -46,7 +46,8 @@ export function Yard({
     placed.map((i) => i.spot!),
     today,
   );
-  const guests = visitors(placed.length);
+  // Butterflies and birds come by day; at night the yard is quiet (G7 TS S4-7).
+  const guests = visitorPlaces(som, night ? { butterflies: 0, birds: 0 } : visitors(placed.length));
   const editable = Boolean(onPlace && onStore);
   if (items.length === 0) return null;
 
@@ -66,11 +67,12 @@ export function Yard({
       <section
         aria-label={t("title")}
         data-yard
-        className={`relative h-28 overflow-hidden ${night ? "bg-[var(--sky-night-bottom)]" : "bg-[var(--art-leaf-light)]"}`}
+        className={`relative h-32 overflow-hidden ${night ? "bg-[var(--sky-night-bottom)]" : "bg-[var(--art-leaf-light)]"}`}
       >
         {YARD_SPOTS.map(({ spot, x, y }) => {
           const item = at(spot);
-          const style = { left: `${x * 100}%`, top: `${8 + y * 64}%` };
+          // Two rows: the back row near the top of the band, the front row near the bottom.
+          const style = { left: `${x * 100}%`, top: `${4 + y * 56}%` };
           if (!item) {
             // An empty spot shows only when there's something in storage to put there.
             if (!editable || stored.length === 0) return null;
@@ -118,22 +120,22 @@ export function Yard({
           );
         })}
         {/* Visitors: cosmetic, still under reduced motion and "Skip animations". */}
-        {Array.from({ length: guests.butterflies }, (_, i) => (
+        {guests.butterflies.map((x, i) => (
           <span
             key={`b${i}`}
             aria-hidden="true"
-            className={`pointer-events-none absolute ${skip ? "" : "visitor-drift"}`}
-            style={{ left: `${20 + i * 27}%`, top: `${10 + (i % 2) * 18}%`, animationDelay: `${i * 0.9}s` }}
+            className={`pointer-events-none absolute -translate-x-1/2 ${skip ? "" : "visitor-drift"}`}
+            style={{ left: `${x * 100}%`, top: "0%", animationDelay: `${i * 0.9}s` }}
           >
             <ButterflyArt className="h-5 w-5" tint={i % 2 ? "sun" : "pink"} />
           </span>
         ))}
-        {Array.from({ length: guests.birds }, (_, i) => (
+        {guests.birds.map((x, i) => (
           <span
             key={`r${i}`}
             aria-hidden="true"
-            className="pointer-events-none absolute"
-            style={{ left: `${44 + i * 14}%`, top: "62%" }}
+            className="pointer-events-none absolute -translate-x-1/2"
+            style={{ left: `${x * 100}%`, top: "78%" }}
           >
             <BirdArt className="h-5 w-5" />
           </span>
@@ -170,26 +172,39 @@ export function Yard({
           {"item" in open ? (
             <>
               <p className="mb-2 text-sm font-bold">{t("moveTo")}</p>
+              {/* A map of the yard: the same 4 × 2 layout, back row on top, with what stands where. */}
               <div className="mb-3 grid grid-cols-4 gap-2" role="group" aria-label={t("moveTo")}>
                 {YARD_SPOTS.map(({ spot }) => {
                   const there = at(spot);
                   const here = open.item.spot === spot;
+                  const Art = there ? DECOR_ART[there.item] : null;
                   return (
                     <button
                       key={spot}
                       type="button"
                       disabled={busy || here}
                       aria-label={
-                        there && !here
-                          ? t("spotSwap", { n: spot, item: names(there.item) })
-                          : t("spotFree", { n: spot })
+                        here
+                          ? t("spotHere", { n: spot })
+                          : there
+                            ? t("spotSwap", { n: spot, item: names(there.item) })
+                            : t("spotFree", { n: spot })
                       }
                       onClick={() => void act(() => onPlace!(open.item.id, spot))}
-                      className="tap flex min-h-12 flex-col items-center justify-center rounded-xl bg-surface-2 text-xs font-bold disabled:opacity-50"
+                      className={`tap relative flex min-h-16 flex-col items-center justify-center rounded-xl text-[11px] font-bold ${
+                        here
+                          ? "bg-primary-soft text-primary ring-2 ring-[var(--ui-primary)]"
+                          : there
+                            ? "bg-surface-2"
+                            : "border-2 border-dashed border-[var(--ui-border)] bg-transparent text-muted"
+                      }`}
                     >
-                      {t("spot", { n: spot })}
-                      {there && !here && <span className="font-normal text-muted">{names(there.item)}</span>}
-                      {here && <span className="font-normal text-muted">{t("here")}</span>}
+                      {/* the spot's number, as its label reads (G7 TS S4-1) */}
+                      <span aria-hidden="true" className="absolute left-1.5 top-1 text-[10px] text-muted">
+                        {spot}
+                      </span>
+                      {Art ? <Art className="h-9 w-9" /> : <span aria-hidden="true">+</span>}
+                      {here && <span>{t("here")}</span>}
                     </button>
                   );
                 })}

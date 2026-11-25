@@ -141,6 +141,21 @@ export async function settle(page: Page) {
   await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
 }
 
+/**
+ * Today reads the farm 2 s after its own data (on purpose, for speed), which starts after the
+ * network has gone idle once. A test that leaves Today right after landing on it waits for that
+ * read too (CI #35: CJ-14 on Mac WebKit hit "internal error" mid-read). Only where needed: in
+ * `settle()` it cost every test ~2 s and pushed CI past its 45-minute limit (#36).
+ */
+export async function settleToday(page: Page) {
+  await settle(page);
+  const waiting = page.locator('[data-farm-strip="waiting"]');
+  if ((await waiting.count()) > 0) {
+    await waiting.waitFor({ state: "detached", timeout: 10_000 }).catch(() => {});
+    await settle(page);
+  }
+}
+
 export async function setPrefs(
   page: Page,
   prefs: { locale?: "en" | "th"; theme?: "light" | "dark" | "system"; animations?: boolean },

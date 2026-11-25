@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { notifyWalletChange } from "@/lib/market/changes";
 import type { BlockKey } from "@/content/blocks";
 import { logEvent } from "@/lib/db/events";
 import { getSupabase } from "@/lib/supabase/client";
@@ -159,7 +160,10 @@ export function useBacklog(userId: string | null) {
       }
       setError(false);
       void logEvent("backlog_item_done", { id });
-      return (data as { coins_granted: number }).coins_granted;
+      const coins = (data as { coins_granted: number }).coins_granted;
+      // The farm Shop and coin counts beside it (iPad/Mac side panel) reload (G7 TS S2-3).
+      if (coins > 0) notifyWalletChange();
+      return coins;
     },
     [client, show],
   );

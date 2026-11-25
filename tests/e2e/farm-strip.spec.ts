@@ -116,12 +116,17 @@ test("G7 F2 S3-4: Som in Today's header follows the block; the header fits 390 p
   }
 });
 
-test("F4: until the farm arrives (2 s after Today), the strip is an empty field in the block's sky, not a blank card", async ({
+test("F4: until the farm arrives (just after Today's data), the strip is an empty field in the block's sky, not a blank card", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 375, height: 760 });
   await setPrefs(page, { locale: "en", theme: "light" });
   await signIn(page, uniqueEmail("strip-wait"));
+  // The farm is read just after Today's own data; hold that read back so the waiting field shows.
+  await page.route(/\/rest\/v1\/plots/, async (route) => {
+    await new Promise((r) => setTimeout(r, 1500));
+    await route.fallback();
+  });
   await page.goto("/today");
   const waiting = page.locator('[data-farm-strip="waiting"]');
   await expect(waiting).toBeVisible();

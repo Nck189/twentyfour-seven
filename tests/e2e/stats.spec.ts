@@ -137,3 +137,20 @@ test("review A5: a week with nothing logged doesn't offer the share picture", as
   await expect(page.getByRole("region", { name: "Your estimates vs real time" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Share my week" })).toHaveCount(0);
 });
+
+test("the estimates card: a failed load says so with Try again, which loads it (visual baselines 2026-11-24)", async ({
+  page,
+}) => {
+  let fail = true;
+  await page.route(/\/rest\/v1\/backlog_items\?select=estimate_min/, (route) =>
+    fail ? route.fulfill({ status: 500, body: "{}" }) : route.fallback(),
+  );
+  await setup(page);
+  await page.goto("/stats");
+  const card = page.getByRole("region", { name: "Your estimates vs real time" });
+  await expect(card).toContainText("Couldn't load your estimates.");
+  fail = false;
+  await card.getByRole("button", { name: "Try again" }).click();
+  await expect(card).toContainText("After you finish a task");
+  await expect(card.getByRole("alert")).toHaveCount(0);
+});

@@ -3,11 +3,11 @@
 Minnie: "decor feels pointless: it only lines up in a strip below the farm, and it can't be moved or removed." She chose the full redesign. Decor gets **places on the farm**, can be **moved** and **put away**, and gets **small reasons to buy** that never touch crops, tickets or coins.
 
 ## Rules
-- **Spots.** The yard is a band below the plots with 8 fixed spots, each a position in `content/yard.ts`. One decor item per spot.
+- **Spots.** The yard is a band below the plots with 8 fixed spots in two rows of 4 (`content/yard.ts`), numbered in reading order: the back row, then the front, each left to right. New decor fills them in that order. One decor item per spot.
 - **Storage.** A decor row has a `spot` (1–8) or none (in storage). Nothing is ever deleted: putting an item away keeps it, and placing it again is free.
 - **Buying.** A new item goes to the first free spot, or to storage when the yard is full. Earned decor (unlock ladder, story gifts) works the same way.
 - **Moving.**
-  - Tap a placed item: **Move to…** (pick a spot; an item already there swaps back to where the first one came from) or **Put away**.
+  - Tap a placed item: **Move to…** (pick a spot on a small map of the yard that shows what stands where; an item already there swaps back to where the first one came from) or **Put away**.
   - Tap an item in storage: pick a spot.
   - Drag-and-drop is not built yet (DECISIONS 2026-11-23): **Move to…** is one tap away.
 - **Server-side.** Placing, moving and storing are security-definer RPCs that check `auth.uid()` and owner, and that spots are 1–8 and free (or swapped). The client never writes `decor` directly.

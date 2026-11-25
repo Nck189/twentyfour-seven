@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { expectNoHorizontalScroll, expectNoSeriousA11y, expectTouchTargets } from "../helpers/a11y";
-import { setPrefs, settle, signIn } from "../helpers/auth";
+import { setPrefs, settle, settleToday, signIn } from "../helpers/auth";
 import { fixClock } from "../helpers/clock";
 import { rest, userIdFor } from "../helpers/db";
 import { IS_PROD_RUN } from "../helpers/env";
@@ -80,6 +80,7 @@ test.describe("app shell", () => {
     // It opens every screen in Thai; against prod over the network that can pass the 30 s default
     // (qc:prod 2026-11-23 took 30 s, its retry 19 s), so it gets the slow-test budget.
     test.slow();
+    await settleToday(page); // leaves Today right after landing (CI #35, Mac WebKit)
     await page.goto("/more/preferences");
     await settle(page); // More answers taps only once it is interactive (slow WebKit)
     await page.getByRole("radio", { name: "ไทย" }).click();

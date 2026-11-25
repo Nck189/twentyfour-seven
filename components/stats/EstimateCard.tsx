@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { estimateSummary, MIN_TASKS, type EstimateSummary } from "@/lib/stats/estimates";
 import { getSupabase } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/Button";
 
 /**
  * Estimates vs real time (M14, SPEC §9 planning-fallacy analytics), in plain words: how much
@@ -12,7 +13,11 @@ import { getSupabase } from "@/lib/supabase/client";
 export function EstimateCard() {
   const t = useTranslations("stats.estimates");
   const locale = useLocale();
+  const tc = useTranslations("common");
   const [s, setS] = useState<EstimateSummary | null | "error" | undefined>(undefined);
+  // Try again re-runs the read (every failed load offers it, M14 states audit).
+  const [attempt, setAttempt] = useState(0);
+  const [busy, setBusy] = useState(false);
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -23,12 +28,15 @@ export function EstimateCard() {
         .eq("status", "done")
         .not("actual_min", "is", null)
         .gt("estimate_min", 0);
-      if (!cancelled) setS(r.error ? "error" : estimateSummary(r.data ?? []));
+      if (!cancelled) {
+        setS(r.error ? "error" : estimateSummary(r.data ?? []));
+        setBusy(false);
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [attempt]);
   if (s === undefined) return null;
   const x = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
   const pct = new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 });
@@ -36,9 +44,21 @@ export function EstimateCard() {
     <section aria-label={t("title")} className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
       <h2 className="mb-1 text-lg font-bold">{t("title")}</h2>
       {s === "error" ? (
-        <p role="alert" className="text-sm font-bold">
-          {t("loadError")}
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p role="alert" className="text-sm font-bold">
+            {t("loadError")}
+          </p>
+          <Button
+            variant="secondary"
+            disabled={busy}
+            onClick={() => {
+              setBusy(true);
+              setAttempt((n) => n + 1);
+            }}
+          >
+            {tc("retry")}
+          </Button>
+        </div>
       ) : !s ? (
         <p className="text-sm text-muted">{t("empty", { n: MIN_TASKS })}</p>
       ) : (
