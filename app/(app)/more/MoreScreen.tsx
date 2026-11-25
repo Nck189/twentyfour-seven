@@ -1,5 +1,6 @@
 "use client";
 
+import { InviteCard } from "@/components/invite/InviteCard";
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
@@ -124,6 +125,7 @@ export function MoreGroupScreen({ group }: { group: MoreGroup }) {
       {group === "setup" && <SetupGroup setup={setup} />}
       {group === "sharing" && (
         <>
+          <InviteCard />
           <ShareCard />
           <CalendarCard />
         </>

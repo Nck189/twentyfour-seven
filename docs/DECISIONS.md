@@ -418,4 +418,28 @@ Format: date · decision · why · how to change it
   - **Visitors keep clear of Som and come by day only.** Butterflies hover over the item columns, and birds walk the front row's gaps except the one Som sits in.
   - **The picker's cells show their spot numbers**, matching their labels ("Spot 3: here now").
   - **Today reads the farm just after its own data, not on a fixed 2 s timer.** The timer started the read after the page had gone quiet. On Mac WebKit in CI, a test that left Today at that moment cut the read off ("internal error"), and three Mac tests failed that way (CJ-14, tips, CJ-10). A test-side wait in `settle()` fixed it but added ~2 s per test and pushed CI past its 45-minute limit. Now the read starts 250 ms after Today's data is in: Today's own reads still go first, the strip shows sooner, and a network-idle wait covers it.
-
+- 2026-11-24 · **Invites, invite-only for the pilot** (Phase E part 1, `docs/FRIENDS-DESIGN.md`, migration 20261125000000)
+  - **Minnie's choices:**
+    - invite-only with an on/off switch on `/admin/retention`;
+    - 2 invites per person, unlimited for her own link;
+    - 1 ticket each when the friend finishes their first lived minimum day.
+  - **Who gets in while it's on:** accounts that joined through an invite, and accounts made before the switch was first turned on (`since` is stamped once). Everyone else sees "24/7 is invite-only for now", with a box to paste an invite link and a way to sign out.
+  - **The check is cheap:** `my_access` runs once per account per browser, then it's remembered. While it runs, the app shows as usual: nearly everyone is allowed, and no reward depends on it. If the check fails, nobody is locked out.
+  - **Claiming:** the invite page keeps the token in the browser, and the new account claims it after signing in. Only accounts under 3 days old can claim, so an existing account can't take a friend's place. The inviter's link row is locked while a claim checks the room left, so two friends can't both take the last place.
+  - **Paying:** a trigger on `day_results` pays when the friend's day settles as minimum or perfect and was lived (a live check-in or a live "I'm up"), once per friend. The friend's ticket goes through the ledger (`invite_joined`). The inviter is paid directly, because two friends can finish on the same date and the ledger's key is one grant per reason and date.
+  - **`app_config` is the first global table.** It isn't per-user, so it isn't exported (`GLOBAL_TABLES`), and no user can read or write it.
+  - **After the G7 review (`docs/qa/REVIEW-INV-review.md`):**
+    - A link's room is a counter that never goes down: a friend who deletes their account doesn't free their place (F1).
+    - A gated account may join through an invite at any age; only accounts that already have access must be new (F2). The gate now says why a link didn't work.
+    - Only an account with access can make an invite link (F4). A failed access check lets the person in for that open but isn't remembered (F5).
+    - Names on the invite page are capped at 30 characters and wrap. A privacy line is on the invite card. Switching invite-only writes an event.
+  - **Accepted for the pilot:**
+    - No self-invite guard (same device or email domain, F3). A second account of your own can use one of your 2 places, which is worth at most 2 tickets per person.
+    - Rewards don't wait for the gate (F4): a gated account can only touch its own data.
+    - An account that already has access and is under 3 days old, and opens a friend's invite link, joins through it (F7). Opening the link is the person's own choice.
+  - **Not built yet:**
+    - the wake buddy (waits for the pilot);
+    - Share/QR on the invite card, turning a link off without a new one, the `invite_opened` count, and leaving the inviter's internal id out of the friend's export (F9);
+    - a name field: nothing in the app sets `display_name` yet, so invites say "A friend" (F6);
+    - the "your friend finished their first day" line on Today (the invite card shows it);
+    - the invited-vs-not split on the retention dashboard.
