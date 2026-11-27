@@ -109,7 +109,9 @@
       "addItemPlaceholder": "+ Add a checklist item",
       "add": "Add",
       "saveError": "Couldn't save. Check your connection and try again.",
-      "everyDay": "Sets it for every day. Change it in Plan."
+      "everyDay": "Sets it for every day. Change it in Plan.",
+      "notTracked": "You're not tracking this block, so there's nothing to check in. Use the time your way until {time}.",
+      "checkInAnyway": "Check in anyway"
     },
     "nap": {
       "title": "Power nap",
@@ -160,6 +162,17 @@
     },
     "farmStrip": {
       "open": "Your farm: open it"
+    },
+    "adjust": {
+      "title": "Adjust this block",
+      "endsAt": "Ends at {time} today.",
+      "extend": "+{minutes} min",
+      "skip": "Not today",
+      "saved": "Saved for today.",
+      "error": "Couldn't save. Check your connection and try again.",
+      "noRoom": "No room to stretch it today: the next block is already as short as it gets, or a fixed time holds it.",
+      "skipped": "Not today",
+      "undo": "Undo"
     }
   },
   "plan": {
@@ -294,7 +307,9 @@
       "placeHere": "Place here",
       "placeItem": "Place {item} in spot {n}",
       "error": "Couldn't move it. Try again."
-    }
+    },
+    "untrackedPlot": "You're not tracking {block}, so this plot grows on every day you press I'm up on time or do the Night ritual (normal quality).",
+    "untrackedLink": "Blocks I track"
   },
   "crops": {
     "radish": "Radish",
@@ -879,7 +894,15 @@
     "backToWeek": "Back to the week",
     "doneKind": "Done",
     "kinds": "Kinds of day",
-    "firstCapsule": "Open your first capsule"
+    "firstCapsule": "Open your first capsule",
+    "track": {
+      "title": "Which part of your day do you want to change most?",
+      "hint": "Pick one or two. Waking up, winding down and going to bed are always in. The rest keep their time on Today, with nothing to check in. You can add more any time in More.",
+      "many": "Starting with one or two is easier; you can add the rest once these feel natural.",
+      "next": "Next",
+      "coreOnly": "Just wake-up and bedtime for now",
+      "all": "Track all 7 blocks"
+    }
   },
   "setup": {
     "title": "Set up 24/7",
@@ -1724,5 +1747,22 @@
     "save": "Save name",
     "saved": "Saved.",
     "failed": "Couldn't save. Try again."
+  },
+  "tracked": {
+    "title": "Blocks I track",
+    "hint": "Track only the parts of the day you want to change. The others keep their time on Today with nothing to check in and no effect on your Day score; their plots grow on every day you keep an anchor.",
+    "always": "Always tracked: {list}",
+    "loading": "Loading…",
+    "saved": "Saved. It starts tomorrow.",
+    "failed": "Couldn't save. Check your connection and try again.",
+    "nudgeTitle": "Track one more block?",
+    "nudge": "{days} days in a row. Nice! Want to add {block} too?",
+    "nudgeAdd": "Add {block}",
+    "nudgeLater": "Not now",
+    "fromTomorrow": "Starts tomorrow",
+    "loadFailed": "Couldn't load your blocks.",
+    "retry": "Try again",
+    "addFailed": "Couldn't add it. Check your connection and try again.",
+    "added": "{block} is in from tomorrow."
   }
 }

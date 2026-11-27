@@ -485,6 +485,11 @@ export function useToday(now: Date) {
       };
       if (!current.started_at) row.started_at = startedAt;
       if (past && !current.started_at) row.backfilled = true;
+      // Doing a block set aside for today after all ("Not today", rule C): it counts again.
+      if (!current.started_at && !past && current.planned_deviation) {
+        next.planned_deviation = false;
+        row.planned_deviation = false;
+      }
       return mutate(key, next, { t: "upsert", row }, [
         event,
         { date: next.date, block: next.block, backfilled: next.backfilled },
@@ -610,8 +615,11 @@ export function useToday(now: Date) {
         const patch = first10 && !cur.first10_at ? { first10_at: at.toISOString() } : {};
         return upsertLog(b, patch, cur.started_at ? "first10_done" : "block_started", at);
       },
-      /** A block with no time today is set aside as planned, not missed (playtest R1 P1). */
-      setAside: (b: TimelineBlock) => {
+      /**
+       * A block set aside as planned, not missed: one with no time today (playtest R1 P1), or
+       * "Not today" before it starts (rule C).
+       */
+      setAside: (b: TimelineBlock, reason: "no_time" | "skipped" = "no_time") => {
         if (!loaded) return Promise.resolve();
         const key = `${b.logDate}:${b.key}`;
         const cur = logsRef.current[key] ?? emptyLog(b.logDate, b.key);
@@ -633,7 +641,29 @@ export function useToday(now: Date) {
               planned_deviation: true,
             },
           },
-          ["block_set_aside", { date: b.logDate, block: b.key, reason: "no_time" }],
+          ["block_set_aside", { date: b.logDate, block: b.key, reason }],
+        );
+      },
+      /** Undo "Not today" (rule C): the block counts again. */
+      unsetAside: (b: TimelineBlock) => {
+        if (!loaded) return Promise.resolve();
+        const key = `${b.logDate}:${b.key}`;
+        const cur = logsRef.current[key] ?? emptyLog(b.logDate, b.key);
+        const next: BlockLog = { ...cur, planned_deviation: false };
+        return mutate(
+          key,
+          next,
+          {
+            t: "upsert",
+            row: {
+              user_id: loaded.userId,
+              date: b.logDate,
+              block: b.key,
+              planned_start: next.planned_start,
+              planned_deviation: false,
+            },
+          },
+          ["block_set_aside_undone", { date: b.logDate, block: b.key }],
         );
       },
       setLocation: (b: TimelineBlock, location: "home" | "out", at: Date) =>
@@ -644,6 +674,46 @@ export function useToday(now: Date) {
         const w = data as WakeEvent;
         setWakes((prev) => ({ ...prev, [w.date]: w }));
         return data as WakeEvent;
+      },
+      /**
+       * Stretches a block today by `minutes` (rule C): a per-day duration override, like Plan's.
+       * The engine shortens what comes after (Free first, SPEC §3), so the day still ends at the
+       * next wake.
+       */
+      extendBlock: async (b: TimelineBlock, minutes: number) => {
+        if (!loaded) return;
+        const row = loaded.ctx.dayPlans[b.logDate];
+        const blocks = row?.overrides.blocks ?? {};
+        const block = { ...blocks[b.key], duration_min: b.desiredMin + minutes };
+        // Preview first: Free absorbs the day's slack, and a fixed event can pin a block, so a
+        // stretch may change nothing (G7 C S2-2). Say so instead of a silent "saved".
+        const nextRow = {
+          ...(row ?? {
+            date: b.logDate,
+            template_id: null,
+            attending: null,
+            bedtime_override: null,
+            late_night: null,
+            mode: "normal" as const,
+          }),
+          overrides: { ...row?.overrides, blocks: { ...blocks, [b.key]: block } },
+        };
+        const day = dayDate ?? b.logDate;
+        const after = timelineFor(
+          { ...loaded.ctx, dayPlans: { ...loaded.ctx.dayPlans, [b.logDate]: nextRow } },
+          day,
+        ).blocks.find((x) => x.key === b.key && x.logDate === b.logDate);
+        if (!after || after.end.getTime() <= b.end.getTime()) throw new Error("no_room");
+        const ok = await saveDirty(
+          client,
+          loaded.userId,
+          b.logDate,
+          { set: {}, blocks: { [b.key]: block } },
+          row && { ...row, overrides: { ...row.overrides, blocks: { ...blocks, [b.key]: block } } },
+        );
+        if (!ok) throw new Error("block not extended");
+        void logEvent("block_extended", { date: b.logDate, block: b.key, minutes });
+        setReload((r) => r + 1);
       },
       /** Picks today's first-10 for a block (a per-day override; the default stays as set). */
       setFirst10: async (b: TimelineBlock, value: string | null) => {

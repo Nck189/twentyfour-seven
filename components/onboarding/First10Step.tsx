@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useBlockText } from "@/components/today/useBlockText";
 import { Button } from "@/components/ui/Button";
 import { CheckIcon } from "@/components/ui/Icons";
-import type { BlockKey, BlockSetting } from "@/content/blocks";
+import { isTracked, type BlockKey, type BlockSetting } from "@/content/blocks";
 import { NONE, first10Options } from "@/lib/onboarding";
 
 /** A day in order: wake up → … → sleep. */
@@ -39,12 +39,14 @@ export function First10Step({
   useEffect(() => () => void (timer.current && clearTimeout(timer.current)), []);
 
   const using = !blocks.every((b) => b.first10 === NONE);
-  const key = ORDER[i];
+  // Only the blocks being tracked (rule B): an untracked block has no check-in to start.
+  const order = ORDER.filter((k) => isTracked(blocks, k));
+  const key = order[Math.min(i, order.length - 1)]!;
   const setting = blocks.find((b) => b.key === key);
   const options = first10Options(key, setting?.first10_options ?? []);
   const current = setting?.first10 ?? null;
 
-  const next = () => (i < ORDER.length - 1 ? setI(i + 1) : onDone());
+  const next = () => (i < order.length - 1 ? setI(i + 1) : onDone());
 
   function pick(value: string | null) {
     onPick(key, value);
@@ -105,7 +107,7 @@ export function First10Step({
         <div className="flex flex-col gap-3">
           {/* Which block: 7 dots, tap one to jump. */}
           <div className="flex items-center justify-center gap-1.5">
-            {ORDER.map((k, n) => (
+            {order.map((k, n) => (
               <button
                 key={k}
                 type="button"

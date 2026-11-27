@@ -153,6 +153,7 @@ export function FarmPreview() {
           today: TODAY,
           house: 2,
           stall: 0,
+          untracked: [],
           empty: BLOCK_KEYS.filter((b) => !planted.has(b)),
           coins: 120,
           decor: ["fence", "fence", "flowers"],

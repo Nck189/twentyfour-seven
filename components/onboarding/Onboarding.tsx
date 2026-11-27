@@ -14,9 +14,10 @@ import { groupWeek, parseIcs } from "@/lib/onboarding/schedule";
 import { suggestionToken } from "@/lib/onboarding";
 import { First10Step } from "./First10Step";
 import { StarterStep } from "./StarterStep";
+import { TrackStep } from "./TrackStep";
 import { WeekStep } from "./WeekStep";
 
-const STEPS = ["starter", "week", "first10", "done"] as const;
+const STEPS = ["starter", "week", "track", "first10", "done"] as const;
 type Step = (typeof STEPS)[number];
 
 /**
@@ -119,7 +120,9 @@ export function Onboarding() {
             {tc("error")}
           </p>
         )}
-        {setup.status === "ready" && step !== "done" && <SpotArt kind={step} className="mx-auto h-20 w-30" />}
+        {setup.status === "ready" && step !== "done" && (
+          <SpotArt kind={step === "track" ? "week" : step} className="mx-auto h-20 w-30" />
+        )}
         {setup.status === "ready" && step === "starter" && (
           <StarterStep
             onPick={async (starter) => {
@@ -149,11 +152,20 @@ export function Onboarding() {
               onEditingChange={setKindOpen}
             />
             {!kindOpen && (
-              <Button onClick={() => (fromMore ? leave() : setStep("first10"))}>
+              <Button onClick={() => (fromMore ? leave() : setStep("track"))}>
                 {fromMore ? t("finish") : t("next")}
               </Button>
             )}
           </>
+        )}
+        {setup.status === "ready" && step === "track" && (
+          <TrackStep
+            busy={setup.busy}
+            blocks={setup.blocks}
+            onSave={(tracked) => {
+              void setup.setTracked(tracked).then((ok) => ok && setStep("first10"));
+            }}
+          />
         )}
         {setup.status === "ready" && step === "first10" && (
           <>
@@ -167,7 +179,7 @@ export function Onboarding() {
             />
             <div className="flex gap-2">
               {!fromMore && (
-                <Button variant="secondary" onClick={() => setStep("week")}>
+                <Button variant="secondary" onClick={() => setStep("track")}>
                   {t("back")}
                 </Button>
               )}

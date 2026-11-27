@@ -57,6 +57,8 @@ type Props = {
   onClose: () => void;
   /** Blocks a lived action already counts as done (an in-window "I'm up" is Wake's; R1). */
   credited?: readonly string[];
+  /** Blocks this person doesn't track (rule B): not asked about in "Close today". */
+  untracked?: readonly string[];
 };
 
 /**
@@ -73,6 +75,7 @@ export function NightRitual({
   timezone,
   onClose,
   credited = [],
+  untracked = [],
 }: Props) {
   const t = useTranslations("night");
   const tc = useTranslations("common");
@@ -111,8 +114,14 @@ export function NightRitual({
 
   // Blocks of today (Wake…Free) that never closed.
   // A credited block happened (G7 R1-fixes F4): not "not done", and no shared miss reason for it.
+  // An untracked block (rule B) isn't asked about, unless it was checked in anyway.
   const open = timeline.blocks.filter(
-    (b) => b.key !== "down" && b.key !== "sleep" && !logFor(b).closed_at && !credited.includes(b.key),
+    (b) =>
+      b.key !== "down" &&
+      b.key !== "sleep" &&
+      !logFor(b).closed_at &&
+      !credited.includes(b.key) &&
+      (!untracked.includes(b.key) || !!(logFor(b).started_at || logFor(b).first10_at)),
   );
   // Started but never finished = it happened: one tap closes it as done (R-M4-3).
   const started = (b: TimelineBlock) => {

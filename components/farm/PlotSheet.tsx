@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { CropArt } from "@/components/art/farm/CropArt";
@@ -73,8 +75,11 @@ export function PlotSheet({
   seeds,
   onHarvest,
   onClose,
+  untracked = false,
 }: {
   slot: BlockKey;
+  /** This block isn't tracked (rule B): the plot grows on every kept day. */
+  untracked?: boolean;
   plot: PlotView | undefined;
   onPlant: (crop: CropId, replace: boolean) => Promise<boolean>;
   /** Seeds you own (capsules), shown first in the picker. */
@@ -153,6 +158,17 @@ export function PlotSheet({
       </div>
 
       {stage === "dead" && <p className="mt-3 rounded-xl bg-surface-2 p-3 text-sm">{t("dead")}</p>}
+      {untracked && stage !== "dead" && (
+        <div className="mt-3 flex flex-col items-start gap-2 rounded-xl bg-surface-2 p-3 text-sm">
+          <p>{t("untrackedPlot", { block })}</p>
+          <Link
+            href="/more/setup#tracked"
+            className="tap inline-flex min-h-11 items-center rounded-full bg-surface px-4 font-bold text-primary"
+          >
+            {t("untrackedLink")}
+          </Link>
+        </div>
+      )}
       {stage === "growing" && oneMissFromDeath(plot) && (
         <p role="alert" className="mt-3 rounded-xl bg-warn-soft p-3 text-sm font-bold">
           {t("lastChance")}

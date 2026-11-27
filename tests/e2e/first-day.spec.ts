@@ -181,6 +181,7 @@ test("G7 R-C-11: a real new account goes setup → All set → Done → the firs
   await page.goto("/welcome");
   await page.getByRole("button", { name: /Student/ }).click();
   await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Track all 7 blocks" }).click();
   await page.getByRole("button", { name: "Use all suggestions" }).click();
   await expect(page.getByText("All set")).toBeVisible();
   // The starter set its own wake time; put today's 150 min back so a block is current at any hour.
