@@ -20,7 +20,7 @@ test("B: an untracked block has no check-in on Today; More → Set up turns it o
   await card.getByRole("checkbox", { name: "Focus" }).click();
   await expect(card.getByRole("status")).toHaveText("Saved.");
   await expect(card.getByRole("checkbox", { name: "Focus" })).toHaveAttribute("aria-checked", "false");
-  expect((await settingsBlocks(id)).find((b: { key: string }) => b.key === "focus")).toMatchObject({
+  expect((await settingsBlocks(id)).find((b) => b.key === "focus")).toMatchObject({
     tracked: false,
   });
   await expectTouchTargets(page);
