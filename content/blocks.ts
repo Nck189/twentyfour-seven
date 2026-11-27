@@ -17,7 +17,28 @@ export type BlockSetting = {
   /** The user's own first-10 texts to pick from (in addition to the built-in ones). */
   first10_options?: string[];
   checklist: ChecklistItem[];
+  /**
+   * Whether Today asks for this block's check-in (rule B, Minnie OK 2026-11-27). Missing = true.
+   * The core blocks (Wake, Down Time, Sleep) are always tracked. An untracked block still has its
+   * time on the timeline, but no check-in, no Night-ritual close and no place in the Day score.
+   */
+  tracked?: boolean;
 };
+
+/** Always tracked: the day's anchors (I'm up, the Night ritual, going to bed). */
+export const CORE_BLOCKS: readonly BlockKey[] = ["wake", "down", "sleep"];
+/** The blocks a person may choose to track or not. */
+export const OPTIONAL_BLOCKS: readonly BlockKey[] = ["focus", "work", "gradation", "free"];
+
+export function isTracked(blocks: readonly Pick<BlockSetting, "key" | "tracked">[], key: BlockKey): boolean {
+  if (CORE_BLOCKS.includes(key)) return true;
+  return blocks.find((b) => b.key === key)?.tracked !== false;
+}
+
+/** The blocks this person doesn't track (never a core block). */
+export function untrackedBlocks(blocks: readonly Pick<BlockSetting, "key" | "tracked">[]): BlockKey[] {
+  return OPTIONAL_BLOCKS.filter((k) => !isTracked(blocks, k));
+}
 
 /** Book defaults; durations sum to 24h. */
 export const DEFAULT_BLOCKS: BlockSetting[] = [

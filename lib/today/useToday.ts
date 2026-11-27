@@ -610,8 +610,11 @@ export function useToday(now: Date) {
         const patch = first10 && !cur.first10_at ? { first10_at: at.toISOString() } : {};
         return upsertLog(b, patch, cur.started_at ? "first10_done" : "block_started", at);
       },
-      /** A block with no time today is set aside as planned, not missed (playtest R1 P1). */
-      setAside: (b: TimelineBlock) => {
+      /**
+       * A block set aside as planned, not missed: one with no time today (playtest R1 P1), or
+       * "Not today" before it starts (rule C).
+       */
+      setAside: (b: TimelineBlock, reason: "no_time" | "skipped" = "no_time") => {
         if (!loaded) return Promise.resolve();
         const key = `${b.logDate}:${b.key}`;
         const cur = logsRef.current[key] ?? emptyLog(b.logDate, b.key);
@@ -633,7 +636,7 @@ export function useToday(now: Date) {
               planned_deviation: true,
             },
           },
-          ["block_set_aside", { date: b.logDate, block: b.key, reason: "no_time" }],
+          ["block_set_aside", { date: b.logDate, block: b.key, reason }],
         );
       },
       setLocation: (b: TimelineBlock, location: "home" | "out", at: Date) =>
@@ -644,6 +647,27 @@ export function useToday(now: Date) {
         const w = data as WakeEvent;
         setWakes((prev) => ({ ...prev, [w.date]: w }));
         return data as WakeEvent;
+      },
+      /**
+       * Stretches a block today by `minutes` (rule C): a per-day duration override, like Plan's.
+       * The engine shortens what comes after (Free first, SPEC §3), so the day still ends at the
+       * next wake.
+       */
+      extendBlock: async (b: TimelineBlock, minutes: number) => {
+        if (!loaded) return;
+        const row = loaded.ctx.dayPlans[b.logDate];
+        const blocks = row?.overrides.blocks ?? {};
+        const block = { ...blocks[b.key], duration_min: b.desiredMin + minutes };
+        const ok = await saveDirty(
+          client,
+          loaded.userId,
+          b.logDate,
+          { set: {}, blocks: { [b.key]: block } },
+          row && { ...row, overrides: { ...row.overrides, blocks: { ...blocks, [b.key]: block } } },
+        );
+        if (!ok) throw new Error("block not extended");
+        void logEvent("block_extended", { date: b.logDate, block: b.key, minutes });
+        setReload((r) => r + 1);
       },
       /** Picks today's first-10 for a block (a per-day override; the default stays as set). */
       setFirst10: async (b: TimelineBlock, value: string | null) => {

@@ -28,6 +28,9 @@ import { FarmStrip } from "./FarmStrip";
 import { useFarm } from "@/lib/farm/useFarm";
 import { skyPhaseFor } from "@/lib/farm/sky";
 import { LastChanceLine } from "@/components/farm/LastChanceLine";
+import { AddBlockLine } from "@/components/today/AddBlockLine";
+import { BlockAdjust } from "@/components/today/BlockAdjust";
+import { untrackedBlocks } from "@/content/blocks";
 import { useUnlocks } from "@/lib/unlocks/useUnlocks";
 import { TodayReviewLine } from "@/components/stats/ReviewLine";
 import { Tip } from "@/components/tips/Tip";
@@ -215,6 +218,9 @@ export function TodayScreen() {
     ...(wake?.event?.in_window && !wake.event.backfilled && wake.event.date === tl.date ? ["wake"] : []),
     ...(today.nightDone ? ["down"] : []),
   ];
+  // Rule B: blocks this person doesn't track (never Wake, Down Time or Sleep).
+  const untracked = untrackedBlocks(today.blockSettings);
+  const curTracked = !!cur && !untracked.includes(cur.key);
   const showCurrent = cur && !bedCard && cur.key !== "sleep" && !(cur.key === "down" && !today.nightDone);
   const napRunning = isNapRunning();
   const warnings = allWarnings ? tl.warnings : tl.warnings.slice(0, 1);
@@ -227,8 +233,14 @@ export function TodayScreen() {
 
   return (
     <>
-      {/* M11: upload today's reminders when this device has notifications on (renders nothing). */}
-      <PushPlanner day={tl.date} blocks={tl.blocks} timezone={today.timezone} mode={tl.mode} />
+      {/* M11: upload today's reminders when this device has notifications on (renders nothing).
+          No reminders for blocks this person doesn't track (rule B). */}
+      <PushPlanner
+        day={tl.date}
+        blocks={tl.blocks.filter((b) => !untracked.includes(b.key))}
+        timezone={today.timezone}
+        mode={tl.mode}
+      />
       <ScreenHeader
         title={t("title")}
         subtitle={formatDayMedium(tl.date, locale, today.timezone)}
@@ -334,7 +346,28 @@ export function TodayScreen() {
       )}
       <Tip id="wake" when={!!showWake && !today.wakeMissed && tipsQuiet} />
 
-      {showCurrent && (
+      {showCurrent && !curTracked && (
+        // Rule B: a block this person doesn't track has its time, but no check-in to do.
+        <section
+          aria-label={t("block.current")}
+          className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6"
+        >
+          <p className="text-xs font-bold tracking-wide text-primary uppercase">{t("block.current")}</p>
+          <h2 className="text-xl font-extrabold">{text.name(cur.key)}</h2>
+          <p className="mt-1 text-sm text-muted">
+            {t("block.notTracked", { time: formatTime(cur.end, today.timezone) })}
+          </p>
+          <button
+            type="button"
+            onClick={() => setOpenKey(cur.key)}
+            className="tap mt-2 min-h-11 rounded-full bg-surface-2 px-4 text-sm font-bold text-primary"
+          >
+            {t("block.checkInAnyway")}
+          </button>
+          <BlockTasks userId={today.userId} date={cur.logDate} block={cur.key} />
+        </section>
+      )}
+      {showCurrent && curTracked && (
         <section
           aria-label={t("block.current")}
           className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6"
@@ -357,6 +390,16 @@ export function TodayScreen() {
             onChanged={setup.reload}
           />
           <BlockTasks userId={today.userId} date={cur.logDate} block={cur.key} />
+          {cur.key !== "wake" && cur.key !== "down" && !today.logFor(cur).closed_at && (
+            <BlockAdjust
+              key={`adjust:${cur.logDate}:${cur.key}`}
+              block={cur}
+              started={!!(today.logFor(cur).started_at || today.logFor(cur).first10_at)}
+              timezone={today.timezone}
+              onExtend={(m) => today.actions.extendBlock(cur, m)}
+              onSkip={() => today.actions.setAside(cur, "skipped")}
+            />
+          )}
         </section>
       )}
       {bedCard && sleepBlock && (
@@ -407,6 +450,14 @@ export function TodayScreen() {
           }
         />
         {unlocks && !onboarding.show && <TodayUnlockLine state={unlocks} />}
+        {streak.view && (
+          <AddBlockLine
+            untracked={untracked}
+            streak={streak.view.streak}
+            today={tl.date}
+            onAdded={today.reload}
+          />
+        )}
 
         <div className="mx-4 mb-2 lg:mx-6">
           <button
@@ -460,6 +511,7 @@ export function TodayScreen() {
           goToBed={today.actions.goToBed}
           timezone={today.timezone}
           credited={creditedKeys}
+          untracked={untracked}
           onClose={() => {
             markOffered(tl.date);
             setRitualOpen(false);

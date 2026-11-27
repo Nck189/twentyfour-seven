@@ -28,7 +28,7 @@ test("first open offers setup on Today; Later hides it for good", async ({ page 
   await expect(card).toHaveCount(0);
 });
 
-test("lazy path: Student → Next → Use all suggestions → done (4 taps)", async ({ page }) => {
+test("lazy path: Student → Next → pick a block → Use all suggestions → done (5 taps)", async ({ page }) => {
   const id = await newUser(page);
   await page.goto("/today");
   await page.getByRole("link", { name: "Set up now" }).click();
@@ -41,6 +41,10 @@ test("lazy path: Student → Next → Use all suggestions → done (4 taps)", as
   await expect(week.getByRole("button", { name: /School day/ })).toContainText("09:00–16:00");
   await expect(week.getByRole("button", { name: /Day off/ })).toBeVisible();
   await page.getByRole("button", { name: "Next" }).click();
+  // Rule B: pick the part of the day to change most; the rest isn't tracked.
+  const track = page.getByRole("region", { name: "Which part of your day do you want to change most?" });
+  await track.getByRole("checkbox", { name: "Focus" }).click();
+  await track.getByRole("button", { name: "Next" }).click();
   await page.getByRole("button", { name: "Use all suggestions" }).click();
   await expect(page.getByText("All set")).toBeVisible();
 
@@ -55,7 +59,8 @@ test("lazy path: Student → Next → Use all suggestions → done (4 taps)", as
   expect(tpls.filter((t) => t.auto_apply && (t.weekdays as number[]).includes(3))).toHaveLength(1);
   const blocks = await settingsBlocks(id);
   expect(blocks.find((b) => b.key === "focus")).toMatchObject({ first10: "@s:focus:1" });
-  expect(blocks.find((b) => b.key === "work")).toMatchObject({ first10: null }); // built-in default kept
+  expect(blocks.find((b) => b.key === "work")).toMatchObject({ first10: null, tracked: false }); // default kept
+  expect(blocks.find((b) => b.key === "focus")).toMatchObject({ tracked: true });
 });
 
 test("my own: sleep times + weekdays + a class slot, then first-10s one block at a time", async ({
@@ -84,6 +89,7 @@ test("my own: sleep times + weekdays + a class slot, then first-10s one block at
   await first.getByRole("button", { name: "Done" }).click();
   await expect(week.getByRole("button", { name: /Free weekday/ })).toContainText("13:00–17:00");
   await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Track all 7 blocks" }).click();
 
   // First-10: pick the 1st suggestion for Wake → Focus slides in by itself; add an own one.
   await page.getByRole("radiogroup", { name: "Wake" }).getByRole("radio").nth(1).click();
@@ -208,6 +214,7 @@ test("review C4: right after setup, a first capsule opens (setting sleep times p
   await page.goto("/welcome");
   await page.getByRole("button", { name: /Student/ }).click();
   await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Just wake-up and bedtime for now" }).click();
   await page.getByRole("button", { name: "Use all suggestions" }).click();
   await expect(page.getByText("All set")).toBeVisible();
   await page.getByRole("button", { name: "Open your first capsule" }).click();

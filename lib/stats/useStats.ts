@@ -1,5 +1,7 @@
 "use client";
 
+import { untrackedBlocks } from "@/content/blocks";
+
 import { useCallback, useEffect, useState } from "react";
 import type { DayFacts, DayMode } from "@/lib/game";
 import { buildDayFacts, type LogRow } from "@/lib/game/facts";
@@ -91,6 +93,7 @@ export function useStats() {
           wakes: wakes.data as { date: string; in_window: boolean; backfilled: boolean }[],
           nights: (nights.data as { ref_date: string }[]).map((n) => n.ref_date),
           exercise: [],
+          untracked: untrackedBlocks(ctx.blocks),
         }).filter((d) => d.date < today);
         // Never before the account existed (G7 R-M10-1): those days would read as all missed.
         const created = (profile.data as { created_at?: string } | null)?.created_at;

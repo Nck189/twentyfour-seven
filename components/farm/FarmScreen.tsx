@@ -496,6 +496,7 @@ export function FarmView({
         <PlotSheet
           slot={open}
           plot={farm.plots[open]}
+          untracked={data.untracked.includes(open)}
           onClose={() => setOpen(null)}
           seeds={gacha?.state?.seeds}
           onPlant={async (crop, replace) => {

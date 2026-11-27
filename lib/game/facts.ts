@@ -21,6 +21,8 @@ export type FactsInput = {
   nights: readonly string[];
   /** exercise_logs.at timestamps. */
   exercise: readonly string[];
+  /** Blocks this person doesn't track (settings, rule B): out of the Day score, never a miss. */
+  untracked?: readonly BlockKey[];
 };
 
 /**
@@ -53,6 +55,7 @@ export function buildDayFacts(i: FactsInput): DayFacts[] {
       ...(d === i.today ? { open: [...BLOCK_KEYS] } : {}),
       ...(lateNights.has(addDays(d, 1)) ? { excused: ["free" as BlockKey] } : {}),
       ...(away ? { away: true } : {}),
+      ...(i.untracked?.length ? { untracked: [...i.untracked] } : {}),
     });
   }
   return out;

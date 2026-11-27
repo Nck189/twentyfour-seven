@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ExportCard } from "@/components/settings/ExportCard";
 import { NameCard } from "@/components/settings/NameCard";
+import { TrackedBlocksCard } from "@/components/settings/TrackedBlocksCard";
 import { TipsCard } from "@/components/settings/TipsCard";
 import { CafeCard } from "@/components/settings/CafeCard";
 import { NotificationsCard } from "@/components/settings/NotificationsCard";
@@ -173,6 +174,7 @@ function SetupGroup({ setup }: { setup: Setup }) {
           ))}
         </ul>
       </Card>
+      <TrackedBlocksCard />
       <Card title={te("settingsTitle")} id="exercise">
         <ExerciseSettings onSaved={setup.reload} />
         {/* The exercise reward shows next to its setting (Minnie 2026-11-14). */}

@@ -55,7 +55,8 @@ export function growthStage(growthDays: number, growDays: number, status: PlotSt
  * Plays a planting forward over the days after it was planted (SPEC §8.1, §8.4).
  * `days` = wake-days in date order (finished days, plus today with its `open` blocks).
  *
- * - the block's success → +1 growth day (unless weeds are pausing it); picks up that day's
+ * - the block's success → +1 growth day (unless weeds are pausing it); for a block that isn't
+ *   tracked (rule B), every kept day counts instead. Picks up that day's
  *   weather (the mutations the previous day earned). Any other block result just doesn't grow.
  * - the day's health (rule A, `farmDay`): a missed day in a row 1 → a warning only; 2 → weeds
  *   (the crop pauses); every 3rd → wilt (−1 quality); 5 → dead
@@ -85,7 +86,12 @@ export function simulatePlot(p: Planting, days: readonly DayFacts[]): PlotView {
     prevDate = day.date;
 
     if (day.date <= from || status !== "growing") continue;
-    if (blockResult(day, p.slot) === "success" && !weeds) {
+    // An untracked block's plot (rule B) grows on every kept day instead: the farm stays alive for
+    // someone tracking only the anchors, at normal quality (no first-10 or checklist to show).
+    const grows =
+      blockResult(day, p.slot) === "success" ||
+      (!!day.untracked?.includes(p.slot) && farmDay(day) === "kept");
+    if (grows && !weeds) {
       growthDays++;
       // A credited block (an in-window "I'm up", the Night ritual) may have no log of its own.
       const log = day.logs[p.slot];

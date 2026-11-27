@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { BlockKey, BlockSetting } from "@/content/blocks";
+import { OPTIONAL_BLOCKS, type BlockKey, type BlockSetting } from "@/content/blocks";
 import type { FixedEvent } from "@/content/defaults";
 import type { Starter } from "@/content/starters";
 import { logEvent } from "@/lib/db/events";
@@ -100,6 +100,17 @@ export function useSetup() {
       setError(Boolean(err));
     },
     [client],
+  );
+
+  /** Which optional blocks are tracked (rule B); the core three always are. */
+  const setTracked = useCallback(
+    (tracked: readonly BlockKey[]) =>
+      saveBlocks(
+        blocksRef.current.map((b) =>
+          OPTIONAL_BLOCKS.includes(b.key) ? { ...b, tracked: tracked.includes(b.key) } : b,
+        ),
+      ),
+    [saveBlocks],
   );
 
   /** Wake time + sleep length for one kind of day (bedtime follows: wake − sleep). */
@@ -353,6 +364,7 @@ export function useSetup() {
     setFirst10,
     addOwnFirst10,
     setUseFirst10,
+    setTracked,
     finish,
   };
 }
