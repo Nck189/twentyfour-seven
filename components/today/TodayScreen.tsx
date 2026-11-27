@@ -401,7 +401,8 @@ export function TodayScreen() {
         <LastChanceLine
           data={farm.data}
           keptToday={
-            today.nightDone ||
+            tl.mode !== "normal" ||
+            today.nightTicket ||
             (!!wake?.event?.in_window && !wake.event.backfilled && wake.event.date === tl.date)
           }
         />

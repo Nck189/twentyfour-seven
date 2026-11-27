@@ -223,6 +223,55 @@ describe("harvest_plot", () => {
     // A second harvest the same day: nothing ripe.
     expect((await u.client.rpc("harvest_plot", { p_slot: "sleep" })).error?.code).toBe("22023");
   });
+
+  it("rule A on the server: a Vacation pause mid-run, a day kept by the ritual alone, wilt lowers quality (G7 A S3-5)", async () => {
+    const u = await newUser("harv-rule-a");
+    const t = T();
+    const d = (n: number) => addDays(t, -n);
+    const a = admin();
+    await a
+      .from("plots")
+      .update({ crop_id: "sunflower", planted_on: d(10), state: "growing" })
+      .eq("user_id", u.id)
+      .eq("slot", "focus");
+    // d9–d7: live check-ins, no anchor → missed ×3 (weeds from d8, wilt at d7). d6: Vacation (pause).
+    // d5: the Night ritual alone keeps the day (Focus good but weedy → no growth; weeds clear).
+    // d4–d2: on-time I'm up + Focus good → 3 growth days → ripe, gold (prismatic − 1 wilt).
+    const logs = [
+      ...[9, 8, 7].map((n) => logRow(u.id, d(n), "gradation", "late")),
+      ...[5, 4, 3, 2].map((n) => logRow(u.id, d(n), "focus", "good")),
+    ];
+    expect((await a.from("block_logs").insert(logs)).error).toBeNull();
+    expect(
+      (await a.from("day_plans").insert({ user_id: u.id, date: d(6), mode: "vacation" })).error,
+    ).toBeNull();
+    expect(
+      (await a.from("ticket_grants").insert({ user_id: u.id, reason: "night", ref_date: d(5), amount: 1 }))
+        .error,
+    ).toBeNull();
+    for (const n of [4, 3, 2])
+      expect(
+        (
+          await a.from("wake_events").insert({
+            user_id: u.id,
+            date: d(n),
+            target_wake: at(d(n), 8 * 60),
+            pressed_at: at(d(n), 8 * 60),
+            in_window: true,
+            backfilled: false,
+          })
+        ).error,
+      ).toBeNull();
+    const view = farmState(
+      [{ slot: "focus", cropId: "sunflower", star: 1, plantedOn: d(10) }],
+      await loadFacts(u.id, d(11), t),
+      u.id,
+    ).plots.focus!;
+    expect(view).toMatchObject({ status: "ready", wiltLevel: 1, quality: "gold", readyOn: d(2) });
+    expect((await u.client.rpc("harvest_plot", { p_slot: "focus" })).error).toBeNull();
+    const { data: inv } = await u.client.from("inventory").select("item_id");
+    expect(inv).toEqual([{ item_id: `crop:sunflower:gold:${Math.round(view.multiplier * 100)}` }]);
+  });
 });
 
 describe("buy_decor (SPEC §8.9)", () => {

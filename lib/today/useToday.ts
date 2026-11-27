@@ -98,6 +98,8 @@ export function useToday(now: Date) {
   const [frozen, setFrozen] = useState<Record<string, string>>({});
   const [nightDone, setNightDone] = useState<string[]>([]);
   const [nightDoneAtLoad, setNightDoneAtLoad] = useState<string[]>([]);
+  // Night tickets held (the ritual done in time): what the farm reads, unlike `nightDone` (G7 A S3-1).
+  const [nightTickets, setNightTickets] = useState<string[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [saveError, setSaveError] = useState(0);
   const [reload, setReload] = useState(0);
@@ -193,6 +195,7 @@ export function useToday(now: Date) {
         const doneDates = ((nightRows.data ?? []) as { ref_date: string }[]).map((r) => r.ref_date);
         setNightDone(doneDates);
         setNightDoneAtLoad(doneDates);
+        setNightTickets(doneDates);
         loadedOnce.current = true;
         setStatus("ready");
       } catch {
@@ -594,7 +597,9 @@ export function useToday(now: Date) {
         const { data, error } = await client.rpc("complete_night_ritual", { p_date: dayDate });
         if (error) throw error;
         setNightDone((prev) => [...prev, dayDate]);
-        return data as { ticket_granted: boolean; in_time?: boolean };
+        const r = data as { ticket_granted: boolean; in_time?: boolean };
+        if (r.ticket_granted) setNightTickets((prev) => [...prev, dayDate]);
+        return r;
       },
       /**
        * Goodnight = going to bed (lib/today/bedtime goodnightSleep decides whether, G7 R-M10-R3-1):
@@ -735,6 +740,8 @@ export function useToday(now: Date) {
     nightDone: dayDate ? nightDone.includes(dayDate) : false,
     /** As loaded (not flipped by finishing the ritual), so an open ritual sheet stays open. */
     nightDoneAtLoad: dayDate ? nightDoneAtLoad.includes(dayDate) : false,
+    /** Today's Night ticket is held (the ritual counted for the farm and the streak). */
+    nightTicket: dayDate ? nightTickets.includes(dayDate) : false,
     actions,
     saveError,
     retrySave,

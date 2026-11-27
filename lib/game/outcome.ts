@@ -115,17 +115,26 @@ export function blockResult(day: DayFacts, block: BlockKey): BlockResult {
 /**
  * How a day counts for the farm's health (rule A, Minnie OK 2026-11-27):
  * - open: today, not over yet
- * - paused: Vacation/Sick, an away day, or a planned late night — nothing changes
- * - kept: at least one anchor done live (an in-window "I'm up" or the Night ritual)
- * - missed: an active day with neither anchor
+ * - paused: Vacation/Sick, or a quiet day (no anchor and no live check-in: away, or only a late
+ *   "I'm up", a workout, a backfill or an honest miss reason) — nothing changes
+ * - kept: at least one anchor done live (an in-window "I'm up" or the Night ritual's ticket)
+ * - missed: blocks checked in live, but neither anchor
+ * A planned late night doesn't pause it: one anchor is enough, so an on-time "I'm up" keeps the
+ * day (G7 A S2-1). Logging a bad day never turns a quiet day into a missed one (G7 A S2-2).
  * Mirrored in SQL (`_plot_harvest`).
  */
 export type FarmDay = "open" | "paused" | "kept" | "missed";
 
+/** A block log that shows the block was really done today (not a backfill, tag or miss reason). */
+export function liveCheckIn(log: GameLog | undefined): boolean {
+  return !!log && !log.backfilled && !!(log.started_at || log.first10_at || log.items_done.length > 0);
+}
+
 export function farmDay(day: DayFacts): FarmDay {
   if (day.open) return "open";
-  if (day.mode !== "normal" || day.away || day.excused?.includes("free")) return "paused";
-  return day.wakeInWindow || day.nightRitualDone ? "kept" : "missed";
+  if (day.mode !== "normal") return "paused";
+  if (day.wakeInWindow || day.nightRitualDone) return "kept";
+  return BLOCK_KEYS.some((b) => liveCheckIn(day.logs[b])) ? "missed" : "paused";
 }
 
 /** Minimum day (SPEC §8.7): "I'm up" within the window + Night ritual done. */

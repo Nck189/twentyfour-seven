@@ -233,8 +233,8 @@ Each mutation has its own visual tint / particles.
 ### 8.4 Penalties (scaled by severity)
 *Rule A, Minnie OK 2026-11-27: blocks only ever help; the farm is hurt by **missed days**.*
 - **A skipped block** costs nothing: its crop just doesn't grow that day.
-- **A missed day** is a finished, active day with neither anchor done live: no in-window "I'm up" and no Night ritual. One anchor keeps the day.
-- **No penalty:** `planned` deviations (a planned late night), Vacation/Sick mode, away days.
+- **A missed day** is a finished day with live block check-ins but neither anchor done live: no in-window "I'm up" and no Night ritual. One anchor keeps the day.
+- **No penalty (the run pauses):** Vacation/Sick mode and quiet days: no anchor and no live check-in (away, or only a late "I'm up", a workout, a backfill or an honest miss reason). Logging a bad day never makes it worse. A planned late night doesn't need a pause: an on-time "I'm up" keeps that day.
 - **1 missed day:** a warning only ("never miss twice").
 - **2 missed days in a row:** weeds appear and crops pause. They clear at the end of the next kept day.
 - **3 in a row:** wilt (−1 quality).

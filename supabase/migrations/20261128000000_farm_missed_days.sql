@@ -2,8 +2,11 @@
 -- blocks. A block only ever helps (its success grows the crop); a skipped block just doesn't grow.
 -- A missed day = a finished, active day with neither a live in-window "I'm up" nor the Night
 -- ritual. 1 in a row = a warning only ("never miss twice"); 2 → weeds; every 3rd → wilt; 5 → dead.
--- One anchor keeps the day and clears the weeds at its end. Vacation/Sick, away days and a planned
--- late night pause the run. Mirrors lib/game `simulatePlot` + `farmDay` (harvest-parity test).
+-- One anchor keeps the day and clears the weeds at its end. Vacation/Sick and quiet days (no anchor
+-- and no live check-in: away, or only a late "I'm up", a workout, a backfill or a miss reason)
+-- pause the run, so logging a bad day never makes it worse (G7 A S2-2). A planned late night
+-- doesn't pause it (G7 A S2-1): an on-time "I'm up" already keeps the day.
+-- Mirrors lib/game `simulatePlot` + `farmDay` (harvest-parity test).
 
 -- One planting replayed to p_today (lib/game simulatePlot). Returns
 -- { ripe, dead, quality, mult, growth }.
@@ -72,19 +75,20 @@ begin
         ripe := true; -- a ready crop waits: this day's health no longer touches it
       end if;
     end if;
-    -- The day's health (lib/game farmDay): today is open; Vacation/Sick, away and a planned late
-    -- night pause; one live anchor keeps the day; an active day with neither is missed.
-    if not ripe and d < p_today then
-      if coalesce(md, 'normal') <> 'normal' or public._away_day(uid, d)
-         or public._late_night_planned(uid, d) then
-        null;
-      elsif exists (select 1 from public.wake_events
-                    where user_id = uid and date = d and in_window and not backfilled)
-            or exists (select 1 from public.ticket_grants
-                       where user_id = uid and reason = 'night' and ref_date = d) then
+    -- The day's health (lib/game farmDay): today is open; Vacation/Sick pauses; one live anchor
+    -- keeps the day; live check-ins with neither anchor miss it; anything else is a quiet day.
+    if not ripe and d < p_today and coalesce(md, 'normal') = 'normal' then
+      if exists (select 1 from public.wake_events
+                 where user_id = uid and date = d and in_window and not backfilled)
+         or exists (select 1 from public.ticket_grants
+                    where user_id = uid and reason = 'night' and ref_date = d) then
         streak := 0;
         weeds := false;
-      else
+      elsif exists (select 1 from public.block_logs b
+                    where b.user_id = uid and b.date = d and not b.backfilled
+                      and (b.started_at is not null or b.first10_at is not null
+                           or (jsonb_typeof(b.items_done) = 'array'
+                               and jsonb_array_length(b.items_done) > 0))) then
         streak := streak + 1;
         if streak >= 2 then
           weeds := true;

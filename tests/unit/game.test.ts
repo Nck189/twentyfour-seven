@@ -15,6 +15,7 @@ import {
   mutationMultiplier,
   oneMissFromDeath,
   oneMissFromWeeds,
+  farmDay,
   qualityOf,
   roll,
   simulatePlot,
@@ -223,8 +224,9 @@ describe("growth + penalties (SPEC §8.1, §8.4)", () => {
   });
   // Rule A (Minnie OK 2026-11-27): damage comes from missed days (an active day with neither an
   // in-window "I'm up" nor the Night ritual), never from a skipped block.
-  /** An active day with no anchor: something was logged, but no live wake in the window or ritual. */
-  const drift = (date: string, logs: Partial<Record<BlockKey, GameLog>> = {}) => day(date, logs);
+  /** An active day with no anchor: a block checked in live, but no live wake in the window or ritual. */
+  const drift = (date: string, logs: Partial<Record<BlockKey, GameLog>> = {}) =>
+    day(date, { gradation: late(date), ...logs });
   /** A kept day: the wake anchor only (no ritual), nothing else logged. */
   const anchored = (date: string, logs: Partial<Record<BlockKey, GameLog>> = {}) =>
     day(date, logs, { wakeInWindow: true });
@@ -284,17 +286,35 @@ describe("growth + penalties (SPEC §8.1, §8.4)", () => {
       ]).status,
     ).toBe("dead");
   });
-  it("Vacation/Sick, away days and planned late nights pause the run (no penalty, no reset)", () => {
+  it("Vacation/Sick, away days and quiet days pause the run (no penalty, no reset)", () => {
     const p = plant("work", "coffee", "2026-11-09");
     const v = simulatePlot(p, [
       drift("2026-11-10"),
       drift("2026-11-11"),
       day("2026-11-12", {}, { mode: "sick" }),
       day("2026-11-13", {}, { away: true }),
-      day("2026-11-14", {}, { excused: ["free"] }),
-      drift("2026-11-15"),
+      drift("2026-11-14"),
     ]);
     expect(v).toMatchObject({ missStreak: 3, wiltLevel: 1, status: "growing" });
+  });
+  it("logging a bad day never makes it worse: a backfill or an honest miss reason alone is a quiet day (G7 A S2-2)", () => {
+    const p = plant("work", "coffee", "2026-11-09");
+    const backfill = day("2026-11-11", { work: good("2026-11-11", { backfilled: true }) });
+    const honest = day("2026-11-12", {
+      focus: late("2026-11-12", { started_at: null, first10_at: null, miss_reason: "phone" }),
+    });
+    expect(farmDay(backfill)).toBe("paused");
+    expect(farmDay(honest)).toBe("paused");
+    expect(farmDay(drift("2026-11-13"))).toBe("missed");
+    expect(simulatePlot(p, [drift("2026-11-10"), backfill, honest])).toMatchObject({
+      missStreak: 1,
+      weeds: false,
+    });
+  });
+  it("a planned late night doesn't pause the farm: an on-time I'm up keeps the day, an oversleep doesn't (G7 A S2-1)", () => {
+    expect(farmDay(day("2026-11-11", {}, { excused: ["free"], wakeInWindow: true }))).toBe("kept");
+    expect(farmDay(drift("2026-11-11", {}))).toBe("missed");
+    expect(farmDay({ ...drift("2026-11-11"), excused: ["free"] })).toBe("missed");
   });
   it("only a kept day ends the run: a late start or a backfill on a missed day doesn't", () => {
     const p = plant("work", "coffee", "2026-11-09");
@@ -530,7 +550,11 @@ describe("away days pause the farm (playtest R1 R2, Minnie OK 2026-11-11)", () =
   });
   it("the plot warns one miss before it dies", () => {
     const p = plant("focus", "sunflower", "2026-11-01");
-    const misses = (n: number) => Array.from({ length: n }, (_, i) => day(`2026-11-0${i + 2}`, {}));
+    const misses = (n: number) =>
+      Array.from({ length: n }, (_, i) => {
+        const d = `2026-11-0${i + 2}`;
+        return day(d, { work: late(d) }); // checked in live, no anchor
+      });
     expect(oneMissFromDeath(simulatePlot(p, misses(3)))).toBe(false);
     expect(oneMissFromDeath(simulatePlot(p, misses(4)))).toBe(true);
     expect(oneMissFromDeath(simulatePlot(p, misses(5)))).toBe(false); // already dead
