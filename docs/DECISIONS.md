@@ -443,3 +443,13 @@ Format: date · decision · why · how to change it
     - a name field: nothing in the app sets `display_name` yet, so invites say "A friend" (F6);
     - the "your friend finished their first day" line on Today (the invite card shows it);
     - the invited-vs-not split on the retention dashboard.
+- 2026-11-27 · **Security upgrade: Next 16.4.4 → 16.4.6** (patch, released 2026-11-09)
+  - **Fixes 7 moderate advisories in 16.4.4:**
+    - cache leaks and poisoning around `use cache` and Cache Components, which this app uses (`cacheComponents`);
+    - an SVG bypass in image optimisation;
+    - HttpOnly cookie exposure on Edge routes;
+    - cross-client response injection when self-hosted.
+  - `eslint-config-next` moved with it.
+  - **Dev tools in the same pass:** Lighthouse CI 0.15 → 0.16.1 (used only by `qc:prod`), plus the non-breaking `npm audit fix` for typescript-eslint and minimatch. `npm audit` now reports 0 vulnerabilities, production and dev.
+  - **No `--force` was used.** The Lighthouse step is a minor-version bump on a 0.x package; the config didn't change, and a local run collects and asserts as before.
+
