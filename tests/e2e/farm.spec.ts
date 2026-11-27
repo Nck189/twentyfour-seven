@@ -129,12 +129,12 @@ test("R2 + rule A: one missed day from dying says so, on Today and in the sheet 
     });
   }
   await gotoToday(page);
-  const line = page.getByRole("link", { name: /One more missed day and a plant dies/ });
+  const line = page.getByRole("link", { name: /One more day without an on-time .* and a plant dies/ });
   await expect(line).toBeVisible();
   await line.click();
   await expect(page).toHaveURL(/\/farm/);
   await page.getByRole("button", { name: /^Focus: Sunflower/ }).click();
   await expect(
-    page.getByRole("dialog", { name: "Focus" }).getByText(/One more missed day and it dies/),
+    page.getByRole("dialog", { name: "Focus" }).getByText(/One more day without an on-time .* and it dies/),
   ).toBeVisible();
 });

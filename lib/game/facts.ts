@@ -42,6 +42,8 @@ export function buildDayFacts(i: FactsInput): DayFacts[] {
   const exercised = new Set(i.exercise.map((at) => localDate(new Date(at), i.timezone)));
   const out: DayFacts[] = [];
   for (let d = i.from; d <= i.today; d = addDays(d, 1)) {
+    // Away: excuses every block (blockResult) and skips the Day score. The farm's health has its
+    // own, wider quiet-day rule (farmDay), so it doesn't read this flag.
     const away = d < i.today && !logsByDate.has(d) && !anyWake.has(d) && !nights.has(d) && !exercised.has(d);
     out.push({
       date: d,
