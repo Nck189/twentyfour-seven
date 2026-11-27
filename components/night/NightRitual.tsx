@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type JSX, type ReactNode } from "react";
 import { PlantAll } from "@/components/farm/PlantAll";
 import { DayEditor } from "@/components/plan/DayEditor";
+import { QuickAppointment } from "@/components/plan/QuickAppointment";
 import { SaveStatus } from "@/components/plan/SaveStatus";
 import { CheckRow } from "@/components/today/Checkbox";
 import { Sheet } from "@/components/today/BlockSheet";
@@ -23,6 +24,8 @@ import { sfx } from "@/lib/sound/sfx";
 import { useBacklog } from "@/lib/backlog/useBacklog";
 import { usePlan } from "@/lib/plan/usePlan";
 import { formatTime } from "@/lib/format";
+import { logEvent } from "@/lib/db/events";
+import { planFor } from "@/lib/today/day";
 import { addDays } from "@/lib/time";
 import { hasExam } from "@/lib/game/exam";
 import { SomArt } from "@/components/art/Som";
@@ -92,6 +95,7 @@ export function NightRitual({
   const [result, setResult] = useState<"ticket" | "already" | "late" | "error" | "unsaved" | null>(null);
   const [busy, setBusy] = useState(false);
   const [bedLater, setBedLater] = useState(false);
+  const [asUsual, setAsUsual] = useState(false);
   const tomorrow = addDays(timeline.date, 1);
   const total = 4;
   // Tonight's Sleep: Goodnight starts it, and the checkbox is its first-10 (SPEC §2 default:
@@ -139,6 +143,7 @@ export function NightRitual({
     (i) => i.status === "scheduled" && i.scheduled_date === timeline.date,
   );
 
+  const nothingToClose = open.length === 0 && unfinished.length === 0;
   const steps = [
     // 1. Free phone time
     <div key="phone" className="flex flex-col gap-3">
@@ -309,15 +314,52 @@ export function NightRitual({
         </p>
       )}
       <SaveStatus state={plan.saving} />
-      <PlantAll />
       {plan.ctx ? (
-        <DayEditor
-          today={timeline.date}
-          ctx={plan.ctx}
-          date={tomorrow}
-          onChange={plan.updateDay}
-          onSaveDefault={plan.saveBlockDefault}
-        />
+        <>
+          {/* G1 (Minnie OK 2026-11-27): one question, not a form. Doing nothing keeps the usual
+              plan; only what's different needs a tap. The full editor waits under "Edit details". */}
+          <p className="text-muted">
+            {t("usualQuestion", {
+              time: formatTime(planFor(plan.ctx, tomorrow).wake, timezone),
+            })}
+          </p>
+          {asUsual ? (
+            <p role="status" className="rounded-xl bg-primary-soft p-3 font-bold text-primary">
+              {t("usualSaved")}
+            </p>
+          ) : (
+            <Button
+              onClick={() => {
+                sfx.tick();
+                setAsUsual(true);
+                void logEvent("plan_as_usual", { date: tomorrow });
+              }}
+            >
+              {t("usualYes")}
+            </Button>
+          )}
+          <QuickAppointment
+            today={timeline.date}
+            defaultDate={tomorrow}
+            timezone={timezone}
+            onAdd={plan.addAppointment}
+          />
+          <PlantAll />
+          <details className="rounded-xl bg-surface-2">
+            <summary className="tap flex min-h-11 cursor-pointer items-center px-3 font-bold text-primary">
+              {t("editDetails")}
+            </summary>
+            <div className="px-1 pb-2">
+              <DayEditor
+                today={timeline.date}
+                ctx={plan.ctx}
+                date={tomorrow}
+                onChange={plan.updateDay}
+                onSaveDefault={plan.saveBlockDefault}
+              />
+            </div>
+          </details>
+        </>
       ) : plan.status === "error" ? (
         <div
           role="alert"
@@ -406,7 +448,11 @@ export function NightRitual({
           quick second tap (e.g. on "Today went as usual") into a tap on the backdrop (G7 S3). */}
       <StepBox key={step}>{steps[step]}</StepBox>
       <div className="mt-4 flex justify-between gap-2">
-        <Button variant="ghost" disabled={step === 0} onClick={() => setStep((s) => s - 1)}>
+        <Button
+          variant="ghost"
+          disabled={step === 0}
+          onClick={() => setStep((s) => s - (s === 2 && nothingToClose ? 2 : 1))}
+        >
           {t("back")}
         </Button>
         {step < total - 1 ? (
@@ -414,7 +460,8 @@ export function NightRitual({
             variant={step === 0 && phoneEnds !== null && left > 0 ? "secondary" : "primary"}
             onClick={() => {
               sfx.ritualStep();
-              setStep((s) => s + 1);
+              // D (2026-11-27): nothing to close today → straight from the phone break to planning.
+              setStep((s) => s + (s === 0 && nothingToClose ? 2 : 1));
             }}
           >
             {step === 0 && phoneEnds !== null && left > 0 ? t("phoneSkip") : t("next")}

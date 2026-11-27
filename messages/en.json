@@ -822,7 +822,11 @@
     "seedsError": "Some plots couldn't be planted. Try again from the Farm tab.",
     "bedLater": "Sleep starts at {time}. When you lie down, tap Going to bed on Today.",
     "examTomorrow": "Exam tomorrow. Som says: get a full night's sleep.",
-    "examDone": "You did the exam today. Som is proud; rest well."
+    "examDone": "You did the exam today. Som is proud; rest well.",
+    "usualQuestion": "Is tomorrow a usual day? You'd be up at {time}. Doing nothing keeps the usual plan; only add what's different.",
+    "usualYes": "Yes, a usual day",
+    "usualSaved": "Usual plan it is. Nothing else to do.",
+    "editDetails": "Edit details (times, kind of day, checklists)"
   },
   "onboarding": {
     "cardTitle": "Make 24/7 yours in 2 minutes",
@@ -1764,5 +1768,15 @@
     "retry": "Try again",
     "addFailed": "Couldn't add it. Check your connection and try again.",
     "added": "{block} is in from tomorrow."
+  },
+  "quickAppt": {
+    "label": "Something on? Add it in one line",
+    "placeholder": "e.g. 2pm dentist, Fri 9am exam",
+    "add": "Add",
+    "preview": "{day} · {time} · {title}",
+    "needTime": "Add a time, e.g. 2pm or 14:00.",
+    "untitled": "Appointment",
+    "added": "Added: {title}, {day} at {time}.",
+    "failed": "Couldn't add it. Check your connection and try again."
   }
 }
