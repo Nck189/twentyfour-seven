@@ -6,7 +6,9 @@ import { logEvent } from "@/lib/db/events";
 import { saveDirty } from "@/lib/plan/patch";
 import type { BlockSetting, ChecklistItem } from "@/content/blocks";
 import { getSupabase } from "@/lib/supabase/client";
-import { addDays, DEFAULT_TZ } from "@/lib/time";
+import { addDays, DEFAULT_TZ, zonedInstant } from "@/lib/time";
+import { hostFor, parseHHMM } from "@/lib/engine";
+import type { FixedEvent } from "@/content/defaults";
 
 import {
   currentDayDate,
@@ -644,6 +646,37 @@ export function useToday(now: Date) {
           ["block_set_aside", { date: b.logDate, block: b.key, reason }],
         );
       },
+      /**
+       * G4 (Minnie OK 2026-11-27): an appointment added from Today's morning check, saved like
+       * Plan's (one event at a time, merged on the server), in the block its start falls in.
+       */
+      addAppointment: async (date: string, title: string, start: string, end: string) => {
+        if (!loaded) return;
+        let host: BlockKey = "work";
+        try {
+          host = hostFor(
+            planFor(loaded.ctx, date),
+            zonedInstant(date, parseHHMM(start), loaded.ctx.timezone),
+          );
+        } catch {
+          // No kind of day: keep Work.
+        }
+        const ev: FixedEvent = { id: crypto.randomUUID(), key: "appointment", title, start, end, host };
+        const row = loaded.ctx.dayPlans[date];
+        const ok = await saveDirty(
+          client,
+          loaded.userId,
+          date,
+          { set: {}, addEvents: [ev] },
+          row && {
+            ...row,
+            overrides: { ...row.overrides, fixed_events: [...(row.overrides.fixed_events ?? []), ev] },
+          },
+        );
+        if (!ok) throw new Error("appointment not saved");
+        void logEvent("appointment_added", { date, host, from: "today" });
+        setReload((r) => r + 1);
+      },
       /** Undo "Not today" (rule C): the block counts again. */
       unsetAside: (b: TimelineBlock) => {
         if (!loaded) return Promise.resolve();
@@ -812,6 +845,8 @@ export function useToday(now: Date) {
     nightDoneAtLoad: dayDate ? nightDoneAtLoad.includes(dayDate) : false,
     /** Today's Night ticket is held (the ritual counted for the farm and the streak). */
     nightTicket: dayDate ? nightTickets.includes(dayDate) : false,
+    /** Last night's ritual counted (G4: no morning check needed when tomorrow was planned). */
+    nightTicketYesterday: dayDate ? nightTickets.includes(addDays(dayDate, -1)) : false,
     actions,
     saveError,
     retrySave,

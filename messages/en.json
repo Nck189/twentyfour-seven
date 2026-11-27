@@ -1778,5 +1778,11 @@
     "untitled": "Appointment",
     "added": "Added: {title}, {day} at {time}.",
     "failed": "Couldn't add it. Check your connection and try again."
+  },
+  "morningCheck": {
+    "title": "Anything different today?",
+    "hint": "No plan from last night, and that's fine. Add an appointment if there is one; otherwise it's a usual day.",
+    "nothing": "No, a usual day",
+    "done": "That's all"
   }
 }
