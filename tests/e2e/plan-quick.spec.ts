@@ -3,7 +3,7 @@ import { expectTouchTargets } from "../helpers/a11y";
 import { setPrefs, signIn, uniqueEmail } from "../helpers/auth";
 import { dayPlans, rest, setWakeMinutesAgo, userIdFor } from "../helpers/db";
 import { IS_PROD_RUN } from "../helpers/env";
-import { addDays, localDate } from "@/lib/time";
+import { addDays, localDate, localParts } from "@/lib/time";
 
 /** G (Minnie OK 2026-11-27): planning tomorrow in about 10 seconds; appointments in one line. */
 test.skip(IS_PROD_RUN, "creates dedicated users");
@@ -67,7 +67,9 @@ test("G4: the morning after no Night ritual, Today asks once what's different; T
   await expect(card.getByText(/15:00 · หมอฟัน/)).toBeVisible();
   await card.getByRole("button", { name: "Add", exact: true }).click();
   await expect(card.getByText(/Added: หมอฟัน/)).toBeVisible();
-  await expect.poll(() => apptsOn(id, today)).toEqual(["15:00 หมอฟัน"]);
+  // With no date written, a time already gone today means tomorrow (G7 G S3).
+  const gone = localParts(new Date(), "Asia/Bangkok").hour >= 15;
+  await expect.poll(() => apptsOn(id, gone ? addDays(today, 1) : today)).toEqual(["15:00 หมอฟัน"]);
   await card.getByRole("button", { name: "That's all" }).click();
   await expect(card).toBeHidden();
   await page.reload();
