@@ -44,6 +44,11 @@ export type DayFacts = {
    * away, so the farm pauses like Vacation (playtest R1 R2, Minnie OK 2026-11-11).
    */
   away?: boolean;
+  /**
+   * Blocks this person doesn't track (rule B, Minnie OK 2026-11-27): left out of the Day score,
+   * and a block with no check-in there is excused, not missed. A check-in there still counts.
+   */
+  untracked?: BlockKey[];
 };
 
 /**
@@ -108,6 +113,7 @@ export function blockResult(day: DayFacts, block: BlockKey): BlockResult {
   if (log && succeeded(log)) return "success";
   if (day.open?.includes(block)) return "open";
   if (day.excused?.includes(block)) return "excused";
+  if (day.untracked?.includes(block) && !log?.started_at) return "excused";
   if (log?.started_at) return "partial";
   return "miss";
 }
@@ -156,7 +162,7 @@ export function dayOee(day: DayFacts): {
   oee: number;
 } | null {
   if (day.mode !== "normal" || day.away) return null;
-  const planned = BLOCK_KEYS.filter((b) => !day.logs[b]?.planned_deviation);
+  const planned = BLOCK_KEYS.filter((b) => !day.logs[b]?.planned_deviation && !day.untracked?.includes(b));
   if (planned.length === 0) return null;
   let onTime = 0;
   let first10 = 0;

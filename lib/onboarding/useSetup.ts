@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { BlockKey, BlockSetting } from "@/content/blocks";
+import { OPTIONAL_BLOCKS, type BlockKey, type BlockSetting } from "@/content/blocks";
+import { saveTracked } from "@/lib/blocks/tracked";
 import type { FixedEvent } from "@/content/defaults";
 import type { Starter } from "@/content/starters";
 import { logEvent } from "@/lib/db/events";
@@ -101,6 +102,29 @@ export function useSetup() {
     },
     [client],
   );
+
+  /**
+   * Which optional blocks are tracked (rule B); the core three always are. Through the server, from
+   * today (the account is new). Resolves true once all four are saved.
+   */
+  const setTracked = useCallback(async (tracked: readonly BlockKey[]): Promise<boolean> => {
+    setBusy((b) => b + 1);
+    try {
+      let saved: BlockSetting[] | null = null;
+      for (const k of OPTIONAL_BLOCKS) saved = await saveTracked(k, tracked.includes(k), true);
+      if (saved) {
+        blocksRef.current = saved;
+        setBlocks(saved);
+      }
+      setError(false);
+      return true;
+    } catch {
+      setError(true);
+      return false;
+    } finally {
+      setBusy((b) => b - 1);
+    }
+  }, []);
 
   /** Wake time + sleep length for one kind of day (bedtime follows: wake − sleep). */
   const setSleep = useCallback(
@@ -353,6 +377,7 @@ export function useSetup() {
     setFirst10,
     addOwnFirst10,
     setUseFirst10,
+    setTracked,
     finish,
   };
 }

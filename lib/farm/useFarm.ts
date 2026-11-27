@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BLOCK_KEYS, type BlockKey } from "@/content/blocks";
+import { BLOCK_KEYS, type BlockKey, untrackedOn } from "@/content/blocks";
 import { isCropId, type CropId } from "@/content/crops";
 import { isDecorId, type DecorId } from "@/content/decor";
 import {
@@ -34,6 +34,8 @@ export type FarmData = {
   farm: FarmState;
   /** Block plots with nothing planted. */
   empty: BlockKey[];
+  /** Blocks this person doesn't track (rule B): their plots grow on kept days. */
+  untracked: BlockKey[];
   coins: number;
   /** Decor bought, oldest first (SPEC §8.9). */
   decor: DecorId[];
@@ -133,6 +135,7 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
         wakes: wakes.data as { date: string; in_window: boolean; backfilled: boolean }[],
         nights: (nights.data as { ref_date: string }[]).map((n) => n.ref_date),
         exercise: (ex.data as { at: string }[]).map((e) => e.at),
+        blockSettings: ctx.blocks,
       });
       const block = currentBlock(timelineFor(ctx, today), now)?.key;
       const planted = new Set(plantings.map((p) => p.slot));
@@ -141,6 +144,7 @@ export function useFarm({ live = true, delayMs = 0 }: { live?: boolean; delayMs?
         data: {
           farm: farmState(plantings, days, uid),
           empty: BLOCK_KEYS.filter((b) => !planted.has(b)),
+          untracked: untrackedOn(ctx.blocks, today),
           sky: skyPhaseFor(block),
           coins: (game.data?.coins as number | undefined) ?? 0,
           decor: ((decorRows.data ?? []) as { item_id: string }[]).map((d) => d.item_id).filter(isDecorId),
