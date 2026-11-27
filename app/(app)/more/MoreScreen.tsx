@@ -6,6 +6,7 @@ import { useEffect, useId, useState, useSyncExternalStore, type ReactNode } from
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ExportCard } from "@/components/settings/ExportCard";
+import { NameCard } from "@/components/settings/NameCard";
 import { TipsCard } from "@/components/settings/TipsCard";
 import { CafeCard } from "@/components/settings/CafeCard";
 import { NotificationsCard } from "@/components/settings/NotificationsCard";
@@ -261,6 +262,7 @@ function AccountGroup() {
 
   return (
     <>
+      <NameCard />
       <Card title={t("install")} id="install">
         <p className="text-muted">{installed ? t("installDone") : t("installSteps")}</p>
       </Card>
