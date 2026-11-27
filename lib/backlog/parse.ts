@@ -1,4 +1,6 @@
 import { addDays, isoWeekday } from "@/lib/time";
+import { MONTHS } from "@/lib/plan/months";
+import { endAfter, parseQuickAddDetail } from "@/lib/plan/quickAdd";
 import type { Priority } from "./index";
 
 /**
@@ -95,69 +97,6 @@ function tagOf(token: string): string | null {
   return null;
 }
 
-const MONTHS: Record<string, number> = {
-  jan: 1,
-  january: 1,
-  feb: 2,
-  february: 2,
-  mar: 3,
-  march: 3,
-  apr: 4,
-  april: 4,
-  may: 5,
-  jun: 6,
-  june: 6,
-  jul: 7,
-  july: 7,
-  aug: 8,
-  august: 8,
-  sep: 9,
-  sept: 9,
-  september: 9,
-  oct: 10,
-  october: 10,
-  nov: 11,
-  november: 11,
-  dec: 12,
-  december: 12,
-  "ม.ค.": 1,
-  มค: 1,
-  มกราคม: 1,
-  "ก.พ.": 2,
-  กพ: 2,
-  กุมภาพันธ์: 2,
-  "มี.ค.": 3,
-  มีค: 3,
-  มีนาคม: 3,
-  "เม.ย.": 4,
-  เมย: 4,
-  เมษายน: 4,
-  "พ.ค.": 5,
-  พค: 5,
-  พฤษภาคม: 5,
-  "มิ.ย.": 6,
-  มิย: 6,
-  มิถุนายน: 6,
-  "ก.ค.": 7,
-  กค: 7,
-  กรกฎาคม: 7,
-  "ส.ค.": 8,
-  สค: 8,
-  สิงหาคม: 8,
-  "ก.ย.": 9,
-  กย: 9,
-  กันยายน: 9,
-  "ต.ค.": 10,
-  ตค: 10,
-  ตุลาคม: 10,
-  "พ.ย.": 11,
-  พย: 11,
-  พฤศจิกายน: 11,
-  "ธ.ค.": 12,
-  ธค: 12,
-  ธันวาคม: 12,
-};
-
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
 const daysIn = (year: number, m: number) => new Date(Date.UTC(year, m, 0)).getUTCDate();
@@ -231,11 +170,6 @@ function readTime(token: string): { start: string; end?: string } | null {
   return s ? { start: s } : null;
 }
 
-const plusHour = (hhmm: string) => {
-  const [h, m] = hhmm.split(":").map(Number);
-  return `${pad2(Math.min(23, h + 1))}:${pad2(h + 1 > 23 ? 59 : m)}`;
-};
-
 export function parseCapture(text: string, today: string): Capture {
   const raw = text.trim().replace(/\s+/g, " ");
   const tokens = raw.split(" ");
@@ -297,12 +231,27 @@ export function parseCapture(text: string, today: string): Capture {
 
   if (date && time) {
     keep.splice(time.index, 1);
-    out.appointment = { date, start: time.start, end: time.end ?? plusHour(time.start) };
+    out.appointment = { date, start: time.start, end: time.end ?? endAfter(time.start) };
   } else if (date) {
     out.scheduled_date = date;
   }
+  // G2 (2026-11-27): Thai clock words and phrases the token reader can't see ("พรุ่งนี้ บ่าย 2
+  // ประชุม", "ศุกร์ 2 ทุ่ม"), read from the words not used yet. Only with a date (written, or read
+  // above), like above: a time alone stays a task title. Never on a deadline task (G7 G S2-4).
+  if (!out.appointment && !out.deadline) {
+    const q = parseQuickAddDetail(keep.join(" "), today, date ?? today);
+    if (q && (q.dateGiven || date)) {
+      delete out.scheduled_date;
+      return {
+        title: q.title || raw,
+        ...out,
+        appointment: { date: q.date, start: q.start, end: q.end ?? endAfter(q.start) },
+      };
+    }
+  }
   const title = keep.join(" ").trim();
-  // Only tokens? Keep what was typed as the title instead of guessing.
-  if (!title) return { title: raw };
+  // Only tokens? Keep what was typed as the title instead of guessing; an appointment it read
+  // ("sun 9am") stays one, with that as its title (G7 G note).
+  if (!title) return out.appointment ? { title: raw, appointment: out.appointment } : { title: raw };
   return { title, ...out };
 }

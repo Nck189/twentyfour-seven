@@ -60,6 +60,8 @@ test("CJ-07 night ritual end to end: open blocks closed with reasons, tomorrow p
 
   // Plan tomorrow: push bedtime 15 min and add a checklist item to Work.
   await expect(sheet.getByText("Step 3 of 4")).toBeVisible();
+  // G1: the full editor is folded under "Edit details".
+  await sheet.getByText(/^Edit details/).click();
   await sheet.getByRole("button", { name: "15 min later" }).click();
   await expect(sheet.getByText("15 min later than target")).toBeVisible();
   await sheet.getByRole("button", { name: "Work", exact: true }).click();
@@ -353,6 +355,7 @@ test("R-M4-5: Goodnight waits until tomorrow's plan is saved (offline edit isn't
     r.request().method() === "POST" ? r.abort("internetdisconnected") : r.continue();
   await page.route("**/rest/v1/rpc/patch_day_plan**", offline);
   await page.route("**/rest/v1/day_plans**", offline);
+  await sheet.getByText(/^Edit details/).click();
   await sheet.getByRole("button", { name: "15 min later" }).click();
   await sheet.getByRole("button", { name: "Next" }).click();
   await sheet.getByRole("checkbox", { name: "Alarm set + phone out of reach" }).click();
