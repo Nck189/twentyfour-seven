@@ -18,7 +18,8 @@ const QUIET_DAYS = 14;
 
 /**
  * Rule B's next step (goal gradient): after a 3-day streak, one quiet offer to track one more block,
- * the next one in day order. "Not now" hides it for 14 days on this device (a convenience, so
+ * the next one in day order (`untracked`: the latest choice, so a block added for tomorrow isn't
+ * offered again). It starts with the next day. "Not now" hides it for 14 days on this device (a convenience, so
  * browser storage is fine). Never shown while every block is tracked.
  */
 export function AddBlockLine({
@@ -36,6 +37,13 @@ export function AddBlockLine({
   const text = useBlockText();
   const [hiddenUntil, setHiddenUntil] = useState<string | null>(() => readHidden());
   const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; block: BlockKey } | null>(null);
+  if (result?.ok)
+    return (
+      <p role="status" className="mx-4 mb-3 rounded-xl bg-primary-soft p-3 text-sm font-bold lg:mx-6">
+        {t("added", { block: text.name(result.block) })}
+      </p>
+    );
   const next = OPTIONAL_BLOCKS.find((k) => untracked.includes(k));
   if (!next || streak < 3 || (hiddenUntil && hiddenUntil > today)) return null;
   const hide = () => {
@@ -62,8 +70,11 @@ export function AddBlockLine({
           onClick={async () => {
             setBusy(true);
             try {
-              await saveTracked({ [next]: true });
+              await saveTracked(next, true);
+              setResult({ ok: true, block: next });
               onAdded();
+            } catch {
+              setResult({ ok: false, block: next });
             } finally {
               setBusy(false);
             }
@@ -76,6 +87,11 @@ export function AddBlockLine({
           {t("nudgeLater")}
         </button>
       </div>
+      {result && !result.ok && (
+        <p role="alert" className="text-sm font-bold">
+          {t("addFailed")}
+        </p>
+      )}
     </section>
   );
 }

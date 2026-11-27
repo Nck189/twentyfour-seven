@@ -161,8 +161,9 @@ export function Onboarding() {
         {setup.status === "ready" && step === "track" && (
           <TrackStep
             busy={setup.busy}
+            blocks={setup.blocks}
             onSave={(tracked) => {
-              void setup.setTracked(tracked).then(() => setStep("first10"));
+              void setup.setTracked(tracked).then((ok) => ok && setStep("first10"));
             }}
           />
         )}

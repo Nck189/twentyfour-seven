@@ -162,9 +162,7 @@ export function dayOee(day: DayFacts): {
   oee: number;
 } | null {
   if (day.mode !== "normal" || day.away) return null;
-  const planned = BLOCK_KEYS.filter(
-    (b) => !day.logs[b]?.planned_deviation && !day.untracked?.includes(b),
-  );
+  const planned = BLOCK_KEYS.filter((b) => !day.logs[b]?.planned_deviation && !day.untracked?.includes(b));
   if (planned.length === 0) return null;
   let onTime = 0;
   let first10 = 0;

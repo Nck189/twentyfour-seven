@@ -168,9 +168,11 @@
       "endsAt": "Ends at {time} today.",
       "extend": "+{minutes} min",
       "skip": "Not today",
-      "skipHint": "Skipping before it starts counts as planned: no effect on your Day score or farm.",
       "saved": "Saved for today.",
-      "error": "Couldn't save. Check your connection and try again."
+      "error": "Couldn't save. Check your connection and try again.",
+      "noRoom": "No room to stretch it today: the next block is already as short as it gets, or a fixed time holds it.",
+      "skipped": "Not today",
+      "undo": "Undo"
     }
   },
   "plan": {
@@ -1748,14 +1750,19 @@
   },
   "tracked": {
     "title": "Blocks I track",
-    "hint": "Track only the parts of the day you want to change. The others keep their time on Today, with nothing to check in and no effect on your Day score or farm.",
+    "hint": "Track only the parts of the day you want to change. The others keep their time on Today with nothing to check in and no effect on your Day score; their plots grow on every day you keep an anchor.",
     "always": "Always tracked: {list}",
     "loading": "Loading…",
-    "saved": "Saved.",
+    "saved": "Saved. It starts tomorrow.",
     "failed": "Couldn't save. Check your connection and try again.",
     "nudgeTitle": "Track one more block?",
     "nudge": "{days} days in a row. Nice! Want to add {block} too?",
     "nudgeAdd": "Add {block}",
-    "nudgeLater": "Not now"
+    "nudgeLater": "Not now",
+    "fromTomorrow": "Starts tomorrow",
+    "loadFailed": "Couldn't load your blocks.",
+    "retry": "Try again",
+    "addFailed": "Couldn't add it. Check your connection and try again.",
+    "added": "{block} is in from tomorrow."
   }
 }

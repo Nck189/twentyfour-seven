@@ -2,39 +2,41 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import type { TimelineBlock } from "@/lib/today/day";
 import { formatTime } from "@/lib/format";
+import type { TimelineBlock } from "@/lib/today/day";
 
 /**
- * Rule C (Minnie OK 2026-11-27): small changes to the current block, folded away so Today stays
- * calm. "+15 / +30 min" stretches today's block (a per-day override; the engine shortens what
- * comes after, Free first). "Not today" sets a block that hasn't started aside as planned: no
- * Day-score hit and never a miss. Once it has started, it simply isn't offered.
+ * Rule C (Minnie OK 2026-11-27): stretch the current block for today, folded away so Today stays
+ * calm. "+15 / +30 min" is a per-day override; the engine shortens what comes after (Free first).
+ * When nothing would move (Free itself takes the day's slack; a fixed event can pin a block), it
+ * says so instead of saving (G7 C S2-2). The buttons wait for the new end time to show, so two
+ * quick taps can't both stretch from the old length.
  */
 export function BlockAdjust({
   block,
-  started,
   timezone,
   onExtend,
-  onSkip,
 }: {
   block: TimelineBlock;
-  started: boolean;
   timezone: string;
   onExtend: (minutes: number) => Promise<void>;
-  onSkip: () => Promise<void>;
 }) {
   const t = useTranslations("today.adjust");
   const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState<"saved" | "error" | null>(null);
-  const run = async (f: () => Promise<void>) => {
+  const [status, setStatus] = useState<"saved" | "error" | "noRoom" | null>(null);
+  // The end time a save was made from: until the new one arrives, the buttons stay off.
+  const [savedFrom, setSavedFrom] = useState<number | null>(null);
+  const waiting = savedFrom !== null && savedFrom === block.end.getTime();
+  const run = async (m: number) => {
     setBusy(true);
     setStatus(null);
     try {
-      await f();
+      const from = block.end.getTime();
+      await onExtend(m);
+      setSavedFrom(from);
       setStatus("saved");
-    } catch {
-      setStatus("error");
+    } catch (e) {
+      setStatus(e instanceof Error && e.message === "no_room" ? "noRoom" : "error");
     } finally {
       setBusy(false);
     }
@@ -51,27 +53,16 @@ export function BlockAdjust({
             <button
               key={m}
               type="button"
-              disabled={busy}
-              onClick={() => void run(() => onExtend(m))}
-              className="tap min-h-11 rounded-full bg-surface px-4 text-sm font-bold"
+              disabled={busy || waiting}
+              onClick={() => void run(m)}
+              className="tap min-h-11 rounded-full bg-surface px-4 text-sm font-bold disabled:opacity-60"
             >
               {t("extend", { minutes: m })}
             </button>
           ))}
-          {!started && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void run(onSkip)}
-              className="tap min-h-11 rounded-full bg-surface px-4 text-sm font-bold"
-            >
-              {t("skip")}
-            </button>
-          )}
         </div>
-        {!started && <p className="text-xs text-muted">{t("skipHint")}</p>}
         {status && (
-          <p role={status === "error" ? "alert" : "status"} className="text-sm font-bold">
+          <p role={status === "saved" ? "status" : "alert"} className="text-sm font-bold">
             {t(status)}
           </p>
         )}
