@@ -639,6 +639,28 @@ export function useToday(now: Date) {
           ["block_set_aside", { date: b.logDate, block: b.key, reason }],
         );
       },
+      /** Undo "Not today" (rule C): the block counts again. */
+      unsetAside: (b: TimelineBlock) => {
+        if (!loaded) return Promise.resolve();
+        const key = `${b.logDate}:${b.key}`;
+        const cur = logsRef.current[key] ?? emptyLog(b.logDate, b.key);
+        const next: BlockLog = { ...cur, planned_deviation: false };
+        return mutate(
+          key,
+          next,
+          {
+            t: "upsert",
+            row: {
+              user_id: loaded.userId,
+              date: b.logDate,
+              block: b.key,
+              planned_start: next.planned_start,
+              planned_deviation: false,
+            },
+          },
+          ["block_set_aside_undone", { date: b.logDate, block: b.key }],
+        );
+      },
       setLocation: (b: TimelineBlock, location: "home" | "out", at: Date) =>
         upsertLog(b, { location }, "location_set", at),
       pressWake: async () => {
@@ -658,6 +680,25 @@ export function useToday(now: Date) {
         const row = loaded.ctx.dayPlans[b.logDate];
         const blocks = row?.overrides.blocks ?? {};
         const block = { ...blocks[b.key], duration_min: b.desiredMin + minutes };
+        // Preview first: Free absorbs the day's slack, and a fixed event can pin a block, so a
+        // stretch may change nothing (G7 C S2-2). Say so instead of a silent "saved".
+        const nextRow = {
+          ...(row ?? {
+            date: b.logDate,
+            template_id: null,
+            attending: null,
+            bedtime_override: null,
+            late_night: null,
+            mode: "normal" as const,
+          }),
+          overrides: { ...row?.overrides, blocks: { ...blocks, [b.key]: block } },
+        };
+        const day = dayDate ?? b.logDate;
+        const after = timelineFor(
+          { ...loaded.ctx, dayPlans: { ...loaded.ctx.dayPlans, [b.logDate]: nextRow } },
+          day,
+        ).blocks.find((x) => x.key === b.key && x.logDate === b.logDate);
+        if (!after || after.end.getTime() <= b.end.getTime()) throw new Error("no_room");
         const ok = await saveDirty(
           client,
           loaded.userId,

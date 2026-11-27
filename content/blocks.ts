@@ -18,11 +18,13 @@ export type BlockSetting = {
   first10_options?: string[];
   checklist: ChecklistItem[];
   /**
-   * Whether Today asks for this block's check-in (rule B, Minnie OK 2026-11-27). Missing = true.
-   * The core blocks (Wake, Down Time, Sleep) are always tracked. An untracked block still has its
-   * time on the timeline, but no check-in, no Night-ritual close and no place in the Day score.
+   * Rule B (Minnie OK 2026-11-27): which days this block is tracked, as dated changes, oldest
+   * first; a day reads the last entry on or before it (none = tracked). Written only by the
+   * `set_block_tracked` RPC (from the next wake-day), so a change never rewrites a past day.
+   * An untracked block keeps its time on Today with no check-in, no Night-ritual question, no
+   * reminder and no place in the Day score; its plot grows on every kept day instead.
    */
-  tracked?: boolean;
+  tracked_log?: { from: string; tracked: boolean }[];
 };
 
 /** Always tracked: the day's anchors (I'm up, the Night ritual, going to bed). */
@@ -30,13 +32,30 @@ export const CORE_BLOCKS: readonly BlockKey[] = ["wake", "down", "sleep"];
 /** The blocks a person may choose to track or not. */
 export const OPTIONAL_BLOCKS: readonly BlockKey[] = ["focus", "work", "gradation", "free"];
 
-export function isTracked(blocks: readonly Pick<BlockSetting, "key" | "tracked">[], key: BlockKey): boolean {
+type Tracked = Pick<BlockSetting, "key" | "tracked_log">;
+
+/** Tracked on `date` (YYYY-MM-DD)? Core blocks always are. Mirrored in SQL `_untracked_on`. */
+export function trackedOn(blocks: readonly Tracked[], key: BlockKey, date: string): boolean {
   if (CORE_BLOCKS.includes(key)) return true;
-  return blocks.find((b) => b.key === key)?.tracked !== false;
+  const log = blocks.find((b) => b.key === key)?.tracked_log ?? [];
+  let tracked = true;
+  for (const e of log) if (e.from <= date) tracked = e.tracked;
+  return tracked;
 }
 
-/** The blocks this person doesn't track (never a core block). */
-export function untrackedBlocks(blocks: readonly Pick<BlockSetting, "key" | "tracked">[]): BlockKey[] {
+/** The latest choice (what the settings switch shows), whenever it starts. */
+export function isTracked(blocks: readonly Tracked[], key: BlockKey): boolean {
+  if (CORE_BLOCKS.includes(key)) return true;
+  return blocks.find((b) => b.key === key)?.tracked_log?.at(-1)?.tracked ?? true;
+}
+
+/** Blocks not tracked on `date`. */
+export function untrackedOn(blocks: readonly Tracked[], date: string): BlockKey[] {
+  return OPTIONAL_BLOCKS.filter((k) => !trackedOn(blocks, k, date));
+}
+
+/** Blocks the latest choice leaves untracked (some may start only tomorrow). */
+export function untrackedBlocks(blocks: readonly Tracked[]): BlockKey[] {
   return OPTIONAL_BLOCKS.filter((k) => !isTracked(blocks, k));
 }
 

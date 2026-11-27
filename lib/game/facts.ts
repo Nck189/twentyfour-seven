@@ -1,4 +1,4 @@
-import { BLOCK_KEYS, type BlockKey } from "@/content/blocks";
+import { BLOCK_KEYS, untrackedOn, type BlockKey, type BlockSetting } from "@/content/blocks";
 import { addDays, localDate } from "@/lib/time";
 import type { DayFacts, DayMode, GameLog } from "./outcome";
 
@@ -21,8 +21,8 @@ export type FactsInput = {
   nights: readonly string[];
   /** exercise_logs.at timestamps. */
   exercise: readonly string[];
-  /** Blocks this person doesn't track (settings, rule B): out of the Day score, never a miss. */
-  untracked?: readonly BlockKey[];
+  /** settings.blocks: which blocks were tracked on each day (rule B, dated). */
+  blockSettings?: readonly Pick<BlockSetting, "key" | "tracked_log">[];
 };
 
 /**
@@ -44,6 +44,8 @@ export function buildDayFacts(i: FactsInput): DayFacts[] {
   const exercised = new Set(i.exercise.map((at) => localDate(new Date(at), i.timezone)));
   const out: DayFacts[] = [];
   for (let d = i.from; d <= i.today; d = addDays(d, 1)) {
+    // Away: excuses every block (blockResult) and skips the Day score. The farm's health has its
+    // own, wider quiet-day rule (farmDay), so it doesn't read this flag.
     const away = d < i.today && !logsByDate.has(d) && !anyWake.has(d) && !nights.has(d) && !exercised.has(d);
     out.push({
       date: d,
@@ -55,7 +57,10 @@ export function buildDayFacts(i: FactsInput): DayFacts[] {
       ...(d === i.today ? { open: [...BLOCK_KEYS] } : {}),
       ...(lateNights.has(addDays(d, 1)) ? { excused: ["free" as BlockKey] } : {}),
       ...(away ? { away: true } : {}),
-      ...(i.untracked?.length ? { untracked: [...i.untracked] } : {}),
+      ...(() => {
+        const u = i.blockSettings ? untrackedOn(i.blockSettings, d) : [];
+        return u.length ? { untracked: u } : {};
+      })(),
     });
   }
   return out;

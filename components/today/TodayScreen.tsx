@@ -30,7 +30,8 @@ import { skyPhaseFor } from "@/lib/farm/sky";
 import { LastChanceLine } from "@/components/farm/LastChanceLine";
 import { AddBlockLine } from "@/components/today/AddBlockLine";
 import { BlockAdjust } from "@/components/today/BlockAdjust";
-import { untrackedBlocks } from "@/content/blocks";
+import { NextLine } from "@/components/today/NextLine";
+import { untrackedBlocks, untrackedOn } from "@/content/blocks";
 import { useUnlocks } from "@/lib/unlocks/useUnlocks";
 import { TodayReviewLine } from "@/components/stats/ReviewLine";
 import { Tip } from "@/components/tips/Tip";
@@ -218,9 +219,12 @@ export function TodayScreen() {
     ...(wake?.event?.in_window && !wake.event.backfilled && wake.event.date === tl.date ? ["wake"] : []),
     ...(today.nightDone ? ["down"] : []),
   ];
-  // Rule B: blocks this person doesn't track (never Wake, Down Time or Sleep).
-  const untracked = untrackedBlocks(today.blockSettings);
-  const curTracked = !!cur && !untracked.includes(cur.key);
+  // Rule B: blocks this person doesn't track today (never Wake, Down Time or Sleep). A check-in
+  // made anyway shows the normal card from then on.
+  const untracked = untrackedOn(today.blockSettings, tl.date);
+  const curTracked =
+    !!cur &&
+    (!untracked.includes(cur.key) || !!(today.logFor(cur).started_at || today.logFor(cur).first10_at));
   const showCurrent = cur && !bedCard && cur.key !== "sleep" && !(cur.key === "down" && !today.nightDone);
   const napRunning = isNapRunning();
   const warnings = allWarnings ? tl.warnings : tl.warnings.slice(0, 1);
@@ -390,14 +394,12 @@ export function TodayScreen() {
             onChanged={setup.reload}
           />
           <BlockTasks userId={today.userId} date={cur.logDate} block={cur.key} />
-          {cur.key !== "wake" && cur.key !== "down" && !today.logFor(cur).closed_at && (
+          {cur.key !== "wake" && cur.key !== "down" && cur.key !== "free" && !today.logFor(cur).closed_at && (
             <BlockAdjust
               key={`adjust:${cur.logDate}:${cur.key}`}
               block={cur}
-              started={!!(today.logFor(cur).started_at || today.logFor(cur).first10_at)}
               timezone={today.timezone}
               onExtend={(m) => today.actions.extendBlock(cur, m)}
-              onSkip={() => today.actions.setAside(cur, "skipped")}
             />
           )}
         </section>
@@ -428,9 +430,16 @@ export function TodayScreen() {
       <Tip id="first10" when={!!showCurrent && tipsQuiet} />
 
       {next && (
-        <p className="mx-4 mb-3 text-muted lg:mx-6">
-          {t("nextAt", { block: text.name(next.key), time: formatTime(next.start, today.timezone) })}
-        </p>
+        <NextLine
+          block={next}
+          label={t("nextAt", { block: text.name(next.key), time: formatTime(next.start, today.timezone) })}
+          log={today.logFor(next)}
+          now={now}
+          // Rule C: "Not today" only before it starts, only for a block that's tracked today.
+          canSkip={!["wake", "down", "sleep"].includes(next.key) && !untracked.includes(next.key)}
+          onSkip={() => today.actions.setAside(next, "skipped")}
+          onUndo={() => today.actions.unsetAside(next)}
+        />
       )}
 
       {napRunning && !menuOpen && <NapCard timezone={today.timezone} />}
@@ -452,7 +461,7 @@ export function TodayScreen() {
         {unlocks && !onboarding.show && <TodayUnlockLine state={unlocks} />}
         {streak.view && (
           <AddBlockLine
-            untracked={untracked}
+            untracked={untrackedBlocks(today.blockSettings)}
             streak={streak.view.streak}
             today={tl.date}
             onAdded={today.reload}

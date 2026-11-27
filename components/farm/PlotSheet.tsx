@@ -159,12 +159,15 @@ export function PlotSheet({
 
       {stage === "dead" && <p className="mt-3 rounded-xl bg-surface-2 p-3 text-sm">{t("dead")}</p>}
       {untracked && stage !== "dead" && (
-        <p className="mt-3 rounded-xl bg-surface-2 p-3 text-sm">
-          {t("untrackedPlot", { block })}{" "}
-          <Link href="/more/setup#tracked" className="font-bold text-primary underline">
+        <div className="mt-3 flex flex-col items-start gap-2 rounded-xl bg-surface-2 p-3 text-sm">
+          <p>{t("untrackedPlot", { block })}</p>
+          <Link
+            href="/more/setup#tracked"
+            className="tap inline-flex min-h-11 items-center rounded-full bg-surface px-4 font-bold text-primary"
+          >
             {t("untrackedLink")}
           </Link>
-        </p>
+        </div>
       )}
       {stage === "growing" && oneMissFromDeath(plot) && (
         <p role="alert" className="mt-3 rounded-xl bg-warn-soft p-3 text-sm font-bold">

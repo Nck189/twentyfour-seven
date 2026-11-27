@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { BLOCK_KEYS, isTracked, untrackedBlocks, type BlockKey } from "@/content/blocks";
-import { blockResult, dayOee, simulatePlot, type DayFacts, type GameLog } from "@/lib/game";
+import {
+  BLOCK_KEYS,
+  isTracked,
+  trackedOn,
+  untrackedBlocks,
+  untrackedOn,
+  type BlockKey,
+} from "@/content/blocks";
+import { blockResult, buildDayFacts, dayOee, simulatePlot, type DayFacts, type GameLog } from "@/lib/game";
 
 /** Rule B (Minnie OK 2026-11-27): choose which optional blocks to track. */
 const T = (hm: string) => new Date(`2026-11-20T${hm}:00+07:00`).toISOString();
@@ -26,11 +33,37 @@ const day = (untracked: BlockKey[] = []): DayFacts => ({
 });
 
 describe("tracked blocks (rule B)", () => {
-  it("Wake, Down Time and Sleep are always tracked; a missing flag means tracked", () => {
-    const blocks = BLOCK_KEYS.map((key) => ({ key, tracked: false }));
+  it("Wake, Down Time and Sleep are always tracked; no log means tracked; a dated log decides each day", () => {
+    const off = (from: string) => [{ from, tracked: false }];
+    const blocks = BLOCK_KEYS.map((key) => ({ key, tracked_log: off("2026-11-20") }));
     expect(untrackedBlocks(blocks)).toEqual(["focus", "work", "gradation", "free"]);
     expect(isTracked(blocks, "wake")).toBe(true);
-    expect(untrackedBlocks([{ key: "focus" }, { key: "free", tracked: true }])).toEqual([]);
+    expect(untrackedBlocks([{ key: "focus" }, { key: "free" }])).toEqual([]);
+    // Dated: before the change, tracked; from it, not; a later change back wins from its day.
+    const focus = [
+      { key: "focus" as const, tracked_log: [...off("2026-11-20"), { from: "2026-11-25", tracked: true }] },
+    ];
+    expect(trackedOn(focus, "focus", "2026-11-19")).toBe(true);
+    expect(trackedOn(focus, "focus", "2026-11-20")).toBe(false);
+    expect(trackedOn(focus, "focus", "2026-11-24")).toBe(false);
+    expect(trackedOn(focus, "focus", "2026-11-25")).toBe(true);
+    expect(isTracked(focus, "focus")).toBe(true);
+    expect(untrackedOn(focus, "2026-11-22")).toEqual(["focus"]);
+  });
+  it("buildDayFacts reads the dated setting per day, so a later change never rewrites the past", () => {
+    const settings = [{ key: "focus" as const, tracked_log: [{ from: "2026-11-21", tracked: false }] }];
+    const days = buildDayFacts({
+      from: "2026-11-20",
+      today: "2026-11-22",
+      timezone: "Asia/Bangkok",
+      logs: [],
+      modes: {},
+      wakes: [],
+      nights: [],
+      exercise: [],
+      blockSettings: settings,
+    });
+    expect(days.map((d) => d.untracked ?? [])).toEqual([[], ["focus"], ["focus"]]);
   });
   it("untracked blocks leave the Day score: tracking only what you do can reach a perfect score", () => {
     expect(dayOee(day())!.oee).toBeCloseTo(((4 / 7) * 4) / 7, 5);

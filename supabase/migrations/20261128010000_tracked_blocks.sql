@@ -1,9 +1,30 @@
--- Rule B (Minnie OK 2026-11-27, docs/DECISIONS.md): a person chooses which optional blocks to track
--- (settings.blocks[].tracked = false leaves one out; Wake, Down Time and Sleep are always tracked).
--- An untracked block has no check-in on Today and is left out of the Day score, so it can't drag
--- a Perfect day (+1 ticket) or the rainbow weather down. Its plot grows on every kept day (an
--- in-window "I'm up" or the Night ticket) instead, at normal quality, so a farm stays alive for
--- someone tracking only the anchors. Mirrors lib/game `dayOee` + `simulatePlot` (`untracked`).
+-- Rule B (Minnie OK 2026-11-27, docs/DECISIONS.md): a person chooses which optional blocks to track.
+-- The choice is DATED: settings.blocks[].tracked_log = [{from: 'YYYY-MM-DD', tracked: bool}], and a
+-- day reads the last entry on or before it (none = tracked; Wake, Down Time and Sleep always are).
+-- A change takes effect from the next wake-day (a brand-new account: today), so it never rewrites
+-- a past day's Day score or a crop's growth (G7 B S2-3), and only `set_block_tracked` may write the
+-- log (a trigger keeps it on every other settings write, so a stale copy can't undo it).
+-- An untracked block is left out of the Day score (`_day_oee`), so it can't drag a Perfect day
+-- (+1 ticket) or the rainbow weather down, and its plot grows on every kept day instead, at normal
+-- quality (`_plot_harvest`). Mirrors lib/game (`trackedOn`, `dayOee`, `simulatePlot`).
+
+-- Is block k untracked on day d for this user?
+create or replace function public._untracked_on(uid uuid, k text, d date)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select k not in ('wake', 'down', 'sleep') and coalesce((
+    select not (x ->> 'tracked')::boolean
+    from public.settings s, jsonb_array_elements(s.blocks) e,
+         jsonb_array_elements(coalesce(e -> 'tracked_log', '[]'::jsonb)) x
+    where s.user_id = uid and e ->> 'key' = k and (x ->> 'from')::date <= d
+    order by (x ->> 'from')::date desc
+    limit 1), false)
+$$;
+revoke all on function public._untracked_on(uuid, text, date) from public, anon, authenticated;
 
 create or replace function public._day_oee(uid uuid, d date)
 returns real
@@ -31,10 +52,8 @@ begin
     if lg.id is not null and lg.planned_deviation then
       continue;
     end if;
-    -- A block this person doesn't track is out of the Day score (lib/game dayOee, rule B).
-    if k not in ('wake', 'down', 'sleep') and exists (
-         select 1 from public.settings s, jsonb_array_elements(s.blocks) e
-         where s.user_id = uid and e ->> 'key' = k and e ->> 'tracked' = 'false') then
+    -- A block this person didn't track that day is out of the Day score (lib/game dayOee, rule B).
+    if public._untracked_on(uid, k, d) then
       continue;
     end if;
     planned := planned + 1;
@@ -93,10 +112,6 @@ declare
   score numeric;
   idx integer := 0;
   n_done integer;
-  -- Rule B: a plot whose block isn't tracked grows on every kept day (lib/game simulatePlot).
-  untracked boolean := p.slot not in ('wake', 'down', 'sleep') and exists (
-    select 1 from public.settings s, jsonb_array_elements(s.blocks) e
-    where s.user_id = uid and e ->> 'key' = p.slot and e ->> 'tracked' = 'false');
 begin
   if need is null or p.planted_on is null then
     return jsonb_build_object('ripe', false, 'dead', false, 'quality', 'normal', 'mult', 1, 'growth', 0);
@@ -118,7 +133,8 @@ begin
     if r in ('miss', 'partial') and p.slot = 'free' and public._late_night_planned(uid, d) then
       r := 'excused';
     end if;
-    if r <> 'success' and untracked and d < p_today and coalesce(md, 'normal') = 'normal'
+    -- Rule B: a plot whose block wasn't tracked that day grows on every kept day (simulatePlot).
+    if r <> 'success' and d < p_today and public._untracked_on(uid, p.slot, d) and coalesce(md, 'normal') = 'normal'
        and (exists (select 1 from public.wake_events
                     where user_id = uid and date = d and in_window and not backfilled)
             or exists (select 1 from public.ticket_grants
@@ -192,3 +208,75 @@ begin
     'mult', public._mutation_multiplier(muts));
 end $$;
 revoke all on function public._plot_harvest(uuid, public.plots, date) from public, anon, authenticated;
+
+-- Track a block or not, from the next wake-day (from today while the account is under a day old,
+-- i.e. during setup). Same-day changes replace each other. Returns the new blocks.
+create or replace function public.set_block_tracked(p_block text, p_tracked boolean, p_now boolean default false)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  uid uuid := auth.uid();
+  made timestamptz;
+  eff date;
+  out_ jsonb;
+begin
+  if uid is null then
+    raise exception 'not authenticated' using errcode = '42501';
+  end if;
+  if p_block not in ('focus', 'work', 'gradation', 'free') then
+    raise exception 'this block is always tracked' using errcode = '22023';
+  end if;
+  select created_at into made from public.profiles where user_id = uid;
+  eff := public._wake_day(uid) + case when p_now and made > now() - interval '1 day' then 0 else 1 end;
+  perform set_config('app.tracked_rpc', '1', true);
+  update public.settings s
+  set blocks = (
+    select jsonb_agg(
+             case when e ->> 'key' = p_block then
+               e || jsonb_build_object('tracked_log',
+                 coalesce((select jsonb_agg(x order by (x ->> 'from')::date)
+                           from jsonb_array_elements(coalesce(e -> 'tracked_log', '[]'::jsonb)) x
+                           where (x ->> 'from')::date < eff), '[]'::jsonb)
+                 || jsonb_build_array(jsonb_build_object('from', eff, 'tracked', p_tracked)))
+             else e end
+             order by ord)
+    from jsonb_array_elements(s.blocks) with ordinality t(e, ord))
+  where s.user_id = uid
+  returning blocks into out_;
+  perform set_config('app.tracked_rpc', '', true);
+  insert into public.events (user_id, type, payload)
+  values (uid, 'block_tracked_set', jsonb_build_object('block', p_block, 'tracked', p_tracked, 'from', eff));
+  return out_;
+end $$;
+revoke all on function public.set_block_tracked(text, boolean, boolean) from public, anon;
+grant execute on function public.set_block_tracked(text, boolean, boolean) to authenticated;
+
+-- Every other write keeps each block's tracked_log as it was (a stale copy of the blocks, e.g. Plan's
+-- "save as my default" on another device, can't undo or backdate it).
+create or replace function public.settings_keep_tracked_log()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if current_setting('app.tracked_rpc', true) = '1'
+     or current_user = 'service_role' or current_setting('role', true) = 'service_role' then
+    return new;
+  end if;
+  new.blocks := (
+    select coalesce(jsonb_agg(
+             case when o.v -> 'tracked_log' is null then n.v - 'tracked_log'
+                  else n.v || jsonb_build_object('tracked_log', o.v -> 'tracked_log') end
+             order by n.ord), '[]'::jsonb)
+    from jsonb_array_elements(new.blocks) with ordinality as n(v, ord)
+    left join lateral (
+      select x.v from jsonb_array_elements(old.blocks) as x(v) where x.v ->> 'key' = n.v ->> 'key' limit 1
+    ) as o on true);
+  return new;
+end $$;
+drop trigger if exists settings_keep_tracked_log on public.settings;
+create trigger settings_keep_tracked_log before update of blocks on public.settings
+for each row execute function public.settings_keep_tracked_log();
