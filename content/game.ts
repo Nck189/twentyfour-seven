@@ -8,7 +8,14 @@ export const SUCCESS_CHECKLIST_RATE = 0.7;
 /** On-time start tolerance in minutes (same as Today, SPEC §4.3). */
 export const ON_TIME_MIN = 10;
 
-/** Penalties (SPEC §8.4): consecutive misses of one block. */
+/**
+ * Penalties (SPEC §8.4, rule A, Minnie OK 2026-11-27): counted in **missed days** in a row, not
+ * missed blocks. A missed day is a finished, active day with neither a live in-window "I'm up"
+ * nor the Night ritual. Blocks only ever help (a skipped block just doesn't grow). The first
+ * missed day is a warning ("never miss twice"); the 2nd in a row brings weeds, every 3rd wilts,
+ * the 5th kills. Mirrored in SQL (`_plot_harvest`).
+ */
+export const WEEDS_AT_MISSES = 2;
 export const WILT_AT_MISSES = 3;
 export const DEAD_AT_MISSES = 5;
 

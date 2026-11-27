@@ -398,7 +398,14 @@ export function TodayScreen() {
         <Tip id="exercise" when={!!animals.state && tipsQuiet && !today.firstDay} />
 
         {!onboarding.show && <TodayReviewLine />}
-        <LastChanceLine data={farm.data} />
+        <LastChanceLine
+          data={farm.data}
+          keptToday={
+            tl.mode !== "normal" ||
+            today.nightTicket ||
+            (!!wake?.event?.in_window && !wake.event.backfilled && wake.event.date === tl.date)
+          }
+        />
         {unlocks && !onboarding.show && <TodayUnlockLine state={unlocks} />}
 
         <div className="mx-4 mb-2 lg:mx-6">

@@ -9,7 +9,7 @@ import { Sheet } from "@/components/today/BlockSheet";
 import { Button } from "@/components/ui/Button";
 import type { BlockKey } from "@/content/blocks";
 import { STARTER_CROPS, type CropId } from "@/content/crops";
-import { oneMissFromDeath, type PlotView } from "@/lib/game";
+import { oneMissFromDeath, oneMissFromWeeds, type PlotView } from "@/lib/game";
 
 /** Seed picker: seeds you own (from capsules) first, then the free starter seeds — as pictures. */
 function SeedPicker({
@@ -155,8 +155,11 @@ export function PlotSheet({
       {stage === "dead" && <p className="mt-3 rounded-xl bg-surface-2 p-3 text-sm">{t("dead")}</p>}
       {stage === "growing" && oneMissFromDeath(plot) && (
         <p role="alert" className="mt-3 rounded-xl bg-warn-soft p-3 text-sm font-bold">
-          {t("lastChance", { block })}
+          {t("lastChance")}
         </p>
+      )}
+      {stage === "growing" && oneMissFromWeeds(plot) && (
+        <p className="mt-3 rounded-xl bg-warn-soft p-3 text-sm">{t("weedsTomorrow")}</p>
       )}
       {stage === "growing" && plot.weeds && (
         <p className="mt-3 rounded-xl bg-warn-soft p-3 text-sm">{t("weeds")}</p>
