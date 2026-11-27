@@ -651,7 +651,8 @@ export function useToday(now: Date) {
        * Plan's (one event at a time, merged on the server), in the block its start falls in.
        */
       addAppointment: async (date: string, title: string, start: string, end: string) => {
-        if (!loaded) return;
+        // Never say "Added" for nothing (G7 G S3).
+        if (!loaded) throw new Error("not loaded");
         let host: BlockKey = "work";
         try {
           host = hostFor(

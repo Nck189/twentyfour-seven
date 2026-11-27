@@ -3,12 +3,24 @@
 import { useId, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatDayShort } from "@/lib/format";
-import { parseQuickAdd } from "@/lib/plan/quickAdd";
+import { endAfter, parseQuickAddDetail, type QuickAdd } from "@/lib/plan/quickAdd";
+import { addDays, localParts } from "@/lib/time";
 
-const plusHour = (hm: string) => {
-  const [h, m] = hm.split(":").map(Number);
-  return `${String(Math.min(23, h! + 1)).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-};
+/**
+ * What to save: with no date written and the default being today, a time already gone today means
+ * tomorrow ("ตี 1" typed in the morning, G7 G S3).
+ */
+function read(text: string, today: string, defaultDate: string, timezone: string): QuickAdd | null {
+  const q = parseQuickAddDetail(text, today, defaultDate);
+  if (!q) return null;
+  const { dateGiven, ...rest } = q;
+  if (!dateGiven && rest.date === today) {
+    const now = localParts(new Date(), timezone);
+    const nowHm = `${String(now.hour).padStart(2, "0")}:${String(now.minute).padStart(2, "0")}`;
+    if (rest.start < nowHm) return { ...rest, date: addDays(today, 1) };
+  }
+  return rest;
+}
 
 /**
  * G2 (Minnie OK 2026-11-27): an appointment in one line, the moment it comes up ("บ่าย 2 หมอฟัน",
@@ -33,7 +45,12 @@ export function QuickAppointment({
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const parsed = text.trim() ? parseQuickAdd(text, today, defaultDate) : null;
+  const parsed = text.trim() ? read(text, today, defaultDate, timezone) : null;
+  // A date in another year shows its year, so "26/11" read as next year is visible (G7 G S3).
+  const dayLabel = (d: string) =>
+    d.slice(0, 4) === today.slice(0, 4)
+      ? formatDayShort(d, locale, timezone)
+      : `${formatDayShort(d, locale, timezone)} ${d.slice(0, 4)}`;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -42,12 +59,12 @@ export function QuickAppointment({
     setMsg(null);
     const title = parsed.title || t("untitled");
     try {
-      await onAdd(parsed.date, title, parsed.start, parsed.end ?? plusHour(parsed.start));
+      await onAdd(parsed.date, title, parsed.start, parsed.end ?? endAfter(parsed.start));
       setMsg({
         ok: true,
         text: t("added", {
           title,
-          day: formatDayShort(parsed.date, locale, timezone),
+          day: dayLabel(parsed.date),
           time: parsed.start,
         }),
       });
@@ -88,7 +105,7 @@ export function QuickAppointment({
         <p className="text-sm text-muted" aria-live="polite">
           {parsed
             ? t("preview", {
-                day: formatDayShort(parsed.date, locale, timezone),
+                day: dayLabel(parsed.date),
                 time: parsed.end ? `${parsed.start}–${parsed.end}` : parsed.start,
                 title: parsed.title || t("untitled"),
               })

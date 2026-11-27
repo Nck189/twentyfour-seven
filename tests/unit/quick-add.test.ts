@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseQuickAdd } from "@/lib/plan/quickAdd";
+import { endAfter, parseQuickAdd } from "@/lib/plan/quickAdd";
 
 /**
  * G2 (Minnie OK 2026-11-27): add an appointment the moment it comes up, in plain words, Thai or
@@ -94,5 +94,50 @@ describe("quick add: Thai", () => {
       title: "ปาร์ตี้",
     });
     expect(p("5 ม.ค. 9 โมง เปิดเทอม")).toMatchObject({ date: "2027-01-05", start: "09:00" });
+  });
+});
+
+describe("quick add: G7 G fixes", () => {
+  it("S2-1/2: am/pm with minutes, and am/pm on both ends of a range", () => {
+    expect(p("8:00pm call")).toMatchObject({ start: "20:00", title: "call" });
+    expect(p("7.30 pm dinner")).toMatchObject({ start: "19:30", title: "dinner" });
+    expect(p("3pm-5pm tutor")).toMatchObject({ start: "15:00", end: "17:00", title: "tutor" });
+    expect(p("11am-1pm lunch")).toMatchObject({ start: "11:00", end: "13:00", title: "lunch" });
+    expect(p("11-1pm lunch")).toMatchObject({ start: "11:00", end: "13:00" });
+  });
+  it("S2-3: an end an hour after the start, past midnight if need be (never the start itself)", () => {
+    expect(endAfter("14:00")).toBe("15:00");
+    expect(endAfter("23:30")).toBe("00:30");
+    expect(endAfter("23:59")).toBe("00:59");
+  });
+  it("S2-5: 'X หน้า' and 'next X' mean X of next week; 'X นี้' this week's", () => {
+    const mon = "2026-11-30"; // Monday
+    expect(parseQuickAdd("ศุกร์หน้า บ่าย 2 ประชุม", mon)).toMatchObject({
+      date: "2026-12-11",
+      title: "ประชุม",
+    });
+    expect(parseQuickAdd("next fri 2pm x", mon)!.date).toBe("2026-12-11");
+    expect(parseQuickAdd("ศุกร์นี้ 4 โมงเย็น ประชุม", mon)).toMatchObject({
+      date: "2026-12-04",
+      title: "ประชุม",
+    });
+    expect(parseQuickAdd("fri 2pm x", mon)!.date).toBe("2026-12-04");
+  });
+  it("S2-6: full Thai month names, no-dot abbreviations, and 'วันที่ N'", () => {
+    expect(p("สอบ 8 ธันวาคม บ่าย 1")).toMatchObject({ date: "2026-12-08", start: "13:00", title: "สอบ" });
+    expect(p("8 ธค 9 โมง สอบ")).toMatchObject({ date: "2026-12-08", start: "09:00" });
+    expect(p("วันที่ 8 บ่าย 2 ส่งงาน")).toMatchObject({
+      date: "2026-12-08",
+      start: "14:00",
+      title: "ส่งงาน",
+    });
+    expect(p("ที่ 1 10 โมง x")!.date).toBe("2027-01-01"); // the 1st already passed this month
+  });
+  it("S3: Thai weekday names inside other words aren't days; ตี 12 is midnight", () => {
+    expect(p("ดูพระจันทร์ 2 ทุ่ม")).toMatchObject({ date: TODAY, start: "20:00", title: "ดูพระจันทร์" });
+    expect(p("พระอาทิตย์ตก 6 โมงเย็น")).toMatchObject({ date: TODAY, title: "พระอาทิตย์ตก" });
+    expect(p("พรุ่งนี้วันจันทร์ 9 โมง x")!.date).toBe("2026-12-03"); // "พรุ่งนี้" wins; วันจันทร์ is consumed
+    expect(p("ตี 12 ดูบอล")).toMatchObject({ start: "00:00" });
+    expect(p("Mon. 9am x")).toMatchObject({ title: "x" });
   });
 });

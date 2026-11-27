@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import {
   BoltIcon,
   CheckIcon,
+  ChevronIcon,
   MoreDotsIcon,
   PeopleIcon,
   PhoneIcon,
@@ -143,7 +144,8 @@ export function NightRitual({
     (i) => i.status === "scheduled" && i.scheduled_date === timeline.date,
   );
 
-  const nothingToClose = open.length === 0 && unfinished.length === 0;
+  // Only once the tasks are known: a quick Next mustn't skip carrying them (G7 G S3).
+  const nothingToClose = open.length === 0 && unfinished.length === 0 && backlog.status === "ready";
   const steps = [
     // 1. Free phone time
     <div key="phone" className="flex flex-col gap-3">
@@ -346,7 +348,8 @@ export function NightRitual({
           />
           <PlantAll />
           <details className="rounded-xl bg-surface-2">
-            <summary className="tap flex min-h-11 cursor-pointer items-center px-3 font-bold text-primary">
+            <summary className="tap flex min-h-11 cursor-pointer items-center gap-2 px-3 font-bold text-primary">
+              <ChevronIcon className="h-4 w-4 shrink-0" />
               {t("editDetails")}
             </summary>
             <div className="px-1 pb-2">

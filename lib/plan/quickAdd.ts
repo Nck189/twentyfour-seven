@@ -1,4 +1,5 @@
 import { addDays, isoWeekday } from "@/lib/time";
+import { MONTHS } from "./months";
 
 /**
  * G2 (Minnie OK 2026-11-27): an appointment typed the moment it comes up, in plain Thai or English
@@ -20,35 +21,36 @@ const EN_DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 const EN_DAY_RE =
   "(mon(?:day)?|tue(?:s|sday)?|wed(?:nesday)?|thu(?:r|rs|rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)";
 const TH_DAYS = ["จันทร์", "อังคาร", "พุธ", "พฤหัส", "ศุกร์", "เสาร์", "อาทิตย์"];
-const EN_MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
-const EN_MONTH_RE =
-  "(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t|tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)";
-const TH_MONTHS = [
-  "ม.ค.",
-  "ก.พ.",
-  "มี.ค.",
-  "เม.ย.",
-  "พ.ค.",
-  "มิ.ย.",
-  "ก.ค.",
-  "ส.ค.",
-  "ก.ย.",
-  "ต.ค.",
-  "พ.ย.",
-  "ธ.ค.",
-];
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const TH_MONTH_RE = `(${TH_MONTHS.map(esc).join("|")})`;
+const byLength = (keys: string[]) =>
+  [...keys]
+    .sort((a, b) => b.length - a.length)
+    .map(esc)
+    .join("|");
+const MONTH_KEYS = Object.keys(MONTHS);
+const EN_MONTH_RE = `(${byLength(MONTH_KEYS.filter((k) => /^[a-z]/.test(k)))})`;
+const TH_MONTH_RE = `(${byLength(MONTH_KEYS.filter((k) => !/^[a-z]/.test(k)))})`;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const hm = (h: number, m = 0): string | null =>
   h >= 0 && h <= 24 && m >= 0 && m < 60 ? `${pad(h % 24)}:${pad(m)}` : null;
 const half = (s: string | undefined) => (s ? 30 : 0);
 
-/** Weekday 1 (Mon) … 7 (Sun): the next one on/after today, or strictly after with `next`. */
-function nextWeekday(today: string, iso: number, strictlyAfter: boolean): string {
-  const diff = (iso - isoWeekday(today) + 7) % 7;
-  return addDays(today, diff === 0 && strictlyAfter ? 7 : diff);
+/**
+ * Weekday 1 (Mon) … 7 (Sun): the next one on/after today; with `nextWeek` ("next fri", "ศุกร์หน้า")
+ * the one in next (ISO) week, as Thai speakers mean it (G7 G S2-5).
+ */
+function nextWeekday(today: string, iso: number, nextWeek: boolean): string {
+  if (nextWeek) return addDays(today, 8 - isoWeekday(today) + iso - 1);
+  return addDays(today, (iso - isoWeekday(today) + 7) % 7);
+}
+
+/** Day N of the month: this month if it hasn't passed, else next month. */
+function dayOfMonth(today: string, n: number): string | null {
+  const [y, m, d] = today.split("-").map(Number) as [number, number, number];
+  const [yy, mm] = n >= d ? [y, m] : m === 12 ? [y + 1, 1] : [y, m + 1];
+  const date = `${yy}-${pad(mm)}-${pad(n)}`;
+  return new Date(`${date}T00:00:00Z`).getUTCMonth() + 1 === mm && n >= 1 ? date : null;
 }
 
 /** A day/month this year, or next year if it has passed. */
@@ -69,21 +71,30 @@ const pm = (h: number, ap: string) => (ap.toLowerCase() === "pm" ? (h % 12) + 12
 /** Bare "N โมง": 1–6 means the afternoon in everyday Thai. */
 const thaiMong = (n: number) => (n >= 1 && n <= 6 ? n + 12 : n);
 
+/** "11-1pm": a range's first time takes the second's am/pm, unless that makes it end first. */
+function rangeAmPm(h1: number, m1: number, ap1: string | undefined, h2: number, m2: number, ap2: string) {
+  const end = hm(pm(h2, ap2), m2);
+  let start = hm(pm(h1, ap1 ?? ap2), m1);
+  if (!ap1 && start && end && start > end) start = hm(pm(h1, ap2.toLowerCase() === "pm" ? "am" : "pm"), m1);
+  return both(start, end);
+}
+
 const TIME_RULES: Rule<Times>[] = [
-  // Ranges first.
+  // Ranges first; am/pm before plain 24 h, so "8:00pm" isn't read as 08:00 (G7 G S2-1/2).
+  {
+    re: /\b(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?\s*[-–]\s*(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)\b/i,
+    read: (m) => rangeAmPm(+m[1]!, +(m[2] ?? 0), m[3], +m[4]!, +(m[5] ?? 0), m[6]!),
+  },
   {
     re: /(\d{1,2})[:.](\d{2})\s*[-–]\s*(\d{1,2})[:.](\d{2})(?:\s*น\.)?/,
     read: (m) => both(hm(+m[1]!, +m[2]!), hm(+m[3]!, +m[4]!)),
-  },
-  {
-    re: /\b(\d{1,2})(?::(\d{2}))?\s*[-–]\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/i,
-    read: (m) => both(hm(pm(+m[1]!, m[5]!), +(m[2] ?? 0)), hm(pm(+m[3]!, m[5]!), +(m[4] ?? 0))),
   },
   {
     re: /บ่าย\s*(\d{1,2})\s*[-–]\s*(\d{1,2})(?:\s*โมง)?/,
     read: (m) => both(hm(+m[1]! + 12), hm(+m[2]! + 12)),
   },
   // One time.
+  { re: /\b(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)\b/i, read: (m) => one(hm(pm(+m[1]!, m[3]!), +(m[2] ?? 0))) },
   { re: /เที่ยงคืน/, read: () => one(hm(0)) },
   { re: /เที่ยง(?:วัน)?(\s*ครึ่ง)?/, read: (m) => one(hm(12, half(m[1]))) },
   { re: /บ่ายโมง(\s*ครึ่ง)?/, read: (m) => one(hm(13, half(m[1]))) },
@@ -91,11 +102,10 @@ const TIME_RULES: Rule<Times>[] = [
   { re: /(\d{1,2})\s*โมงเช้า(\s*ครึ่ง)?/, read: (m) => one(hm(+m[1]!, half(m[2]))) },
   { re: /(\d{1,2})\s*โมงเย็น(\s*ครึ่ง)?/, read: (m) => one(hm((+m[1]! % 12) + 12, half(m[2]))) },
   { re: /(\d{1,2})\s*ทุ่ม(\s*ครึ่ง)?/, read: (m) => one(hm(+m[1]! + 18, half(m[2]))) },
-  { re: /ตี\s*(\d{1,2})(\s*ครึ่ง)?/, read: (m) => one(hm(+m[1]!, half(m[2]))) },
+  // ตี 12 is midnight (G7 G S3).
+  { re: /ตี\s*(\d{1,2})(\s*ครึ่ง)?/, read: (m) => one(hm(+m[1]! % 12, half(m[2]))) },
   { re: /(\d{1,2})\s*โมง(\s*ครึ่ง)?/, read: (m) => one(hm(thaiMong(+m[1]!), half(m[2]))) },
   { re: /(\d{1,2})[:.](\d{2})(?:\s*น\.)?/, read: (m) => one(hm(+m[1]!, +m[2]!)) },
-  { re: /\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/i, read: (m) => one(hm(pm(+m[1]!, m[3]!), +(m[2] ?? 0))) },
-  { re: /(\d{1,2})\s*น\./, read: (m) => one(hm(+m[1]!)) },
 ];
 function one(start: string | null): Times | null {
   return start ? { start, end: null } : null;
@@ -109,26 +119,33 @@ function dateRules(today: string): Rule<string>[] {
     { re: /\b(?:today|tonight)\b|วันนี้|คืนนี้/i, read: () => today },
     { re: /\b(?:tomorrow|tmrw?|tomorow)\b|พรุ่งนี้/i, read: () => addDays(today, 1) },
     { re: /มะรืน(?:นี้)?|\bday after tomorrow\b/i, read: () => addDays(today, 2) },
+    // Day + month first ("8 ธันวาคม", "8 ธค", "24 Dec", "Dec 24"): a month name is never a weekday.
     {
-      re: new RegExp(`\\b(next\\s+)?${EN_DAY_RE}\\b`, "i"),
+      re: new RegExp(`(\\d{1,2})\\s*${TH_MONTH_RE}`),
+      read: (m) => dayMonth(today, +m[1]!, MONTHS[m[2]!]!),
+    },
+    {
+      re: new RegExp(`\\b(\\d{1,2})\\s*${EN_MONTH_RE}\\b\\.?`, "i"),
+      read: (m) => dayMonth(today, +m[1]!, MONTHS[m[2]!.toLowerCase()]!),
+    },
+    {
+      re: new RegExp(`\\b${EN_MONTH_RE}\\.?\\s*(\\d{1,2})\\b`, "i"),
+      read: (m) => dayMonth(today, +m[2]!, MONTHS[m[1]!.toLowerCase()]!),
+    },
+    {
+      re: new RegExp(`\\b(?:(next)\\s+|this\\s+)?${EN_DAY_RE}\\b\\.?`, "i"),
       read: (m) => nextWeekday(today, EN_DAYS.indexOf(m[2]!.slice(0, 3).toLowerCase()) + 1, !!m[1]),
     },
     {
-      re: new RegExp(`(?:วัน)?(${TH_DAYS.join("|")})(?:บดี)?(\\s*หน้า)?`),
-      read: (m) => nextWeekday(today, TH_DAYS.indexOf(m[1]!) + 1, !!m[2]),
+      // Not inside another word ("พระจันทร์", "พระอาทิตย์", G7 G S3); "วัน" may lead.
+      re: new RegExp(`(?:วัน|(?<![ก-๙]))(${TH_DAYS.join("|")})(?:บดี)?(?:\\s*(หน้า|นี้))?`),
+      read: (m) => nextWeekday(today, TH_DAYS.indexOf(m[1]!) + 1, m[2] === "หน้า"),
     },
     { re: /\b(\d{1,2})\/(\d{1,2})\b/, read: (m) => dayMonth(today, +m[1]!, +m[2]!) },
+    // "วันที่ 8", "ที่ 8": the next 8th (not followed by a clock word).
     {
-      re: new RegExp(`\\b(\\d{1,2})\\s*${EN_MONTH_RE}\\b`, "i"),
-      read: (m) => dayMonth(today, +m[1]!, EN_MONTHS.indexOf(m[2]!.slice(0, 3).toLowerCase()) + 1),
-    },
-    {
-      re: new RegExp(`\\b${EN_MONTH_RE}\\s*(\\d{1,2})\\b`, "i"),
-      read: (m) => dayMonth(today, +m[2]!, EN_MONTHS.indexOf(m[1]!.slice(0, 3).toLowerCase()) + 1),
-    },
-    {
-      re: new RegExp(`(\\d{1,2})\\s*${TH_MONTH_RE}`),
-      read: (m) => dayMonth(today, +m[1]!, TH_MONTHS.indexOf(m[2]!) + 1),
+      re: /(?:วัน)?ที่\s*(\d{1,2})(?!\s*(?:โมง|ทุ่ม|[:.]\d|น\.))/,
+      read: (m) => dayOfMonth(today, +m[1]!),
     },
   ];
 }
@@ -169,6 +186,13 @@ export function parseQuickAddDetail(
     title,
     dateGiven: !!d.value,
   };
+}
+
+/** An end an hour after `start` ("HH:MM"), past midnight if need be: never the start itself (G7 G S2-3). */
+export function endAfter(start: string): string {
+  const [h, m] = start.split(":").map(Number) as [number, number];
+  const t = (h * 60 + m + 60) % 1440;
+  return `${pad(Math.floor(t / 60))}:${pad(t % 60)}`;
 }
 
 /** `defaultDate`: the day meant when none is written (today; tomorrow in the Night ritual). */
