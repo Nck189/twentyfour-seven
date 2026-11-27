@@ -1711,6 +1711,17 @@
     "refusedOwn": "That's your own invite link. Send it to a friend instead.",
     "checkFailed": "Couldn't check this invite",
     "retry": "Try again",
-    "privacy": "Friends who join see only that you invited them. You see only whether they finished their first day."
+    "privacy": "Friends who join see only that you invited them. You see only whether they finished their first day.",
+    "noName": "Friends will see \"A friend invited you\".",
+    "addName": "Add your name"
+  },
+  "name": {
+    "title": "Your name",
+    "hint": "The name friends see on your invite link. Nothing else in the app shows it to anyone.",
+    "label": "Your name",
+    "placeholder": "e.g. Minnie",
+    "save": "Save name",
+    "saved": "Saved.",
+    "failed": "Couldn't save. Try again."
   }
 }

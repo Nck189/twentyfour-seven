@@ -1,9 +1,10 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { getSupabase } from "@/lib/supabase/client";
+import { getSupabase, getUserCached } from "@/lib/supabase/client";
 
 type Status = {
   token: string;
@@ -24,6 +25,7 @@ export function InviteCard() {
   const [s, setS] = useState<Status | null | "error" | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [noName, setNoName] = useState(false);
 
   const load = useCallback(async () => {
     const { data, error } = await getSupabase().rpc("invite_status");
@@ -31,6 +33,15 @@ export function InviteCard() {
   }, []);
   useEffect(() => {
     let live = true;
+    void getUserCached().then(async ({ data }) => {
+      if (!data.user) return;
+      const p = await getSupabase()
+        .from("profiles")
+        .select("display_name")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+      if (live && !p.error) setNoName(!((p.data?.display_name as string | null) ?? "").trim());
+    });
     void getSupabase()
       .rpc("invite_status")
       .then(({ data, error }) => {
@@ -64,6 +75,18 @@ export function InviteCard() {
       </h2>
       <p className="mb-1 text-sm text-muted">{t("cardHint")}</p>
       <p className="mb-3 text-xs text-muted">{t("privacy")}</p>
+      {/* No name yet: the invite would say "A friend invited you". */}
+      {noName && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
+          <p>{t("noName")}</p>
+          <Link
+            href="/more/account#name"
+            className="tap inline-flex min-h-11 items-center rounded-xl bg-primary-soft px-3 font-bold text-primary"
+          >
+            {t("addName")}
+          </Link>
+        </div>
+      )}
       {s === undefined ? (
         <p role="status" className="text-sm text-muted">
           {tc("loading")}

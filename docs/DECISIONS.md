@@ -452,4 +452,9 @@ Format: date · decision · why · how to change it
   - `eslint-config-next` moved with it.
   - **Dev tools in the same pass:** Lighthouse CI 0.15 → 0.16.1 (used only by `qc:prod`), plus the non-breaking `npm audit fix` for typescript-eslint and minimatch. `npm audit` now reports 0 vulnerabilities, production and dev.
   - **No `--force` was used.** The Lighthouse step is a minor-version bump on a 0.x package; the config didn't change, and a local run collects and asserts as before.
+- 2026-11-27 · **Your name** (More → Account)
+  - The name friends see on an invite ("Minnie invited you"). Without it, invites said "A friend" (G7 INV F6).
+  - It's optional, shown nowhere else, and cleaned before saving (trimmed, single spaces, no control characters, at most 30 characters).
+  - The invite card asks for one when it's missing.
+  - **No migration:** `display_name` already existed with an update grant, and the invite RPCs already cap it at 30.
 
