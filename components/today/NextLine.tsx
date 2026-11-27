@@ -33,6 +33,8 @@ export function NextLine({
   const before = now.getTime() < block.start.getTime();
   const fresh = !log.started_at && !log.first10_at && !log.closed_at && !log.miss_reason;
   const skipped = log.planned_deviation && fresh;
+  // A block with no time today was set aside by itself (playtest R1 P1): nothing to undo there.
+  const offer = canSkip && before && fresh && block.durationMin > 0;
   const run = async (f: () => Promise<void>) => {
     setBusy(true);
     try {
@@ -47,7 +49,7 @@ export function NextLine({
         {label}
         {skipped && <span className="font-bold"> · {t("skipped")}</span>}
       </p>
-      {canSkip && before && fresh && (
+      {offer && (
         <button
           type="button"
           disabled={busy}

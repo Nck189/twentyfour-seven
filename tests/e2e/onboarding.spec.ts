@@ -59,8 +59,11 @@ test("lazy path: Student → Next → pick a block → Use all suggestions → d
   expect(tpls.filter((t) => t.auto_apply && (t.weekdays as number[]).includes(3))).toHaveLength(1);
   const blocks = await settingsBlocks(id);
   expect(blocks.find((b) => b.key === "focus")).toMatchObject({ first10: "@s:focus:1" });
-  expect(blocks.find((b) => b.key === "work")).toMatchObject({ first10: null, tracked: false }); // default kept
-  expect(blocks.find((b) => b.key === "focus")).toMatchObject({ tracked: true });
+  expect(blocks.find((b) => b.key === "work")).toMatchObject({ first10: null }); // built-in default kept
+  // Rule B: set during setup, so from today: Focus tracked, Work not.
+  const last = (k: string) =>
+    (blocks.find((b) => b.key === k)?.tracked_log as { tracked: boolean }[] | undefined)?.at(-1)?.tracked;
+  expect([last("focus"), last("work")]).toEqual([true, false]);
 });
 
 test("my own: sleep times + weekdays + a class slot, then first-10s one block at a time", async ({

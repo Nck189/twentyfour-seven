@@ -485,6 +485,11 @@ export function useToday(now: Date) {
       };
       if (!current.started_at) row.started_at = startedAt;
       if (past && !current.started_at) row.backfilled = true;
+      // Doing a block set aside for today after all ("Not today", rule C): it counts again.
+      if (!current.started_at && !past && current.planned_deviation) {
+        next.planned_deviation = false;
+        row.planned_deviation = false;
+      }
       return mutate(key, next, { t: "upsert", row }, [
         event,
         { date: next.date, block: next.block, backfilled: next.backfilled },

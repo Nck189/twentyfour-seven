@@ -22,7 +22,7 @@ test("B: More → Set up turns a block off from tomorrow; an untracked block has
   await card.getByRole("checkbox", { name: "Focus" }).click();
   await expect(card.getByRole("status")).toHaveText("Saved. It starts tomorrow.");
   await expect(card.getByRole("checkbox", { name: "Focus" })).toHaveAttribute("aria-checked", "false");
-  await expect(card.getByText("Starts tomorrow")).toBeVisible();
+  await expect(card.getByText("Starts tomorrow", { exact: true })).toBeVisible();
   const log = ((await settingsBlocks(id)) as Block[]).find((b) => b.key === "focus")?.tracked_log;
   expect(log).toHaveLength(1);
   expect(log![0]).toMatchObject({ tracked: false });

@@ -45,8 +45,14 @@ export function TrackedBlocksCard() {
   };
 
   return (
-    <section id="tracked" className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6">
-      <h2 className="mb-1 text-lg font-bold">{t("title")}</h2>
+    <section
+      id="tracked"
+      aria-labelledby="tracked-title"
+      className="mx-4 mb-3 rounded-[var(--radius-lg)] bg-surface p-4 lg:mx-6"
+    >
+      <h2 id="tracked-title" className="mb-1 text-lg font-bold">
+        {t("title")}
+      </h2>
       <p className="mb-3 text-sm text-muted">{t("hint")}</p>
       <p className="mb-2 text-sm font-bold">
         {t("always", { list: CORE_BLOCKS.map((k) => text.name(k)).join(", ") })}
