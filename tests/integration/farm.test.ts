@@ -124,47 +124,50 @@ describe("harvest_plot", () => {
         .eq("user_id", u.id)
         .eq("slot", slot);
     }
+    // Rule A: the farm is hurt by missed days (active, no live anchor), not by skipped blocks.
+    // Anchors: d7 (wake + ritual) and d4 (wake). So d8 missed ×1 (warning), d6–d5 missed ×2 →
+    // weeds from the end of d5, cleared at the end of d4; d3 missed ×1; d2, d1 away.
     const logs = [
       // wake: radish (1 day) — success the day after planting → ripe
       logRow(u.id, d(8), "wake", "good"),
       // sleep: tomato (2 days, regrows) → ripe
       logRow(u.id, d(8), "sleep", "good"),
       logRow(u.id, d(7), "sleep", "good"),
-      // down: dragon fruit (5) — 2 days, a miss on d6 (weeds, never a minimum day after) → not ripe
+      // down: dragon fruit (5) — d8, d7, d5 grow (d5 grows before its weeds); d4 weedy → 3, not ripe
       logRow(u.id, d(8), "down", "good"),
       logRow(u.id, d(7), "down", "good"),
       logRow(u.id, d(5), "down", "good"),
       logRow(u.id, d(4), "down", "good"),
-      // focus: carrot (1) — miss d8 (weeds), d7 success but weedy; d7 is a minimum day → clear;
-      // d6 success → ripe
+      // focus: carrot (1) — nothing on d8 (one missed day is only a warning); d7 success → ripe
       logRow(u.id, d(7), "focus", "good"),
-      logRow(u.id, d(6), "focus", "good"),
-      // work: lettuce (1) — 5 misses → dead, a later success doesn't help
-      logRow(u.id, d(3), "work", "good"),
+      // work: lettuce (1) — its only success is on d4, a weedy day → no growth, not ripe
+      logRow(u.id, d(4), "work", "good"),
       // gradation: turnip (1) — excused ×3, late, backfilled, then a late start with 70% checklist
+      // on d3 (weeds cleared at the end of d4) → ripe
       logRow(u.id, d(8), "gradation", "excused"),
       logRow(u.id, d(7), "gradation", "excused"),
       logRow(u.id, d(6), "gradation", "excused"),
       logRow(u.id, d(5), "gradation", "late"),
       logRow(u.id, d(4), "gradation", "backfilled"),
       logRow(u.id, d(3), "gradation", "checklist"),
-      // free: corn (2) — 1 day, then misses → dead
+      // free: corn (2) — 1 day, then nothing → not ripe
       logRow(u.id, d(8), "free", "good"),
     ];
     expect((await a.from("block_logs").insert(logs)).error).toBeNull();
-    // d7 is a minimum day: a live in-window "I'm up" + the Night ticket.
-    expect(
-      (
-        await a.from("wake_events").insert({
-          user_id: u.id,
-          date: d(7),
-          target_wake: at(d(7), 8 * 60),
-          pressed_at: at(d(7), 8 * 60),
-          in_window: true,
-          backfilled: false,
-        })
-      ).error,
-    ).toBeNull();
+    // d7: a minimum day (a live in-window "I'm up" + the Night ticket); d4: the wake anchor only.
+    for (const day of [d(7), d(4)])
+      expect(
+        (
+          await a.from("wake_events").insert({
+            user_id: u.id,
+            date: day,
+            target_wake: at(day, 8 * 60),
+            pressed_at: at(day, 8 * 60),
+            in_window: true,
+            backfilled: false,
+          })
+        ).error,
+      ).toBeNull();
     expect(
       (await a.from("ticket_grants").insert({ user_id: u.id, reason: "night", ref_date: d(7), amount: 1 }))
         .error,

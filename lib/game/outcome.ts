@@ -112,6 +112,22 @@ export function blockResult(day: DayFacts, block: BlockKey): BlockResult {
   return "miss";
 }
 
+/**
+ * How a day counts for the farm's health (rule A, Minnie OK 2026-11-27):
+ * - open: today, not over yet
+ * - paused: Vacation/Sick, an away day, or a planned late night — nothing changes
+ * - kept: at least one anchor done live (an in-window "I'm up" or the Night ritual)
+ * - missed: an active day with neither anchor
+ * Mirrored in SQL (`_plot_harvest`).
+ */
+export type FarmDay = "open" | "paused" | "kept" | "missed";
+
+export function farmDay(day: DayFacts): FarmDay {
+  if (day.open) return "open";
+  if (day.mode !== "normal" || day.away || day.excused?.includes("free")) return "paused";
+  return day.wakeInWindow || day.nightRitualDone ? "kept" : "missed";
+}
+
 /** Minimum day (SPEC §8.7): "I'm up" within the window + Night ritual done. */
 export function isMinimumDay(day: DayFacts): boolean {
   return day.wakeInWindow && day.nightRitualDone;

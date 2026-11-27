@@ -2,7 +2,13 @@ import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CROP_IDS, CROPS, GROW_DAYS, STARTER_CROPS } from "@/content/crops";
 import { BLOCK_KEYS } from "@/content/blocks";
-import { DEAD_AT_MISSES, ON_TIME_MIN, SUCCESS_CHECKLIST_RATE } from "@/content/game";
+import {
+  DEAD_AT_MISSES,
+  ON_TIME_MIN,
+  SUCCESS_CHECKLIST_RATE,
+  WEEDS_AT_MISSES,
+  WILT_AT_MISSES,
+} from "@/content/game";
 
 /** The farm SQL mirrors content/crops.ts + content/game.ts (the server re-checks ripeness). */
 const sql = readFileSync("supabase/migrations/20261103060000_m6_farm.sql", "utf8");
@@ -37,6 +43,14 @@ describe("farm SQL mirrors the static content", () => {
     expect(sql).toContain(`<= ${ON_TIME_MIN * 60}`);
     expect(sql).toContain(`>= ${SUCCESS_CHECKLIST_RATE}`);
     expect(sql).toContain(`streak >= ${DEAD_AT_MISSES}`);
+  });
+  it("missed-day penalties (rule A) in the live harvest replay", () => {
+    const live = latest("_plot_harvest");
+    expect(live).toContain(`streak >= ${WEEDS_AT_MISSES} then`);
+    expect(live).toContain(`streak % ${WILT_AT_MISSES} = 0`);
+    expect(live).toContain(`streak >= ${DEAD_AT_MISSES} then`);
+    // A skipped block no longer adds to the run: no 'miss' branch is left in the replay.
+    expect(live).not.toContain("elsif r = 'miss'");
   });
 });
 

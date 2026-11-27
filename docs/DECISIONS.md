@@ -448,4 +448,10 @@ Format: date · decision · why · how to change it
   - It's optional, shown nowhere else, and cleaned before saving (trimmed, single spaces, no control characters, at most 30 characters).
   - The invite card asks for one when it's missing.
   - **No migration:** `display_name` already existed with an update grant, and the invite RPCs already cap it at 30.
+- 2026-11-27 · **Rule A: the farm is hurt by missed days, not missed blocks** (Minnie: "แก้ทั้งหมดเลยก่อนเบต้า", after the 7-block flexibility analysis). Supersedes SPEC §8.4's per-block misses and the M6 weeds rule.
+  - **Blocks only help.** A block's success grows its crop; anything else (skipped, a miss reason, late, backfilled) just doesn't grow. Telling the truth ("missed: phone") no longer costs a crop.
+  - **A missed day** = a finished, active day with neither anchor done live (an in-window "I'm up" or the Night ritual). One anchor keeps the day, so a late riser who does the ritual, or someone who skips the ritual after waking on time, is safe. Minimum day (both anchors) is unchanged for the streak and tickets.
+  - **Never miss twice:** 1 missed day = a warning on Today and in the plot sheet; 2 in a row = weeds (pause); every 3rd = wilt; 5 = dead. A kept day ends the run and clears the weeds at its end. Vacation/Sick, away days and a planned late night pause the run without resetting it.
+  - **Why (my call on the details):** before, a day with the app opened but blocks untapped hurt more than an away day (no app at all), which teaches people to avoid the app on bad days. Now damage needs two days of drifting while still using the app, which is rare and fair. My earlier proposal said "a day that isn't a minimum day"; I loosened it to "neither anchor" so an honest late wake plus a ritual isn't punished.
+  - Today shows one line for the whole farm (all plots share the run), hidden once today has an anchor. Server mirror: `_plot_harvest` (migration 20261128000000), checked by the harvest-parity test.
 

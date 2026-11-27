@@ -231,10 +231,14 @@ Extras:
 Each mutation has its own visual tint / particles.
 
 ### 8.4 Penalties (scaled by severity)
-- **No penalty:** `planned` deviations, Vacation/Sick mode.
-- **1 missed day of a block:** weeds appear and the crop pauses. Weeds clear after the next minimum day.
-- **3 consecutive misses:** wilt (−1 quality).
-- **5 consecutive misses:** the crop dies → becomes compost (partial fertilizer back).
+*Rule A, Minnie OK 2026-11-27: blocks only ever help; the farm is hurt by **missed days**.*
+- **A skipped block** costs nothing: its crop just doesn't grow that day.
+- **A missed day** is a finished, active day with neither anchor done live: no in-window "I'm up" and no Night ritual. One anchor keeps the day.
+- **No penalty:** `planned` deviations (a planned late night), Vacation/Sick mode, away days.
+- **1 missed day:** a warning only ("never miss twice").
+- **2 missed days in a row:** weeds appear and crops pause. They clear at the end of the next kept day.
+- **3 in a row:** wilt (−1 quality).
+- **5 in a row:** the crop dies → becomes compost (partial fertilizer back).
 
 ### 8.5 Gacha (server-side rolls via Postgres RPC — no client tampering)
 - **Seed capsule machine**, full animation:

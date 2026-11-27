@@ -104,14 +104,17 @@ test("CJ-07 step 3: one tap plants tomorrow's seeds in every empty plot (SPEC §
     .toEqual(Array(7).fill({ crop_id: "carrot" }));
 });
 
-test("R2: a plot one miss from dying says so, on Today and in its sheet (playtest R1)", async ({ page }) => {
+test("R2 + rule A: one missed day from dying says so, on Today and in the sheet (playtest R1)", async ({
+  page,
+}) => {
   const id = await setup(page);
   const today = wakeDay();
   await rest(`plots?user_id=eq.${id}&slot=eq.focus`, {
     method: "PATCH",
     body: JSON.stringify({ crop_id: "sunflower", planted_on: addDays(today, -6), state: "growing" }),
   });
-  // Four days the app was used (Work started on time) but Focus was skipped; yesterday away.
+  // Four days the app was used (Work started on time) with no anchor (no in-window I'm up, no
+  // Night ritual): four missed days in a row (rule A). Yesterday away (pauses, doesn't reset).
   for (let i = 5; i >= 2; i--) {
     const d = addDays(today, -i);
     await rest("block_logs", {
@@ -126,12 +129,12 @@ test("R2: a plot one miss from dying says so, on Today and in its sheet (playtes
     });
   }
   await gotoToday(page);
-  const line = page.getByRole("link", { name: /Sunflower in Focus: one more miss/ });
+  const line = page.getByRole("link", { name: /One more missed day and a plant dies/ });
   await expect(line).toBeVisible();
   await line.click();
   await expect(page).toHaveURL(/\/farm/);
   await page.getByRole("button", { name: /^Focus: Sunflower/ }).click();
   await expect(
-    page.getByRole("dialog", { name: "Focus" }).getByText(/One more missed Focus and it dies/),
+    page.getByRole("dialog", { name: "Focus" }).getByText(/One more missed day and it dies/),
   ).toBeVisible();
 });

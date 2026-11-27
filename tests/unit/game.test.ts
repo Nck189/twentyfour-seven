@@ -14,6 +14,7 @@ import {
   isPerfectDay,
   mutationMultiplier,
   oneMissFromDeath,
+  oneMissFromWeeds,
   qualityOf,
   roll,
   simulatePlot,
@@ -220,66 +221,96 @@ describe("growth + penalties (SPEC §8.1, §8.4)", () => {
     expect(growthStage(0, 5, "growing")).toBe(0);
     expect(growthStage(3, 5, "growing")).toBe(2);
   });
-  it("a miss → weeds pause the crop until the end of the next minimum day", () => {
+  // Rule A (Minnie OK 2026-11-27): damage comes from missed days (an active day with neither an
+  // in-window "I'm up" nor the Night ritual), never from a skipped block.
+  /** An active day with no anchor: something was logged, but no live wake in the window or ritual. */
+  const drift = (date: string, logs: Partial<Record<BlockKey, GameLog>> = {}) => day(date, logs);
+  /** A kept day: the wake anchor only (no ritual), nothing else logged. */
+  const anchored = (date: string, logs: Partial<Record<BlockKey, GameLog>> = {}) =>
+    day(date, logs, { wakeInWindow: true });
+  it("a skipped block on a kept day only skips growth: no weeds, no streak", () => {
     const p = plant("focus", "dragon_fruit", "2026-11-09");
-    const missed = (date: string) => perfect(date, { logs: { ...perfect(date).logs, focus: undefined } });
-    let v = simulatePlot(p, [perfect("2026-11-10"), missed("2026-11-11")]);
-    expect(v).toMatchObject({ growthDays: 1, weeds: true, missStreak: 1 });
-    // Next day: success but not a minimum day → still weedy, no growth.
-    const notMin = perfect("2026-11-12", { nightRitualDone: false });
-    v = simulatePlot(p, [perfect("2026-11-10"), missed("2026-11-11"), notMin]);
-    expect(v).toMatchObject({ growthDays: 1, weeds: true, missStreak: 0 });
-    // A minimum day clears them at its end; the day after grows again.
+    const skipped = (date: string) => perfect(date, { logs: { ...perfect(date).logs, focus: undefined } });
+    const tagged = (date: string) =>
+      perfect(date, {
+        logs: { ...perfect(date).logs, focus: late(date, { started_at: null, miss_reason: "phone" }) },
+      });
+    const v = simulatePlot(p, [perfect("2026-11-10"), skipped("2026-11-11"), tagged("2026-11-12")]);
+    expect(v).toMatchObject({ growthDays: 1, weeds: false, missStreak: 0, wiltLevel: 0 });
+    // One anchor is enough to keep the day: the wake alone, or the ritual alone.
+    const w = simulatePlot(p, [anchored("2026-11-10"), day("2026-11-11", {}, { nightRitualDone: true })]);
+    expect(w).toMatchObject({ weeds: false, missStreak: 0 });
+  });
+  it("never miss twice: the 1st missed day is a warning, the 2nd brings weeds, a kept day clears them", () => {
+    const p = plant("focus", "dragon_fruit", "2026-11-09");
+    let v = simulatePlot(p, [perfect("2026-11-10"), drift("2026-11-11")]);
+    expect(v).toMatchObject({ growthDays: 1, weeds: false, missStreak: 1 });
+    expect(oneMissFromWeeds(v)).toBe(true);
+    // A good block on a missed day still grows (blocks only help); the day's health comes after.
     v = simulatePlot(p, [
       perfect("2026-11-10"),
-      missed("2026-11-11"),
-      notMin,
-      perfect("2026-11-13"),
+      drift("2026-11-11"),
+      drift("2026-11-12", { focus: good("2026-11-12") }),
+    ]);
+    expect(v).toMatchObject({ growthDays: 2, weeds: true, missStreak: 2 });
+    expect(oneMissFromWeeds(v)).toBe(false);
+    // Weedy: the next kept day's success doesn't grow, and the weeds clear at its end.
+    const kept = perfect("2026-11-13");
+    v = simulatePlot(p, [perfect("2026-11-10"), drift("2026-11-11"), drift("2026-11-12"), kept]);
+    expect(v).toMatchObject({ growthDays: 1, weeds: false, missStreak: 0 });
+    v = simulatePlot(p, [
+      perfect("2026-11-10"),
+      drift("2026-11-11"),
+      drift("2026-11-12"),
+      kept,
       perfect("2026-11-14"),
     ]);
     expect(v).toMatchObject({ growthDays: 2, weeds: false });
   });
-  it("3 misses in a row → wilt (−1 quality); 5 → dead", () => {
+  it("3 missed days in a row → wilt (−1 quality); 5 → dead", () => {
     const p = plant("work", "coffee", "2026-11-09");
-    const m = (date: string) => day(date, {}, { wakeInWindow: true, nightRitualDone: true });
-    const three = simulatePlot(p, [m("2026-11-10"), m("2026-11-11"), m("2026-11-12")]);
-    expect(three).toMatchObject({ wiltLevel: 1, status: "growing", missStreak: 3 });
+    const three = simulatePlot(p, [drift("2026-11-10"), drift("2026-11-11"), drift("2026-11-12")]);
+    expect(three).toMatchObject({ wiltLevel: 1, status: "growing", missStreak: 3, weeds: true });
     const five = simulatePlot(
       p,
-      ["10", "11", "12", "13", "14"].map((x) => m(`2026-11-${x}`)),
+      ["10", "11", "12", "13", "14"].map((x) => drift(`2026-11-${x}`)),
     );
     expect(five).toMatchObject({ status: "dead", missStreak: 5 });
     // Nothing brings a dead crop back.
     expect(
       simulatePlot(p, [
-        ...["10", "11", "12", "13", "14"].map((x) => m(`2026-11-${x}`)),
+        ...["10", "11", "12", "13", "14"].map((x) => drift(`2026-11-${x}`)),
         perfect("2026-11-15"),
       ]).status,
     ).toBe("dead");
   });
-  it("Vacation/Sick days and planned deviations pause the miss streak (no penalty)", () => {
+  it("Vacation/Sick, away days and planned late nights pause the run (no penalty, no reset)", () => {
     const p = plant("work", "coffee", "2026-11-09");
-    const m = (date: string) => day(date, {});
     const v = simulatePlot(p, [
-      m("2026-11-10"),
-      m("2026-11-11"),
+      drift("2026-11-10"),
+      drift("2026-11-11"),
       day("2026-11-12", {}, { mode: "sick" }),
-      day("2026-11-13", { work: late("2026-11-13", { planned_deviation: true }) }),
-      m("2026-11-14"),
+      day("2026-11-13", {}, { away: true }),
+      day("2026-11-14", {}, { excused: ["free"] }),
+      drift("2026-11-15"),
     ]);
     expect(v).toMatchObject({ missStreak: 3, wiltLevel: 1, status: "growing" });
   });
-  it("a late start or a backfill ends the miss streak", () => {
+  it("only a kept day ends the run: a late start or a backfill on a missed day doesn't", () => {
     const p = plant("work", "coffee", "2026-11-09");
     const v = simulatePlot(p, [
-      day("2026-11-10", {}),
-      day("2026-11-11", {}),
-      day("2026-11-12", { work: late("2026-11-12") }),
-      day("2026-11-13", {}),
-      day("2026-11-14", { work: good("2026-11-14", { backfilled: true }) }),
-      day("2026-11-15", {}),
+      drift("2026-11-10"),
+      drift("2026-11-11", { work: late("2026-11-11") }),
+      drift("2026-11-12", { work: good("2026-11-12", { backfilled: true }) }),
+      anchored("2026-11-13"),
+      drift("2026-11-14"),
     ]);
-    expect(v).toMatchObject({ missStreak: 1, wiltLevel: 0, growthDays: 0 });
+    expect(v).toMatchObject({ missStreak: 1, wiltLevel: 1, growthDays: 0, weeds: false });
+  });
+  it("today never counts as missed while it's open", () => {
+    const p = plant("work", "coffee", "2026-11-09");
+    const v = simulatePlot(p, [drift("2026-11-10"), day("2026-11-11", {}, { open: [...BLOCK_KEYS] })]);
+    expect(v).toMatchObject({ missStreak: 1, weeds: false });
   });
   it("the planting day itself doesn't count; a regrowing crop restarts after its harvest", () => {
     const p = plant("focus", "strawberry", "2026-11-10");
@@ -343,17 +374,16 @@ describe("a seeded week produces the right farm (M6 done-when)", () => {
     expect(f.plots.wake).toMatchObject({ status: "ready", readyOn: "2026-11-09", quality: "prismatic" });
     expect(f.plots.free).toMatchObject({ status: "ready", weeds: false });
     expect(f.plots.sleep).toMatchObject({ status: "ready", growthDays: 2 });
-    // Grape (5 days): grew Mon, Tue; missed Wed; Thu sick (excused: streak paused, but a minimum
-    // day, so Wed's weeds clear); missed Fri, Sat → 3 in a row → wilt; Sun success but weedy →
-    // paused; the weeds clear at the end of Sun (minimum day).
+    // Grape (5 days): grew Mon, Tue; Down skipped Wed, Fri, Sat (Thu sick) but every day was kept
+    // (minimum days), so a skipped block only skips growth (rule A); grew again Sun → 3.
     expect(f.plots.down).toMatchObject({
       status: "growing",
-      growthDays: 2,
-      wiltLevel: 1,
+      growthDays: 3,
+      wiltLevel: 0,
       missStreak: 0,
       weeds: false,
     });
-    expect(f.plots.down!.quality).toBe("gold"); // prismatic − 1 wilt
+    expect(f.plots.down!.quality).toBe("prismatic");
     expect(f.plots.focus).toMatchObject({ status: "ready", readyOn: "2026-11-11" });
   });
   it("three ready pumpkins in a row can merge into a giant (seeded, repeatable)", () => {
@@ -422,9 +452,9 @@ describe("day facts from rows (lib/game/facts)", () => {
 describe("a planned late night is a planned deviation (SPEC §3, §8.4; G7 R-M6-2)", () => {
   it("out late before D excuses D−1's Free: no miss, no weeds — a success still grows", () => {
     const p = plant("free", "sunflower", "2026-11-09"); // 3 days
-    const d10 = day("2026-11-10", { free: good("2026-11-10") });
+    const d10 = day("2026-11-10", { free: good("2026-11-10") }, { wakeInWindow: true });
     const d11 = day("2026-11-11", {}, { excused: ["free"] }); // out late on the night of the 11th
-    const d12 = day("2026-11-12", { free: good("2026-11-12") });
+    const d12 = day("2026-11-12", { free: good("2026-11-12") }, { wakeInWindow: true });
     expect(blockResult(d11, "free")).toBe("excused");
     expect(simulatePlot(p, [d10, d11, d12])).toMatchObject({ growthDays: 2, weeds: false, missStreak: 0 });
     expect(blockResult(day("2026-11-11", { free: good("2026-11-11") }, { excused: ["free"] }), "free")).toBe(
