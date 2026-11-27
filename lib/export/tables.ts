@@ -39,6 +39,8 @@ export const EXPORT_TABLES = [
   "booking_requests",
   "machines",
   "production_jobs",
+  "invite_links",
+  "invites",
 ] as const;
 export type ExportTable = (typeof EXPORT_TABLES)[number];
 
@@ -90,4 +92,12 @@ export const EXPORT_ORDER: Record<ExportTable, string[]> = {
   booking_requests: ["id"],
   machines: ["machine_id"],
   production_jobs: ["id"],
+  invite_links: ["user_id"],
+  invites: ["user_id"],
 };
+
+/**
+ * Global tables (one row for the whole app, never a person's data): not exported, and no user can
+ * read or write them. `app_config` holds the invite-only switch (docs/FRIENDS-DESIGN.md).
+ */
+export const GLOBAL_TABLES = ["app_config"] as const;

@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { expect, it } from "vitest";
-import { EXPORT_ORDER, EXPORT_TABLES } from "@/lib/export/tables";
+import { EXPORT_ORDER, EXPORT_TABLES, GLOBAL_TABLES } from "@/lib/export/tables";
 
 /** Every per-user table is exported and covered by the RLS loops (R-M7-6). */
 it("EXPORT_TABLES lists every table created in the migrations", () => {
@@ -11,6 +11,7 @@ it("EXPORT_TABLES lists every table created in the migrations", () => {
       /create table (?:if not exists )?public\.([a-z_]+)/g,
     ))
       created.add(m[1]!);
+  for (const g of GLOBAL_TABLES) created.delete(g);
   expect([...created].sort()).toEqual([...EXPORT_TABLES].sort());
   for (const t of EXPORT_TABLES) expect(EXPORT_ORDER[t].length).toBeGreaterThan(0);
 });
