@@ -1,5 +1,13 @@
 # PROGRESS — 24/7
 
+## Now (2026-11-27 Bangkok): flexibility + retention batch before the beta
+Minnie OK'd (after the 7-block flexibility and psychology analysis): "แก้ทั้งหมดเลยก่อนเบต้า". Plan, one PR at a time, each with a QC report:
+1. **Rule A** (`phase-rules`): the farm is hurt by missed days, not missed blocks; never miss twice. Migration `20261128000000`. G7 PASS.
+2. **Rules B + C** (`phase-blocks`): choose the blocks you track (dated, from the next day); stretch the current block; "Not today" on the next one. Migration `20261128010000`. G7 PASS.
+3. **G + D** (`phase-plan`): the Night ritual's plan step is one question; one-line Thai/English appointments; morning check; Close skipped when empty. No migration.
+4. **E + F** (`phase-tone`): gentler wording; pilot health on `/admin/retention`; weekly "felt like a chore?" pulse. No migration.
+- Minnie before each migration PR merges: `npx supabase db push --remote` from the PR branch. After the batch: re-record the Mac visual baselines, then `npm run qc:prod`.
+
 ## Now (2026-11-17 Bangkok)
 - ✅ **M14 is merged** (PRs #23, #24, #25). Prod DB has every migration through `20261116000000` (Minnie's `migration list`, 2026-11-16). CI is steady: tests leave Today only after it settles (0 WebKit internal errors, about 26 min).
 - 🔄 **Review fixes** (`docs/REVIEW_FIX_PLAN.md`, from `docs/qa/PROJECT-REVIEW-2026-11-16.md`; Minnie: "ที่เหลือเอาตามเหมาะสมเลย"):
@@ -60,7 +68,7 @@ Message from Minnie, relayed via Claude chat: she's away from the computer and w
 - ~~Run the new DB migrations on prod (PR #5)~~ **Done by Minnie 2026-11-03 ~12:15 Bangkok.** Next on the Mac: `npm run qc:prod` (G6 re-run for M1/M3–M5).
 - **Honor system (G7 R2-3 + R3-1), please confirm:** early nights and early appointments now count as planned (an early 06:00 flight → "I'm up" at 06:00 earns the Sunrise ticket, as Today shows). The flip side: you could plan a much earlier wake for tomorrow (≥ 4 h ahead) and press "I'm up" up to 3 h early — before going to bed. The app can't know whether you slept. Fine as an honor system, or should "I'm up" also require that last night's ritual was closed ≥ 3 h earlier?
 - **Judgment calls to confirm (DECISIONS 2026-11-03):** backlog coins: 150/day cap, a task finished < 10 min after being added (or its priority raised) pays 10 · Night ticket counts from 14 h to 3 h before the next wake (a short night, e.g. home 03:00 before a 07:00 class, still counts) · Sunrise target freezes 4 h before the wake · bedtime-drift warning compares with the same kind of day.
-- **Farm (M6), please confirm:** an "Out late" night excuses that evening's **Free** block only (no weeds). Should it also cover Gradation (if you leave early)? · Decor prices fence 40 / path 30 / flowers 50 / pond 300 coins? · Starter seeds = radish, turnip, lettuce, carrot (free) until the capsule machine (M7).
+- **Farm (M6), please confirm:** ~~an "Out late" night excuses that evening's **Free** block only~~ (moot since rule A, 2026-11-27: a skipped block never brings weeds) · Decor prices fence 40 / path 30 / flowers 50 / pond 300 coins? · Starter seeds = radish, turnip, lettuce, carrot (free) until the capsule machine (M7).
 - **Later (Minnie, 2026-11-03 — "ค่อยทำ โน้ตไว้ก่อน"):** (1) send sign-in emails from a dedicated Gmail (e.g. a new app-only address) instead of Minnie's own — re-run `scripts/setup-email.mjs` with it; later a real email service + own domain (`no-reply@…`) if many friends join. (2) Invite-only sign-up (only friends Minnie invites can create an account) — today anyone with the link can sign up.
 - ~~**M12 share (G7 R-M12-14)**~~ **Answered 2026-11-14 ("เอาที่เหมาะสม"):** sick/vacation days and slots inside Free show as busy.
 - **M12 (merged 2026-11-14, PR #20):** key on Vercel ✅; left: `db push` (share) + redeploy + a real-iPhone copy check + `qc:prod`.

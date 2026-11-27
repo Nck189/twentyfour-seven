@@ -1,8 +1,14 @@
 import type { BlockKey } from "@/content/blocks";
 import { CROPS, type CropId } from "@/content/crops";
-import { DEAD_AT_MISSES, WILT_AT_MISSES, type MutationId, type Quality } from "@/content/game";
+import {
+  DEAD_AT_MISSES,
+  WEEDS_AT_MISSES,
+  WILT_AT_MISSES,
+  type MutationId,
+  type Quality,
+} from "@/content/game";
 import { mutationMultiplier, earnedMutations } from "./mutations";
-import { blockResult, checklistRate, first10Done, isMinimumDay, type DayFacts } from "./outcome";
+import { blockResult, checklistRate, farmDay, first10Done, type DayFacts } from "./outcome";
 import { qualityOf, type GrowthRecord } from "./quality";
 
 /** A seed in a block plot (the plots row: crop, star, when it was planted / last harvested). */
@@ -31,7 +37,7 @@ export type PlotView = {
   stage: 0 | 1 | 2 | 3;
   weeds: boolean;
   wiltLevel: number;
-  /** Consecutive misses right now (3 → wilt, 5 → dead). */
+  /** Missed days in a row right now (1 → warning, 2 → weeds, 3 → wilt, 5 → dead). */
   missStreak: number;
   quality: Quality;
   mutations: MutationId[];
@@ -49,12 +55,12 @@ export function growthStage(growthDays: number, growDays: number, status: PlotSt
  * Plays a planting forward over the days after it was planted (SPEC §8.1, §8.4).
  * `days` = wake-days in date order (finished days, plus today with its `open` blocks).
  *
- * - success → +1 growth day (unless weeds are pausing it); picks up that day's weather
- *   (the mutations the previous day earned)
- * - miss → weeds (the crop pauses); 3 in a row → wilt (−1 quality); 5 in a row → dead
- * - weeds clear at the end of the next minimum day after they appeared
- * - excused (Vacation/Sick, planned deviation) and open blocks change nothing;
- *   partial and backfilled end a miss streak but don't grow the crop
+ * - the block's success → +1 growth day (unless weeds are pausing it); picks up that day's
+ *   weather (the mutations the previous day earned). Any other block result just doesn't grow.
+ * - the day's health (rule A, `farmDay`): a missed day in a row 1 → a warning only; 2 → weeds
+ *   (the crop pauses); every 3rd → wilt (−1 quality); 5 → dead
+ * - a kept day (an in-window "I'm up" or the Night ritual) ends the run and clears the weeds at
+ *   its end; paused days (Vacation/Sick, away, a planned late night) and today change nothing
  * - a ready crop waits for harvest: nothing changes it any more
  */
 export function simulatePlot(p: Planting, days: readonly DayFacts[]): PlotView {
@@ -79,33 +85,31 @@ export function simulatePlot(p: Planting, days: readonly DayFacts[]): PlotView {
     prevDate = day.date;
 
     if (day.date <= from || status !== "growing") continue;
-    const r = blockResult(day, p.slot);
-    if (r === "success") {
-      missStreak = 0;
-      if (!weeds) {
-        growthDays++;
-        // A credited block (an in-window "I'm up", the Night ritual) may have no log of its own.
-        const log = day.logs[p.slot];
-        record.days++;
-        if (log && first10Done(log)) record.first10Days++;
-        const rate = log ? checklistRate(log) : null;
-        if (rate !== null) record.checklistRates.push(rate);
-        for (const m of todayWeather) mutations.add(m);
-        if (growthDays >= crop.growDays) {
-          status = "ready";
-          readyOn = day.date;
-        }
+    if (blockResult(day, p.slot) === "success" && !weeds) {
+      growthDays++;
+      // A credited block (an in-window "I'm up", the Night ritual) may have no log of its own.
+      const log = day.logs[p.slot];
+      record.days++;
+      if (log && first10Done(log)) record.first10Days++;
+      const rate = log ? checklistRate(log) : null;
+      if (rate !== null) record.checklistRates.push(rate);
+      for (const m of todayWeather) mutations.add(m);
+      if (growthDays >= crop.growDays) {
+        status = "ready";
+        readyOn = day.date;
+        continue; // a ready crop waits: this day's health no longer touches it
       }
-    } else if (r === "miss") {
-      weeds = true;
+    }
+    const health = farmDay(day);
+    if (health === "missed") {
       missStreak++;
+      if (missStreak >= WEEDS_AT_MISSES) weeds = true;
       if (missStreak % WILT_AT_MISSES === 0) wiltLevel++;
       if (missStreak >= DEAD_AT_MISSES) status = "dead";
-      continue; // fresh weeds don't clear the same day
-    } else if (r === "partial" || r === "backfilled") {
+    } else if (health === "kept") {
       missStreak = 0;
+      weeds = false;
     }
-    if (weeds && r !== "open" && isMinimumDay(day)) weeds = false;
   }
 
   const ms = [...mutations];
@@ -134,7 +138,12 @@ function isNextDay(a: string, b: string): boolean {
   return db - da === 86_400_000;
 }
 
-/** A growing plot one more miss away from dying: the farm says so before it happens (R1 R2). */
+/** A growing plot one more missed day away from dying: the farm says so before it happens (R1 R2). */
 export function oneMissFromDeath(v: Pick<PlotView, "status" | "missStreak">): boolean {
   return v.status === "growing" && v.missStreak === DEAD_AT_MISSES - 1;
+}
+
+/** The first missed day of a run: nothing happened yet, but one more brings weeds (rule A). */
+export function oneMissFromWeeds(v: Pick<PlotView, "status" | "missStreak" | "weeds">): boolean {
+  return v.status === "growing" && !v.weeds && v.missStreak === WEEDS_AT_MISSES - 1;
 }

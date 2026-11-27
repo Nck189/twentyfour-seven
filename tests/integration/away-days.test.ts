@@ -43,8 +43,26 @@ describe("away days pause the farm (server)", () => {
     expect((await u.client.rpc("harvest_plot", { p_slot: "wake" })).error).toBeNull();
   });
 
-  it("the same days with a log each (the app was used, Wake skipped) are misses: it died", async () => {
+  it("the same days with a live check-in each but no anchor (rule A: missed days) kill it", async () => {
     const { u, y, wakeOn } = await setup("away-no");
+    for (let i = 6; i >= 1; i--) {
+      const d = addDays(y, -i);
+      await admin()
+        .from("block_logs")
+        .insert({
+          user_id: u.id,
+          date: d,
+          block: "focus",
+          planned_start: zonedInstant(d, 9 * 60, TZ).toISOString(),
+          started_at: zonedInstant(d, 9 * 60 + 2, TZ).toISOString(),
+        });
+    }
+    await wakeOn(y);
+    expect((await u.client.rpc("harvest_plot", { p_slot: "wake" })).error?.code).toBe("22023");
+  });
+
+  it("rule A: a log with no live check-in (only a planned start) is a quiet day, not a miss", async () => {
+    const { u, y, wakeOn } = await setup("away-quiet");
     for (let i = 6; i >= 1; i--) {
       const d = addDays(y, -i);
       await admin()
@@ -57,7 +75,7 @@ describe("away days pause the farm (server)", () => {
         });
     }
     await wakeOn(y);
-    expect((await u.client.rpc("harvest_plot", { p_slot: "wake" })).error?.code).toBe("22023");
+    expect((await u.client.rpc("harvest_plot", { p_slot: "wake" })).error).toBeNull();
   });
 
   it("G7 F5: a user can't delete their own logs to fake away days (the welcome-back gift, erased misses)", async () => {
