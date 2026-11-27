@@ -1,4 +1,5 @@
 import { addDays, isoWeekday } from "@/lib/time";
+import { parseQuickAddDetail } from "@/lib/plan/quickAdd";
 import type { Priority } from "./index";
 
 /**
@@ -300,6 +301,20 @@ export function parseCapture(text: string, today: string): Capture {
     out.appointment = { date, start: time.start, end: time.end ?? plusHour(time.start) };
   } else if (date) {
     out.scheduled_date = date;
+  }
+  // G2 (2026-11-27): Thai clock words and phrases the token reader can't see ("พรุ่งนี้ บ่าย 2
+  // ประชุม", "ศุกร์ 2 ทุ่ม", "Dec 24 6pm"). Only with a written date, like above: a time alone
+  // stays a task title.
+  if (!out.appointment) {
+    const q = parseQuickAddDetail(raw, today);
+    if (q?.dateGiven) {
+      delete out.scheduled_date;
+      return {
+        title: q.title || raw,
+        ...out,
+        appointment: { date: q.date, start: q.start, end: q.end ?? plusHour(q.start) },
+      };
+    }
   }
   const title = keep.join(" ").trim();
   // Only tokens? Keep what was typed as the title instead of guessing.
