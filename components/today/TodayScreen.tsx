@@ -30,6 +30,7 @@ import { skyPhaseFor } from "@/lib/farm/sky";
 import { LastChanceLine } from "@/components/farm/LastChanceLine";
 import { AddBlockLine } from "@/components/today/AddBlockLine";
 import { BlockAdjust } from "@/components/today/BlockAdjust";
+import { MorningCheck } from "@/components/today/MorningCheck";
 import { NextLine } from "@/components/today/NextLine";
 import { untrackedBlocks, untrackedOn } from "@/content/blocks";
 import { useUnlocks } from "@/lib/unlocks/useUnlocks";
@@ -349,6 +350,12 @@ export function TodayScreen() {
         />
       )}
       <Tip id="wake" when={!!showWake && !today.wakeMissed && tipsQuiet} />
+      {wake?.event?.date === tl.date &&
+        !today.nightTicketYesterday &&
+        !today.firstDay &&
+        tl.mode === "normal" && (
+          <MorningCheck today={tl.date} timezone={today.timezone} onAdd={today.actions.addAppointment} />
+        )}
 
       {showCurrent && !curTracked && (
         // Rule B: a block this person doesn't track has its time, but no check-in to do.
