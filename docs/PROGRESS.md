@@ -1,5 +1,13 @@
 # PROGRESS — 24/7
 
+## Now (2026-11-27 Bangkok): flexibility + retention batch before the beta
+Minnie OK'd (after the 7-block flexibility and psychology analysis): "แก้ทั้งหมดเลยก่อนเบต้า". Plan, one PR at a time, each with a QC report:
+1. **Rule A** (`phase-rules`): the farm is hurt by missed days, not missed blocks; never miss twice. Migration `20261128000000`. G7 PASS.
+2. **Rules B + C** (`phase-blocks`): choose the blocks you track (dated, from the next day); stretch the current block; "Not today" on the next one. Migration `20261128010000`. G7 PASS.
+3. **G + D** (`phase-plan`): the Night ritual's plan step is one question; one-line Thai/English appointments; morning check; Close skipped when empty. No migration.
+4. **E + F** (`phase-tone`): gentler wording; pilot health on `/admin/retention`; weekly "felt like a chore?" pulse. No migration.
+- Minnie before each migration PR merges: `npx supabase db push --remote` from the PR branch. After the batch: re-record the Mac visual baselines, then `npm run qc:prod`.
+
 ## Now (2026-11-17 Bangkok)
 - ✅ **M14 is merged** (PRs #23, #24, #25). Prod DB has every migration through `20261116000000` (Minnie's `migration list`, 2026-11-16). CI is steady: tests leave Today only after it settles (0 WebKit internal errors, about 26 min).
 - 🔄 **Review fixes** (`docs/REVIEW_FIX_PLAN.md`, from `docs/qa/PROJECT-REVIEW-2026-11-16.md`; Minnie: "ที่เหลือเอาตามเหมาะสมเลย"):
