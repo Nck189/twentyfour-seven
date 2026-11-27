@@ -47,10 +47,16 @@ function nextWeekday(today: string, iso: number, nextWeek: boolean): string {
 
 /** Day N of the month: this month if it hasn't passed, else next month. */
 function dayOfMonth(today: string, n: number): string | null {
-  const [y, m, d] = today.split("-").map(Number) as [number, number, number];
-  const [yy, mm] = n >= d ? [y, m] : m === 12 ? [y + 1, 1] : [y, m + 1];
-  const date = `${yy}-${pad(mm)}-${pad(n)}`;
-  return new Date(`${date}T00:00:00Z`).getUTCMonth() + 1 === mm && n >= 1 ? date : null;
+  if (n < 1 || n > 31) return null;
+  let [y, m] = today.split("-").map(Number) as [number, number];
+  // This month if the day hasn't passed (and exists), else the next month that has it ("31").
+  for (let i = 0; i < 13; i++) {
+    const date = `${y}-${pad(m)}-${pad(n)}`;
+    const real = new Date(`${date}T00:00:00Z`).getUTCMonth() + 1 === m;
+    if (real && date >= today) return date;
+    [y, m] = m === 12 ? [y + 1, 1] : [y, m + 1];
+  }
+  return null;
 }
 
 /** A day/month this year, or next year if it has passed. */
@@ -121,7 +127,8 @@ function dateRules(today: string): Rule<string>[] {
     { re: /มะรืน(?:นี้)?|\bday after tomorrow\b/i, read: () => addDays(today, 2) },
     // Day + month first ("8 ธันวาคม", "8 ธค", "24 Dec", "Dec 24"): a month name is never a weekday.
     {
-      re: new RegExp(`(\\d{1,2})\\s*${TH_MONTH_RE}`),
+      // Not the start of a longer word ("3 สคริปต์", "2 พยาบาล"; G7 G re-review); "นี้" may follow.
+      re: new RegExp(`(\\d{1,2})\\s*${TH_MONTH_RE}(?!(?!นี้)[ก-๙])`),
       read: (m) => dayMonth(today, +m[1]!, MONTHS[m[2]!]!),
     },
     {
@@ -137,14 +144,22 @@ function dateRules(today: string): Rule<string>[] {
       read: (m) => nextWeekday(today, EN_DAYS.indexOf(m[2]!.slice(0, 3).toLowerCase()) + 1, !!m[1]),
     },
     {
-      // Not inside another word ("พระจันทร์", "พระอาทิตย์", G7 G S3); "วัน" may lead.
-      re: new RegExp(`(?:วัน|(?<![ก-๙]))(${TH_DAYS.join("|")})(?:บดี)?(?:\\s*(หน้า|นี้))?`),
+      // "วันจันทร์ที่ 8": the date wins over the weekday name (G7 G re-review).
+      re: new RegExp(`(?:วัน)?(?:${TH_DAYS.join("|")})(?:บดี)?\\s*ที่\\s*(\\d{1,2})(?!\\d)`),
+      read: (m) => dayOfMonth(today, +m[1]!),
+    },
+    {
+      // Thai is written without spaces, so "ประชุมศุกร์" is Friday; only พระจันทร์/พระอาทิตย์
+      // (the moon, the sun) aren't days (G7 G S3 + re-review).
+      re: new RegExp(`(?<!พระ)(?:วัน)?(${TH_DAYS.join("|")})(?:บดี)?(?:\\s*(หน้า|นี้))?`),
       read: (m) => nextWeekday(today, TH_DAYS.indexOf(m[1]!) + 1, m[2] === "หน้า"),
     },
     { re: /\b(\d{1,2})\/(\d{1,2})\b/, read: (m) => dayMonth(today, +m[1]!, +m[2]!) },
     // "วันที่ 8", "ที่ 8": the next 8th (not followed by a clock word).
     {
-      re: /(?:วัน)?ที่\s*(\d{1,2})(?!\s*(?:โมง|ทุ่ม|[:.]\d|น\.))/,
+      // Only "วันที่ N", or "ที่ N" standing alone: "บทที่ 5", "ข้อที่ 4", "ครั้งที่ 2" are ordinals
+      // (G7 G re-review). The number can't be cut short ("ที่ 10 โมง").
+      re: /(?:วันที่|(?<![ก-๙])ที่)\s*(\d{1,2})(?!\d)(?!\s*(?:โมง|ทุ่ม|[:.]\d|น\.))/,
       read: (m) => dayOfMonth(today, +m[1]!),
     },
   ];

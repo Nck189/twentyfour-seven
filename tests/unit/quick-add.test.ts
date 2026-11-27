@@ -141,3 +141,26 @@ describe("quick add: G7 G fixes", () => {
     expect(p("Mon. 9am x")).toMatchObject({ title: "x" });
   });
 });
+
+describe("quick add: G7 G re-review", () => {
+  const tmr = "2026-12-03";
+  const r = (text: string) => parseQuickAdd(text, TODAY, tmr);
+  it("S2: 'ที่ N' after a word is an ordinal, not a date", () => {
+    expect(r("อ่านบทที่ 5 บ่าย 2")).toMatchObject({ date: tmr, start: "14:00", title: "อ่านบทที่ 5" });
+    expect(r("ทำแบบฝึกหัดข้อที่ 4 บ่าย 3")).toMatchObject({ date: tmr, start: "15:00" });
+    expect(r("ครั้งที่ 2 บ่าย 2 ประชุม")).toMatchObject({ date: tmr, start: "14:00" });
+    expect(r("ไปที่ 10 โมง ร้าน")).toMatchObject({ date: tmr, start: "10:00" });
+    expect(r("วันที่ 8 บ่าย 2 x")!.date).toBe("2026-12-08");
+  });
+  it("S2: a weekday glued to the word before it is still a day (only พระ… is excluded)", () => {
+    expect(r("ประชุมศุกร์ บ่าย 2")).toMatchObject({ date: "2026-12-04", title: "ประชุม" });
+    expect(r("ส่งงานศุกร์หน้า 10 โมง")!.date).toBe("2026-12-11");
+    expect(r("ดูพระจันทร์ 2 ทุ่ม")!.date).toBe(tmr);
+  });
+  it("S3: month abbreviations inside words aren't months; day 31 rolls to a month that has one; weekday + date prefers the date", () => {
+    expect(r("แก้ 3 สคริปต์ บ่าย 2")).toMatchObject({ date: tmr, title: "แก้ 3 สคริปต์" });
+    expect(r("นัด 2 พยาบาล 10 โมง")!.date).toBe(tmr);
+    expect(parseQuickAdd("วันที่ 31 9 โมง x", "2026-11-05")!.date).toBe("2026-12-31");
+    expect(r("วันจันทร์ที่ 8 บ่าย 2 x")).toMatchObject({ date: "2026-12-08", title: "x" });
+  });
+});
